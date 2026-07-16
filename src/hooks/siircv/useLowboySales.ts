@@ -4,10 +4,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
-import { normalizeRut } from '@/utils/rutFormatter';
+import { saveLowboySaleWithContainers } from '@/services/lowboySaleService';
 import {
   ACTIVE_SALE_STATUSES,
   type CreateLowboySaleInput,
+  type LowboyContainerSaleAssignment,
   type LowboySaleFormValues,
   type LowboySaleRow,
   type LowboySaleStatus,
@@ -102,21 +103,6 @@ export function useLowboySalesKpis(sales: LowboySaleRow[] | undefined): LowboySa
   }, [sales]);
 }
 
-const salePayload = (values: LowboySaleFormValues) => {
-  const isFlete = values.sale_type === 'flete';
-  return {
-    sale_type: values.sale_type,
-    client_rut: normalizeRut(values.client_rut),
-    client_name: values.client_name.trim(),
-    description: values.description.trim(),
-    origin: isFlete ? values.origin.trim() || null : null,
-    destination: isFlete ? values.destination.trim() || null : null,
-    scheduled_date: values.scheduled_date || null,
-    net_amount: values.net_amount,
-    notes: values.notes.trim() || null,
-  };
-};
-
 export function useLowboySalesManager() {
   const queryClient = useQueryClient();
   const invalidate = () => Promise.all([
@@ -128,16 +114,15 @@ export function useLowboySalesManager() {
   ]);
 
   const createSale = useMutation({
-    mutationFn: async ({ values, initialState }: CreateLowboySaleInput) => {
-      const { data: auth } = await supabase.auth.getUser();
-      const { data, error } = await supabase.from('lowboy_sales').insert({
-        ...salePayload(values),
+    mutationFn: async ({ values, initialState, containerAssignments, rcvRecordId }: CreateLowboySaleInput) => {
+      const id = await saveLowboySaleWithContainers({
+        values,
         status: initialState?.status ?? 'confirmada',
-        executed_date: initialState?.executed_date ?? null,
-        created_by: auth.user?.id ?? null,
-      }).select('*').single();
-      if (error) throw error;
-      return data as LowboySaleRow;
+        executedDate: initialState?.executed_date,
+        containerAssignments,
+        rcvRecordId,
+      });
+      return { id };
     },
     onSuccess: async () => {
       await invalidate();
@@ -150,12 +135,8 @@ export function useLowboySalesManager() {
   });
 
   const updateSale = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: LowboySaleFormValues }) => {
-      const { error } = await supabase
-        .from('lowboy_sales')
-        .update(salePayload(values))
-        .eq('id', id);
-      if (error) throw error;
+    mutationFn: async ({ id, values, status, executedDate, containerAssignments }: { id: string; values: LowboySaleFormValues; status: Exclude<LowboySaleStatus, 'cancelada'>; executedDate?: string | null; containerAssignments?: LowboyContainerSaleAssignment[] }) => {
+      await saveLowboySaleWithContainers({ saleId: id, values, status, executedDate, containerAssignments });
     },
     onSuccess: async () => {
       await invalidate();

@@ -7977,6 +7977,25 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_lowboy_sale_with_containers: {
+        Args: {
+          p_client_name: string
+          p_client_rut: string
+          p_container_assignments?: Json
+          p_description: string
+          p_destination: string | null
+          p_executed_date: string | null
+          p_net_amount: number
+          p_notes: string | null
+          p_origin: string | null
+          p_rcv_record_id?: string | null
+          p_sale_id: string | null
+          p_sale_type: string
+          p_scheduled_date: string | null
+          p_status: string
+        }
+        Returns: string
+      }
       set_lowboy_rcv_sale_link: {
         Args: {
           p_mark_as_invoiced?: boolean

@@ -86,4 +86,15 @@ export type LowboySaleInitialState = {
 export type CreateLowboySaleInput = {
   values: LowboySaleFormValues;
   initialState?: LowboySaleInitialState;
+  containerAssignments?: LowboyContainerSaleAssignment[];
+  rcvRecordId?: string;
+};
+
+export type LowboyContainerSaleAssignment = {
+  container_id: string;
+  sale_net_price: number;
+};
+
+export type LowboyContainerSaleAssignmentDraft = LowboyContainerSaleAssignment & {
+  manuallyEdited: boolean;
 };

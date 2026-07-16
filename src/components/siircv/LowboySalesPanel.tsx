@@ -58,6 +58,7 @@ import { businessClock } from '@/utils/businessClock';
 import { cn } from '@/lib/utils';
 import {
   type LowboySaleFormValues,
+  type LowboyContainerSaleAssignment,
   type LowboySaleInitialState,
   type LowboySaleRow,
   type LowboySaleStatus,
@@ -233,9 +234,18 @@ export function LowboySalesPanel() {
   const openCreate = () => { setEditingSale(null); setFormOpen(true); };
   const openEdit = (sale: LowboySaleRow) => { setEditingSale(sale); setFormOpen(true); };
 
-  const handleSave = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState) => {
-    if (editingSale) await manager.updateSale.mutateAsync({ id: editingSale.id, values });
-    else await manager.createSale.mutateAsync({ values, initialState });
+  const handleSave = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, containerAssignments?: LowboyContainerSaleAssignment[], rcvRecordId?: string) => {
+    if (editingSale) {
+      await manager.updateSale.mutateAsync({
+        id: editingSale.id,
+        values,
+        status: editingSale.status as Exclude<LowboySaleStatus, 'cancelada'>,
+        executedDate: editingSale.executed_date,
+        containerAssignments,
+      });
+    } else {
+      await manager.createSale.mutateAsync({ values, initialState, containerAssignments, rcvRecordId });
+    }
   };
 
   const advance = (sale: LowboySaleRow) => {
@@ -335,9 +345,11 @@ export function LowboySalesPanel() {
               ))}
             </>
           )}
-          <DropdownMenuItem onClick={() => openEdit(sale)}>
-            <Pencil className="mr-2 size-4" />Editar
-          </DropdownMenuItem>
+          {!['pagada', 'cancelada'].includes(sale.status) && (
+            <DropdownMenuItem onClick={() => openEdit(sale)}>
+              <Pencil className="mr-2 size-4" />Editar
+            </DropdownMenuItem>
+          )}
           {canCancel(sale) && (
             <DropdownMenuItem className="text-amber-600 focus:text-amber-600" onClick={() => setCancelingSale(sale)}>
               <Ban className="mr-2 size-4" />Cancelar venta

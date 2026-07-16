@@ -41,7 +41,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSiiRcvManager, useSiiRcvPagedRecords } from '@/hooks/useSiiRcv';
 import { useLowboySalesManager } from '@/hooks/siircv/useLowboySales';
-import type { LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
+import type { LowboyContainerSaleAssignment, LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
 import type { SiiBookType, SiiRcvRecordFormValues, SiiRcvRecordRow } from '@/types/siiRcv';
 import { DOC_TYPE_NOTA_CREDITO, DOC_TYPE_NOTA_DEBITO } from '@/types/siiRcv';
 
@@ -343,13 +343,18 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
             sale={null}
             isPending={salesManager.createSale.isPending || manager.setLink.isPending}
             initialValues={salePrefill}
+            initialRcvRecordId={creatingSaleForRecord?.id}
             defaultRetroactive
             defaultInitialStatus="facturada"
             defaultExecutedDate={creatingSaleForRecord?.doc_date ?? ''}
-            onSubmit={async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState) => {
+            onSubmit={async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, containerAssignments?: LowboyContainerSaleAssignment[], rcvRecordId?: string) => {
               if (!creatingSaleForRecord) return;
-              const sale = await salesManager.createSale.mutateAsync({ values, initialState });
-              await manager.setLink.mutateAsync({ id: creatingSaleForRecord.id, linkedSaleId: sale.id });
+              await salesManager.createSale.mutateAsync({
+                values,
+                initialState,
+                containerAssignments,
+                rcvRecordId,
+              });
               setCreatingSaleForRecord(null);
             }}
           />

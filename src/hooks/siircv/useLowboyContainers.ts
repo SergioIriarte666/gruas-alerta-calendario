@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { normalizeRut } from '@/utils/rutFormatter';
 import { businessClock } from '@/utils/businessClock';
-import type { LowboySaleFormValues, LowboySaleInitialState, LowboySaleRow } from '@/types/lowboySales';
 import type {
   LowboyContainerCostFormValues,
   LowboyContainerCostRow,
@@ -49,22 +48,11 @@ const costPayload = (values: LowboyContainerCostFormValues) => ({
   notes: values.notes.trim() || null,
 });
 
-const salePayload = (values: LowboySaleFormValues) => ({
-  sale_type: 'producto',
-  client_rut: normalizeRut(values.client_rut),
-  client_name: values.client_name.trim(),
-  description: values.description.trim(),
-  origin: null,
-  destination: null,
-  scheduled_date: values.scheduled_date || null,
-  net_amount: values.net_amount,
-  notes: values.notes.trim() || null,
-});
-
-export function useLowboyContainers() {
+export function useLowboyContainers(enabled = true) {
   return useQuery({
     queryKey: CONTAINERS_KEY,
     staleTime: 60_000,
+    enabled,
     queryFn: async (): Promise<LowboyContainerRow[]> => {
       const { data, error } = await supabase
         .from('lowboy_containers')
@@ -127,28 +115,6 @@ export function useLowboyContainerRcvCandidates(enabled = true) {
         .limit(1000);
       if (error) throw error;
       return (data ?? []) as LowboyContainerRcvReference[];
-    },
-  });
-}
-
-export function useLowboyContainerSales(enabled = true) {
-  return useQuery({
-    queryKey: ['lowboy-container-sales'],
-    enabled,
-    staleTime: 60_000,
-    queryFn: async (): Promise<LowboySaleRow[]> => {
-      const { data, error } = await supabase
-        .from('lowboy_sales')
-        .select(`
-          *,
-          linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_sale_id_fkey(id, folio, doc_date, net_amount),
-          lowboy_containers!lowboy_containers_sale_id_fkey(id, sale_net_price)
-        `)
-        .eq('sale_type', 'producto')
-        .neq('status', 'cancelada')
-        .order('scheduled_date', { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return (data ?? []) as LowboySaleRow[];
     },
   });
 }
@@ -254,52 +220,6 @@ export function useLowboyContainersManager() {
     onError: (error: Error) => { logger.error('No fue posible cambiar la reserva', error); toast.error(error.message); },
   });
 
-  const linkSale = useMutation({
-    mutationFn: async ({ containerId, saleId, saleNetPrice, rcvRecordId, markAsInvoiced = false }: { containerId: string; saleId: string; saleNetPrice: number; rcvRecordId?: string; markAsInvoiced?: boolean }) => {
-      const { error } = await supabase.rpc('sell_lowboy_container', {
-        p_container_id: containerId,
-        p_sale_id: saleId,
-        p_sale_net_price: saleNetPrice,
-        p_rcv_record_id: rcvRecordId,
-        p_mark_as_invoiced: markAsInvoiced,
-      });
-      if (error) throw error;
-    },
-    onSuccess: async () => { await invalidate(); toast.success('Contenedor asociado a la venta.'); },
-    onError: (error: Error) => { logger.error('No fue posible vender el contenedor', error); toast.error(error.message); },
-  });
-
-  const createSaleAndLink = useMutation({
-    mutationFn: async ({ containerId, values, initialState, rcvRecordId }: { containerId: string; values: LowboySaleFormValues; initialState?: LowboySaleInitialState; rcvRecordId?: string }) => {
-      const { data: auth } = await supabase.auth.getUser();
-      const { data: sale, error: saleError } = await supabase
-        .from('lowboy_sales')
-        .insert({
-          ...salePayload(values),
-          status: initialState?.status ?? 'confirmada',
-          executed_date: initialState?.executed_date ?? null,
-          created_by: auth.user?.id ?? null,
-        })
-        .select('id, net_amount')
-        .single();
-      if (saleError) throw saleError;
-
-      const { error: containerError } = await supabase.rpc('sell_lowboy_container', {
-        p_container_id: containerId,
-        p_sale_id: sale.id,
-        p_sale_net_price: sale.net_amount,
-        p_rcv_record_id: rcvRecordId,
-        p_mark_as_invoiced: false,
-      });
-      if (containerError) {
-        await supabase.from('lowboy_sales').delete().eq('id', sale.id);
-        throw containerError;
-      }
-    },
-    onSuccess: async () => { await invalidate(); toast.success('Venta creada y contenedor vendido.'); },
-    onError: (error: Error) => { logger.error('No fue posible crear la venta del contenedor', error); toast.error(error.message); },
-  });
-
   return {
     createContainer,
     updateContainer,
@@ -307,7 +227,5 @@ export function useLowboyContainersManager() {
     saveCost,
     deleteCost,
     setReservation,
-    linkSale,
-    createSaleAndLink,
   };
 }

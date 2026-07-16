@@ -3,7 +3,7 @@ import { Box, Download, Eye, Loader2, MoreHorizontal, PackageCheck, Pencil, Plus
 import { toast } from 'sonner';
 import { LowboyContainerDetailSheet } from '@/components/siircv/LowboyContainerDetailSheet';
 import { LowboyContainerForm } from '@/components/siircv/LowboyContainerForm';
-import { LowboyContainerSellDialog } from '@/components/siircv/LowboyContainerSellDialog';
+import { LowboySaleForm } from '@/components/siircv/LowboySaleForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLowboyContainerKpis, useLowboyContainers, useLowboyContainersManager } from '@/hooks/siircv/useLowboyContainers';
+import { useLowboySalesManager } from '@/hooks/siircv/useLowboySales';
 import { cn } from '@/lib/utils';
-import type { LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
+import type { LowboyContainerSaleAssignment, LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
 import type { LowboyContainerFormValues, LowboyContainerRow, LowboyContainerStatus } from '@/types/lowboyContainers';
 import {
   CONTAINER_CONDITION_LABEL,
@@ -65,6 +66,7 @@ export function LowboyContainersPanel() {
   const isAdmin = user?.role === 'admin';
   const { data: containers, isLoading } = useLowboyContainers();
   const manager = useLowboyContainersManager();
+  const salesManager = useLowboySalesManager();
   const kpis = useLowboyContainerKpis(containers);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
@@ -87,21 +89,16 @@ export function LowboyContainersPanel() {
 
   const openCreate = () => { setEditingContainer(null); setFormOpen(true); };
   const openEdit = (container: LowboyContainerRow) => { setEditingContainer(container); setFormOpen(true); };
+  const openSale = (container: LowboyContainerRow) => { setSelectedId(null); setSellingContainer(container); };
 
   const saveContainer = async (values: LowboyContainerFormValues) => {
     if (editingContainer) await manager.updateContainer.mutateAsync({ id: editingContainer.id, values, preserveSoldStatus: editingContainer.status === 'vendido' });
     else await manager.createContainer.mutateAsync(values);
   };
 
-  const linkSale = async (saleId: string, price: number, rcvRecordId?: string, markAsInvoiced?: boolean) => {
+  const createSale = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, containerAssignments?: LowboyContainerSaleAssignment[], rcvRecordId?: string) => {
     if (!sellingContainer) return;
-    await manager.linkSale.mutateAsync({ containerId: sellingContainer.id, saleId, saleNetPrice: price, rcvRecordId, markAsInvoiced });
-    setSellingContainer(null);
-  };
-
-  const createSale = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, rcvRecordId?: string) => {
-    if (!sellingContainer) return;
-    await manager.createSaleAndLink.mutateAsync({ containerId: sellingContainer.id, values, initialState, rcvRecordId });
+    await salesManager.createSale.mutateAsync({ values, initialState, containerAssignments, rcvRecordId });
     setSellingContainer(null);
   };
 
@@ -134,7 +131,7 @@ export function LowboyContainersPanel() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setSelectedId(container.id)}><Eye className="mr-2 size-4" />Ver ficha</DropdownMenuItem>
           <DropdownMenuItem onClick={() => openEdit(container)}><Pencil className="mr-2 size-4" />Editar</DropdownMenuItem>
-          {container.status !== 'vendido' && <DropdownMenuItem onClick={() => setSellingContainer(container)}><PackageCheck className="mr-2 size-4" />Vender</DropdownMenuItem>}
+          {container.status === 'disponible' && <DropdownMenuItem onClick={() => openSale(container)}><PackageCheck className="mr-2 size-4" />Vender</DropdownMenuItem>}
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeletingContainer(container)}><Trash2 className="mr-2 size-4" />Eliminar</DropdownMenuItem>
         </DropdownMenuContent>
@@ -229,9 +226,17 @@ export function LowboyContainersPanel() {
         )}
       </section>
 
-      <LowboyContainerDetailSheet container={selectedContainer} open={Boolean(selectedContainer)} onOpenChange={(open) => { if (!open) setSelectedId(null); }} isAdmin={isAdmin} onEdit={openEdit} onSell={setSellingContainer} />
+      <LowboyContainerDetailSheet container={selectedContainer} open={Boolean(selectedContainer)} onOpenChange={(open) => { if (!open) setSelectedId(null); }} isAdmin={isAdmin} onEdit={openEdit} onSell={openSale} />
       <LowboyContainerForm open={formOpen} onOpenChange={setFormOpen} container={editingContainer} isPending={manager.createContainer.isPending || manager.updateContainer.isPending} onSubmit={saveContainer} />
-      <LowboyContainerSellDialog open={Boolean(sellingContainer)} onOpenChange={(open) => { if (!open) setSellingContainer(null); }} container={sellingContainer} isPending={manager.linkSale.isPending || manager.createSaleAndLink.isPending} onLinkSale={linkSale} onCreateSale={createSale} />
+      <LowboySaleForm
+        open={Boolean(sellingContainer)}
+        onOpenChange={(open) => { if (!open) setSellingContainer(null); }}
+        sale={null}
+        isPending={salesManager.createSale.isPending}
+        onSubmit={createSale}
+        initialContainerIds={sellingContainer ? [sellingContainer.id] : []}
+        fixedSaleType="producto"
+      />
 
       <AlertDialog open={Boolean(deletingContainer)} onOpenChange={(open) => { if (!open) setDeletingContainer(null); }}>
         <AlertDialogContent>

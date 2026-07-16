@@ -83,7 +83,7 @@ export function LowboyContainerDetailSheet({ container, open, onOpenChange, isAd
           {isAdmin && (
             <div className="mt-5 flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => onEdit(container)}><Pencil className="mr-2 size-4" />Editar</Button>
-              {container.status !== 'vendido' && <Button size="sm" onClick={() => onSell(container)}><PackageCheck className="mr-2 size-4" />Vender</Button>}
+              {container.status === 'disponible' && <Button size="sm" onClick={() => onSell(container)}><PackageCheck className="mr-2 size-4" />Vender</Button>}
               {container.status !== 'vendido' && (
                 <Button size="sm" variant="outline" onClick={() => manager.setReservation.mutate({ id: container.id, reserved: container.status !== 'reservado' })}>
                   {container.status === 'reservado' ? 'Liberar reserva' : 'Reservar'}
