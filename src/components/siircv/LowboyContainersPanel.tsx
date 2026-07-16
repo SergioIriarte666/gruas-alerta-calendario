@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Box, Eye, Loader2, MoreHorizontal, PackageCheck, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Box, Download, Eye, Loader2, MoreHorizontal, PackageCheck, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { LowboyContainerDetailSheet } from '@/components/siircv/LowboyContainerDetailSheet';
 import { LowboyContainerForm } from '@/components/siircv/LowboyContainerForm';
 import { LowboyContainerSellDialog } from '@/components/siircv/LowboyContainerSellDialog';
@@ -24,6 +25,8 @@ import {
   containerMargin,
   containerTotalCost,
 } from '@/types/lowboyContainers';
+import { businessClock } from '@/utils/businessClock';
+import { generateLowboyContainersPdf } from '@/utils/pdf/lowboyContainersPdfGenerator';
 
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
@@ -70,6 +73,7 @@ export function LowboyContainersPanel() {
   const [editingContainer, setEditingContainer] = useState<LowboyContainerRow | null>(null);
   const [sellingContainer, setSellingContainer] = useState<LowboyContainerRow | null>(null);
   const [deletingContainer, setDeletingContainer] = useState<LowboyContainerRow | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const selectedContainer = containers?.find((container) => container.id === selectedId) ?? null;
   const filtered = useMemo(() => {
@@ -99,6 +103,27 @@ export function LowboyContainersPanel() {
     if (!sellingContainer) return;
     await manager.createSaleAndLink.mutateAsync({ containerId: sellingContainer.id, values });
     setSellingContainer(null);
+  };
+
+  const downloadPdf = async () => {
+    if (filtered.length === 0) return;
+    setIsExporting(true);
+    try {
+      const blob = await generateLowboyContainersPdf({ containers: filtered, statusFilter, search });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Informe_Contenedores_LowBoy_${businessClock.today()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Informe de contenedores exportado.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No fue posible exportar el informe.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   function Actions({ container }: { container: LowboyContainerRow }) {
@@ -132,7 +157,13 @@ export function LowboyContainersPanel() {
             <h2 className="flex items-center gap-2 text-base font-semibold"><Box className="size-4 text-teal-600" />Inventario seriado</h2>
             <p className="text-sm text-muted-foreground">Costo específico y margen por unidad</p>
           </div>
-          {isAdmin && <Button size="sm" onClick={openCreate}><Plus className="mr-2 size-4" />Nuevo contenedor</Button>}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={isLoading || filtered.length === 0 || isExporting}>
+              {isExporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Download className="mr-2 size-4" />}
+              Descargar PDF
+            </Button>
+            {isAdmin && <Button size="sm" onClick={openCreate}><Plus className="mr-2 size-4" />Nuevo contenedor</Button>}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3 border-t py-3 sm:flex-row sm:items-center sm:justify-between">
