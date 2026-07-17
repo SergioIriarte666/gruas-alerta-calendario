@@ -27,7 +27,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="configuration-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Detalle de Tarifa

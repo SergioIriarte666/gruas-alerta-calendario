@@ -10,11 +10,20 @@ interface Props {
   onSelect: (svc: ExternalServiceListItem) => void;
 }
 
+const formatCurrency = (amount: number | null) => {
+  if (!amount) return 'Sin costo informado';
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
 export const ExternalServicesMobileView = ({ services, onSelect }: Props) => {
   return (
     <div className="space-y-3">
       {services.map((s) => (
-        <Card key={s.id} className="border bg-card">
+        <Card key={s.id} data-closed={s.hasClosure} className="external-service-mobile-card overflow-hidden">
           <CardContent className="space-y-3 p-4">
             <div className="flex items-start justify-between">
               <div>
@@ -22,9 +31,9 @@ export const ExternalServicesMobileView = ({ services, onSelect }: Props) => {
                 <div className="mt-0.5 text-xs text-muted-foreground">{s.serviceTypeName}</div>
               </div>
               {s.hasClosure ? (
-                <Badge className="border-green-300 bg-green-100 text-xs text-green-800">Cerrado</Badge>
+                <Badge className="border-success/30 bg-success/10 text-xs text-success">Cerrado</Badge>
               ) : (
-                <Badge className="border-amber-300 bg-amber-100 text-xs text-amber-800">Pendiente</Badge>
+                <Badge className="border-warning/30 bg-warning/10 text-xs text-warning">Pendiente</Badge>
               )}
             </div>
 
@@ -34,12 +43,13 @@ export const ExternalServicesMobileView = ({ services, onSelect }: Props) => {
               {s.vehicleBrand && (
                 <div>{s.vehicleBrand} {s.vehicleModel} ({s.licensePlate ?? 'S/P'})</div>
               )}
+              <div className="pt-1 font-medium text-foreground">{formatCurrency(s.outsourcedCost)}</div>
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className={s.hasClosure ? 'w-full border-info/30 text-info hover:bg-info/10' : 'external-services-primary-action w-full'}
               onClick={() => onSelect(s)}
             >
               {s.hasClosure ? (

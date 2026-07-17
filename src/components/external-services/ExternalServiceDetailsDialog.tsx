@@ -27,10 +27,10 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] w-[95vw] max-w-4xl flex-col p-0">
+      <DialogContent className="external-dialog flex h-[90vh] w-[95vw] max-w-4xl flex-col p-0">
         <DialogHeader className="px-6 pb-2 pt-6">
           <DialogTitle className="flex items-center gap-2">
-            <Building2 className="size-5 text-purple-600" />
+            <Building2 className="external-accent-icon size-5" />
             Servicio externo cerrado · Folio {service.folio}
           </DialogTitle>
           <DialogDescription>
@@ -40,7 +40,7 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
 
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-4 pb-6">
-            <Card>
+            <Card className="external-dialog-card">
               <CardHeader>
                 <CardTitle className="text-base">Servicio</CardTitle>
               </CardHeader>
@@ -67,11 +67,11 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
             </Card>
 
             {closure && (
-              <Card>
+              <Card className="external-dialog-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-base">
                     <span>Cierre administrativo</span>
-                    <Badge className="border-green-300 bg-green-100 text-green-800">
+                    <Badge className="border-success/30 bg-success/10 text-success">
                       Cerrado · {formatBusinessDateLong(closure.closedAt)}
                     </Badge>
                   </CardTitle>
@@ -108,7 +108,7 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
             )}
 
             {closure && closure.pdfPath && (
-              <Card>
+              <Card className="external-dialog-card">
                 <CardHeader>
                   <CardTitle className="text-base">Acta de Servicio Externo</CardTitle>
                 </CardHeader>
@@ -142,7 +142,7 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
                           }
                         }
                       }}
-                      className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800"
+                      className="border-info/30 text-info hover:bg-info/10"
                     >
                       <Download className="size-4 mr-2" />
                       Descargar Acta PDF
@@ -167,7 +167,7 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
                     <Button
                       size="sm"
                       onClick={() => setSendOpen(true)}
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="dashboard-report-button"
                     >
                       <Mail className="size-4 mr-2" />
                       {closure.emailSendCount > 0 ? 'Reenviar por email' : 'Enviar por email'}

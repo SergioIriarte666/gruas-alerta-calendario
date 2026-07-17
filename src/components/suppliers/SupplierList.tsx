@@ -241,7 +241,7 @@ export const SupplierList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -309,7 +309,7 @@ export const SupplierList: React.FC = () => {
       </Card>
 
       {/* Results */}
-      <Card className="bg-card border">
+      <Card className="inventory-panel border bg-card">
         <CardHeader>
           <CardTitle className="text-foreground">
             Proveedores ({filteredAndSortedSuppliers.length})

@@ -36,7 +36,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MetricCard } from '@/components/ui/metric-card';
-import { PageHeader } from '@/components/ui/page-header';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -176,13 +175,13 @@ const getExpiryState = (expiresAt: string | null) => {
 const expiryBadge = (expiresAt: string | null) => {
   const state = getExpiryState(expiresAt);
   if (state === 'expired') {
-    return <Badge className="border-red-200 bg-red-50 text-red-700 hover:bg-red-50">Vencido</Badge>;
+    return <Badge className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/10">Vencido</Badge>;
   }
   if (state === 'soon') {
-    return <Badge className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">Por vencer</Badge>;
+    return <Badge className="border-warning/30 bg-warning/10 text-warning hover:bg-warning/10">Por vencer</Badge>;
   }
   if (state === 'valid') {
-    return <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">Vigente</Badge>;
+    return <Badge className="border-success/30 bg-success/10 text-success hover:bg-success/10">Vigente</Badge>;
   }
   return <Badge variant="outline">Sin vencimiento</Badge>;
 };
@@ -413,33 +412,39 @@ const DocumentLibrary = () => {
   };
 
   return (
-    <div className="space-y-6 pb-6">
-      <PageHeader
-        title="Biblioteca Documental"
-        description="Centraliza contratos, permisos, seguros, respaldos y documentos críticos con trazabilidad y enlaces seguros."
-        badges={isFetching && !isLoading ? <Badge variant="outline">Actualizando</Badge> : null}
-        actions={
-          <Button onClick={openCreateForm} className="gap-2">
-            <Plus className="size-4" />
-            Subir documento
-          </Button>
-        }
-      />
+    <div className="document-library-concept space-y-6 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="dashboard-section-kicker">
+            <Archive className="size-3.5" />
+            Archivo operativo
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="dashboard-section-title">Biblioteca documental</h1>
+            {isFetching && !isLoading && <Badge variant="outline">Actualizando</Badge>}
+          </div>
+          <p className="dashboard-section-description">Contratos, permisos, seguros y respaldos críticos con trazabilidad.</p>
+        </div>
+        <Button onClick={openCreateForm} size="sm" className="dashboard-report-button gap-2">
+          <Plus className="size-4" />
+          Subir documento
+        </Button>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)
         ) : (
           <>
-            <MetricCard title="Documentos" value={metrics.total} description="Activos en biblioteca" icon={Archive} tone="primary" />
-            <MetricCard title="Por vencer" value={metrics.soon} description="Vencen en los próximos 30 días" icon={CalendarClock} tone="warning" />
-            <MetricCard title="Vencidos" value={metrics.expired} description="Requieren revisión" icon={AlertTriangle} tone="danger" />
-            <MetricCard title="Confidenciales" value={metrics.confidential} description="Con control especial" icon={Lock} tone="info" />
+            <MetricCard title="Documentos" value={metrics.total} description="Activos en biblioteca" icon={Archive} tone="primary" variant="control" />
+            <MetricCard title="Por vencer" value={metrics.soon} description="Vencen en los próximos 30 días" icon={CalendarClock} tone="warning" variant="control" />
+            <MetricCard title="Vencidos" value={metrics.expired} description="Requieren revisión" icon={AlertTriangle} tone="danger" variant="control" />
+            <MetricCard title="Confidenciales" value={metrics.confidential} description="Con control especial" icon={Lock} tone="info" variant="control" />
           </>
         )}
       </div>
 
-      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
+      <SectionCard flush className="operations-panel border-border/70 bg-card/80 shadow-sm">
         <div className="space-y-4 p-4 sm:p-6">
           <div className="grid gap-3 lg:grid-cols-[minmax(220px,1.3fr)_repeat(5,minmax(150px,1fr))_auto]">
             <div className="relative">
@@ -556,7 +561,7 @@ const DocumentLibrary = () => {
                 documents.map((document) => (
                   <TableRow
                     key={document.id}
-                    className={cn(getExpiryState(document.expires_at) === 'expired' && 'bg-red-50/50')}
+                    className={cn(getExpiryState(document.expires_at) === 'expired' && 'bg-danger/5')}
                   >
                     <TableCell>
                       <div className="flex min-w-[220px] items-start gap-3">
@@ -566,7 +571,7 @@ const DocumentLibrary = () => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="truncate font-medium text-foreground">{document.title}</p>
-                            {document.is_confidential && <Lock className="size-3.5 text-amber-600" />}
+                            {document.is_confidential && <Lock className="size-3.5 text-warning" />}
                           </div>
                           {document.description && (
                             <p className="line-clamp-1 text-xs text-muted-foreground">{document.description}</p>
@@ -639,13 +644,13 @@ const DocumentLibrary = () => {
             </Card>
           ) : (
             documents.map((document) => (
-              <Card key={document.id} className={cn('border-border/70', getExpiryState(document.expires_at) === 'expired' && 'border-red-200 bg-red-50/50')}>
+              <Card key={document.id} className={cn('operations-panel border-border/70', getExpiryState(document.expires_at) === 'expired' && 'border-danger/30 bg-danger/5')}>
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="truncate font-semibold">{document.title}</p>
-                        {document.is_confidential && <Lock className="size-3.5 shrink-0 text-amber-600" />}
+                        {document.is_confidential && <Lock className="size-3.5 shrink-0 text-warning" />}
                       </div>
                       <p className="text-xs text-muted-foreground">{categoryLabel(document.category)} · {formatBytes(document.file_size)}</p>
                     </div>
@@ -683,7 +688,7 @@ const DocumentLibrary = () => {
         setIsFormOpen(open);
         if (!open) resetForm();
       }}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="operations-dialog max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingDocument ? 'Editar documento' : 'Subir documento'}</DialogTitle>
             <DialogDescription>
@@ -836,7 +841,7 @@ const DocumentLibrary = () => {
       </Dialog>
 
       <Dialog open={Boolean(documentToDelete)} onOpenChange={(open) => !open && setDocumentToDelete(null)}>
-        <DialogContent className="sm:max-w-md border-border/70 bg-card">
+        <DialogContent className="operations-dialog border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="size-5 text-danger" />

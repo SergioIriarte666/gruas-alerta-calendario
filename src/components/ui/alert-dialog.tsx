@@ -23,7 +23,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-[1000] bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -47,7 +47,7 @@ const AlertDialogContent = React.forwardRef<
         <AlertDialogPrimitive.Content
           ref={ref}
           className={cn(
-            "grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg",
+            "app-overlay-surface grid w-full max-w-lg gap-4 rounded-2xl border bg-background p-6 shadow-lg",
             "max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)]",
             "pointer-events-auto overflow-y-auto duration-200",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -55,7 +55,6 @@ const AlertDialogContent = React.forwardRef<
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
             "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
             "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-            "sm:rounded-lg",
             className
           )}
           {...props}

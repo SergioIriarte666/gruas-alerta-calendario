@@ -52,8 +52,8 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
     }
   };
 
-  const ServiceCard = ({ service, showAlert = false }: { service: any; showAlert?: boolean }) => (
-    <Card className={`${showAlert ? 'border-red-200 bg-red-50' : ''}`}>
+  const ServiceCard = ({ service, tone = 'default' }: { service: any; tone?: 'default' | 'danger' | 'success' }) => (
+    <Card className={tone === 'danger' ? 'border-danger/30 bg-danger/5' : tone === 'success' ? 'border-success/30 bg-success/5' : undefined}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -61,7 +61,8 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
               <Truck className="size-4 text-muted-foreground" />
               <span className="font-medium">{service.folio}</span>
               {getStatusBadge(service.status)}
-              {showAlert && <AlertTriangle className="size-4 text-red-500" />}
+              {tone === 'danger' && <AlertTriangle className="size-4 text-danger" />}
+              {tone === 'success' && <CheckCircle className="size-4 text-success" />}
             </div>
             
             <div className="text-sm text-muted-foreground space-y-1">
@@ -182,7 +183,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
           <CardContent>
             <div className="space-y-3">
               {data.overdue.map((service) => (
-                <ServiceCard key={service.id} service={service} showAlert />
+                <ServiceCard key={service.id} service={service} tone="success" />
               ))}
             </div>
           </CardContent>

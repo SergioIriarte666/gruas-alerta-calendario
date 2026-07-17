@@ -32,7 +32,7 @@ export const ClientsFilters = ({
   ];
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="operations-filter-panel border-border/70 bg-card/80 shadow-sm">
       <CardContent className="space-y-4 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* Search */}
@@ -56,7 +56,7 @@ export const ClientsFilters = ({
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
                   statusFilter === opt.value
-                    ? 'bg-primary text-primary-foreground border-primary'
+                    ? 'operations-filter-active'
                     : 'bg-background/70 text-muted-foreground border-border/70 hover:bg-muted'
                 )}
               >
@@ -64,7 +64,7 @@ export const ClientsFilters = ({
                 <span className={cn(
                   'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
                   statusFilter === opt.value
-                    ? 'bg-primary-foreground/20 text-primary-foreground'
+                    ? 'bg-white/20 text-current'
                     : 'bg-muted text-muted-foreground'
                 )}>
                   {opt.count}

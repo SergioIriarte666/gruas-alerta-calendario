@@ -81,12 +81,12 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm" className="dashboard-report-button">
           <Plus className="size-4 mr-2" />
           Nuevo Evento
         </Button>
       </DialogTrigger>
-      <DialogContent className="border-border/70 bg-card p-0 sm:max-w-[600px]">
+      <DialogContent className="operations-dialog border-border/70 bg-card p-0 sm:max-w-[600px]">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-foreground">Crear Nuevo Evento</DialogTitle>
         </DialogHeader>
@@ -170,7 +170,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="dashboard-report-button">
               {isSubmitting ? (
                 <><Loader2 className="size-4 mr-2 animate-spin" />Guardando...</>
               ) : 'Crear Evento'}

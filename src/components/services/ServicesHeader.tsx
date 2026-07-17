@@ -1,7 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/ui/page-header';
-import { SectionCard } from '@/components/ui/section-card';
-import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
+import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff, Activity } from 'lucide-react';
 import { ServicesMetrics } from './ServicesMetrics';
 import { ServicesDateFilter, DateFilter } from './ServicesDateFilter';
 import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
@@ -60,93 +58,79 @@ export const ServicesHeader = ({
   }, [showSensitiveData]);
 
   return (
-    <div className={isMobile ? "space-y-3" : "space-y-6"}>
-      <SectionCard
-        className="border-border bg-card"
-        contentClassName="space-y-4"
-        title={
-          <PageHeader
-            title="Gestión de Servicios"
-            description={!isMobile ? 'Administra todos los servicios de grúa del sistema' : undefined}
-            actions={
-              <div className={`flex ${isMobile ? 'w-full flex-col gap-2' : 'flex-wrap items-center gap-2'}`}>
-                <ToggleGroup
-                  type="single"
-                  value={viewMode}
-                  onValueChange={(value) => value && onViewModeChange(value as ViewMode)}
-                  className="rounded-md border border-border bg-muted p-1"
-                >
-                  <ToggleGroupItem value="table" size="sm" className="gap-1.5 px-3">
-                    <Table className="size-4" />
-                    {!isMobile && 'Tabla'}
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="pipeline" size="sm" className="gap-1.5 px-3">
-                    <BarChart3 className="size-4" />
-                    {!isMobile && 'Pipeline'}
-                  </ToggleGroupItem>
-                </ToggleGroup>
+    <section className="space-y-5" aria-labelledby="services-heading">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <span className="dashboard-section-kicker">
+            <Activity className="size-3.5" />
+            Operación
+          </span>
+          <h1 id="services-heading" className="dashboard-section-title">Control de servicios</h1>
+          <p className="dashboard-section-description">Seguimiento de estados, asignaciones y facturación.</p>
+        </div>
 
-                <Button
-                  variant="outline"
-                  size={isMobile ? 'sm' : 'default'}
-                  onClick={onRefresh}
-                  disabled={refreshing}
-                  className="border-border/70 bg-card/70"
-                >
-                  <RefreshCw className={`size-4 ${!isMobile ? 'mr-2' : ''} ${refreshing ? 'animate-spin' : ''}`} />
-                  {!isMobile && 'Actualizar'}
-                </Button>
+        <div className={`flex ${isMobile ? 'w-full flex-col gap-2' : 'flex-wrap items-center justify-end gap-2'}`}>
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && onViewModeChange(value as ViewMode)}
+            className="services-view-toggle"
+            aria-label="Vista de servicios"
+          >
+            <ToggleGroupItem value="table" size="sm" className="gap-1.5 px-3">
+              <Table className="size-4" />
+              {!isMobile && 'Tabla'}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="pipeline" size="sm" className="gap-1.5 px-3">
+              <BarChart3 className="size-4" />
+              {!isMobile && 'Pipeline'}
+            </ToggleGroupItem>
+          </ToggleGroup>
 
-                {isAdmin && (
-                  <>
-                    <Button
-                      onClick={onExportPending}
-                      disabled={isExportingPending || pendingServicesCount === 0}
-                      variant="outline"
-                      size={isMobile ? 'sm' : 'default'}
-                      className="border-warning/20 bg-warning/10 text-foreground hover:bg-warning/15"
-                      title={pendingServicesCount === 0 ? "No hay servicios pendientes" : "Exportar servicios pendientes a PDF"}
-                    >
-                      <FileDown className={`size-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />
-                      {!isMobile ? `Exportar Pendientes (${pendingServicesCount})` : `(${pendingServicesCount})`}
-                    </Button>
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="border-border/70 bg-background/70">
+            <RefreshCw className={`size-4 ${!isMobile ? 'mr-2' : ''} ${refreshing ? 'animate-spin' : ''}`} />
+            {!isMobile && 'Actualizar'}
+          </Button>
 
-                    <Button
-                      onClick={onCSVUpload}
-                      variant="outline"
-                      size={isMobile ? 'sm' : 'default'}
-                      className="border-info/20 bg-info/10 text-foreground hover:bg-info/15"
-                      title="Cargar servicios desde un archivo CSV"
-                    >
-                      <Upload className="size-4" />
-                      {!isMobile && <span className="ml-2">Carga Masiva</span>}
-                    </Button>
+          {isAdmin && (
+            <>
+              <Button
+                onClick={onExportPending}
+                disabled={isExportingPending || pendingServicesCount === 0}
+                variant="outline"
+                size="sm"
+                className="border-warning/25 bg-warning/10 text-foreground hover:bg-warning/15"
+                title={pendingServicesCount === 0 ? 'No hay servicios pendientes' : 'Exportar servicios pendientes a PDF'}
+              >
+                <FileDown className={`size-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />
+                {!isMobile ? `Pendientes (${pendingServicesCount})` : `Pendientes (${pendingServicesCount})`}
+              </Button>
+              <Button onClick={onCSVUpload} variant="outline" size="sm" className="border-border/70 bg-background/70" title="Cargar servicios desde un archivo CSV">
+                <Upload className="size-4" />
+                {!isMobile && <span className="ml-2">Carga masiva</span>}
+              </Button>
+              <Button size="sm" className={`dashboard-report-button ${isMobile ? 'w-full' : ''}`} title="Crear un nuevo servicio" onClick={onNewService}>
+                <Plus className="mr-2 size-4" />
+                Nuevo servicio
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
-                    <Button
-                      size={isMobile ? 'default' : 'lg'}
-                      className={isMobile ? 'w-full' : ''}
-                      title="Crear un nuevo servicio"
-                      onClick={onNewService}
-                    >
-                      <Plus className={`${isMobile ? 'size-5 mr-2' : 'size-5 mr-2'}`} />
-                      Nuevo Servicio
-                    </Button>
-                  </>
-                )}
-              </div>
-            }
-          />
-        }
-      >
-        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
+      <div className="services-toolbar space-y-4 p-4 sm:p-5">
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between gap-4'}`}>
           <div className="flex items-center gap-3">
-            <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-foreground`}>Métricas de Servicios</h2>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground sm:text-base">Pulso del período</h2>
+              {!isMobile && <p className="mt-0.5 text-xs text-muted-foreground">Valores calculados según el rango seleccionado.</p>}
+            </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSensitiveData(!showSensitiveData)}
               title={showSensitiveData ? "Ocultar información sensible" : "Mostrar información sensible"}
-              className="size-8"
+              className="size-8 rounded-full"
             >
               {showSensitiveData ? (
                 <Eye className="size-4 text-muted-foreground" />
@@ -160,19 +144,19 @@ export const ServicesHeader = ({
             onChange={onDateFilterChange}
           />
         </div>
-        
+
         {loading ? (
-          <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-24 rounded-lg bg-muted"></div>
+                <div className="h-36 rounded-2xl bg-muted" />
               </div>
             ))}
           </div>
         ) : (
           <ServicesMetrics metrics={metrics} showSensitiveData={showSensitiveData} />
         )}
-      </SectionCard>
-    </div>
+      </div>
+    </section>
   );
 };

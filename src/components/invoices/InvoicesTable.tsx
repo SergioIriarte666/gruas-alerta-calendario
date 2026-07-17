@@ -203,7 +203,7 @@ const InvoicesTable = ({
 
   if (invoices.length === 0) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="finance-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
           <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
           <h3 className="mb-2 text-lg font-medium text-foreground">No hay facturas</h3>
@@ -216,7 +216,7 @@ const InvoicesTable = ({
   }
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="finance-panel border-border/70 bg-card/80 shadow-sm">
       <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center justify-between text-foreground">
           <span>Facturas ({invoices.length})</span>

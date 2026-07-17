@@ -81,7 +81,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
 
   return (
     <div className="space-y-4">
-      <Card className="bg-card border-border">
+      <Card className="operations-panel border-border bg-card">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-foreground">
             <span>Eventos - {formatForDisplayLong(selectedDate)}</span>

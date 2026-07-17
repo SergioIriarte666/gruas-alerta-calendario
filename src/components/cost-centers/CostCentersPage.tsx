@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Eye, Edit, ChevronDown, ChevronRight, AlertTriangle, BookOpen, Loader2 } from 'lucide-react';
+import { Plus, Search, Eye, Edit, ChevronDown, ChevronRight, AlertTriangle, BookOpen, Loader2, Target } from 'lucide-react';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generateCostManualPDF } from '@/utils/pdf/costManualPdfGenerator';
 import { cn } from '@/lib/utils';
@@ -263,15 +263,14 @@ export const CostCentersPage = () => {
   }
 
   return (
-    <div className="space-y-5 p-4 sm:p-6">
+    <div className="cost-centers-concept space-y-5 pb-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Centros de Costo</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Control presupuestal por área — período activo
-          </p>
+          <span className="dashboard-section-kicker"><Target className="size-3.5" />Estructura presupuestaria</span>
+          <h1 className="dashboard-section-title">Centros de Costo</h1>
+          <p className="dashboard-section-description">Control presupuestario por área y periodo activo.</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -285,7 +284,7 @@ export const CostCentersPage = () => {
               : <BookOpen className="size-4" />}
             Manual PDF
           </Button>
-          <Button onClick={() => { setSelectedCenter(null); setIsFormOpen(true); }} className="gap-2">
+          <Button onClick={() => { setSelectedCenter(null); setIsFormOpen(true); }} className="dashboard-report-button gap-2">
             <Plus className="size-4" />
             Nuevo centro
           </Button>
@@ -294,17 +293,17 @@ export const CostCentersPage = () => {
 
       {/* Métricas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="dashboard-kpi relative rounded-xl p-4" data-tone="primary"><span className="dashboard-kpi__accent" aria-hidden="true" />
           <div className="text-xs text-muted-foreground">Centros activos</div>
           <div className="text-2xl font-semibold text-foreground mt-1">{metrics.active}</div>
           <div className="text-xs text-muted-foreground">de {metrics.total} totales</div>
         </div>
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="dashboard-kpi relative rounded-xl p-4" data-tone="info"><span className="dashboard-kpi__accent" aria-hidden="true" />
           <div className="text-xs text-muted-foreground">Presupuesto período</div>
           <div className="text-xl font-semibold text-foreground mt-1">{fmtCompact(metrics.totalBudget)}</div>
           <div className="text-xs text-muted-foreground">con presupuesto asignado</div>
         </div>
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="dashboard-kpi relative rounded-xl p-4" data-tone="warning"><span className="dashboard-kpi__accent" aria-hidden="true" />
           <div className="text-xs text-muted-foreground">Gasto período</div>
           <div className="text-xl font-semibold text-foreground mt-1">{fmtCompact(metrics.totalSpent)}</div>
           {metrics.totalBudget > 0 && (
@@ -313,7 +312,7 @@ export const CostCentersPage = () => {
             </div>
           )}
         </div>
-        <div className={cn('rounded-xl p-4', metrics.over > 0 ? 'bg-destructive/10' : 'bg-muted/50')}>
+        <div className={cn('dashboard-kpi relative rounded-xl p-4', metrics.over > 0 && 'bg-destructive/10')} data-tone="danger"><span className="dashboard-kpi__accent" aria-hidden="true" />
           <div className={cn('text-xs', metrics.over > 0 ? 'text-destructive' : 'text-muted-foreground')}>
             Centros excedidos
           </div>
@@ -327,7 +326,7 @@ export const CostCentersPage = () => {
       </div>
 
       {/* Buscador */}
-      <div className="relative">
+      <div className="configuration-filter-panel relative p-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por código, nombre o descripción..."
@@ -346,7 +345,7 @@ export const CostCentersPage = () => {
           </Button>
         </div>
       ) : (
-        <div className="border border-border/60 rounded-xl overflow-hidden bg-card">
+        <div className="configuration-panel border border-border/60 rounded-xl overflow-hidden bg-card">
           {/* Cabecera de columnas */}
           <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/60 bg-muted/30 text-xs font-medium text-muted-foreground">
             <div style={{ width: 20 }} />

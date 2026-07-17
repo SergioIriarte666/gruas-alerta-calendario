@@ -187,7 +187,7 @@ export function PendingEntriesView() {
 
   if (entries.length === 0) {
     return (
-      <Card>
+      <Card className="configuration-panel">
         <CardContent className="p-8 text-center">
           <Clock className="size-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No hay registros pendientes</h3>
@@ -202,13 +202,13 @@ export function PendingEntriesView() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Registros Pendientes</h2>
+        <h2 className="text-lg font-semibold">Bandeja pendiente</h2>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{entries.length} pendientes</Badge>
           <Button
             onClick={() => setIsFormOpen(true)}
             size="sm"
-            className="flex items-center gap-2"
+            className="dashboard-report-button flex items-center gap-2"
           >
             <Plus className="size-4" />
             Nueva Entrada
@@ -218,7 +218,7 @@ export function PendingEntriesView() {
 
       <div className="grid gap-4">
         {entries.map((entry) => (
-          <Card key={entry.id}>
+          <Card key={entry.id} className="configuration-panel">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">

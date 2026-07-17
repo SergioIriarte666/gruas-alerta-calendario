@@ -140,7 +140,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
 
   return (
     <div className="space-y-4">
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GitMerge className="size-5 text-primary" />

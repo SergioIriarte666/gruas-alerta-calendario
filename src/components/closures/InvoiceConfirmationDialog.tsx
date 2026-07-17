@@ -29,7 +29,7 @@ const InvoiceConfirmationDialog: React.FC<InvoiceConfirmationDialogProps> = ({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-card border">
+      <AlertDialogContent className="finance-dialog bg-card border">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-foreground">
             Cierre Creado Exitosamente

@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from 'react';
-import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -10,6 +9,7 @@ import { OperatorStatusPanel } from '@/components/operatorlocations/OperatorStat
 import { RouteHistoryPanel } from '@/components/operatorlocations/RouteHistoryPanel';
 import { IdleMetricsPanel } from '@/components/operatorlocations/IdleMetricsPanel';
 import { cn } from '@/lib/utils';
+import { MapPinned } from 'lucide-react';
 import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
 import {
   OPERATOR_STATUS_LABELS,
@@ -140,14 +140,15 @@ const OperatorLocations = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Ubicaciones"
-        description="Rastreo en vivo, historial de ruta y tiempos muertos de los operadores en terreno."
-      />
+    <div className="operator-locations-concept space-y-6">
+      <div>
+        <span className="dashboard-section-kicker"><MapPinned className="size-3.5" />Telemetría</span>
+        <h1 className="dashboard-section-title">Ubicaciones</h1>
+        <p className="dashboard-section-description">Rastreo en vivo, historial de rutas y tiempos muertos en terreno.</p>
+      </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)}>
-        <TabsList>
+        <TabsList className="resources-tabs h-auto max-w-full justify-start overflow-x-auto p-1">
           <TabsTrigger value="mapa">Mapa en vivo</TabsTrigger>
           <TabsTrigger value="historial">Historial de ruta</TabsTrigger>
           <TabsTrigger value="tiempos-muertos">Tiempos muertos</TabsTrigger>
@@ -159,10 +160,10 @@ const OperatorLocations = () => {
               <Button
                 key={filterKey}
                 type="button"
-                variant={liveFilter === filterKey ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
                   'h-9 rounded-full px-4',
-                  liveFilter === filterKey && 'bg-primary text-primary-foreground',
+                  liveFilter === filterKey && 'resources-filter-active',
                 )}
                 onClick={() => setLiveFilter(filterKey)}
               >
@@ -183,35 +184,35 @@ const OperatorLocations = () => {
           </div>
 
           {selectedLocation && (
-            <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="resources-panel mb-4 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xl font-bold tracking-tight text-slate-900">{selectedLocation.operator_name}</p>
-                  <p className="mt-1 text-base font-medium text-slate-700">
+                  <p className="text-xl font-bold tracking-tight text-foreground">{selectedLocation.operator_name}</p>
+                  <p className="mt-1 text-base font-medium text-foreground">
                     Estado actual: {OPERATOR_STATUS_LABELS[deriveOperatorStatus(selectedLocation)]}
                     {selectedLocation.service_folio ? ` · Folio ${selectedLocation.service_folio}` : ''}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-base font-semibold text-slate-700">
+                  <p className="text-base font-semibold text-foreground">
                     Ultima señal {formatMinutesAgo(selectedLocation.recorded_at)}
                   </p>
-                  <p className="text-sm font-medium text-slate-600">{formatAccuracy(selectedLocation.accuracy_meters)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{formatAccuracy(selectedLocation.accuracy_meters)}</p>
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-100 p-3">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Latitud</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-900">{formatCoordinate(selectedLocation.latitude)}</p>
+                <div className="resource-coordinate-card">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Latitud</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCoordinate(selectedLocation.latitude)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-100 p-3">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Longitud</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-900">{formatCoordinate(selectedLocation.longitude)}</p>
+                <div className="resource-coordinate-card">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Longitud</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCoordinate(selectedLocation.longitude)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-100 p-3">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Sesion</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-900">
+                <div className="resource-coordinate-card">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Sesión</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">
                     {selectedLocation.session_status === 'active' ? 'Activa' : 'Sin sesion activa'}
                   </p>
                 </div>
@@ -220,7 +221,7 @@ const OperatorLocations = () => {
           )}
 
           <div className={isMobile ? 'flex flex-col gap-4' : 'grid grid-cols-[minmax(0,1fr)_320px] gap-4'}>
-            <div className="h-[520px] overflow-hidden rounded-2xl border border-white/5">
+            <div className="resources-panel h-[520px] overflow-hidden">
               <LiveOperatorsMap
                 ref={mapHandleRef}
                 locations={mapLocations}

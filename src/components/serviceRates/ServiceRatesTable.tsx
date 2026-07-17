@@ -50,7 +50,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
     return (
       <div className="space-y-3">
         {rates.map((rate) => (
-          <Card key={rate.id} className="border bg-card">
+          <Card key={rate.id} className="configuration-panel border bg-card">
             <CardContent className="p-4 space-y-3">
               {/* Client + Service Type */}
               <div className="flex items-start justify-between">
@@ -107,7 +107,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="configuration-panel border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">

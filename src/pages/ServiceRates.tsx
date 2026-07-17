@@ -75,7 +75,7 @@ const ServiceRates: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="service-rates-concept space-y-6 pb-6">
       <ServiceRatesHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -113,7 +113,7 @@ const ServiceRates: React.FC = () => {
       />
 
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="configuration-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar tarifa?</AlertDialogTitle>
             <AlertDialogDescription>

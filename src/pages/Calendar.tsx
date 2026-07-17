@@ -54,15 +54,15 @@ const Calendar = () => {
     const today = businessClock.today();
     const isPast = status === 'completed' || (date && date < today);
     if (isPast) {
-      return 'bg-gray-100 text-gray-400 line-through opacity-70';
+      return 'bg-muted text-muted-foreground line-through opacity-70';
     }
 
     switch (type) {
-      case 'service': return 'bg-green-100 text-green-900';
-      case 'maintenance': return 'bg-blue-100 text-blue-900';
-      case 'meeting': return 'bg-purple-100 text-purple-900';
-      case 'deadline': return 'bg-red-100 text-red-900';
-      default: return 'bg-gray-100 text-gray-900';
+      case 'service': return 'bg-success/15 text-success';
+      case 'maintenance': return 'bg-info/15 text-info';
+      case 'meeting': return 'bg-primary/15 text-primary';
+      case 'deadline': return 'bg-danger/15 text-danger';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -110,19 +110,19 @@ const Calendar = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="calendar-concept flex min-h-96 items-center justify-center">
         <div className="text-foreground">Cargando calendario...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="calendar-concept animate-fade-in space-y-6">
       <CalendarHeader onCreateEvent={createEvent} selectedDate={selectedDate} />
 
       {(upcomingCounts.thisMonthCount > 0 || upcomingCounts.futureCount > 0) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-2 text-sm">
-          <CalendarClock className="size-4 text-violet-600" />
+        <div className="calendar-upcoming flex flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
+          <CalendarClock className="size-4" />
           <span className="font-medium text-foreground">
             {upcomingCounts.thisMonthCount} servicio{upcomingCounts.thisMonthCount === 1 ? '' : 's'} programado{upcomingCounts.thisMonthCount === 1 ? '' : 's'} este mes
           </span>
@@ -142,10 +142,10 @@ const Calendar = () => {
       <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar View */}
         <div className="lg:col-span-3">
-          <Card className="glass-card">
+          <Card className="operations-panel">
             <CardHeader>
               <CardTitle className="flex items-center gap-x-2 text-foreground">
-                <CalendarIcon className="size-5 text-green-500" />
+                <CalendarIcon className="size-5 text-success" />
                 <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : viewMode === 'list' ? 'Lista' : 'Mensual'}</span>
               </CardTitle>
             </CardHeader>

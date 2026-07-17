@@ -100,7 +100,7 @@ export const PaymentTermFormModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="configuration-dialog max-w-md">
         <DialogHeader>
           <DialogTitle>
             {editingTerm ? 'Editar Condición de Pago' : 'Nueva Condición de Pago'}

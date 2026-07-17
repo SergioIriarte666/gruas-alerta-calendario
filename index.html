@@ -31,6 +31,21 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="/logo-gruas-5-norte.png" />
+    <script>
+      (() => {
+        try {
+          const preference = localStorage.getItem('tms.theme') || 'light';
+          const resolved = preference === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : preference;
+          document.documentElement.classList.add(resolved);
+          document.documentElement.dataset.theme = resolved;
+          document.documentElement.style.colorScheme = resolved;
+        } catch {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
   </head>
 
   <body>

@@ -47,10 +47,10 @@ export const PatentLookup: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 via-background to-cyan-50/70 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/15 dark:via-background dark:to-cyan-950/15">
+      <Card className="resource-query-panel">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 text-white shadow-sm">
+            <div className="resource-query-icon rounded-xl p-2 shadow-sm">
               <Car className="size-5" />
             </div>
             Consulta de Patentes
@@ -70,7 +70,7 @@ export const PatentLookup: React.FC = () => {
                 className="h-11 flex-1 rounded-xl border-border/70 bg-background/70 shadow-sm"
                 maxLength={20}
               />
-              <Button type="submit" disabled={isLoading || !licensePlate.trim()} className="h-11 shadow-sm">
+              <Button type="submit" disabled={isLoading || !licensePlate.trim()} className="dashboard-report-button h-11 shadow-sm">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
@@ -95,7 +95,7 @@ export const PatentLookup: React.FC = () => {
 
       {/* Resultado de patente chilena */}
       {data && (
-        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-cyan-50/70 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/15 dark:to-cyan-950/10">
+        <Card className="resource-query-panel">
           <CardHeader>
             <CardTitle className="text-lg">Información del Vehículo</CardTitle>
             <CardDescription>Datos obtenidos del registro chileno</CardDescription>
@@ -176,7 +176,7 @@ export const PatentLookup: React.FC = () => {
 
       {/* Resultado de VIN decode */}
       {vinData && (
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50/70 shadow-sm dark:border-blue-900/30 dark:from-blue-950/15 dark:to-cyan-950/10">
+        <Card className="resource-query-panel">
           <CardHeader>
             <CardTitle className="text-lg">Información VIN</CardTitle>
             <CardDescription>
@@ -229,7 +229,7 @@ export const PatentLookup: React.FC = () => {
       )}
 
       {!data && !vinData && !error && !isLoading && (
-        <Card className="border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/40 to-cyan-50/30 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/10 dark:to-cyan-950/10">
+        <Card className="resource-query-panel border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Car className="size-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
@@ -240,7 +240,7 @@ export const PatentLookup: React.FC = () => {
       )}
 
       {history.length > 0 && (
-        <Card className="border-cyan-100 bg-gradient-to-br from-cyan-50/50 to-background shadow-sm dark:border-cyan-900/30 dark:from-cyan-950/10 dark:to-background">
+        <Card className="resource-query-panel">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

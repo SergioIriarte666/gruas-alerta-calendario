@@ -10,7 +10,7 @@ interface VehicleFiltersProps {
 
 export const VehicleFilters = ({ searchTerm, setSearchTerm, placeholder }: VehicleFiltersProps) => {
   return (
-    <Card className="border-border/70 bg-gradient-to-br from-card to-muted/20 shadow-sm">
+    <Card className="resources-filter-panel border-border/70 bg-card/80 shadow-sm">
       <CardContent className="p-4 md:p-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

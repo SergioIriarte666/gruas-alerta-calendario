@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { GlobalSearch } from './GlobalSearch';
 import PWAInstallButton from '@/components/PWAInstallButton';
+import { ThemeSelector } from './ThemeSelector';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -35,19 +36,41 @@ export const Header = ({
   const routeMeta: Record<string, { title: string; description: string }> = {
     '/dashboard': { title: 'Dashboard Principal', description: 'Resumen ejecutivo y actividad reciente' },
     '/services': { title: 'Servicios', description: 'Operaciones y seguimiento diario' },
+    '/admin/external-services': { title: 'Servicios Externos', description: 'Proveedores, evidencias y cierres administrativos' },
     '/costs': { title: 'Costos', description: 'Control operativo y financiero' },
     '/closures': { title: 'Cierres', description: 'Consolidado de cierre e ingresos' },
     '/invoices': { title: 'Facturas', description: 'Facturación, vencimientos y cobros' },
+    '/accounts-payable': { title: 'Cuentas por Pagar', description: 'Deudas, cuotas y vencimientos' },
+    '/commissions': { title: 'Comisiones', description: 'Liquidación y pagos a operadores' },
+    '/historical': { title: 'Históricos', description: 'Ventas, compras y resultados anteriores' },
+    '/lowboy': { title: 'Lowboy', description: 'RCV y conciliación de la unidad de negocio' },
+    '/trip-calculator': { title: 'Cálculo de Viajes', description: 'Estimación de rutas y costos operativos' },
     '/clients': { title: 'Clientes', description: 'Cartera, contactos y actividad comercial' },
     '/calendar': { title: 'Calendario', description: 'Programación operacional y eventos' },
+    '/cranes': { title: 'Grúas', description: 'Flota, documentación y disponibilidad operativa' },
+    '/operators': { title: 'Operadores', description: 'Dotación, licencias y cumplimiento documental' },
+    '/vehicles': { title: 'Vehículos', description: 'Catálogos, patentes e historial vehicular' },
+    '/operator-locations': { title: 'Ubicaciones', description: 'Telemetría, rutas y actividad en terreno' },
+    '/inventory': { title: 'Bodega', description: 'Stock, movimientos y reportería de inventario' },
+    '/suppliers': { title: 'Proveedores', description: 'Abastecimiento, pagos y vencimientos' },
+    '/daily-report': { title: 'Informe Diario', description: 'Compromisos, alertas y actividad de la jornada' },
     '/reports': { title: 'Reportes', description: 'Análisis y métricas del negocio' },
+    '/income-projections': { title: 'Proyección de Ingresos', description: 'Flujo de caja y cartera pendiente' },
+    '/service-types': { title: 'Tipos de Servicio', description: 'Catálogo y configuración operacional' },
+    '/service-rates': { title: 'Tarifas de Servicio', description: 'Precios por cliente, servicio y ruta' },
+    '/cost-centers': { title: 'Centros de Costo', description: 'Estructura y control presupuestario' },
+    '/quick-entries': { title: 'Registros Rápidos', description: 'Bandeja de capturas pendientes' },
+    '/admin/inspecciones/regenerar': { title: 'Regenerar Inspección', description: 'Continuidad y reemisión documental' },
+    '/admin/usuarios-pendientes': { title: 'Usuarios Pendientes', description: 'Aprobación y asignación de accesos' },
     '/settings': { title: 'Configuración', description: 'Preferencias y parámetros del sistema' },
   };
   const currentMeta =
-    routeMeta[location.pathname] ?? {
-      title: companyName,
-      description: 'Plataforma de gestión operacional',
-    };
+    routeMeta[location.pathname] ?? (location.pathname.startsWith('/clients/')
+      ? { title: 'Pipeline de Cliente', description: 'Servicios, órdenes de compra y análisis comercial' }
+      : {
+          title: companyName,
+          description: 'Plataforma de gestión operacional',
+        });
 
   const handleLogout = async () => {
     try {
@@ -124,6 +147,7 @@ export const Header = ({
         isMobile ? "space-x-1" : isTablet ? "space-x-2" : "space-x-4"
       )}>
         {!isMobile && <PWAInstallButton />}
+        <ThemeSelector />
         <NotificationsDropdown />
 
         <DropdownMenu>

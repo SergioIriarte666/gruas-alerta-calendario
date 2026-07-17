@@ -83,7 +83,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
       {/* Month Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-x-3">
               <Calendar className="size-6 text-primary" />
@@ -95,7 +95,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-x-3">
               <Clock className="size-6 text-warning" />
@@ -108,7 +108,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-x-3">
               <AlertTriangle className="size-6 text-destructive" />
@@ -121,7 +121,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-x-3">
               <CheckCircle className="size-6 text-primary" />
@@ -136,7 +136,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
       </div>
 
       {/* Calendar */}
-      <Card className="bg-card border">
+      <Card className="inventory-panel border bg-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-foreground">
@@ -240,7 +240,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
       {/* Payment Details for Selected Month */}
       {paymentsInMonth.length > 0 && (
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardHeader>
             <CardTitle className="text-foreground">
               Detalle de Pagos - {format(currentDate, 'MMMM yyyy', { locale: es })}

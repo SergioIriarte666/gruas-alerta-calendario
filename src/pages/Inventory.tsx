@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PageHeader } from '@/components/ui/page-header';
 import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, TrendingUp, BarChart3, Upload, ArrowUpDown, Boxes, FileSpreadsheet } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp, BarChart3, Upload, ArrowUpDown, Boxes, FileSpreadsheet, Warehouse } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
@@ -59,7 +58,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="inventory-concept space-y-6 pb-6">
       <Dialog open={intakeOpen} onOpenChange={(open) => {
         setIntakeOpen(open);
         if (!open) {
@@ -67,7 +66,7 @@ const Inventory = () => {
           setPrefill(null);
         }
       }}>
-        <DialogContent className="border-border/70 bg-card">
+        <DialogContent className="inventory-dialog border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Registrar entrada de inventario desde Registro Rápido</DialogTitle>
           </DialogHeader>
@@ -114,31 +113,28 @@ const Inventory = () => {
         </DialogContent>
       </Dialog>
 
-      <PageHeader
-        title="Gestión de Bodega"
-        description="Controla stock, movimientos y reportes de inventario desde una experiencia administrativa unificada."
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Tabs value={entityFilter} onValueChange={(value) => handleEntityFilterChange(value as InventoryEntityFilter)}>
-              <TabsList className="h-9 rounded-xl">
-                {(['all', 'gruas_5_norte', 'lowboy'] as const).map((value) => (
-                  <TabsTrigger key={value} value={value} className="h-7 px-3 text-xs sm:text-sm">
-                    {INVENTORY_ENTITY_FILTER_LABELS[value]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <Button
-              onClick={() => setIsXMLImportOpen(true)}
-              size={isMobile ? 'sm' : 'default'}
-              className="flex items-center gap-2"
-            >
-              <Upload className="size-4" />
-              <span>{isMobile ? 'XML' : 'Importar XML'}</span>
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <span className="dashboard-section-kicker"><Warehouse className="size-3.5" />Control de existencias</span>
+          <h1 className="dashboard-section-title">Bodega</h1>
+          <p className="dashboard-section-description">Stock, movimientos y reportería de inventario en una vista unificada.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+          <Tabs value={entityFilter} onValueChange={(value) => handleEntityFilterChange(value as InventoryEntityFilter)}>
+            <TabsList className="inventory-tabs h-auto p-1">
+              {(['all', 'gruas_5_norte', 'lowboy'] as const).map((value) => (
+                <TabsTrigger key={value} value={value} className="px-3 py-1.5 text-xs sm:text-sm">
+                  {INVENTORY_ENTITY_FILTER_LABELS[value]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Button onClick={() => setIsXMLImportOpen(true)} size="sm" className="dashboard-report-button flex items-center gap-2">
+            <Upload className="size-4" />
+            <span>{isMobile ? 'XML' : 'Importar XML'}</span>
+          </Button>
+        </div>
+      </div>
 
       <XMLInventoryUpload
         isOpen={isXMLImportOpen}
@@ -160,6 +156,7 @@ const Inventory = () => {
             description={`${recentMovements.length} movimientos recientes`}
             icon={Boxes}
             tone="primary"
+            variant="control"
           />
           <MetricCard
             title="Stock Bajo"
@@ -167,6 +164,7 @@ const Inventory = () => {
             description={`${lowStockData.length} productos monitoreados`}
             icon={AlertTriangle}
             tone="warning"
+            variant="control"
           />
           <MetricCard
             title="Sin Stock"
@@ -174,6 +172,7 @@ const Inventory = () => {
             description="Requieren reposición inmediata"
             icon={Package}
             tone="danger"
+            variant="control"
           />
           <MetricCard
             title="Valor Total"
@@ -181,13 +180,14 @@ const Inventory = () => {
             description={movementsLoading ? 'Actualizando movimientos...' : 'Valorización consolidada'}
             icon={TrendingUp}
             tone="info"
+            variant="control"
           />
         </div>
       )}
 
-      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
+      <SectionCard flush className="inventory-panel border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
         <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
-          <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+          <Badge className="inventory-catalog-badge gap-1 px-3 py-1">
             <Package className="size-3.5" />
             Stock operativo
           </Badge>
@@ -203,24 +203,24 @@ const Inventory = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full min-w-[420px] grid-cols-3 rounded-xl bg-transparent p-0">
+            <TabsList className="inventory-tabs grid h-auto w-full min-w-[420px] grid-cols-3 p-1">
               <TabsTrigger
                 value="stock"
-                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="gap-2 rounded-lg text-muted-foreground"
               >
                 <Package className="size-4" />
                 <span>Stock</span>
               </TabsTrigger>
               <TabsTrigger
                 value="movements"
-                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="gap-2 rounded-lg text-muted-foreground"
               >
                 <ArrowUpDown className="size-4" />
                 <span>Movimientos</span>
               </TabsTrigger>
               <TabsTrigger
                 value="reports"
-                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="gap-2 rounded-lg text-muted-foreground"
               >
                 <BarChart3 className="size-4" />
                 <span>Reportes</span>

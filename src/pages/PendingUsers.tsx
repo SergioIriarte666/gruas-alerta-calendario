@@ -121,18 +121,14 @@ export default function PendingUsers() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Users className="size-6 text-primary" />
+    <div className="pending-users-concept space-y-6 pb-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Usuarios Pendientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Solicitudes de acceso que requieren aprobación
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Una vez aprobado el usuario, los permisos por módulos se ajustan desde Configuración de Usuario.
-          </p>
+          <span className="dashboard-section-kicker"><Users className="size-3.5" />Gobierno de acceso</span>
+          <h1 className="dashboard-section-title">Usuarios Pendientes</h1>
+          <p className="dashboard-section-description">Solicitudes de acceso, asignación de rol y vínculo con clientes.</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
@@ -149,10 +145,11 @@ export default function PendingUsers() {
             {users.length} pendiente{users.length !== 1 ? 's' : ''}
           </Badge>
         )}
+        </div>
       </div>
 
       {users.length === 0 && (
-        <Card>
+        <Card className="configuration-panel">
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
             <UserCheck className="size-12 text-emerald-500 opacity-60" />
             <p className="font-medium text-foreground">No hay solicitudes pendientes</p>
@@ -180,7 +177,7 @@ export default function PendingUsers() {
               !(requiresClient && activeClients.length === 0);
 
             return (
-              <Card key={user.id}>
+              <Card key={user.id} className="configuration-panel">
                 <CardContent className="p-4">
                   <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-start gap-4'}`}>
                     <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -324,7 +321,7 @@ export default function PendingUsers() {
       )}
 
       <AlertDialog open={!!userToReject} onOpenChange={(open) => !open && setUserToReject(null)}>
-        <AlertDialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
+        <AlertDialogContent className="configuration-dialog w-[90vw] max-w-md border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">¿Rechazar solicitud?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">

@@ -39,7 +39,7 @@ export const AlertsPanel = () => {
 
   if (loading) {
     return (
-      <Card className="h-fit border-border/70 bg-card/80 shadow-sm">
+      <Card className="dashboard-panel h-fit border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-x-3 text-xl text-foreground">
             <div className="rounded-xl bg-warning/10 p-2 text-warning">
@@ -60,7 +60,7 @@ export const AlertsPanel = () => {
   }
 
   return (
-    <Card className="h-fit border-border/70 bg-card/80 shadow-sm">
+    <Card className="dashboard-panel h-fit border-border/70 bg-card/80 shadow-sm">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-xl text-foreground">
           <div className="flex items-center gap-x-3">

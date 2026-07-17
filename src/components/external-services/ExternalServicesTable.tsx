@@ -21,9 +21,9 @@ const formatCurrency = (amount: number | null) => {
 
 export const ExternalServicesTable = ({ services, onSelect }: Props) => {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
+    <div className="external-services-panel overflow-hidden">
       <Table>
-        <TableHeader>
+        <TableHeader className="external-services-table-head">
           <TableRow className="border-border hover:bg-muted/50">
             <TableHead>Folio</TableHead>
             <TableHead>Tipo</TableHead>
@@ -52,11 +52,11 @@ export const ExternalServicesTable = ({ services, onSelect }: Props) => {
               <TableCell className="text-sm">{formatCurrency(s.outsourcedCost)}</TableCell>
               <TableCell>
                 {s.hasClosure ? (
-                  <Badge className="border-green-300 bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200">
+                  <Badge className="border-success/30 bg-success/10 text-success">
                     Cerrado
                   </Badge>
                 ) : (
-                  <Badge className="border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                  <Badge className="border-warning/30 bg-warning/10 text-warning">
                     Pendiente
                   </Badge>
                 )}
@@ -71,8 +71,8 @@ export const ExternalServicesTable = ({ services, onSelect }: Props) => {
                   }}
                   className={
                     s.hasClosure
-                      ? 'border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400'
-                      : 'border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400'
+                      ? 'border-info/30 text-info hover:bg-info/10'
+                      : 'external-services-primary-action'
                   }
                 >
                   {s.hasClosure ? (

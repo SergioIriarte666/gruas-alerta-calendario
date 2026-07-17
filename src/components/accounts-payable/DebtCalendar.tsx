@@ -33,7 +33,7 @@ export const DebtCalendar = () => {
 
   return (
     <>
-      <Card className="border border-border">
+      <Card className="finance-panel border border-border">
         <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>

@@ -63,7 +63,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
     return (
       <div className="space-y-3">
         {serviceTypes.map((serviceType) => (
-          <Card key={serviceType.id} className="bg-card border">
+          <Card key={serviceType.id} className="configuration-panel bg-card border">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
@@ -131,7 +131,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
   }
 
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
+    <div className="configuration-panel bg-card rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-muted/50">

@@ -18,6 +18,8 @@ export interface MetricCardProps {
   description?: React.ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
   tone?: Tone;
+  /** Tratamiento visual. `control` se usa en el piloto del dashboard ejecutivo. */
+  variant?: "default" | "control";
   trend?: {
     value: number;
     /** "up" en este contexto significa "subió". El color (bueno/malo) viene de `trendIsGood`. */
@@ -44,6 +46,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   description,
   icon: Icon,
   tone = "primary",
+  variant = "default",
   trend,
   className,
 }) => {
@@ -61,7 +64,16 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     : "";
 
   return (
-    <Card className={cn("border bg-card overflow-hidden", className)}>
+    <Card
+      data-tone={tone}
+      className={cn(
+        "border bg-card overflow-hidden",
+        variant === "control" && "dashboard-kpi",
+        variant === "control" && tone === "primary" && "dashboard-kpi--primary",
+        className
+      )}
+    >
+      {variant === "control" && <span className="dashboard-kpi__accent" aria-hidden="true" />}
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
-import { Users, DollarSign, TrendingUp, Clock, RefreshCw } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Clock, RefreshCw, Percent } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCommissions, validateCommissionsAgainstCosts } from '@/hooks/commissions/useCommissions';
 import { useCreatePaymentBatch } from '@/hooks/commissions/usePaymentBatches';
@@ -369,15 +369,12 @@ const Commissions = () => {
   }
 
   return (
-    <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
-      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
+    <div className={`commissions-concept pb-6 ${isMobile ? 'space-y-3' : 'space-y-6'}`}>
+      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-end justify-between'}`}>
         <div>
-          <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Comisiones</h1>
-          {!isMobile && (
-            <p className="text-muted-foreground">
-              Gestiona las comisiones de los operadores
-            </p>
-          )}
+          <span className="dashboard-section-kicker"><Percent className="size-3.5" />Liquidación operativa</span>
+          <h1 className="dashboard-section-title">Comisiones</h1>
+          <p className="dashboard-section-description">Cálculo, validación y pago de comisiones por operador.</p>
         </div>
       </div>
 
@@ -398,7 +395,8 @@ const Commissions = () => {
       )}
 
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
-        <Card>
+        <Card className="dashboard-kpi dashboard-kpi--primary">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pendiente</CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
@@ -417,7 +415,8 @@ const Commissions = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dashboard-kpi" data-tone="success">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
             <Users className="size-4 text-muted-foreground" />
@@ -436,7 +435,8 @@ const Commissions = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dashboard-kpi" data-tone="info">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Operadores</CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
@@ -449,7 +449,8 @@ const Commissions = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dashboard-kpi" data-tone="warning">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total General</CardTitle>
             <Clock className="size-4 text-muted-foreground" />
@@ -469,7 +470,7 @@ const Commissions = () => {
         </Card>
       </div>
 
-      <div className="flex flex-col gap-4 mb-6">
+      <div className="finance-filter-panel flex flex-col gap-4 p-4 mb-6">
         <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
           <Input
             placeholder="Buscar por operador, folio, cliente..."
@@ -505,13 +506,13 @@ const Commissions = () => {
       </div>
 
       <CustomTabs value={activeTab} onValueChange={setActiveTab}>
-        <CustomTabsList>
+        <CustomTabsList className="finance-tabs">
           <CustomTabsTrigger value="all">Todas las Comisiones</CustomTabsTrigger>
           <CustomTabsTrigger value="by-operator">Por Operador</CustomTabsTrigger>
         </CustomTabsList>
 
         <CustomTabsContent value="all">
-          <Card>
+          <Card className="finance-panel">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Todas las Comisiones</CardTitle>
                <div className="flex items-center gap-2">
@@ -586,7 +587,7 @@ const Commissions = () => {
               const pendingCommissions = operatorGroup.commissions.filter(c => c.status === 'pending');
               
               return (
-                <Card key={operatorGroup.operator.id}>
+                <Card key={operatorGroup.operator.id} className="finance-panel">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>{operatorGroup.operator.name}</CardTitle>

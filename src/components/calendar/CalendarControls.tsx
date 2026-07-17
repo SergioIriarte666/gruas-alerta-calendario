@@ -19,7 +19,7 @@ export const CalendarControls = ({
   onViewModeChange 
 }: CalendarControlsProps) => {
   return (
-    <Card className="border-border/70 bg-card shadow-sm">
+    <Card className="operations-toolbar border-border/70 bg-card shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-x-4">
@@ -45,34 +45,34 @@ export const CalendarControls = ({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
-              variant={viewMode === 'day' ? 'default' : 'outline'} 
+              variant="outline"
               size="sm" 
-              className={viewMode === 'day' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
+              className={viewMode === 'day' ? 'operations-view-active shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('day')}
             >
               Día
             </Button>
             <Button 
-              variant={viewMode === 'week' ? 'default' : 'outline'} 
+              variant="outline"
               size="sm" 
-              className={viewMode === 'week' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
+              className={viewMode === 'week' ? 'operations-view-active shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('week')}
             >
               Semana
             </Button>
             <Button 
-              variant={viewMode === 'month' ? 'default' : 'outline'} 
+              variant="outline"
               size="sm" 
-              className={viewMode === 'month' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
+              className={viewMode === 'month' ? 'operations-view-active shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('month')}
             >
               Mes
             </Button>
             <Button
               size="sm"
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant="outline"
               onClick={() => onViewModeChange('list')}
-              className={viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'border-border/70 bg-background/60'}
+              className={viewMode === 'list' ? 'operations-view-active' : 'border-border/70 bg-background/60'}
             >
               <List className="size-4 mr-1" />
               Lista

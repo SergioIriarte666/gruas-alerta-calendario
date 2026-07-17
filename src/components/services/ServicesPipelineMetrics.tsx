@@ -165,7 +165,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
   return (
     <div className="space-y-4">
       {/* Overview Card */}
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="services-panel border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg text-foreground">
@@ -206,7 +206,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
         {metricCards.map((metric, index) => (
           <Card 
             key={index} 
-            className={`border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
+            className={`services-panel border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">

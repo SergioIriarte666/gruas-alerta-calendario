@@ -176,7 +176,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
 
   if (isLoading) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="flex items-center justify-center gap-2 py-10">
           <Loader2 className="size-5 animate-spin text-foreground" />
           <span className="text-sm text-muted-foreground">Cargando inventario...</span>
@@ -187,7 +187,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
 
   return (
     <>
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -210,7 +210,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
                   <Plus className="size-4" />
                   Nuevo Producto
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card overflow-y-auto">
+                <DialogContent className="inventory-dialog max-h-[90vh] max-w-2xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Agregar Nuevo Producto</DialogTitle>
                     <DialogDescription className="sr-only">Formulario para crear un nuevo producto en el catálogo de inventario.</DialogDescription>
@@ -224,7 +224,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
                   <Plus className="size-4" />
                   Nueva Entrada
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
+                <DialogContent className="inventory-dialog max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Entrada de Inventario</DialogTitle>
                     <DialogDescription className="sr-only">Formulario para registrar una entrada de stock en bodega.</DialogDescription>
@@ -238,7 +238,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
                   <Minus className="size-4" />
                   Nueva Salida
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
+                <DialogContent className="inventory-dialog max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Salida de Inventario</DialogTitle>
                     <DialogDescription className="sr-only">Formulario para registrar una salida de stock en bodega.</DialogDescription>
@@ -597,7 +597,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
       <ProductDrawer productId={selectedProductId} open={!!selectedProductId} onClose={() => setSelectedProductId(null)} />
 
       <Dialog open={showEditProductForm} onOpenChange={setShowEditProductForm}>
-        <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
+        <DialogContent className="inventory-dialog max-h-[90vh] max-w-2xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
             <DialogDescription className="sr-only">Formulario para editar los datos de un producto del catálogo.</DialogDescription>
@@ -613,7 +613,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
       </Dialog>
 
       <Dialog open={showCleanup} onOpenChange={setShowCleanup}>
-        <DialogContent className="max-w-3xl border-border/70 bg-card">
+        <DialogContent className="inventory-dialog max-w-3xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Limpiar ítems huérfanos</DialogTitle>
             <DialogDescription className="sr-only">Lista de ítems sin stock ni movimientos activos, con opción de marcarlos inactivos o eliminarlos.</DialogDescription>
@@ -656,7 +656,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
       </Dialog>
 
       <Dialog open={showDuplicateMerge} onOpenChange={setShowDuplicateMerge}>
-        <DialogContent className="max-h-[90vh] max-w-6xl border-border/70 bg-card">
+        <DialogContent className="inventory-dialog max-h-[90vh] max-w-6xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Administrar Productos Duplicados</DialogTitle>
             <DialogDescription className="sr-only">Panel para revisar y fusionar productos duplicados del catálogo de inventario.</DialogDescription>

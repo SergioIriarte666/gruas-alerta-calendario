@@ -730,7 +730,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="flex h-[min(92vh,56rem)] w-[min(96vw,72rem)] max-w-6xl flex-col overflow-hidden border-border/70 bg-card p-0">
+                <DialogContent className="finance-dialog flex h-[min(92vh,56rem)] w-[min(96vw,72rem)] max-w-6xl flex-col overflow-hidden border-border/70 bg-card p-0">
                     <div className="flex flex-col flex-1 min-h-0">
                         {/* Header */}
                         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">

@@ -44,7 +44,7 @@ export const OperatorLayout = () => {
     <>
       <OperatorThemeForcer />
 
-      <div className="min-h-screen bg-zinc-950 flex flex-col">
+      <div className="operator-shell-concept min-h-screen bg-zinc-950 flex flex-col">
 
         {/* ── Header ── */}
         <header

@@ -32,23 +32,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between",
         className
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          <h1 className="dashboard-section-title !mt-0">
             {title}
           </h1>
           {badges}
         </div>
         {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="dashboard-section-description">{description}</p>
         )}
       </div>
       {actions && (
-        <div className="flex flex-wrap gap-2 shrink-0">{actions}</div>
+        <div className="flex flex-wrap gap-2 shrink-0 xl:justify-end">{actions}</div>
       )}
     </div>
   );

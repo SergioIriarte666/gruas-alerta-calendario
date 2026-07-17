@@ -141,7 +141,7 @@ const ServiceTypes = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="service-types-concept space-y-6 animate-fade-in pb-6">
       <ServiceTypesHeader
         onNewServiceType={handleNewServiceType}
         onRefresh={handleRefresh}
@@ -149,7 +149,7 @@ const ServiceTypes = () => {
       />
 
       {/* Search Bar */}
-      <Card className="bg-card border">
+      <Card className="configuration-filter-panel bg-card border">
         <CardContent className="p-3 sm:p-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
@@ -172,7 +172,7 @@ const ServiceTypes = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] bg-card border p-0 gap-0 flex flex-col">
+        <DialogContent className="configuration-dialog max-w-4xl max-h-[90vh] bg-card border p-0 gap-0 flex flex-col">
           <DialogHeader className="shrink-0 p-6 pb-0">
             <DialogTitle className="text-foreground text-xl">
               {editingServiceType ? 'Editar' : 'Crear'} Tipo de Servicio
@@ -198,7 +198,7 @@ const ServiceTypes = () => {
       />
 
       <AlertDialog open={!!serviceTypeToDelete} onOpenChange={(open) => !open && setServiceTypeToDelete(null)}>
-        <AlertDialogContent className="border-border/70 bg-card">
+        <AlertDialogContent className="configuration-dialog border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar tipo de servicio</AlertDialogTitle>
             <AlertDialogDescription>

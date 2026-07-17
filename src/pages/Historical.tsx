@@ -5,44 +5,40 @@ import { HistoricalPurchases } from '@/components/finance/HistoricalPurchases';
 import { HistoricalResults } from '@/components/finance/historical/HistoricalResults';
 import { LegacyServicesSection } from '@/components/finance/historical/LegacyServicesSection';
 import { useUser } from '@/contexts/UserContext';
+import { Archive } from 'lucide-react';
 
 const Historical = () => {
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="historical-concept space-y-6 animate-in fade-in duration-500 pb-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-bold tracking-tight sm:text-3xl">Históricos</h1>
-        <p className="text-muted-foreground">
-          Gestión de registros históricos de ventas y compras.
-        </p>
+        <span className="dashboard-section-kicker"><Archive className="size-3.5" />Memoria financiera</span>
+        <h1 className="dashboard-section-title">Históricos</h1>
+        <p className="dashboard-section-description">Ventas, compras y resultados de periodos anteriores.</p>
       </div>
 
       <Tabs defaultValue="sales" className="space-y-4">
-        <TabsList className="bg-muted/30 p-1">
+        <TabsList className="finance-tabs h-auto p-1">
           <TabsTrigger
             value="sales"
-            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
           >
             Ventas
           </TabsTrigger>
           <TabsTrigger
             value="purchases"
-            className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
           >
             Compras
           </TabsTrigger>
           <TabsTrigger
             value="results"
-            className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
           >
             Resultados
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger
               value="legacy"
-              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               Servicios Legacy
             </TabsTrigger>

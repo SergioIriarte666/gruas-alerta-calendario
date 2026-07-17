@@ -19,7 +19,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-card">
+      <DialogContent className="operations-dialog max-w-4xl max-h-[90vh] bg-card">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Detalles del Cliente: {toTitleCase(client.name)}

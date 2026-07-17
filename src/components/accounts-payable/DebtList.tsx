@@ -53,7 +53,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
   }
 
   return (
-    <Card className="border border-border">
+    <Card className="finance-panel border border-border">
       <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
         <CardTitle className="text-base font-semibold text-foreground">Deudas Activas</CardTitle>
         <Button size="sm" onClick={onCreateDebt}>

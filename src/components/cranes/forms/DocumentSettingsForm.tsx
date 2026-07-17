@@ -107,7 +107,7 @@ export const DocumentSettingsForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-tms-green/30 max-w-4xl">
+      <DialogContent className="resources-dialog max-w-4xl border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="text-white">
             Configuración de Alertas de Documentos

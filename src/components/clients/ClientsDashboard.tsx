@@ -24,6 +24,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
         description={`${inactiveClients} inactivos`}
         icon={Users}
         tone="primary"
+        variant="control"
       />
       <MetricCard
         title="Empresas Únicas"
@@ -31,6 +32,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
         description="Agrupadas por RUT"
         icon={Building2}
         tone="info"
+        variant="control"
       />
       <MetricCard
         title="Servicios Activos"
@@ -38,6 +40,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
         description="Clientes con actividad en pipeline"
         icon={TrendingUp}
         tone="warning"
+        variant="control"
       />
       <MetricCard
         title="Fact. Pendiente"
@@ -45,6 +48,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
         description="Monto total por cobrar"
         icon={DollarSign}
         tone="success"
+        variant="control"
       />
     </div>
   );

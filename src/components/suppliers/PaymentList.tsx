@@ -205,7 +205,7 @@ export const PaymentList: React.FC = () => {
 
       {/* Filters */}
       <Collapsible defaultOpen>
-        <Card className="border-border/70 bg-card/80 shadow-sm">
+        <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full mb-3">
               <h3 className="text-sm font-medium text-foreground">Filtros</h3>
@@ -298,7 +298,7 @@ export const PaymentList: React.FC = () => {
 
       {/* Grouped Results */}
       {supplierGroups.length === 0 ? (
-        <Card className="bg-card border">
+        <Card className="inventory-panel border bg-card">
           <CardContent className="py-12">
             <div className="text-center">
               <CreditCard className="size-16 text-muted-foreground mx-auto mb-4" />

@@ -190,7 +190,7 @@ const Cranes = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="cranes-concept space-y-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, index) => (
@@ -204,7 +204,7 @@ const Cranes = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="cranes-concept space-y-6">
       <Dialog open={intakeOpen} onOpenChange={(open) => {
         setIntakeOpen(open);
         if (!open) {
@@ -212,7 +212,7 @@ const Cranes = () => {
           setQuickMaintenancePrefill(null);
         }
       }}>
-        <DialogContent className="border-border/70 bg-popover/95">
+        <DialogContent className="resources-dialog border-border/70 bg-popover/95">
           <DialogHeader>
             <DialogTitle>Crear mantenimiento desde Registro Rápido</DialogTitle>
           </DialogHeader>
@@ -274,10 +274,10 @@ const Cranes = () => {
       <CranesHeader onNewCrane={handleCreate} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCard title="Activas" value={craneMetrics.active} description="Disponibles en el parque" icon={CheckCircle2} tone="success" />
-        <MetricCard title="Inactivas" value={craneMetrics.inactive} description="Fuera de operación actual" icon={Truck} tone="warning" />
-        <MetricCard title="Vigencias Próximas" value={craneMetrics.dueSoon} description="Documentos que vencen en 30 días" icon={TriangleAlert} tone="danger" />
-        <MetricCard title="Total Grúas" value={cranes.length} description="Unidades registradas" icon={Shield} tone="primary" />
+        <MetricCard title="Activas" value={craneMetrics.active} description="Disponibles en el parque" icon={CheckCircle2} tone="success" variant="control" />
+        <MetricCard title="Inactivas" value={craneMetrics.inactive} description="Fuera de operación actual" icon={Truck} tone="warning" variant="control" />
+        <MetricCard title="Vigencias Próximas" value={craneMetrics.dueSoon} description="Documentos que vencen en 30 días" icon={TriangleAlert} tone="danger" variant="control" />
+        <MetricCard title="Total Grúas" value={cranes.length} description="Unidades registradas" icon={Shield} tone="primary" variant="control" />
       </div>
 
       <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />

@@ -61,7 +61,7 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="finance-dialog sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/70">
             <DialogTitle className="text-foreground">
               {debt.description} — {debt.creditors?.name}

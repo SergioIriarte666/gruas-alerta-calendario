@@ -70,7 +70,8 @@ export const APDashboardCards = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => (
-        <Card key={card.title} className="border border-border">
+        <Card key={card.title} className="dashboard-kpi border border-border" data-tone={card.title === 'Cuotas Vencidas' ? 'danger' : card.title === 'Pagado este Mes' ? 'success' : card.title === 'Cuotas del Mes' ? 'warning' : 'primary'}>
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>

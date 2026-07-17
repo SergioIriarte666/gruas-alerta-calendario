@@ -41,7 +41,7 @@ export const ClientsMobileView = ({
 
   if (clients.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="operations-panel">
         <CardContent className="p-6 text-center">
           <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">
@@ -50,7 +50,7 @@ export const ClientsMobileView = ({
           <p className="text-muted-foreground mb-4">
             {searchTerm ? `No hay clientes que coincidan con "${searchTerm}"` : 'Comienza agregando tu primer cliente al sistema'}
           </p>
-          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/80 text-primary-foreground">
+          <Button onClick={onNewClient} className="dashboard-report-button">
             <Plus className="size-4 mr-2" />{searchTerm ? 'Agregar Cliente' : 'Agregar Primer Cliente'}
           </Button>
         </CardContent>
@@ -68,7 +68,7 @@ export const ClientsMobileView = ({
         const svcCount = serviceCountByClient?.get(client.id) || 0;
         const isSelected = selectedClients?.has(client.id) ?? false;
         return (
-          <Card key={client.id} className={`glass-card ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+          <Card key={client.id} className={`operations-panel ${isSelected ? 'ring-2 ring-[hsl(var(--dashboard-lime)/0.5)]' : ''}`}>
             <CardContent className="p-4">
               {/* Header: checkbox + clickable name + status */}
               <div className="flex items-start justify-between mb-3">
@@ -127,7 +127,7 @@ export const ClientsMobileView = ({
 
               {/* Simplified actions: View, Edit, Menu */}
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/50 flex-1">
+                <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="flex-1 border border-info/40 text-info hover:bg-info/10 hover:text-info">
                   <Eye className="size-4 mr-1" />Ver
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onEdit(client)} className="text-primary hover:text-primary/80 hover:bg-primary/10 border border-primary/50 flex-1">

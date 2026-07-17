@@ -36,17 +36,13 @@ export default function IncomeProjections() {
   };
 
   return (
-    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="income-projections-concept space-y-4 pb-6 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 sm:mb-6">
-        <div className="p-2 sm:p-3 rounded-lg bg-primary/10">
-          <TrendingUp className="size-5 sm:size-6 text-primary" />
-        </div>
+      <div>
+        <span className="dashboard-section-kicker"><TrendingUp className="size-3.5" />Inteligencia de cobranza</span>
         <div>
-          <h1 className="text-xl sm:text-3xl font-bold text-foreground">Proyección de Ingresos</h1>
-          <p className="text-muted-foreground text-sm">
-            Análisis y proyección de cobros basado en facturas pendientes
-          </p>
+          <h1 className="dashboard-section-title">Proyección de Ingresos</h1>
+          <p className="dashboard-section-description">Flujo de caja esperado y priorización de facturas pendientes.</p>
         </div>
       </div>
 
@@ -54,7 +50,7 @@ export default function IncomeProjections() {
       <ProjectionHeader metrics={metrics} dateRange={filters.dateRange} isLoading={isLoading} />
 
       {/* Filters */}
-      <Card>
+      <Card className="analysis-filter-panel">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -104,7 +100,7 @@ export default function IncomeProjections() {
       <AgingReport invoices={invoices} />
 
       {/* Pending Invoices Table */}
-      <Card>
+      <Card className="analysis-panel">
         <CardHeader>
           <CardTitle>Facturas Pendientes</CardTitle>
           <CardDescription>

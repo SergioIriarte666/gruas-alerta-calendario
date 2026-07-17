@@ -1,4 +1,4 @@
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, Tags } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -12,10 +12,11 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
   const isMobile = useIsMobile();
   
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
-        <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-foreground`}>Tipos de Servicio</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Gestiona los tipos de servicio y sus configuraciones</p>
+        <span className="dashboard-section-kicker"><Tags className="size-3.5" />Catálogo operacional</span>
+        <h1 className="dashboard-section-title">Tipos de Servicio</h1>
+        <p className="dashboard-section-description">Definiciones, requisitos y comportamiento de cada servicio.</p>
       </div>
       <div className="flex gap-2">
         <Button
@@ -30,7 +31,7 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
         <Button 
           onClick={onNewServiceType} 
           size="sm"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+          className="dashboard-report-button font-medium"
         >
           <Plus className="size-4 mr-1" />
           Nuevo Tipo

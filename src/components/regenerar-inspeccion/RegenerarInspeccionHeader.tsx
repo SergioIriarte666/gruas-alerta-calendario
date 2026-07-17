@@ -7,17 +7,13 @@ interface RegenerarInspeccionHeaderProps {
 }
 
 export const RegenerarInspeccionHeader = ({ onRefresh, isRefreshing }: RegenerarInspeccionHeaderProps) => (
-  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
     <div className="space-y-1">
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-          <FileClock className="size-5" />
-        </div>
+      <div>
+        <span className="dashboard-section-kicker"><FileClock className="size-3.5" />Continuidad documental</span>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Regenerar Inspección</h1>
-          <p className="text-sm text-muted-foreground">
-            Reemite PDFs desde evidencia guardada y reenvía el documento por WhatsApp.
-          </p>
+          <h1 className="dashboard-section-title">Regenerar Inspección</h1>
+          <p className="dashboard-section-description">Reemisión de PDF desde evidencia guardada y reenvío por WhatsApp.</p>
         </div>
       </div>
     </div>

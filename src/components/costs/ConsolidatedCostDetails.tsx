@@ -173,7 +173,7 @@ export const ConsolidatedCostDetails = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[92vh] w-[min(96vw,1100px)] max-w-5xl overflow-x-hidden overflow-y-auto border-border/70 bg-card pr-10">
+      <DialogContent className="finance-dialog max-h-[92vh] w-[min(96vw,1100px)] max-w-5xl overflow-x-hidden overflow-y-auto border-border/70 bg-card pr-10">
         <DialogHeader>
           <div className="flex flex-col gap-4 pr-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">

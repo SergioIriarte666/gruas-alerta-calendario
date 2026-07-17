@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/ui/page-header';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SettingsHeaderProps {
@@ -12,10 +11,12 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
   const isMobile = useIsMobile();
   
   return (
-    <PageHeader
-      title="Configuración del Sistema"
-      description="Gestiona empresa, usuarios, respaldos, integridad y comportamiento global del sistema."
-      actions={
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <span className="dashboard-section-kicker"><SlidersHorizontal className="size-3.5" />Administración central</span>
+        <h1 className="dashboard-section-title">Configuración del Sistema</h1>
+        <p className="dashboard-section-description">Empresa, usuarios, respaldos e integridad del sistema.</p>
+      </div>
         <Button
           variant="outline"
           size={isMobile ? "sm" : "default"}
@@ -26,7 +27,6 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
           <RotateCcw className="size-4 mr-2" />
           {isMobile ? "Reset" : "Restablecer"}
         </Button>
-      }
-    />
+    </div>
   );
 };

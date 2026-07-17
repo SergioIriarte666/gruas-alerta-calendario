@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, History, Fuel, Settings2 } from 'lucide-react';
+import { Calculator, History, Fuel, Settings2, Route } from 'lucide-react';
 import { TripCalculatorForm } from './TripCalculatorForm';
 import { TripEstimateHistory } from './TripEstimateHistory';
 import { FuelPricesManager } from './FuelPricesManager';
@@ -11,20 +11,19 @@ export const TripCalculatorPage = () => {
   const [activeTab, setActiveTab] = useState('calculator');
 
   return (
-    <div className="space-y-6 p-3 md:p-6">
+    <div className="trip-calculator-concept space-y-6 pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Cálculo de Viajes</h1>
-          <p className="text-muted-foreground mt-1">
-            Estima costos de viaje incluyendo combustible, peajes y costos adicionales
-          </p>
+          <span className="dashboard-section-kicker"><Route className="size-3.5" />Planificación de ruta</span>
+          <h1 className="dashboard-section-title">Cálculo de Viajes</h1>
+          <p className="dashboard-section-description">Combustible, peajes y costos adicionales antes de salir a ruta.</p>
         </div>
         <SavedLocationsManager />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
+        <TabsList className="finance-tabs grid h-auto w-full grid-cols-4 p-1 md:w-auto md:inline-grid">
           <TabsTrigger value="calculator" className="gap-2">
             <Calculator className="size-4" />
             <span className="hidden md:inline">Calculadora</span>

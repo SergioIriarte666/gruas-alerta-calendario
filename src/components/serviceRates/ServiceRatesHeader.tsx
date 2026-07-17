@@ -19,17 +19,13 @@ export const ServiceRatesHeader: React.FC<ServiceRatesHeaderProps> = ({
   isLoading,
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-violet-500/10">
-            <DollarSign className="size-6 text-violet-500" />
-          </div>
+    <div className="configuration-filter-panel space-y-4 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <span className="dashboard-section-kicker"><DollarSign className="size-3.5" />Matriz comercial</span>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Tarifas de Servicio</h1>
-            <p className="text-sm text-muted-foreground">
-              Administra los precios predefinidos por cliente y ruta
-            </p>
+            <h1 className="dashboard-section-title">Tarifas de Servicio</h1>
+            <p className="dashboard-section-description">Precios predefinidos por cliente, servicio y ruta.</p>
           </div>
         </div>
 
@@ -42,14 +38,14 @@ export const ServiceRatesHeader: React.FC<ServiceRatesHeaderProps> = ({
           >
             <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button onClick={onAddNew} className="bg-violet-600 hover:bg-violet-700">
+          <Button onClick={onAddNew} className="dashboard-report-button">
             <Plus className="size-4 mr-2" />
             Nueva Tarifa
           </Button>
         </div>
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative max-w-xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por cliente, origen o destino..."

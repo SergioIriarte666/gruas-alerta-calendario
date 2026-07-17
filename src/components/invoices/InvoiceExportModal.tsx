@@ -212,7 +212,7 @@ const InvoiceExportModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col">
+      <DialogContent className="finance-dialog max-w-2xl w-[95vw] max-h-[90vh] flex flex-col">
         <DialogHeader className="shrink-0">
           <DialogTitle className="text-xl font-semibold">
             Exportar Informe de Facturas

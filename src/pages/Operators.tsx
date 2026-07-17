@@ -157,7 +157,7 @@ const Operators = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="operators-concept space-y-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, index) => (
@@ -171,14 +171,14 @@ const Operators = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="operators-concept space-y-6">
       <OperatorsHeader onNewOperator={handleCreate} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCard title="Activos" value={operatorMetrics.active} description="Operadores disponibles" icon={ShieldCheck} tone="success" />
-        <MetricCard title="De Grúa" value={operatorMetrics.craneOperators} description="Personal operativo" icon={UserCog} tone="primary" />
-        <MetricCard title="Administrativos" value={operatorMetrics.administrative} description="Soporte y gestión" icon={Briefcase} tone="info" />
-        <MetricCard title="Con Licencia" value={operatorMetrics.withLicense} description="Registros de licencia cargados" icon={IdCard} tone="warning" />
+        <MetricCard title="Activos" value={operatorMetrics.active} description="Operadores disponibles" icon={ShieldCheck} tone="success" variant="control" />
+        <MetricCard title="De Grúa" value={operatorMetrics.craneOperators} description="Personal operativo" icon={UserCog} tone="primary" variant="control" />
+        <MetricCard title="Administrativos" value={operatorMetrics.administrative} description="Soporte y gestión" icon={Briefcase} tone="info" variant="control" />
+        <MetricCard title="Con Licencia" value={operatorMetrics.withLicense} description="Registros de licencia cargados" icon={IdCard} tone="warning" variant="control" />
       </div>
 
       <OperatorsFilters 
@@ -224,7 +224,7 @@ const Operators = () => {
           setEditingOperator(undefined);
         }
       }}>
-        <DialogContent className="max-w-2xl border-border/70 bg-card">
+        <DialogContent className="resources-dialog max-w-2xl border-border/70 bg-card">
           <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="text-foreground">
               {editingOperator ? 'Editar Operador' : 'Nuevo Operador'}

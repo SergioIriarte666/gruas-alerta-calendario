@@ -46,7 +46,7 @@ export const ServiceFilters = React.memo(({
 }: ServiceFiltersProps) => {
   const { operators } = useOperators();
   const controlClassName =
-    'h-11 rounded-xl border-[#d9dde7] bg-[#f8fafc] text-[#0f172a] shadow-sm transition-colors hover:bg-[#f4f7fb]';
+    'h-10 rounded-lg border-border/70 bg-background/70 text-foreground shadow-sm transition-colors hover:bg-accent/40';
 
   const applyAdvanced = useCallback((opId: string) => {
     const advanced: AdvancedFilters = {};
@@ -70,7 +70,7 @@ export const ServiceFilters = React.memo(({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="services-filter-bar flex flex-wrap items-center gap-2 p-3">
       <div className="relative">
         <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
         <Input
@@ -109,10 +109,10 @@ export const ServiceFilters = React.memo(({
         onChange={(value) => onListDateFromChange?.(value)}
         placeholder="Desde"
         className={cn(
-          'h-11 w-[176px] rounded-xl border-[#d9dde7] px-3 shadow-sm hover:bg-[#f4f7fb]',
+          'h-10 w-[176px] rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
           listDateFrom
-            ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-            : 'bg-[#f8fafc] text-[#0f172a]'
+            ? 'border-[hsl(var(--dashboard-lime)/0.45)] bg-[hsl(var(--dashboard-lime)/0.10)]'
+            : 'bg-background/70'
         )}
         id="services-date-from"
       />
@@ -122,10 +122,10 @@ export const ServiceFilters = React.memo(({
         onChange={(value) => onListDateToChange?.(value)}
         placeholder="Hasta"
         className={cn(
-          'h-11 w-[176px] rounded-xl border-[#d9dde7] px-3 shadow-sm hover:bg-[#f4f7fb]',
+          'h-10 w-[176px] rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
           listDateTo
-            ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-            : 'bg-[#f8fafc] text-[#0f172a]'
+            ? 'border-[hsl(var(--dashboard-lime)/0.45)] bg-[hsl(var(--dashboard-lime)/0.10)]'
+            : 'bg-background/70'
         )}
         id="services-date-to"
       />
@@ -135,7 +135,7 @@ export const ServiceFilters = React.memo(({
           variant="ghost"
           size="sm"
           onClick={handleClear}
-          className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
+          className="h-10 rounded-lg px-3 text-muted-foreground hover:bg-accent/50 hover:text-foreground"
         >
           <X className="size-3" />
           Limpiar

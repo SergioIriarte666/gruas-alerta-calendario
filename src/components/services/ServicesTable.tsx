@@ -380,7 +380,7 @@ export const ServicesTable = React.memo(({
 
   if (isMobile) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="services-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <ServicesMobileView
             services={services}
@@ -400,7 +400,7 @@ export const ServicesTable = React.memo(({
   }
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="services-panel border-border/70 bg-card/80 shadow-sm">
       <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center gap-x-2">
           <Truck className="size-5 text-primary" />

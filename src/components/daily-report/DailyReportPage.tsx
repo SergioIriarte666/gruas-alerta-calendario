@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { MetricCard } from '@/components/ui/metric-card';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { useDailyReport } from '@/hooks/useDailyReport';
 import { formatForInput } from '@/utils/timezoneUtils';
@@ -189,55 +190,59 @@ const DailyReportPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="daily-report-concept space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-3xl font-bold text-foreground">Informe Diario</h1>
-          <p className="text-muted-foreground">
-            Compromisos y tareas para {data?.selectedDate}
+          <div className="dashboard-section-kicker">Control de jornada</div>
+          <h1 className="dashboard-section-title">Resumen del día</h1>
+          <p className="dashboard-section-description">
+            Servicios, compromisos, finanzas y recursos para {data?.selectedDate}.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-            <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => refetch()} disabled={loading}>
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
 
-          <Button variant="outline" onClick={handleExportPDF} disabled={isExporting || !data}>
-            <Download className="size-4 mr-2" />
+          <Button size="sm" variant="outline" onClick={handleExportPDF} disabled={isExporting || !data}>
+            <Download className="size-4" />
             PDF
           </Button>
 
-          <Button variant="outline" onClick={handleExportExcel} disabled={isExporting || !data}>
-            <Download className="size-4 mr-2" />
+          <Button
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={isExporting || !data}
+            className="dashboard-report-button"
+          >
+            <Download className="size-4" />
             Excel
           </Button>
         </div>
       </div>
 
-      {/* Date Navigation */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={handlePreviousDay}>
+      <Card className="daily-report-toolbar">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="ghost" size="sm" onClick={handlePreviousDay}>
               <ChevronLeft className="size-4" />
               <span className="hidden sm:inline ml-1">Día Anterior</span>
             </Button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <DatePickerInput
                 value={selectedDate}
                 onChange={setSelectedDate}
                 placeholder="Seleccionar fecha"
               />
-              <Button variant="ghost" size="sm" onClick={handleToday}>
+              <Button variant="outline" size="sm" onClick={handleToday} className="hidden sm:inline-flex">
                 Hoy
               </Button>
             </div>
 
-            <Button variant="outline" size="sm" onClick={handleNextDay}>
+            <Button variant="ghost" size="sm" onClick={handleNextDay}>
               <span className="hidden sm:inline mr-1">Día Siguiente</span>
               <ChevronRight className="size-4" />
             </Button>
@@ -247,63 +252,46 @@ const DailyReportPage = () => {
 
       {/* Executive Summary */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Tareas</p>
-                  <p className="text-2xl font-bold">{data.summary.totalTasks}</p>
-                </div>
-                <FileText className="size-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Tareas Críticas</p>
-                  <p className="text-2xl font-bold text-red-500">{data.summary.criticalTasks}</p>
-                </div>
-                <AlertTriangle className="size-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">% Completitud</p>
-                  <p className="text-2xl font-bold text-green-500">
-                    {data.summary.completionRate.toFixed(1)}%
-                  </p>
-                </div>
-                <TrendingUp className="size-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Alertas</p>
-                  <p className="text-2xl font-bold text-orange-500">{data.summary.alerts}</p>
-                </div>
-                <AlertTriangle className="size-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            variant="control"
+            title="Total de tareas"
+            value={data.summary.totalTasks}
+            tone="primary"
+            icon={FileText}
+            description="Compromisos de la jornada"
+          />
+          <MetricCard
+            variant="control"
+            title="Tareas críticas"
+            value={data.summary.criticalTasks}
+            tone={data.summary.criticalTasks > 0 ? 'danger' : 'muted'}
+            icon={AlertTriangle}
+            description="Requieren atención prioritaria"
+          />
+          <MetricCard
+            variant="control"
+            title="Completitud"
+            value={`${data.summary.completionRate.toFixed(1)}%`}
+            tone="success"
+            icon={TrendingUp}
+            description="Avance de tareas del día"
+          />
+          <MetricCard
+            variant="control"
+            title="Alertas"
+            value={data.summary.alerts}
+            tone={data.summary.alerts > 0 ? 'warning' : 'muted'}
+            icon={AlertTriangle}
+            description="Eventos que revisar"
+          />
         </div>
       )}
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="services" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
-          <TabsTrigger value="services" className="flex items-center gap-2">
+      <Tabs defaultValue="services" className="daily-report-content space-y-4">
+        <TabsList className="daily-report-tabs flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">
+          <TabsTrigger value="services" className="flex min-w-fit items-center gap-2 rounded-lg px-3 py-2">
             <Truck className="size-4" />
             Servicios
             {data && data.services.total > 0 && (
@@ -313,7 +301,7 @@ const DailyReportPage = () => {
             )}
           </TabsTrigger>
           
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsTrigger value="calendar" className="flex min-w-fit items-center gap-2 rounded-lg px-3 py-2">
             <Calendar className="size-4" />
             Agenda
             {data && data.calendar.total > 0 && (
@@ -323,7 +311,7 @@ const DailyReportPage = () => {
             )}
           </TabsTrigger>
           
-          <TabsTrigger value="financial" className="flex items-center gap-2">
+          <TabsTrigger value="financial" className="flex min-w-fit items-center gap-2 rounded-lg px-3 py-2">
             <DollarSign className="size-4" />
             Financiero
             {data && (data.financial.invoicesDue.length + data.financial.paymentsToMake.length) > 0 && (
@@ -333,7 +321,7 @@ const DailyReportPage = () => {
             )}
           </TabsTrigger>
           
-          <TabsTrigger value="suppliers" className="flex items-center gap-2">
+          <TabsTrigger value="suppliers" className="flex min-w-fit items-center gap-2 rounded-lg px-3 py-2">
             <Building2 className="size-4" />
             Proveedores
             {data && data.financial.supplierPayments && (
@@ -349,7 +337,7 @@ const DailyReportPage = () => {
             )}
           </TabsTrigger>
           
-          <TabsTrigger value="operations" className="flex items-center gap-2">
+          <TabsTrigger value="operations" className="flex min-w-fit items-center gap-2 rounded-lg px-3 py-2">
             <Users className="size-4" />
             Operaciones
             {data && data.operations.documentAlerts.length > 0 && (

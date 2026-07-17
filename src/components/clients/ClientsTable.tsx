@@ -113,7 +113,7 @@ export const ClientsTable = ({
 
   if (clients.length === 0 && searchTerm) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="operations-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
           <h3 className="mb-2 text-lg font-medium text-foreground">No se encontraron clientes</h3>
@@ -128,7 +128,7 @@ export const ClientsTable = ({
 
   if (clients.length === 0) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="operations-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
           <h3 className="mb-2 text-lg font-medium text-foreground">No hay clientes registrados</h3>
@@ -142,7 +142,7 @@ export const ClientsTable = ({
   }
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="operations-panel border-border/70 bg-card/80 shadow-sm">
       <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center justify-between">
           <span>Clientes ({totalClients})</span>

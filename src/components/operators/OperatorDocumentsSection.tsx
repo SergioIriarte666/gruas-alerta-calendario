@@ -422,7 +422,7 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
         setIsUploadOpen(open);
         if (!open) setForm(EMPTY_FORM);
       }}>
-        <DialogContent className="w-full max-w-md border-border/70 bg-card h-[100dvh] sm:h-auto overflow-y-auto sm:rounded-lg rounded-none p-4 sm:p-6">
+        <DialogContent className="resources-dialog w-full max-w-md border-border/70 bg-card h-[100dvh] sm:h-auto overflow-y-auto sm:rounded-lg rounded-none p-4 sm:p-6">
           <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <Upload className="size-5 text-primary" />

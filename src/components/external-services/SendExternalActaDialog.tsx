@@ -51,10 +51,10 @@ export const SendExternalActaDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="external-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Mail className="size-5 text-purple-600" />
+            <Mail className="external-accent-icon size-5" />
             Enviar Acta por email
           </DialogTitle>
           <DialogDescription>Folio {folio} · El destinatario recibirá el PDF adjunto.</DialogDescription>
@@ -99,7 +99,7 @@ export const SendExternalActaDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={send.isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleSend} disabled={send.isPending || !email} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleSend} disabled={send.isPending || !email} className="dashboard-report-button">
             <Send className="size-4 mr-2" />
             {send.isPending ? 'Enviando...' : 'Enviar Acta'}
           </Button>

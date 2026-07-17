@@ -23,6 +23,7 @@ export const ServicesMetrics = React.memo(({ metrics, showSensitiveData = true }
         value={metrics.totalServices}
         description={`Valor: ${showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}`}
         tone="info"
+        variant="control"
       />
       
       <MetricCard
@@ -31,6 +32,7 @@ export const ServicesMetrics = React.memo(({ metrics, showSensitiveData = true }
         value={showSensitiveData ? formatCurrency(metrics.totalCosts) : '••••••'}
         description="Costos operativos del período"
         tone="danger"
+        variant="control"
       />
       
       <MetricCard
@@ -39,6 +41,7 @@ export const ServicesMetrics = React.memo(({ metrics, showSensitiveData = true }
         value={showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}
         description="Ingresos totales por servicios"
         tone="success"
+        variant="control"
       />
       
       <MetricCard
@@ -47,6 +50,7 @@ export const ServicesMetrics = React.memo(({ metrics, showSensitiveData = true }
         value={showSensitiveData ? formatCurrency(metrics.netProfit) : '••••••'}
         description={`Margen: ${showSensitiveData ? metrics.profitMargin.toFixed(1) + '%' : '••••'}`}
         tone={metrics.netProfit >= 0 ? 'primary' : 'danger'}
+        variant="control"
       />
     </div>
   );

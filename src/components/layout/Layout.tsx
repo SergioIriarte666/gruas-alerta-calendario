@@ -23,7 +23,7 @@ export const Layout = () => {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg focus:outline-none">
         Saltar al contenido
       </a>
-      <div className="flex min-h-screen overflow-hidden bg-background text-foreground">
+      <div className="app-shell-concept flex min-h-screen overflow-hidden bg-background text-foreground">
         <Sidebar 
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}

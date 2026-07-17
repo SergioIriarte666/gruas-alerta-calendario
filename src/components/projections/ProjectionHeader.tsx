@@ -69,7 +69,8 @@ export const ProjectionHeader = ({ metrics, dateRange, isLoading }: ProjectionHe
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => (
-        <Card key={index} className="hover:bg-muted/50 transition-colors">
+        <Card key={index} className={`dashboard-kpi transition-colors ${index === 0 ? 'dashboard-kpi--primary' : ''}`} data-tone={index === 1 ? 'danger' : index === 2 ? 'warning' : index === 3 ? 'info' : 'primary'}>
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">

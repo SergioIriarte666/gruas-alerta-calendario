@@ -161,7 +161,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[80vh] flex-col overflow-clip border-border/70 bg-card sm:max-w-[600px]">
+      <DialogContent className="configuration-dialog flex max-h-[80vh] flex-col overflow-clip border-border/70 bg-card sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="size-5 text-primary" />

@@ -174,7 +174,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
 
   return (
     <div className="space-y-4">
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="inventory-panel border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -447,7 +447,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
 
       {/* Export Options Modal */}
       <Dialog open={showExportOptions} onOpenChange={setShowExportOptions}>
-        <DialogContent className="max-w-2xl border-border/70 bg-card">
+        <DialogContent className="inventory-dialog max-w-2xl border-border/70 bg-card">
           <MovementExportOptions
             movements={exportMovements}
             appliedFilters={{
@@ -463,7 +463,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
       </Dialog>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-h-[90vh] max-w-4xl border-border/70 bg-card overflow-y-auto">
+        <DialogContent className="inventory-dialog max-h-[90vh] max-w-4xl border-border/70 bg-card overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles del Movimiento</DialogTitle>
           </DialogHeader>

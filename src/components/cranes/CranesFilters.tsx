@@ -11,7 +11,7 @@ interface CranesFiltersProps {
 
 export const CranesFilters = ({ searchTerm, setSearchTerm }: CranesFiltersProps) => {
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="resources-filter-panel border-border/70 bg-card/80 shadow-sm">
       <CardContent className="space-y-4 p-4 sm:p-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />

@@ -205,12 +205,12 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
           </ToggleGroup>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="dashboard-report-button">
                 <Plus className="size-4 mr-2" />
                 Nuevo Modelo
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="resources-dialog">
               <DialogHeader>
                 <DialogTitle>Crear Nuevo Modelo</DialogTitle>
                 <DialogDescription>
@@ -271,7 +271,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
           isDeleting={isDeleting}
         />
       ) : (
-        <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
+        <SectionCard flush className="resources-panel border-border/70 bg-card/80 shadow-sm">
           <div className="overflow-x-auto">
           <Table className="min-w-[500px]">
             <TableHeader>
@@ -308,7 +308,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
           </TableHeader>
             <TableBody>
               {sortedModels.map((model) => (
-                <TableRow key={model.id} className="hover:bg-violet-50/60 dark:hover:bg-violet-950/10">
+                <TableRow key={model.id} className="hover:bg-accent/40">
                 <TableCell>{model.vehicle_brands?.name}</TableCell>
                 <TableCell className="font-medium">{model.name}</TableCell>
                 <TableCell>
@@ -370,7 +370,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="resources-dialog">
           <DialogHeader>
             <DialogTitle>Editar Modelo</DialogTitle>
             <DialogDescription>

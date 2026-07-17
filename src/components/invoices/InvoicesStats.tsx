@@ -26,6 +26,7 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
         description="Registros disponibles en la vista actual"
         icon={FileText}
         tone="primary"
+        variant="control"
       />
       <MetricCard
         title="Pendientes"
@@ -33,6 +34,7 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
         description="Borradores y enviadas pendientes de pago"
         icon={DollarSign}
         tone="warning"
+        variant="control"
       />
       <MetricCard
         title="Vencidas"
@@ -40,6 +42,7 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
         description="Facturas fuera de plazo de cobro"
         icon={AlertTriangle}
         tone="danger"
+        variant="control"
       />
       <MetricCard
         title="Cobradas"
@@ -47,6 +50,7 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
         description="Facturación ya conciliada"
         icon={BadgeCheck}
         tone="success"
+        variant="control"
       />
     </div>
   );

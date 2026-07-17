@@ -260,7 +260,7 @@ export const UserManagementTab = () => {
                               <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
+                          <DialogContent className="configuration-dialog flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                             </DialogHeader>
@@ -290,7 +290,7 @@ export const UserManagementTab = () => {
                               <HardHat className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
+                          <DialogContent className="configuration-dialog flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                             </DialogHeader>
@@ -370,7 +370,7 @@ export const UserManagementTab = () => {
                                   <HardHat className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="configuration-dialog flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                                 </DialogHeader>
@@ -407,7 +407,7 @@ export const UserManagementTab = () => {
                                   <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="configuration-dialog flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                                 </DialogHeader>
@@ -525,7 +525,7 @@ export const UserManagementTab = () => {
       />
 
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
-        <AlertDialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
+        <AlertDialogContent className="configuration-dialog w-[90vw] max-w-md border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">¿Eliminar usuario?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">

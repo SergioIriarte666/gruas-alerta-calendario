@@ -121,7 +121,7 @@ export const CreateUserDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border/70 bg-card">
+      <DialogContent className="configuration-dialog max-w-md border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <User className="size-5 text-primary" />

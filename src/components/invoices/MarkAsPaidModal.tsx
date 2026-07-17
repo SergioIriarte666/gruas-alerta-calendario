@@ -54,7 +54,7 @@ export const MarkAsPaidModal = ({ invoice, isOpen, onClose, onConfirm }: MarkAsP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" onOpenAutoFocus={handleOpen}>
+      <DialogContent className="finance-dialog sm:max-w-md" onOpenAutoFocus={handleOpen}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <CheckCircle className="size-5 text-primary" />

@@ -45,12 +45,12 @@ export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtili
       <CardContent>
         <ChartContainer config={craneUtilizationConfig} className="w-full h-[300px]">
            <BarChart data={metrics.craneUtilization} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis type="number" stroke="#9CA3AF" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
             <YAxis 
               dataKey="craneName" 
               type="category" 
-              stroke="#9CA3AF" 
+              stroke="hsl(var(--muted-foreground))"
               width={120}
               fontSize={12}
             />

@@ -207,7 +207,7 @@ export const ClientBillingContacts = ({ clientId }: ClientBillingContactsProps) 
 
       {/* Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="operations-dialog max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingId ? 'Editar contacto' : 'Agregar contacto'}

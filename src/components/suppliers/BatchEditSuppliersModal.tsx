@@ -104,7 +104,7 @@ export const BatchEditSuppliersModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="supplier-dialog sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edición Masiva de Proveedores</DialogTitle>
           <DialogDescription>

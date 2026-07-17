@@ -396,7 +396,7 @@ const Services = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 text-foreground">
+      <div className="services-concept space-y-6 text-foreground">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-8 w-64" />
         <div className="space-y-4">
@@ -409,7 +409,7 @@ const Services = () => {
   }
 
   return (
-    <div className="space-y-6 text-foreground">
+    <div className="services-concept space-y-6 text-foreground">
       {/* Batch Action Bar - show when services are selected */}
       {selectedServiceIds.size > 0 && (
         <ServiceBatchActionBar

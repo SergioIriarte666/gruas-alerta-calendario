@@ -185,7 +185,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl border-border/70 bg-card">
+      <DialogContent className="resources-dialog max-w-2xl border-border/70 bg-card">
         <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Wrench className="size-5 text-primary" />

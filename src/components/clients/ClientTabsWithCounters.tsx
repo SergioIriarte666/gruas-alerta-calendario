@@ -38,46 +38,46 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
     <div className="h-full flex flex-col">
       <Tabs defaultValue="overview" className="h-full flex flex-col">
         <div className="flex-shrink-0 overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-7 bg-card border-border">
+          <TabsList className="operations-tabs inline-flex h-auto w-auto min-w-full p-1 sm:grid sm:grid-cols-7">
             <TabsTrigger 
               value="overview" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               Resumen
             </TabsTrigger>
             <TabsTrigger 
               value="info" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               Info
             </TabsTrigger>
             <TabsTrigger 
               value="services" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Servicios', services.length, servicesLoading)}
             </TabsTrigger>
             <TabsTrigger 
               value="invoices" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Facturas', invoices.length, invoicesLoading)}
             </TabsTrigger>
             <TabsTrigger 
               value="closures" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Cierres', closures.length, closuresLoading)}
             </TabsTrigger>
             <TabsTrigger 
               value="requests" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Solicitudes', requests.length, requestsLoading)}
             </TabsTrigger>
             <TabsTrigger 
               value="billing_contacts" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Cobranza', activeContactsCount, contactsLoading)}
             </TabsTrigger>

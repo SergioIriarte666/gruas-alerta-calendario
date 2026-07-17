@@ -87,7 +87,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
         {trigger || defaultTrigger}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="finance-dialog sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             Editar Fecha de Pago

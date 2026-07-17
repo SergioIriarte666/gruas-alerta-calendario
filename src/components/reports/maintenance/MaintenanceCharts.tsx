@@ -61,15 +61,15 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
         <CardContent>
           <ChartContainer config={monthlyTrendsConfig} className="h-80 w-full">
             <LineChart data={data.monthlyTrends}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="month" 
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis 
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={formatCurrency}
               />
               <ChartTooltip 
@@ -107,18 +107,18 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
         <CardContent>
           <ChartContainer config={monthlyTrendsConfig} className="h-80 w-full">
             <BarChart data={craneCostData} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 type="number"
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={formatCurrency}
               />
               <YAxis 
                 type="category"
                 dataKey="crane" 
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF' }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 width={60}
               />
               <ChartTooltip 
@@ -147,7 +147,7 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
                 labelLine={false}
                 label={({ type, percent }) => `${type} ${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="hsl(var(--primary))"
                 dataKey="cost"
               >
                 {data.maintenanceByType.map((entry, index) => (

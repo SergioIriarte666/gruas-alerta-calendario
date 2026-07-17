@@ -66,12 +66,12 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+        <p className="rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
           {error instanceof Error ? error.message : 'No se pudieron cargar los tiempos muertos'}
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-white/5">
+      <div className="resources-panel overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -117,7 +117,7 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-auto px-2 py-1 text-xs text-cyan-300 hover:text-cyan-100"
+                        className="h-auto px-2 py-1 text-xs text-info hover:bg-info/10 hover:text-info"
                         onClick={() => onViewRoute(summary.operatorId, summary.date)}
                       >
                         Ver ruta

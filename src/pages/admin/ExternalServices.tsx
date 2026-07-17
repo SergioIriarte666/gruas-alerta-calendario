@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Building2, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Building2, CircleDollarSign, ClipboardCheck, Handshake, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MetricCard } from '@/components/ui/metric-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useExternalServices, ExternalServiceListItem } from '@/hooks/useExternalServices';
 import { ExternalServicesTable } from '@/components/external-services/ExternalServicesTable';
@@ -17,6 +19,21 @@ const ExternalServices = () => {
 
   const query = useExternalServices(tab);
 
+  const metrics = useMemo(() => {
+    const services = query.data ?? [];
+    return {
+      total: services.length,
+      totalCost: services.reduce((sum, service) => sum + (service.outsourcedCost ?? 0), 0),
+      providers: new Set(services.map((service) => service.outsourcedProviderId).filter(Boolean)).size,
+    };
+  }, [query.data]);
+
+  const formattedCost = new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0,
+  }).format(metrics.totalCost);
+
   useEffect(() => {
     document.title = 'Servicios Externos | Panel';
   }, []);
@@ -26,90 +43,81 @@ const ExternalServices = () => {
     else setCloseTarget(svc);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-md bg-purple-100 p-2 dark:bg-purple-900/40">
-            <Building2 className="size-5 text-purple-600 dark:text-purple-300" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Servicios Externos</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Gestión de servicios subcontratados a proveedores externos
-            </p>
-          </div>
+  const renderServiceList = () => {
+    if (query.isLoading) {
+      return (
+        <div className="external-state-panel space-y-3 p-5">
+          {[0, 1, 2, 3].map((item) => <Skeleton key={item} className="h-12 w-full rounded-lg" />)}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => query.refetch()}
-          disabled={query.isFetching}
-        >
-          <RefreshCw className={`mr-2 size-4 ${query.isFetching ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
-      </div>
+      );
+    }
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'pending' | 'closed')}>
-        <TabsList>
-          <TabsTrigger value="pending">Pendientes de cierre</TabsTrigger>
-          <TabsTrigger value="closed">Cerrados</TabsTrigger>
+    if (query.isError) {
+      return (
+        <div className="external-error-panel p-6 text-sm">
+          <p className="font-semibold text-danger">No fue posible cargar los servicios</p>
+          <p className="mt-1 text-muted-foreground">{(query.error as Error)?.message || 'Error desconocido'}</p>
+          <Button variant="outline" size="sm" className="mt-4 border-danger/30 text-danger hover:bg-danger/10" onClick={() => query.refetch()}>
+            Reintentar
+          </Button>
+        </div>
+      );
+    }
+
+    if ((query.data?.length ?? 0) === 0) {
+      return (
+        <div className="external-state-panel flex min-h-56 flex-col items-center justify-center p-8 text-center">
+          <div className="external-empty-icon">
+            <ClipboardCheck className="size-6" />
+          </div>
+          <h3 className="mt-4 font-semibold text-foreground">
+            {tab === 'pending' ? 'Sin cierres pendientes' : 'Sin servicios cerrados'}
+          </h3>
+          <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            {tab === 'pending'
+              ? 'Todos los servicios externos disponibles ya tienen su cierre administrativo.'
+              : 'Los servicios cerrados con evidencia aparecerán en esta sección.'}
+          </p>
+        </div>
+      );
+    }
+
+    return isMobile
+      ? <ExternalServicesMobileView services={query.data || []} onSelect={handleRowClick} />
+      : <ExternalServicesTable services={query.data || []} onSelect={handleRowClick} />;
+  };
+
+  return (
+    <div className="external-services-concept space-y-6">
+      <section className="space-y-5" aria-labelledby="external-services-heading">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <span className="dashboard-section-kicker">
+              <Handshake className="size-3.5" />
+              Red de proveedores
+            </span>
+            <h1 id="external-services-heading" className="dashboard-section-title">Servicios externos</h1>
+            <p className="dashboard-section-description">Control de subcontrataciones, evidencias y cierres administrativos.</p>
+          </div>
+          <Button variant="outline" size="sm" className="border-border/70 bg-background/70" onClick={() => query.refetch()} disabled={query.isFetching}>
+            <RefreshCw className={`mr-2 size-4 ${query.isFetching ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <MetricCard icon={ClipboardCheck} title={tab === 'pending' ? 'Pendientes visibles' : 'Cierres visibles'} value={metrics.total} description="Servicios del estado seleccionado" tone="primary" variant="control" />
+          <MetricCard icon={CircleDollarSign} title="Costo subcontratado" value={formattedCost} description="Suma informada en el período" tone="success" variant="control" />
+          <MetricCard icon={Building2} title="Proveedores asignados" value={metrics.providers} description="Proveedores distintos identificados" tone="info" variant="control" />
+        </div>
+      </section>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'pending' | 'closed')} className="space-y-4">
+        <TabsList className="external-services-tabs h-auto w-full justify-start gap-1 overflow-x-auto p-1 sm:w-auto">
+          <TabsTrigger value="pending" className="whitespace-nowrap px-4 py-2">Pendientes de cierre</TabsTrigger>
+          <TabsTrigger value="closed" className="whitespace-nowrap px-4 py-2">Cerrados</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="pending" className="mt-4">
-          {query.isLoading ? (
-            <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
-              Cargando servicios...
-            </div>
-          ) : query.isError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-              <p className="font-medium">Error al cargar servicios</p>
-              <p className="mt-1">{(query.error as Error)?.message || 'Error desconocido'}</p>
-              <button
-                className="mt-3 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
-                onClick={() => query.refetch()}
-              >
-                Reintentar
-              </button>
-            </div>
-          ) : (query.data?.length ?? 0) === 0 ? (
-            <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-              No hay servicios externos pendientes de cierre.
-            </div>
-          ) : isMobile ? (
-            <ExternalServicesMobileView services={query.data || []} onSelect={handleRowClick} />
-          ) : (
-            <ExternalServicesTable services={query.data || []} onSelect={handleRowClick} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="closed" className="mt-4">
-          {query.isLoading ? (
-            <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
-              Cargando servicios...
-            </div>
-          ) : query.isError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-              <p className="font-medium">Error al cargar servicios</p>
-              <p className="mt-1">{(query.error as Error)?.message || 'Error desconocido'}</p>
-              <button
-                className="mt-3 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
-                onClick={() => query.refetch()}
-              >
-                Reintentar
-              </button>
-            </div>
-          ) : (query.data?.length ?? 0) === 0 ? (
-            <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-              No hay servicios externos cerrados.
-            </div>
-          ) : isMobile ? (
-            <ExternalServicesMobileView services={query.data || []} onSelect={handleRowClick} />
-          ) : (
-            <ExternalServicesTable services={query.data || []} onSelect={handleRowClick} />
-          )}
-        </TabsContent>
+        <TabsContent value={tab} className="mt-0">{renderServiceList()}</TabsContent>
       </Tabs>
 
       <CloseExternalServiceDialog

@@ -141,7 +141,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
   };
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm" id="closures-table-top">
+    <Card className="finance-panel border-border/70 bg-card/80 shadow-sm" id="closures-table-top">
       <CardHeader className="flex flex-row items-center justify-between gap-y-0 border-b border-border/60 pb-4">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})

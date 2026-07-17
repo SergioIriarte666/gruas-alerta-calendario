@@ -128,7 +128,7 @@ export const CostCenterForm = ({ isOpen, onClose, costCenter }: CostCenterFormPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="configuration-dialog sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {costCenter ? 'Editar Centro de Costo' : 'Nuevo Centro de Costo'}

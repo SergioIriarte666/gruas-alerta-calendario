@@ -58,7 +58,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
+        <DialogContent className="inventory-dialog h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
           <XMLImportDialogHeader icon={Receipt} title="Importar XML a Bodega"
             description="Valida documentos, corrige glosas, crea productos faltantes y sincroniza Bodega, Costos y Proveedores."
             fileName={selectedFile?.name} documentCount={summary.totalDocs} />
@@ -234,7 +234,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
       </Dialog>
 
       <Dialog open={!!pendingProductSuggestion} onOpenChange={open => { if (!open) setPendingProductSuggestion(null); }}>
-        <DialogContent className="max-w-3xl overflow-clip">
+        <DialogContent className="inventory-dialog max-w-3xl overflow-clip">
           <DialogHeader><DialogTitle>Validación de producto antes de crear</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Se detectaron productos similares en el catálogo. Para no afectar el flujo actual de importación, puedes reutilizar uno existente o confirmar conscientemente la creación de uno nuevo.</p>

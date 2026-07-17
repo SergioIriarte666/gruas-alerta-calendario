@@ -61,7 +61,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,1600px)]">
+      <DialogContent className="supplier-dialog flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,1600px)]">
         <XMLImportDialogHeader icon={FileSpreadsheet} title="Importar Documentos XML"
           description="Analiza documentos XML, detecta duplicados y registra pagos a proveedores."
           fileName={selectedFile?.name} documentCount={parseResult?.totalDocuments} />

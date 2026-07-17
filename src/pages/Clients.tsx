@@ -226,7 +226,7 @@ const Clients = () => {
 
   if (loading || (isBasicView && pagedLoading && !pagedData)) {
     return (
-      <div className="space-y-6">
+      <div className="clients-concept space-y-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, index) => (
@@ -242,7 +242,7 @@ const Clients = () => {
   const isProcessing = batchUpdate.isPending || batchDelete.isPending;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="clients-concept animate-fade-in space-y-6">
       {selectedClients.size > 0 && (
         <ClientBatchActionBar
           selectedCount={selectedClients.size}

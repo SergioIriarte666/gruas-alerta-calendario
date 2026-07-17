@@ -162,12 +162,12 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="dashboard-report-button">
               <Plus className="size-4 mr-2" />
               Nueva Marca
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="resources-dialog">
             <DialogHeader>
               <DialogTitle>Crear Nueva Marca</DialogTitle>
               <DialogDescription>
@@ -203,7 +203,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         </Dialog>
       </div>
 
-      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
+      <SectionCard flush className="resources-panel border-border/70 bg-card/80 shadow-sm">
         <div className="overflow-x-auto">
         <Table className="min-w-[400px]">
           <TableHeader>
@@ -231,7 +231,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
           </TableHeader>
           <TableBody>
             {sortedBrands.map((brand) => (
-              <TableRow key={brand.id} className="hover:bg-amber-50/60 dark:hover:bg-amber-950/10">
+              <TableRow key={brand.id} className="hover:bg-accent/40">
                 <TableCell className="font-medium">{brand.name}</TableCell>
                 <TableCell>
                   {new Date(brand.created_at).toLocaleDateString('es-CL')}
@@ -292,7 +292,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="resources-dialog">
           <DialogHeader>
             <DialogTitle>Editar Marca</DialogTitle>
             <DialogDescription>

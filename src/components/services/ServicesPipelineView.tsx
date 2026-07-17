@@ -165,7 +165,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
 
   if (!hasInitialServices) {
     return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="services-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="text-center py-12">
           <div className="mb-4 text-muted-foreground">
             <Calendar className="size-16 mx-auto mb-4 opacity-50" />
@@ -183,12 +183,12 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="services-pipeline space-y-6">
       {/* Métricas del Pipeline */}
       <ServicesPipelineMetrics services={services} />
 
       {/* Filtros */}
-      <Card className="border-border/70 bg-card/80 shadow-sm">
+      <Card className="services-panel border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <div className="flex items-center gap-x-4">
             <div className="relative flex-1 max-w-md">
@@ -207,7 +207,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       {/* Pipeline Groups */}
       <div className="space-y-4">
         {serviceGroups.map((group) => (
-          <Card key={group.status} className="border-border/70 bg-card/80 shadow-sm">
+          <Card key={group.status} className="services-panel border-border/70 bg-card/80 shadow-sm">
             <Collapsible
               open={expandedGroups.has(group.status)}
               onOpenChange={() => toggleGroup(group.status)}

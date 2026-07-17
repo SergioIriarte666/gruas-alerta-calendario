@@ -119,10 +119,10 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen space-y-6 overflow-x-hidden pb-6 animate-fade-in">
+    <div className="settings-concept min-h-screen space-y-6 overflow-x-hidden pb-6 animate-fade-in">
       <SettingsHeader onReset={resetSettings} />
 
-      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
+      <SectionCard flush className="configuration-panel border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
         <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
           <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
             <SlidersHorizontal className="size-3.5" />
@@ -139,7 +139,7 @@ const Settings = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="overflow-x-auto scrollbar-none -mx-3 sm:-mx-6 px-3 sm:px-6">
-            <TabsList className="flex w-max min-w-full gap-1 rounded-xl bg-muted/50 p-1">
+            <TabsList className="configuration-tabs flex w-max min-w-full gap-1 p-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
 

@@ -73,10 +73,10 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] w-[95vw] max-w-4xl flex-col p-0">
+      <DialogContent className="external-dialog flex h-[90vh] w-[95vw] max-w-4xl flex-col p-0">
         <DialogHeader className="px-6 pb-2 pt-6">
           <DialogTitle className="flex items-center gap-2">
-            <Building2 className="size-5 text-purple-600" />
+            <Building2 className="external-accent-icon size-5" />
             Cerrar servicio externo · Folio {service.folio}
           </DialogTitle>
           <DialogDescription>
@@ -86,7 +86,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
 
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-4 pb-4">
-            <Card>
+            <Card className="external-dialog-card">
               <CardHeader>
                 <CardTitle className="text-base">Servicio</CardTitle>
               </CardHeader>
@@ -112,7 +112,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="external-dialog-card">
               <CardHeader>
                 <CardTitle className="text-base">Proveedor externo</CardTitle>
               </CardHeader>
@@ -160,7 +160,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
 
             <EvidenceUploadCard serviceId={service.id} />
 
-            <Card>
+            <Card className="external-dialog-card">
               <CardHeader>
                 <CardTitle className="text-base">Firma del administrador</CardTitle>
               </CardHeader>
@@ -183,7 +183,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={close.isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleClose} disabled={close.isPending} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleClose} disabled={close.isPending} className="dashboard-report-button">
             <FileCheck2 className="mr-2 size-4" />
             {close.isPending ? 'Cerrando...' : 'Cerrar con evidencia'}
           </Button>

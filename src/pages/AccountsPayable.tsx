@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Landmark, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { APDashboardCards } from '@/components/accounts-payable/APDashboardCards';
 import { DebtList } from '@/components/accounts-payable/DebtList';
@@ -20,13 +20,14 @@ const AccountsPayable = () => {
   const [selectedDebt, setSelectedDebt] = useState<DebtWithProgress | null>(null);
 
   return (
-    <div className="space-y-6 p-3 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="accounts-payable-concept space-y-6 pb-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Cuentas por Pagar</h1>
-          <p className="text-sm text-muted-foreground">Gestión de deudas, cuotas y obligaciones financieras</p>
+          <span className="dashboard-section-kicker"><Landmark className="size-3.5" />Tesorería</span>
+          <h1 className="dashboard-section-title">Cuentas por Pagar</h1>
+          <p className="dashboard-section-description">Deudas, cuotas, vencimientos y acreedores bajo control.</p>
         </div>
-        <Button onClick={() => setIsDebtFormOpen(true)} size={isMobile ? 'sm' : 'default'}>
+        <Button className="dashboard-report-button" onClick={() => setIsDebtFormOpen(true)} size={isMobile ? 'sm' : 'default'}>
           <Plus className="size-4 mr-1" /> Nueva Deuda
         </Button>
       </div>
@@ -34,7 +35,7 @@ const AccountsPayable = () => {
       <APDashboardCards />
 
       <Tabs defaultValue="installments" className="w-full">
-        <TabsList>
+        <TabsList className="finance-tabs h-auto w-full justify-start overflow-x-auto p-1">
           <TabsTrigger value="installments">Cuotas del Mes</TabsTrigger>
           <TabsTrigger value="debts">Deudas</TabsTrigger>
           <TabsTrigger value="calendar">Calendario</TabsTrigger>

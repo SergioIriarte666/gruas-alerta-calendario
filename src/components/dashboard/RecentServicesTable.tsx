@@ -63,7 +63,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   );
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="dashboard-panel border-border/70 bg-card/80 shadow-sm">
       <CardHeader className={isMobile ? "pb-2 px-3 pt-3" : "pb-4"}>
         <CardTitle className={`flex items-center gap-x-3 text-foreground ${isMobile ? 'text-base' : 'text-xl'}`}>
           <div className="rounded-xl bg-primary/10 p-2 text-primary">

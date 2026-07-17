@@ -25,7 +25,7 @@ export const OperatorsFilters = ({
   } as const;
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="resources-filter-panel border-border/70 bg-card/80 shadow-sm">
       <CardContent className="space-y-4 p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="relative">

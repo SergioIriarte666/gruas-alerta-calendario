@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/ui/page-header';
 import { CostList } from '@/components/costs/CostList';
 import { EnhancedCostsTable } from '@/components/costs/EnhancedCostsTable';
 import { CostForm } from '@/components/costs/CostForm';
@@ -25,7 +24,7 @@ import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
 import { matchesCostIdentifier, prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet, WalletCards } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
@@ -370,16 +369,18 @@ const CostsPage = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Gestión de Costos"
-                description="Administra costos operativos, filtros analíticos y acciones masivas desde una misma superficie."
-                actions={
-                    <div className={`flex ${isMobile ? 'w-full flex-col gap-2' : 'flex-wrap items-center gap-2'}`}>
+        <div className="costs-concept space-y-6 pb-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                    <span className="dashboard-section-kicker"><WalletCards className="size-3.5" />Control financiero</span>
+                    <h1 className="dashboard-section-title">Costos</h1>
+                    <p className="dashboard-section-description">Costos operativos, documentos y distribución contable en una sola vista.</p>
+                </div>
+                    <div className={`flex ${isMobile ? 'w-full flex-col gap-2' : 'flex-wrap items-center gap-2 xl:justify-end'}`}>
                         <Button
                             onClick={() => setIsQuickFormOpen(true)}
                             size={isMobile ? 'default' : 'sm'}
-                            className={isMobile ? 'w-full' : ''}
+                            className={`dashboard-report-button ${isMobile ? 'w-full' : ''}`}
                         >
                             <Zap className="mr-2 size-4" />
                             {isMobile ? 'Costo Rápido' : 'Nuevo Costo Rápido'}
@@ -414,8 +415,7 @@ const CostsPage = () => {
                             Carga Excel
                         </Button>
                     </div>
-                }
-            />
+            </div>
 
             <CostsDashboard
                 costs={finalFilteredCosts}

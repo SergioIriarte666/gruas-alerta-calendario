@@ -215,7 +215,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-6xl overflow-hidden flex flex-col gap-0 border-border/70 bg-card p-0">
+      <DialogContent className="supplier-dialog max-w-6xl overflow-hidden flex flex-col gap-0 border-border/70 bg-card p-0">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Building2 className="size-6 text-primary" />

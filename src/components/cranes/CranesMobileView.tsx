@@ -83,7 +83,7 @@ export const CranesMobileView = ({
   
   if (cranes.length === 0 && searchTerm) {
     return (
-      <Card className="glass-card">
+      <Card className="resources-panel">
         <CardContent className="p-6 text-center">
           <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
@@ -101,7 +101,7 @@ export const CranesMobileView = ({
 
   if (cranes.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="resources-panel">
         <CardContent className="p-6 text-center">
           <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>

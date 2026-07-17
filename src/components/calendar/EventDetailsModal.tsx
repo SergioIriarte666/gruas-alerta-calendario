@@ -62,7 +62,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="operations-dialog max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconComponent className="size-5" />

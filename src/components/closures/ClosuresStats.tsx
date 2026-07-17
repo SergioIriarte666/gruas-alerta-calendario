@@ -22,6 +22,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
         description="Pendientes de revisión o cierre"
         icon={FileText}
         tone="warning"
+        variant="control"
       />
       <MetricCard
         title="Cierres Cerrados"
@@ -29,6 +30,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
         description="Listos para facturación"
         icon={Calendar}
         tone="info"
+        variant="control"
       />
       <MetricCard
         title="Total Facturado"
@@ -36,6 +38,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
         description="Monto ya facturado"
         icon={DollarSign}
         tone="success"
+        variant="control"
       />
     </div>
   );

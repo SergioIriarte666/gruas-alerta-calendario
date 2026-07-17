@@ -191,18 +191,18 @@ export default function VipClientPipeline() {
 
   if (!client) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="client-pipeline-concept space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/clients')}
-            className="text-gray-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4 mr-2" />
             Volver a Clientes
           </Button>
         </div>
-        <Card className="bg-card border">
+        <Card className="operations-panel border bg-card">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="size-12 text-amber-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">Cliente no encontrado</h2>
@@ -214,7 +214,7 @@ export default function VipClientPipeline() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="client-pipeline-concept space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -229,6 +229,7 @@ export default function VipClientPipeline() {
           </Button>
           <div className="hidden sm:block h-8 w-px bg-border" />
           <div>
+            <span className="dashboard-section-kicker">Pipeline comercial</span>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
               {toTitleCase(client.name)}
               <Badge variant="secondary" className="text-xs sm:text-sm">
@@ -261,17 +262,17 @@ export default function VipClientPipeline() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-card border">
-          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+        <TabsList className="operations-tabs grid h-auto w-full grid-cols-2 border p-1 sm:grid-cols-4">
+          <TabsTrigger value="pipeline" className="text-xs sm:text-sm">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+          <TabsTrigger value="purchase-orders" className="text-xs sm:text-sm">
             O.C.
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm">
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+          <TabsTrigger value="reports" className="text-xs sm:text-sm">
             Reportes
           </TabsTrigger>
         </TabsList>
@@ -334,7 +335,7 @@ export default function VipClientPipeline() {
       </Tabs>
 
       {/* Info Footer */}
-      <Card className="bg-card border">
+      <Card className="operations-panel border bg-card">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Clock className="size-4 text-primary" />

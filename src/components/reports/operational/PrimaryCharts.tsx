@@ -19,9 +19,9 @@ export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthCo
       <CardContent>
         <ChartContainer config={servicesByMonthConfig} className="w-full h-[300px]">
           <BarChart data={metrics.servicesByMonth}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="month" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+            <YAxis stroke="hsl(var(--muted-foreground))" />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="services" fill="var(--color-services)" radius={4} />
           </BarChart>
@@ -36,9 +36,9 @@ export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthCo
       <CardContent>
         <ChartContainer config={revenueByMonthConfig} className="w-full h-[300px]">
           <LineChart data={metrics.servicesByMonth}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="month" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+            <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
             <ChartTooltip 
               cursor={false}
               content={<ChartTooltipContent indicator="line" formatter={(value) => `$${Number(value).toLocaleString()}`} />}

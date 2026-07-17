@@ -64,7 +64,7 @@ export const PreviewInspeccionDialog = ({ servicio, open, onOpenChange }: Previe
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent className="configuration-dialog max-w-5xl">
           <DialogHeader>
             <DialogTitle>Previsualizar inspección #{servicio.folio}</DialogTitle>
             <DialogDescription>

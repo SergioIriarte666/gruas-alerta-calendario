@@ -50,7 +50,7 @@ export const EvidenceUploadCard = ({ serviceId, readOnly = false }: Props) => {
   };
 
   return (
-    <Card>
+    <Card className="external-dialog-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Paperclip className="size-4" />

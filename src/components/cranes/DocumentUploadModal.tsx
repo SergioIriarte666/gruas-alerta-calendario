@@ -103,7 +103,7 @@ export const DocumentUploadModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="cranes-modal cranes-modal--upload border-border/70 bg-card sm:max-w-md">
+      <DialogContent className="cranes-modal cranes-modal--upload resources-dialog border-border/70 bg-card sm:max-w-md">
         <DialogHeader className="cranes-modal__header">
           <DialogTitle>Actualizar {documentName}</DialogTitle>
           <DialogDescription>

@@ -52,7 +52,7 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="finance-dialog sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">Registrar Pago de Cuota</DialogTitle>
         </DialogHeader>

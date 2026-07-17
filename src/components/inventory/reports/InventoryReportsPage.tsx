@@ -117,7 +117,7 @@ export const InventoryReportsPage: React.FC<InventoryReportsPageProps> = ({ enti
         </SectionCard>
       )}
 
-      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
+      <SectionCard flush className="inventory-panel border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
         <div className="flex flex-wrap gap-2 px-6 pt-6">
           <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
             <BarChart3 className="size-3.5" />
@@ -131,7 +131,7 @@ export const InventoryReportsPage: React.FC<InventoryReportsPageProps> = ({ enti
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full min-w-[760px] grid-cols-5 rounded-xl bg-transparent p-0">
+            <TabsList className="inventory-tabs grid h-auto w-full min-w-[760px] grid-cols-5 p-1">
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}

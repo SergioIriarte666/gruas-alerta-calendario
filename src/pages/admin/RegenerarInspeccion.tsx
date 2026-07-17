@@ -38,12 +38,12 @@ const RegenerarInspeccion = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="regenerate-inspection-concept space-y-6 pb-6">
       <RegenerarInspeccionHeader onRefresh={() => query.refetch()} isRefreshing={query.isFetching} />
       <RegenerarInspeccionFilters filters={filters} onChange={setFilters} />
 
       {query.isLoading && (
-        <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
+        <div className="configuration-panel rounded-lg border bg-card p-8 text-sm text-muted-foreground">
           Cargando servicios con evidencia fotográfica...
         </div>
       )}

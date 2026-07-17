@@ -115,7 +115,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="configuration-dialog max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Editar Tarifa' : 'Nueva Tarifa'}

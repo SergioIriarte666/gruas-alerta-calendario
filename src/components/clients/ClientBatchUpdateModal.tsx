@@ -56,7 +56,7 @@ export const ClientBatchUpdateModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="operations-dialog sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Editar {selectedCount} cliente{selectedCount !== 1 ? 's' : ''}</DialogTitle>
         </DialogHeader>

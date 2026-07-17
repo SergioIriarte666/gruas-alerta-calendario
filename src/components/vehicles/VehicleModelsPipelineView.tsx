@@ -120,7 +120,7 @@ export const VehicleModelsPipelineView: React.FC<VehicleModelsPipelineViewProps>
 
   if (groupedModels.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="resources-panel border-border bg-card">
         <CardContent className="p-12 text-center">
           <p className="text-muted-foreground">
             {searchTerm.trim() ? 'No se encontraron resultados para tu búsqueda' : 'No hay modelos registrados'}

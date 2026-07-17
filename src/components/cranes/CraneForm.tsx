@@ -82,7 +82,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   };
 
   return (
-    <DialogContent className="cranes-modal cranes-modal--form border-border/70 bg-card sm:max-w-[600px]">
+    <DialogContent className="cranes-modal cranes-modal--form resources-dialog border-border/70 bg-card sm:max-w-[600px]">
       <DialogHeader className="cranes-modal__header -mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 py-4">
         <DialogTitle className="text-foreground">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}

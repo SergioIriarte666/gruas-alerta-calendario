@@ -240,7 +240,7 @@ const Closures = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="closures-concept space-y-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[...Array(3)].map((_, index) => (
@@ -255,7 +255,7 @@ const Closures = () => {
 
   if (editingClosure) {
     return (
-      <div className="space-y-6">
+      <div className="closures-concept space-y-6">
         <EditClosureForm
           closure={editingClosure}
           onSubmit={handleUpdateClosure}
@@ -267,7 +267,7 @@ const Closures = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="closures-concept space-y-6 pb-6">
       <ClosuresHeader
         onCreateClosure={handleShowCreateModal}
       />
@@ -336,7 +336,7 @@ const Closures = () => {
       />
 
       <AlertDialog open={!!closureToClose} onOpenChange={(open) => !open && setClosureToClose(null)}>
-        <AlertDialogContent className="border-border/70 bg-popover/95">
+        <AlertDialogContent className="finance-dialog border-border/70 bg-popover/95">
           <AlertDialogHeader>
             <AlertDialogTitle>Cerrar periodo</AlertDialogTitle>
             <AlertDialogDescription>

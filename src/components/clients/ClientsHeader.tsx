@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { PageHeader } from '@/components/ui/page-header';
-import { Plus } from 'lucide-react';
+import { ContactRound, Plus } from 'lucide-react';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 
@@ -32,19 +31,23 @@ export const ClientsHeader = ({
 
   return (
     <>
-      <PageHeader
-        title="Gestión de Clientes"
-        description="Administra cartera, departamentos y actividad comercial desde una sola vista."
-        actions={
-          <Button onClick={handleNewClient}>
-            <Plus className="mr-2 size-4" />
-            Nuevo Cliente
-          </Button>
-        }
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="dashboard-section-kicker">
+            <ContactRound className="size-3.5" />
+            Cartera comercial
+          </span>
+          <h1 className="dashboard-section-title">Clientes</h1>
+          <p className="dashboard-section-description">Cartera, departamentos y actividad comercial en una sola vista.</p>
+        </div>
+        <Button onClick={handleNewClient} size="sm" className="dashboard-report-button">
+          <Plus className="mr-2 size-4" />
+          Nuevo cliente
+        </Button>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open ? handleCloseModal() : setIsDialogOpen(true)}>
-        <DialogContent className="max-h-[90vh] max-w-4xl border-border/70 bg-popover/95 p-0">
+        <DialogContent className="operations-dialog max-h-[90vh] max-w-4xl border-border/70 bg-popover/95 p-0">
             <ClientForm
               client={selectedClient}
               onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}

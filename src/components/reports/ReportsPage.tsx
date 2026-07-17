@@ -176,7 +176,7 @@ const ReportsPage = () => {
     return getPeriodDates(selectedPeriod);
   }, [selectedPeriod, customFrom, customTo]);
   const customDateTriggerClassName =
-    'h-11 text-sm justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors w-full sm:w-[176px]';
+    'h-11 w-full justify-start rounded-xl border-border/70 px-3 text-left text-sm font-normal shadow-sm transition-colors sm:w-[176px]';
 
   const { appliedFilters } = useReportFilters();
 
@@ -761,13 +761,13 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="reports-concept space-y-4 pb-6">
       {/* Header */}
       <ReportsHeader />
 
       <SectionCard
         flush
-        className="border-border/70 bg-card/80 shadow-sm"
+        className="analysis-panel border-border/70 bg-card/80 shadow-sm"
         contentClassName="space-y-4 p-4"
       >
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
@@ -783,7 +783,7 @@ const ReportsPage = () => {
               }}
               className={`flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-lg border text-sm font-medium transition-all duration-200 min-w-0 ${
                 isActive
-                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  ? 'analysis-tab-active border-primary shadow-sm'
                   : 'bg-background/70 text-foreground border-border/70 hover:bg-muted/50 hover:border-primary/30'
               }`}
             >
@@ -820,8 +820,8 @@ const ReportsPage = () => {
                   className={cn(
                     customDateTriggerClassName,
                     customFrom
-                      ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                      : 'bg-background/70 text-foreground hover:bg-[#f4f7fb]',
+                      ? 'border-primary/35 bg-primary/10 text-foreground'
+                      : 'bg-background/70 text-foreground hover:bg-muted/60',
                     !customFrom && 'text-muted-foreground'
                   )}
                 >
@@ -848,8 +848,8 @@ const ReportsPage = () => {
                   className={cn(
                     customDateTriggerClassName,
                     customTo
-                      ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                      : 'bg-background/70 text-foreground hover:bg-[#f4f7fb]',
+                      ? 'border-primary/35 bg-primary/10 text-foreground'
+                      : 'bg-background/70 text-foreground hover:bg-muted/60',
                     !customTo && 'text-muted-foreground'
                   )}
                 >
@@ -966,7 +966,7 @@ const ReportsPage = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="h-9">
+              <Button size="sm" className="dashboard-report-button h-9">
                 <Download className="size-3.5 mr-1.5" />
                 Exportar
               </Button>

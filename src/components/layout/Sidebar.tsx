@@ -258,7 +258,7 @@ export const Sidebar = ({
         )}
         {showBadge && !collapsed && (
           <span
-            className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+            className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground"
             aria-label={`${upcomingCount} servicios programados para hoy o mañana`}
           >
             {upcomingCount}
@@ -266,7 +266,7 @@ export const Sidebar = ({
         )}
         {showBadge && collapsed && (
           <span
-            className="absolute -right-0.5 -top-0.5 inline-flex size-2 rounded-full bg-violet-600 ring-2 ring-card"
+            className="absolute -right-0.5 -top-0.5 inline-flex size-2 rounded-full bg-primary ring-2 ring-card"
             aria-label={`${upcomingCount} servicios programados para hoy o mañana`}
           />
         )}

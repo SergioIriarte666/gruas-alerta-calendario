@@ -91,7 +91,7 @@ export const InvoicesListTabContent = ({
       <InvoicesStats invoices={invoices.filter((invoice) => !invoice.folio.startsWith('HIST-'))} />
 
       <SectionCard
-        className="border-border/70 bg-card/80 shadow-sm"
+        className="finance-filter-panel border-border/70 bg-card/80 shadow-sm"
         contentClassName="space-y-4"
         title="Búsqueda y Estado"
         description="Filtra por cliente, folio, número fiscal o prioridad de cobranza."

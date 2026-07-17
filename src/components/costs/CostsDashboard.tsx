@@ -132,29 +132,31 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
       {/* Métricas principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total filtrado */}
-        <Card className="bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 border-violet-200 dark:border-violet-800">
+        <Card className="dashboard-kpi dashboard-kpi--primary" data-tone="primary">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">
+                <p className="text-sm text-muted-foreground font-medium">
                   Total {getPeriodLabel()}
                 </p>
-                <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">
+                <p className="text-2xl font-bold text-foreground">
                   {formatCompactCurrency(metrics.totalFiltered)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {metrics.countFiltered} registros
                 </p>
               </div>
-              <div className="bg-violet-600/10 p-3 rounded-xl">
-                <DollarSign className="size-6 text-violet-600" />
+              <div className="bg-primary/10 p-3 rounded-xl">
+                <DollarSign className="size-6 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Promedio */}
-        <Card>
+        <Card className="dashboard-kpi" data-tone="info">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -174,7 +176,8 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
         </Card>
 
         {/* Este mes */}
-        <Card>
+        <Card className="dashboard-kpi" data-tone="warning">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -206,7 +209,8 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
         </Card>
 
         {/* Hoy */}
-        <Card>
+        <Card className="dashboard-kpi" data-tone="success">
+          <span className="dashboard-kpi__accent" aria-hidden="true" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -228,7 +232,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
       {/* Desglose por categorías */}
       {categoryBreakdown.length > 0 && (
-        <Card>
+        <Card className="finance-panel">
           <Collapsible defaultOpen={false}>
             <CardContent className="p-4">
               <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer group">

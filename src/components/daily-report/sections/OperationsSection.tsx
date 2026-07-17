@@ -43,15 +43,15 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
   const getAlertLevel = (priority: string) => {
     switch (priority) {
       case 'VENCIDO':
-        return { color: 'red', text: 'Vencido' };
+        return { tone: 'danger', text: 'Vencido', cardClass: 'border-danger/30 bg-danger/5', iconClass: 'text-danger' };
       case 'CRÍTICO':
-        return { color: 'red', text: 'Crítico' };
+        return { tone: 'danger', text: 'Crítico', cardClass: 'border-danger/30 bg-danger/5', iconClass: 'text-danger' };
       case 'URGENTE':
-        return { color: 'orange', text: 'Urgente' };
+        return { tone: 'warning', text: 'Urgente', cardClass: 'border-warning/30 bg-warning/5', iconClass: 'text-warning' };
       case 'PRÓXIMO':
-        return { color: 'yellow', text: 'Próximo' };
+        return { tone: 'warning', text: 'Próximo', cardClass: 'border-warning/30 bg-warning/5', iconClass: 'text-warning' };
       default:
-        return { color: 'yellow', text: 'Atención' };
+        return { tone: 'warning', text: 'Atención', cardClass: 'border-warning/30 bg-warning/5', iconClass: 'text-warning' };
     }
   };
 
@@ -73,14 +73,14 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
     const expiryDate = new Date(alert.expiryDate);
 
     return (
-      <Card className={`border-${alertLevel.color}-200 bg-${alertLevel.color}-50`}>
+      <Card className={alertLevel.cardClass}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <AlertTriangle className={`size-4 text-${alertLevel.color}-500`} />
+                <AlertTriangle className={`size-4 ${alertLevel.iconClass}`} />
                 <span className="font-medium">{alert.crane}</span>
-                <Badge variant={alertLevel.color === 'red' ? 'destructive' : 'secondary'}>
+                <Badge variant={alertLevel.tone === 'danger' ? 'destructive' : 'secondary'}>
                   {alertLevel.text}
                 </Badge>
               </div>

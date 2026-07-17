@@ -17,17 +17,17 @@ export const ServicesDateFilter = ({ selected, onChange }: ServicesDateFilterPro
   ];
 
   return (
-    <div className="flex flex-shrink-0 gap-x-1 overflow-x-auto rounded-lg border border-border bg-muted p-1 sm:gap-x-2">
+    <div className="services-period-filter flex max-w-full flex-shrink-0 gap-x-1 overflow-x-auto p-1">
       {filters.map((filter) => (
         <Button
           key={filter.key}
-          variant={selected === filter.key ? 'default' : 'ghost'}
+          variant="ghost"
           size="sm"
           onClick={() => onChange(filter.key)}
           className={`
             transition-colors whitespace-nowrap text-xs sm:text-sm
             ${selected === filter.key 
-              ? 'bg-primary text-primary-foreground shadow-sm font-medium' 
+              ? 'services-period-filter__active font-medium shadow-sm'
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             }
           `}

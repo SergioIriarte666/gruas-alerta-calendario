@@ -146,33 +146,6 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Paleta operativa de Lowboy: menos saturación y contraste estable en ambos temas. */
-body.lowboy-theme {
-  --primary: 173 80% 27%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 173 80% 22%;
-  --primary-soft: 174 45% 95%;
-  --ring: 173 70% 35%;
-  --accent: 174 45% 95%;
-  --accent-foreground: 173 65% 22%;
-  --shadow-glow: 0 0 0 1px hsl(173 70% 35% / 0.10), 0 4px 12px hsl(173 70% 30% / 0.10);
-}
-
-.dark body.lowboy-theme {
-  --primary: 173 65% 36%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 173 65% 42%;
-  --primary-soft: 174 45% 15%;
-  --ring: 173 60% 45%;
-  --accent: 174 45% 15%;
-  --accent-foreground: 173 35% 88%;
-  --shadow-glow: 0 0 0 1px hsl(173 60% 45% / 0.16), 0 4px 12px hsl(0 0% 0% / 0.24);
-}
-
-body.lowboy-theme .lowboy-on-color {
-  color: #fff !important;
-}
-
 /* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 8px;
@@ -210,7 +183,780 @@ body.lowboy-theme .lowboy-on-color {
 
 .metric-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+}
+
+/* =====================================================================
+   Sistema visual carbón + lima — aplicación y superficies operativas.
+   Los scopes conservan compatibilidad con módulos heredados y portales.
+   ===================================================================== */
+.app-shell-concept,
+.operator-shell-concept,
+.dashboard-concept,
+.daily-report-concept,
+.services-concept,
+.external-services-concept,
+.external-dialog,
+.clients-concept,
+.document-library-concept,
+.calendar-concept,
+.client-pipeline-concept,
+.operations-dialog,
+.cranes-concept,
+.operators-concept,
+.vehicles-concept,
+.operator-locations-concept,
+.resources-dialog,
+.inventory-concept,
+.suppliers-concept,
+.inventory-dialog,
+.supplier-dialog,
+.costs-concept,
+.accounts-payable-concept,
+.commissions-concept,
+.closures-concept,
+.invoices-concept,
+.historical-concept,
+.lowboy-concept,
+.trip-calculator-concept,
+.finance-dialog,
+.income-projections-concept,
+.reports-concept,
+.service-types-concept,
+.service-rates-concept,
+.cost-centers-concept,
+.quick-entries-concept,
+.settings-concept,
+.regenerate-inspection-concept,
+.pending-users-concept,
+.configuration-dialog,
+.app-overlay-surface {
+  --dashboard-ink: 215 28% 17%;
+  --dashboard-lime: 84 81% 53%;
+  --dashboard-lime-soft: 84 81% 93%;
+  --dashboard-panel: 0 0% 100%;
+  --dashboard-line: 220 14% 90%;
+  --inventory-accent: 84 78% 36%;
+}
+
+.dark .app-shell-concept,
+.dark .operator-shell-concept,
+.dark .dashboard-concept,
+.dark .daily-report-concept,
+.dark .services-concept,
+.dark .external-services-concept,
+.dark .external-dialog,
+.dark .clients-concept,
+.dark .document-library-concept,
+.dark .calendar-concept,
+.dark .client-pipeline-concept,
+.dark .operations-dialog,
+.dark .cranes-concept,
+.dark .operators-concept,
+.dark .vehicles-concept,
+.dark .operator-locations-concept,
+.dark .resources-dialog,
+.dark .inventory-concept,
+.dark .suppliers-concept,
+.dark .inventory-dialog,
+.dark .supplier-dialog,
+.dark .costs-concept,
+.dark .accounts-payable-concept,
+.dark .commissions-concept,
+.dark .closures-concept,
+.dark .invoices-concept,
+.dark .historical-concept,
+.dark .lowboy-concept,
+.dark .trip-calculator-concept,
+.dark .finance-dialog,
+.dark .income-projections-concept,
+.dark .reports-concept,
+.dark .service-types-concept,
+.dark .service-rates-concept,
+.dark .cost-centers-concept,
+.dark .quick-entries-concept,
+.dark .settings-concept,
+.dark .regenerate-inspection-concept,
+.dark .pending-users-concept,
+.dark .configuration-dialog,
+.dark .app-overlay-surface {
+  --dashboard-ink: 216 24% 16%;
+  --dashboard-lime: 84 81% 57%;
+  --dashboard-lime-soft: 84 45% 16%;
+  --dashboard-panel: 220 27% 11%;
+  --dashboard-line: 218 20% 22%;
+  --inventory-accent: 84 81% 57%;
+}
+
+.dashboard-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dashboard-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-live-badge {
+  border: 1px solid hsl(var(--dashboard-line));
+  padding: 0.55rem 0.8rem;
+  color: hsl(var(--text-muted));
+  background: hsl(var(--dashboard-panel) / 0.75);
+}
+
+.dashboard-live-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: none;
+  border-radius: 9999px;
+  background: hsl(var(--dashboard-lime));
+  box-shadow: 0 0 0 4px hsl(var(--dashboard-lime) / 0.14);
+}
+
+.dashboard-report-button {
+  border-radius: 9999px;
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+  box-shadow: 0 10px 25px -12px hsl(var(--dashboard-lime) / 0.8);
+}
+
+.dashboard-report-button:hover {
+  color: hsl(216 31% 12%);
+  background: hsl(84 81% 61%);
+}
+
+.dashboard-section-kicker {
+  color: hsl(var(--text-muted));
+}
+
+.dashboard-section-title {
+  margin-top: 0.3rem;
+  color: hsl(var(--text-strong));
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.dashboard-section-description {
+  margin-top: 0.3rem;
+  color: hsl(var(--text-muted));
+  font-size: 0.82rem;
+}
+
+.dashboard-divider {
+  height: 1px;
+  background: linear-gradient(90deg, hsl(var(--dashboard-line)), transparent);
+}
+
+.dashboard-kpi {
+  position: relative;
+  min-height: 142px;
+  border-color: hsl(var(--dashboard-line));
+  border-radius: 1.15rem;
+  background: hsl(var(--dashboard-panel));
+  box-shadow: 0 14px 34px -28px rgb(15 23 42 / 0.65);
+}
+
+.dashboard-kpi__accent {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: hsl(var(--text-subtle));
+}
+
+.dashboard-kpi[data-tone="primary"] .dashboard-kpi__accent { background: hsl(var(--dashboard-lime)); }
+.dashboard-kpi[data-tone="success"] .dashboard-kpi__accent { background: hsl(var(--success)); }
+.dashboard-kpi[data-tone="warning"] .dashboard-kpi__accent { background: hsl(var(--warning)); }
+.dashboard-kpi[data-tone="danger"] .dashboard-kpi__accent { background: hsl(var(--danger)); }
+.dashboard-kpi[data-tone="info"] .dashboard-kpi__accent { background: hsl(var(--info)); }
+
+.dashboard-kpi--primary {
+  border-color: hsl(var(--dashboard-lime) / 0.3);
+  background:
+    radial-gradient(circle at 105% -15%, hsl(var(--dashboard-lime) / 0.11), transparent 42%),
+    hsl(var(--dashboard-panel));
+  color: hsl(var(--text-strong));
+  box-shadow: 0 14px 34px -28px rgb(15 23 42 / 0.45);
+}
+
+.dashboard-kpi--primary .text-foreground { color: hsl(var(--text-strong)); }
+.dashboard-kpi--primary .text-muted-foreground { color: hsl(var(--text-muted)); }
+.dashboard-kpi--primary .text-primary { color: hsl(var(--inventory-accent)); }
+.dashboard-kpi--primary .bg-primary\/10 { background: hsl(var(--dashboard-lime) / 0.12); }
+
+.dark .dashboard-kpi--primary {
+  border-color: hsl(216 22% 26%);
+  background:
+    radial-gradient(circle at 105% -15%, hsl(var(--dashboard-lime) / 0.17), transparent 42%),
+    hsl(var(--dashboard-ink));
+  color: white;
+  box-shadow: 0 14px 34px -28px rgb(2 6 23 / 0.8);
+}
+
+.dark .dashboard-kpi--primary .text-foreground { color: white; }
+.dark .dashboard-kpi--primary .text-muted-foreground { color: hsl(216 16% 72%); }
+.dark .dashboard-kpi--primary .text-primary { color: hsl(var(--dashboard-lime)); }
+.dark .dashboard-kpi--primary .bg-primary\/10 { background: hsl(var(--dashboard-lime) / 0.14); }
+
+.dashboard-section-card,
+.dashboard-panel {
+  overflow: hidden;
+  border-color: hsl(var(--dashboard-line));
+  border-radius: 1.35rem;
+  background: hsl(var(--dashboard-panel) / 0.92);
+  box-shadow: 0 18px 44px -34px rgb(15 23 42 / 0.7);
+}
+
+/* Servicios: controles compactos para una pantalla de alta frecuencia. */
+.services-toolbar,
+.services-filter-bar,
+.services-panel {
+  border: 1px solid hsl(var(--dashboard-line));
+  background: hsl(var(--dashboard-panel) / 0.88);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.services-toolbar,
+.services-panel {
+  border-radius: 1.1rem;
+}
+
+.services-filter-bar {
+  border-radius: 0.9rem;
+}
+
+.services-view-toggle,
+.services-period-filter {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.75rem;
+  background: hsl(var(--dashboard-panel) / 0.74);
+}
+
+.services-view-toggle [data-state="on"],
+.services-period-filter__active {
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+}
+
+.dark .services-view-toggle [data-state="on"],
+.dark .services-period-filter__active {
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.services-concept .services-panel thead {
+  background: hsl(var(--dashboard-ink) / 0.045);
+}
+
+.dark .services-concept .services-panel thead {
+  background: hsl(var(--dashboard-ink) / 0.85);
+}
+
+/* Servicios externos: red de proveedores, evidencia y cierre administrativo. */
+.external-services-panel,
+.external-state-panel,
+.external-error-panel,
+.external-dialog-card,
+.external-service-mobile-card {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.external-services-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.8rem;
+  background: hsl(var(--dashboard-panel) / 0.78);
+}
+
+.external-services-tabs [data-state="active"] {
+  color: white;
+  background: hsl(var(--dashboard-ink));
+  box-shadow: none;
+}
+
+.dark .external-services-tabs [data-state="active"] {
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+}
+
+.external-services-table-head {
+  background: hsl(var(--dashboard-ink) / 0.045);
+}
+
+.dark .external-services-table-head {
+  background: hsl(var(--dashboard-ink) / 0.85);
+}
+
+.external-services-primary-action {
+  border-color: hsl(var(--dashboard-lime) / 0.55) !important;
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime) / 0.88) !important;
+}
+
+.external-services-primary-action:hover {
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.external-service-mobile-card {
+  position: relative;
+}
+
+.external-service-mobile-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  content: "";
+  background: hsl(var(--warning));
+}
+
+.external-service-mobile-card[data-closed="true"]::before {
+  background: hsl(var(--success));
+}
+
+.external-empty-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 9999px;
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+  box-shadow: 0 0 0 7px hsl(var(--dashboard-lime) / 0.13);
+}
+
+.external-error-panel {
+  border-color: hsl(var(--danger) / 0.3);
+  background: hsl(var(--danger) / 0.06);
+}
+
+.external-accent-icon {
+  color: hsl(var(--dashboard-lime));
+}
+
+/* Operaciones: Clientes, Biblioteca Documental, Calendario y pipeline interno. */
+.operations-panel,
+.operations-filter-panel,
+.operations-toolbar {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.operations-filter-active,
+.operations-view-active {
+  border-color: hsl(var(--dashboard-ink)) !important;
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+}
+
+.dark .operations-filter-active,
+.dark .operations-view-active {
+  border-color: hsl(var(--dashboard-lime)) !important;
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.operations-tabs {
+  border-color: hsl(var(--dashboard-line));
+  border-radius: 0.85rem;
+  background: hsl(var(--dashboard-panel) / 0.8);
+}
+
+.operations-tabs [data-state="active"] {
+  color: white;
+  background: hsl(var(--dashboard-ink));
+  box-shadow: none;
+}
+
+.dark .operations-tabs [data-state="active"] {
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+}
+
+.calendar-upcoming {
+  border: 1px solid hsl(var(--dashboard-lime) / 0.35);
+  border-radius: 0.8rem;
+  color: hsl(var(--text-strong));
+  background: hsl(var(--dashboard-lime) / 0.08);
+}
+
+.calendar-upcoming > svg {
+  color: hsl(var(--dashboard-lime));
+}
+
+.client-form-header {
+  background:
+    radial-gradient(circle at 100% 0%, hsl(var(--dashboard-lime) / 0.22), transparent 42%),
+    hsl(var(--dashboard-ink));
+}
+
+.operations-dialog .dashboard-report-button {
+  color: hsl(216 31% 12%);
+}
+
+/* Recursos: flota, dotación, catálogos vehiculares y telemetría. */
+.resources-panel,
+.resources-filter-panel,
+.resource-query-panel {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.resources-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.85rem;
+  background: hsl(var(--dashboard-panel) / 0.8);
+}
+
+.resources-tabs [data-state="active"],
+.resources-filter-active {
+  border-color: hsl(var(--dashboard-ink)) !important;
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+  box-shadow: none;
+}
+
+.dark .resources-tabs [data-state="active"],
+.dark .resources-filter-active {
+  border-color: hsl(var(--dashboard-lime)) !important;
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.resource-catalog-badge {
+  border: 1px solid hsl(var(--dashboard-lime) / 0.4);
+  color: hsl(var(--text-strong));
+  background: hsl(var(--dashboard-lime) / 0.1);
+}
+
+.resource-coordinate-card {
+  padding: 0.75rem;
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.75rem;
+  background: hsl(var(--dashboard-ink) / 0.045);
+}
+
+.dark .resource-coordinate-card {
+  background: hsl(var(--dashboard-ink) / 0.78);
+}
+
+.resource-location-selected {
+  border-color: hsl(var(--dashboard-lime) / 0.6) !important;
+  background: hsl(var(--dashboard-lime) / 0.08) !important;
+  box-shadow: inset 3px 0 0 hsl(var(--dashboard-lime));
+}
+
+.resource-query-panel {
+  background:
+    radial-gradient(circle at 100% 0%, hsl(var(--dashboard-lime) / 0.08), transparent 38%),
+    hsl(var(--dashboard-panel) / 0.92);
+}
+
+.resource-query-icon {
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+}
+
+.resources-dialog .dashboard-report-button {
+  color: hsl(216 31% 12%);
+}
+
+/* Inventario: bodega, movimientos, reportes, proveedores y pagos. */
+.inventory-concept,
+.suppliers-concept,
+.inventory-dialog,
+.supplier-dialog {
+  --primary: var(--inventory-accent);
+  --primary-foreground: 0 0% 100%;
+}
+
+.dark .inventory-concept,
+.dark .suppliers-concept,
+.dark .inventory-dialog,
+.dark .supplier-dialog {
+  --primary-foreground: 216 31% 12%;
+}
+
+.inventory-panel {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.inventory-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.85rem;
+  background: hsl(var(--dashboard-panel) / 0.8);
+}
+
+.inventory-tabs [data-state="active"] {
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+  box-shadow: none;
+}
+
+.dark .inventory-tabs [data-state="active"] {
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.inventory-catalog-badge {
+  border: 1px solid hsl(var(--dashboard-lime) / 0.4);
+  color: hsl(var(--text-strong));
+  background: hsl(var(--dashboard-lime) / 0.1);
+}
+
+.inventory-dialog .dashboard-report-button,
+.supplier-dialog .dashboard-report-button {
+  color: hsl(216 31% 12%);
+}
+
+/* Finanzas: lectura ejecutiva, control de caja y conciliación. */
+.costs-concept,
+.accounts-payable-concept,
+.commissions-concept,
+.closures-concept,
+.invoices-concept,
+.historical-concept,
+.lowboy-concept,
+.trip-calculator-concept,
+.finance-dialog {
+  --primary: var(--inventory-accent);
+  --primary-foreground: 0 0% 100%;
+}
+
+.dark .costs-concept,
+.dark .accounts-payable-concept,
+.dark .commissions-concept,
+.dark .closures-concept,
+.dark .invoices-concept,
+.dark .historical-concept,
+.dark .lowboy-concept,
+.dark .trip-calculator-concept,
+.dark .finance-dialog {
+  --primary-foreground: 216 31% 12%;
+}
+
+.finance-panel,
+.finance-filter-panel,
+.costs-concept [data-costs-panel],
+.accounts-payable-concept [role="tabpanel"] > .border,
+.trip-calculator-concept [role="tabpanel"] > .border {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.finance-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.85rem;
+  background: hsl(var(--dashboard-panel) / 0.8) !important;
+}
+
+.finance-tabs [data-state="active"] {
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+  box-shadow: none !important;
+}
+
+.dark .finance-tabs [data-state="active"] {
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.finance-dialog .dashboard-report-button,
+.costs-concept .dashboard-report-button,
+.accounts-payable-concept .dashboard-report-button,
+.commissions-concept .dashboard-report-button,
+.closures-concept .dashboard-report-button,
+.invoices-concept .dashboard-report-button,
+.trip-calculator-concept .dashboard-report-button {
+  color: hsl(216 31% 12%);
+}
+
+/* Análisis y Configuración: lectura densa, parámetros trazables y acciones claras. */
+.app-shell-concept,
+.operator-shell-concept,
+.income-projections-concept,
+.reports-concept,
+.service-types-concept,
+.service-rates-concept,
+.cost-centers-concept,
+.quick-entries-concept,
+.settings-concept,
+.regenerate-inspection-concept,
+.pending-users-concept,
+.configuration-dialog,
+.app-overlay-surface {
+  --primary: var(--inventory-accent);
+  --primary-foreground: 0 0% 100%;
+}
+
+.dark .app-shell-concept,
+.dark .operator-shell-concept,
+.dark .income-projections-concept,
+.dark .reports-concept,
+.dark .service-types-concept,
+.dark .service-rates-concept,
+.dark .cost-centers-concept,
+.dark .quick-entries-concept,
+.dark .settings-concept,
+.dark .regenerate-inspection-concept,
+.dark .pending-users-concept,
+.dark .configuration-dialog,
+.dark .app-overlay-surface {
+  --primary-foreground: 216 31% 12%;
+}
+
+.analysis-panel,
+.analysis-filter-panel,
+.configuration-panel,
+.configuration-filter-panel {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 1.05rem;
+  background: hsl(var(--dashboard-panel) / 0.9);
+  box-shadow: 0 16px 38px -32px rgb(15 23 42 / 0.7);
+}
+
+.analysis-tab-active {
+  border-color: hsl(var(--dashboard-ink)) !important;
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+}
+
+.configuration-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.85rem;
+  background: hsl(var(--dashboard-panel) / 0.8) !important;
+}
+
+.configuration-tabs [data-state="active"] {
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+  box-shadow: none !important;
+}
+
+.dark .analysis-tab-active,
+.dark .configuration-tabs [data-state="active"] {
+  border-color: hsl(var(--dashboard-lime)) !important;
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+.income-projections-concept .dashboard-report-button,
+.reports-concept .dashboard-report-button,
+.service-types-concept .dashboard-report-button,
+.service-rates-concept .dashboard-report-button,
+.cost-centers-concept .dashboard-report-button,
+.quick-entries-concept .dashboard-report-button,
+.settings-concept .dashboard-report-button,
+.regenerate-inspection-concept .dashboard-report-button,
+.pending-users-concept .dashboard-report-button,
+.configuration-dialog .dashboard-report-button {
+  color: hsl(216 31% 12%);
+}
+
+.app-overlay-surface {
+  border-color: hsl(var(--dashboard-line)) !important;
+  background: hsl(var(--dashboard-panel)) !important;
+  box-shadow: 0 32px 80px -30px rgb(2 6 23 / 0.72) !important;
+}
+
+.app-overlay-surface [role="tablist"] [data-state="active"] {
+  color: white !important;
+  background: hsl(var(--dashboard-ink)) !important;
+}
+
+.dark .app-overlay-surface [role="tablist"] [data-state="active"] {
+  color: hsl(216 31% 12%) !important;
+  background: hsl(var(--dashboard-lime)) !important;
+}
+
+/* Informe Diario comparte la dirección del centro de control, pero prioriza
+   densidad operativa: fecha, métricas y navegación permanecen visibles. */
+.daily-report-toolbar {
+  overflow: visible;
+  border-color: hsl(var(--dashboard-line));
+  border-radius: 1rem;
+  background: hsl(var(--dashboard-panel) / 0.84);
+  box-shadow: 0 14px 34px -30px rgb(15 23 42 / 0.65);
+}
+
+.daily-report-tabs {
+  border: 1px solid hsl(var(--dashboard-line));
+  border-radius: 0.9rem;
+  background: hsl(var(--dashboard-panel) / 0.78);
+  scrollbar-width: none;
+}
+
+.daily-report-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.daily-report-tabs [data-state="active"] {
+  color: white;
+  background: hsl(var(--dashboard-ink));
+  box-shadow: 0 8px 20px -14px rgb(15 23 42 / 0.8);
+}
+
+.daily-report-tabs [data-state="active"] [class*="bg-secondary"] {
+  color: hsl(var(--dashboard-ink));
+  background: hsl(var(--dashboard-lime));
+}
+
+.daily-report-content .tms-shadow {
+  border-color: hsl(var(--dashboard-line));
+  border-radius: 1rem;
+  background-color: hsl(var(--dashboard-panel));
+  box-shadow: 0 14px 34px -30px rgb(15 23 42 / 0.6);
+}
+
+.daily-report-content .tms-shadow .tms-shadow {
+  background-color: hsl(var(--background) / 0.72);
+  box-shadow: none;
+}
+
+.dark .daily-report-tabs [data-state="active"] {
+  color: hsl(216 31% 12%);
+  background: hsl(var(--dashboard-lime));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-kpi {
+    animation: dashboard-rise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .dashboard-kpi:nth-child(2) { animation-delay: 55ms; }
+  .dashboard-kpi:nth-child(3) { animation-delay: 110ms; }
+  .dashboard-kpi:nth-child(4) { animation-delay: 165ms; }
+}
+
+@keyframes dashboard-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .dashboard-live-badge {
+    white-space: normal;
+  }
 }
 
 /* Estados de navegación */
@@ -364,8 +1110,6 @@ body.lowboy-theme .lowboy-on-color {
   .bg-zinc-900 { background-color: hsl(var(--card)) !important; }
 
   /* Text colors → foreground tokens */
-  .text-white { color: hsl(var(--foreground)) !important; }
-  .text-black { color: hsl(var(--foreground)) !important; }
 
   .text-gray-300,
   .text-gray-400,
@@ -432,8 +1176,6 @@ body.lowboy-theme .lowboy-on-color {
   .hover\:bg-gray-200:hover { background-color: hsl(var(--muted)) !important; }
   .hover\:bg-gray-700:hover,
   .hover\:bg-gray-800:hover { background-color: hsl(var(--accent)) !important; }
-  .hover\:text-white:hover,
-  .hover\:text-black:hover { color: hsl(var(--foreground)) !important; }
   .hover\:text-gray-700:hover,
   .hover\:text-gray-800:hover,
   .hover\:text-gray-900:hover { color: hsl(var(--foreground)) !important; }

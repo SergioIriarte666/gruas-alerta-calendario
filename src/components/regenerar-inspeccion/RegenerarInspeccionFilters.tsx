@@ -11,7 +11,7 @@ export const RegenerarInspeccionFilters = ({ filters, onChange }: RegenerarInspe
   const update = (key: keyof Filters, value: string) => onChange({ ...filters, [key]: value });
 
   return (
-    <div className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-3">
+    <div className="configuration-filter-panel grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-3">
       <div className="space-y-2">
         <Label htmlFor="filtro-folio">Folio</Label>
         <Input

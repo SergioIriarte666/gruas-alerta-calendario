@@ -186,7 +186,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] border-border/70 bg-card">
+      <DialogContent className="finance-dialog sm:max-w-[500px] border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Zap className="size-5 text-primary" />

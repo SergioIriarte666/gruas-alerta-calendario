@@ -26,7 +26,7 @@ const InvoicesFormScreen = ({
   onSubmit,
   onCancel,
 }: InvoicesFormScreenProps) => (
-  <div className="space-y-6">
+  <div className="invoices-concept space-y-6">
     <PageHeader
       title={formState.editingInvoice ? 'Editar Factura' : 'Nueva Factura'}
       description="Completa los datos de facturación y vuelve al listado cuando termines."
@@ -163,6 +163,7 @@ const Invoices = () => {
   }
 
   return (
+    <div className="invoices-concept pb-6">
     <InvoicesPageContent
       activeTab={viewState.activeTab}
       onActiveTabChange={setActiveTab}
@@ -212,6 +213,7 @@ const Invoices = () => {
       onConfirmProtectedDelete={handleConfirmProtectedDelete}
       onCancelProtectedDelete={closeProtectedDeleteDialog}
     />
+    </div>
   );
 };
 

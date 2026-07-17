@@ -216,7 +216,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
 
       {/* Entry Form Dialog */}
       <Dialog open={showEntryForm} onOpenChange={setShowEntryForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="inventory-dialog max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Agregar Stock - {product.name}</DialogTitle>
           </DialogHeader>
@@ -229,7 +229,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
 
       {/* Exit Form Dialog */}
       <Dialog open={showExitForm} onOpenChange={setShowExitForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="inventory-dialog max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar Salida - {product.name}</DialogTitle>
           </DialogHeader>

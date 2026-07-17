@@ -27,7 +27,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
   };
 
   return (
-    <Card className="border-border/70 bg-card/80 shadow-sm">
+    <Card className="finance-filter-panel border-border/70 bg-card/80 shadow-sm">
       <CardContent className="space-y-4 p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">

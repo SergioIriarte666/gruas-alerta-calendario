@@ -87,7 +87,7 @@ export const ComisionManualForm = () => {
           Nueva comisión manual
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="finance-dialog sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Registrar comisión manual</DialogTitle>
         </DialogHeader>

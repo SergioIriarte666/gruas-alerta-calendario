@@ -218,7 +218,7 @@ export const TripRouteMap = ({
       </Card>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogContent className="finance-dialog w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

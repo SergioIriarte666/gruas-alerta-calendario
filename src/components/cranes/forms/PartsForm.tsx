@@ -134,7 +134,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl border-border bg-background">
+      <DialogContent className="resources-dialog max-w-2xl border-border bg-background">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Package className="size-5 text-primary" />

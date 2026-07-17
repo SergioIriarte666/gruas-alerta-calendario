@@ -313,7 +313,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="finance-dialog max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="p-3 sm:p-6 pb-4 border-b border-border/70">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">

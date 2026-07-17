@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/ui/page-header';
-import { Plus, FileDown } from 'lucide-react';
+import { Plus, FileDown, ReceiptText } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface InvoicesHeaderProps {
@@ -12,10 +11,12 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderPr
   const isMobile = useIsMobile();
 
   return (
-    <PageHeader
-      title="Facturas"
-      description="Gestión de facturación, cobranzas y seguimiento de estados de pago."
-      actions={
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <span className="dashboard-section-kicker"><ReceiptText className="size-3.5" />Facturación y cobranza</span>
+        <h1 className="dashboard-section-title">Facturas</h1>
+        <p className="dashboard-section-description">Emisión, vencimientos y seguimiento de pagos.</p>
+      </div>
         <div className={`flex gap-2 ${isMobile ? 'w-full flex-col' : 'flex-wrap'}`}>
           <Button
             variant="outline"
@@ -28,14 +29,13 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderPr
           </Button>
           <Button
             onClick={onCreateInvoice}
-            className={`bg-primary hover:bg-primary/90 text-primary-foreground ${isMobile ? 'w-full' : ''}`}
+            className={`dashboard-report-button ${isMobile ? 'w-full' : ''}`}
           >
             <Plus className="size-4 mr-2" />
             Nueva Factura
           </Button>
         </div>
-      }
-    />
+    </div>
   );
 };
 
