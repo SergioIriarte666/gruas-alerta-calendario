@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { useFleetCompliance } from '@/hooks/useFleetCompliance';
 import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { EconomicIndicatorsTicker } from '@/components/dashboard/EconomicIndicatorsTicker';
 
 const Dashboard: React.FC = () => {
   const { metrics, recentServices, loading: dashboardLoading } = useDashboardData();
@@ -142,6 +143,8 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        <EconomicIndicatorsTicker />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
