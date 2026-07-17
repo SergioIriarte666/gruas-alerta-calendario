@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { 
-  Search, 
-  Download, 
-  Eye, 
+import {
+  Search,
+  Download,
+  Eye,
   MoreHorizontal,
   ArrowUpDown,
   TrendingUp,
@@ -20,17 +21,32 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react';
-import { useInventoryMovements, useInventoryLocations, type InventoryMovement } from '@/hooks/useInventory';
+import {
+  usePagedInventoryMovements,
+  useInventoryLocations,
+  fetchInventoryMovementsForExport,
+  type InventoryMovement,
+  type InventoryMovementQueryFilters,
+} from '@/hooks/useInventory';
 import { MovementDetailsModal } from './MovementDetailsModal';
 import { MovementExportOptions } from './MovementExportOptions';
+import DatePickerInput from '@/components/common/DatePickerInput';
+import { AppPagination } from '@/components/shared/AppPagination';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
 import {
   INVENTORY_LOCATION_ENTITY_LABELS,
   getLocationEntity,
   type InventoryEntityFilter,
 } from '@/utils/inventoryEntity';
+
+const logger = createLogger('InventoryMovements');
+
+const PAGE_SIZE = 25;
+const SEARCH_DEBOUNCE_MS = 350;
 
 interface MovementsHistoryTableProps {
   entityFilter?: InventoryEntityFilter;
@@ -38,101 +54,64 @@ interface MovementsHistoryTableProps {
 
 export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ entityFilter = 'all' }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<Date>();
-  const [dateTo, setDateTo] = useState<Date>();
-  const [sortBy, setSortBy] = useState<'date' | 'type' | 'product' | 'location' | 'quantity' | 'cost' | 'document'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
   const [selectedMovement, setSelectedMovement] = useState<InventoryMovement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [exportMovements, setExportMovements] = useState<InventoryMovement[]>([]);
+  const [isPreparingExport, setIsPreparingExport] = useState(false);
 
-  const { data: movements = [], isLoading, refetch } = useInventoryMovements(200, entityFilter);
+  // Debounce del término de búsqueda para no disparar una query por tecla.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(searchTerm.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [searchTerm]);
+
+  const filters: InventoryMovementQueryFilters = useMemo(
+    () => ({
+      entityFilter,
+      movementType: typeFilter,
+      locationId: locationFilter,
+      search: debouncedSearch,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      sortDir,
+    }),
+    [entityFilter, typeFilter, locationFilter, debouncedSearch, dateFrom, dateTo, sortDir],
+  );
+
+  // Cualquier cambio de filtro vuelve a la primera página.
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  const { data, isLoading, isFetching, refetch } = usePagedInventoryMovements(page, PAGE_SIZE, filters);
+  const movements = data?.movements ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const { data: locations = [] } = useInventoryLocations(entityFilter);
+
   const movementAdjustmentReferences = movements.map((movement) => `inv_movement:${movement.id}`);
   const { data: intercompanyByReference = {} } = useQuery({
     queryKey: ['inventory-movement-intercompany-adjustments', movementAdjustmentReferences],
     enabled: movementAdjustmentReferences.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from('intercompany_adjustments')
         .select('reference, amount')
         .in('reference', movementAdjustmentReferences);
       if (error) return {};
-      return (data || []).reduce((acc, row) => {
+      return (rows || []).reduce((acc, row) => {
         if (row.reference) acc[row.reference] = Number(row.amount || 0);
         return acc;
       }, {} as Record<string, number>);
     },
-  });
-
-  const activeMovements = movements.filter(movement => movement.status === 'active');
-
-  // Filter movements
-  const filteredMovements = activeMovements.filter(movement => {
-    // If no search term, show all (don't filter by search)
-    const matchesSearch = !searchTerm.trim() || (
-      (movement.item?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (movement.reference_document?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (movement.reason?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (movement.batch_number?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (movement.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    
-    const matchesType = typeFilter === 'all' || movement.movement_type === typeFilter;
-    const matchesLocation = locationFilter === 'all' || movement.location_id === locationFilter;
-    
-    const movementDate = new Date(movement.movement_date);
-    const matchesDateFrom = !dateFrom || movementDate >= dateFrom;
-    const matchesDateTo = !dateTo || movementDate <= dateTo;
-
-    return matchesSearch && matchesType && matchesLocation && matchesDateFrom && matchesDateTo;
-  });
-
-
-  // Sort movements
-  const sortedMovements = [...filteredMovements].sort((a, b) => {
-    let aValue: any, bValue: any;
-    
-    switch (sortBy) {
-      case 'date':
-        aValue = new Date(a.movement_date).getTime();
-        bValue = new Date(b.movement_date).getTime();
-        break;
-      case 'type':
-        aValue = a.movement_type || '';
-        bValue = b.movement_type || '';
-        break;
-      case 'product':
-        aValue = (a.item?.name || '').toLowerCase();
-        bValue = (b.item?.name || '').toLowerCase();
-        break;
-      case 'location':
-        aValue = (a.location?.name || '').toLowerCase();
-        bValue = (b.location?.name || '').toLowerCase();
-        break;
-      case 'quantity':
-        aValue = a.quantity;
-        bValue = b.quantity;
-        break;
-      case 'cost':
-        aValue = a.total_cost || 0;
-        bValue = b.total_cost || 0;
-        break;
-      case 'document':
-        aValue = (a.reference_document || '').toLowerCase();
-        bValue = (b.reference_document || '').toLowerCase();
-        break;
-      default:
-        return 0;
-    }
-    
-    if (sortOrder === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
   });
 
   const getMovementBadge = (type: string) => {
@@ -142,25 +121,16 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
       transfer: { label: 'Transferencia', icon: ArrowUpDown, className: 'border-info/20 bg-info/10 text-info' },
       adjustment: { label: 'Ajuste', icon: ArrowUpDown, className: 'border-warning/20 bg-warning/10 text-warning' },
     };
-    
+
     const config = badges[type as keyof typeof badges] || badges.adjustment;
     const Icon = config.icon;
-    
+
     return (
       <Badge variant="outline" className={cn("flex items-center gap-1 font-semibold", config.className)}>
         <Icon className="size-3" />
         {config.label}
       </Badge>
     );
-  };
-
-  const handleSort = (field: typeof sortBy) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
   };
 
   const handleViewDetails = (movement: InventoryMovement) => {
@@ -172,28 +142,35 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
     refetch();
   };
 
-  const handleExportData = () => {
-    setShowExportOptions(true);
+  const handleExportData = async () => {
+    setIsPreparingExport(true);
+    try {
+      const all = await fetchInventoryMovementsForExport(filters);
+      setExportMovements(all);
+      setShowExportOptions(true);
+    } catch (error) {
+      logger.error('No se pudieron preparar los movimientos para exportar', error);
+      toast.error('Error al preparar la exportación', {
+        description: error instanceof Error ? error.message : 'Inténtalo nuevamente.',
+      });
+    } finally {
+      setIsPreparingExport(false);
+    }
   };
 
   const clearFilters = () => {
     setSearchTerm('');
+    setDebouncedSearch('');
     setTypeFilter('all');
     setLocationFilter('all');
-    setDateFrom(undefined);
-    setDateTo(undefined);
+    setDateFrom('');
+    setDateTo('');
+    setSortDir('desc');
+    setPage(1);
   };
 
-  if (isLoading) {
-    return (
-      <Card className="border-border/70 bg-card/80 shadow-sm">
-        <CardContent className="flex items-center justify-center gap-2 py-10">
-          <RefreshCw className="size-5 animate-spin text-foreground" />
-          <span className="text-sm text-muted-foreground">Cargando historial de movimientos...</span>
-        </CardContent>
-      </Card>
-    );
-  }
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div className="space-y-4">
@@ -208,13 +185,23 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{sortedMovements.length} resultados</Badge>
-              <Badge variant="outline">{activeMovements.length} movimientos activos</Badge>
+              <Badge variant="outline">{total} resultados</Badge>
+              {total > 0 ? (
+                <Badge variant="outline">
+                  Mostrando {rangeStart}–{rangeEnd}
+                </Badge>
+              ) : null}
+              {isFetching ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <RefreshCw className="size-3 animate-spin" />
+                  Actualizando…
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 xl:flex-row">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-end">
+            <div className="relative flex-1 xl:min-w-[220px]">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar por producto, documento o motivo..."
@@ -251,18 +238,44 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
               </SelectContent>
             </Select>
 
-            <Button variant="outline" onClick={handleRefresh} className="border-border/70 bg-background/60">
-              <RefreshCw className="mr-2 size-4" />
-              Actualizar
-            </Button>
-            <Button variant="outline" onClick={handleExportData} className="border-border/70 bg-background/60">
-              <Download className="mr-2 size-4" />
-              Exportar
-            </Button>
-            <Button variant="outline" onClick={clearFilters} className="border-border/70 bg-background/60">
-              <X className="mr-2 size-4" />
-              Limpiar
-            </Button>
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Desde</Label>
+              <DatePickerInput
+                value={dateFrom}
+                onChange={setDateFrom}
+                placeholder="Sin límite"
+                className="border-border/70 bg-background/60 xl:w-[160px]"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Hasta</Label>
+              <DatePickerInput
+                value={dateTo}
+                onChange={setDateTo}
+                placeholder="Sin límite"
+                className="border-border/70 bg-background/60 xl:w-[160px]"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={handleRefresh} className="border-border/70 bg-background/60">
+                <RefreshCw className="mr-2 size-4" />
+                Actualizar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleExportData}
+                disabled={isPreparingExport || total === 0}
+                className="border-border/70 bg-background/60"
+              >
+                <Download className="mr-2 size-4" />
+                {isPreparingExport ? 'Preparando…' : 'Exportar'}
+              </Button>
+              <Button variant="outline" onClick={clearFilters} className="border-border/70 bg-background/60">
+                <X className="mr-2 size-4" />
+                Limpiar
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -274,65 +287,40 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                   <TableHead>
                     <Button
                       variant="ghost"
-                      onClick={() => handleSort('date')}
+                      onClick={() => setSortDir((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
                       className="h-auto p-0 font-semibold"
                     >
                       Fecha
                       <ArrowUpDown className="ml-2 size-4" />
                     </Button>
                   </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
-                      Tipo <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
-                      Producto <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
-                      Ubicación <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('quantity')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Cantidad
-                      <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('cost')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Costo
-                      <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
-                      Documento <ArrowUpDown className="ml-2 size-4" />
-                    </Button>
-                  </TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Ubicación</TableHead>
+                  <TableHead>Cantidad</TableHead>
+                  <TableHead>Costo</TableHead>
+                  <TableHead>Documento</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedMovements.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        <RefreshCw className="size-4 animate-spin" />
+                        Cargando historial de movimientos...
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ) : movements.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
                       No se encontraron movimientos que coincidan con los filtros.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  sortedMovements.map((movement) => (
+                  movements.map((movement) => (
                     <TableRow key={movement.id}>
                       <TableCell>
                         <div>
@@ -413,24 +401,9 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                       </TableCell>
                       <TableCell>
                         {movement.reference_document ? (
-                          <div className="space-y-1">
-                            <code className="rounded bg-muted px-1 text-sm">
-                              {movement.reference_document}
-                            </code>
-                            {(() => {
-                              if (!movement.reference_document) return null;
-                              const uniqueItems = new Set(
-                                activeMovements
-                                  .filter((item) => item.reference_document === movement.reference_document)
-                                  .map((item) => item.item_id)
-                              );
-                              return uniqueItems.size > 1 ? (
-                                <Badge variant="secondary" className="text-xs">
-                                  Compra múltiple ({uniqueItems.size} productos)
-                                </Badge>
-                              ) : null;
-                            })()}
-                          </div>
+                          <code className="rounded bg-muted px-1 text-sm">
+                            {movement.reference_document}
+                          </code>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
@@ -462,6 +435,13 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
               </TableBody>
             </Table>
           </div>
+
+          <AppPagination
+            className="py-2"
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
@@ -469,13 +449,13 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
       <Dialog open={showExportOptions} onOpenChange={setShowExportOptions}>
         <DialogContent className="max-w-2xl border-border/70 bg-card">
           <MovementExportOptions
-            movements={sortedMovements}
+            movements={exportMovements}
             appliedFilters={{
-              searchTerm,
+              searchTerm: debouncedSearch,
               typeFilter,
               locationFilter,
-              dateFrom,
-              dateTo
+              dateFrom: dateFrom ? new Date(`${dateFrom}T12:00:00`) : undefined,
+              dateTo: dateTo ? new Date(`${dateTo}T12:00:00`) : undefined,
             }}
             onClose={() => setShowExportOptions(false)}
           />
@@ -488,7 +468,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
             <DialogTitle>Detalles del Movimiento</DialogTitle>
           </DialogHeader>
           {selectedMovement && (
-            <MovementDetailsModal 
+            <MovementDetailsModal
               movement={selectedMovement}
               onClose={() => setShowDetails(false)}
               onRefresh={handleRefresh}

@@ -646,6 +646,25 @@ export const queryDateRange = (field: string, from: string, to: string) => {
   return { gte: from, lte: to };
 };
 
+/**
+ * Convierte un rango de días comerciales (YYYY-MM-DD) a límites ISO absolutos
+ * (instantes UTC) para filtrar columnas timestamptz sin desfase de zona horaria.
+ *
+ * El inicio se ancla a las 00:00:00.000 y el fin a las 23:59:59.999 del día
+ * elegido EN LA TZ DEL NEGOCIO, evitando errores off-by-one cerca de medianoche.
+ * Devuelve solo las claves presentes (from/to opcionales e independientes).
+ */
+export const getBusinessTimestampBounds = (
+  from?: string,
+  to?: string,
+): { gte?: string; lte?: string } => {
+  const tz = getUserTimezoneSync();
+  const bounds: { gte?: string; lte?: string } = {};
+  if (from) bounds.gte = fromZonedTime(`${from}T00:00:00.000`, tz).toISOString();
+  if (to) bounds.lte = fromZonedTime(`${to}T23:59:59.999`, tz).toISOString();
+  return bounds;
+};
+
 // Invalidar userSettingsCache cuando el usuario cambia el formato de fecha
 if (typeof window !== 'undefined') {
   window.addEventListener('date-format-changed', () => {

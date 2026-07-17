@@ -5,6 +5,7 @@ import { createInventoryCost } from '@/utils/inventoryCostHelper';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useUniversalSync } from './useUniversalSync';  // FASE 5
 import { businessClock } from '@/utils/businessClock';
+import { getBusinessTimestampBounds } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 import type { EntityKey } from '@/lib/entities';
 import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
@@ -471,27 +472,121 @@ export const useInventoryMovementsByReference = (reference: string | null) => {
   });
 };
 
-export const usePagedInventoryMovements = (page: number, pageSize: number, entityFilter: InventoryEntityFilter = 'all') => {
+// Filtros server-side para el historial de movimientos. Todo se resuelve en la BD
+// (no client-side sobre una página) para que el conteo y la paginación reflejen
+// el universo real de movimientos activos.
+export interface InventoryMovementQueryFilters {
+  entityFilter?: InventoryEntityFilter;
+  movementType?: string; // 'all' | 'entry' | 'exit' | 'transfer' | 'adjustment'
+  locationId?: string;   // 'all' | <uuid>
+  search?: string;       // texto libre
+  dateFrom?: string;     // YYYY-MM-DD (día comercial)
+  dateTo?: string;       // YYYY-MM-DD (día comercial)
+  sortDir?: 'asc' | 'desc'; // dirección por movement_date (default 'desc')
+}
+
+// Sanea texto para incrustarlo en el DSL de PostgREST (.or()), que trata comas y
+// paréntesis como separadores. Los quitamos para no romper el filtro.
+const sanitizeOrToken = (value: string): string => value.replace(/[(),]/g, ' ').trim();
+
+// Resuelve los item_id cuyo nombre coincide con la búsqueda, para poder buscar
+// también por producto (columna en tabla embebida) de forma server-side.
+const resolveSearchItemIds = async (search: string): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from('inventory_items')
+    .select('id')
+    .ilike('name', `%${search}%`)
+    .limit(1000);
+  if (error) {
+    logger.warn('No se pudieron resolver items para la búsqueda de movimientos', error);
+    return [];
+  }
+  return (data || []).map((row) => row.id);
+};
+
+// Aplica los filtros comunes (entidad, tipo, ubicación, rango de fechas y
+// búsqueda) a una query de inventory_movements ya con .select() aplicado.
+// Devuelve null cuando el filtro de entidad no tiene ubicaciones (resultado vacío).
+const applyInventoryMovementFilters = async <
+  T extends {
+    eq: (column: string, value: unknown) => T;
+    gte: (column: string, value: unknown) => T;
+    lte: (column: string, value: unknown) => T;
+    or: (filters: string) => T;
+  },
+>(
+  query: T,
+  filters: InventoryMovementQueryFilters,
+): Promise<T | null> => {
+  const entityFilter = filters.entityFilter ?? 'all';
+  const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+  if (locationIds && locationIds.length === 0) return null;
+
+  let q = applyMovementLocationFilter(query, locationIds);
+
+  if (filters.movementType && filters.movementType !== 'all') {
+    q = q.eq('movement_type', filters.movementType);
+  }
+
+  if (filters.locationId && filters.locationId !== 'all') {
+    q = q.eq('location_id', filters.locationId);
+  }
+
+  const { gte, lte } = getBusinessTimestampBounds(filters.dateFrom, filters.dateTo);
+  if (gte) q = q.gte('movement_date', gte);
+  if (lte) q = q.lte('movement_date', lte);
+
+  const search = filters.search?.trim();
+  if (search) {
+    const token = sanitizeOrToken(search);
+    if (token) {
+      const orParts = [
+        `reference_document.ilike.%${token}%`,
+        `reason.ilike.%${token}%`,
+        `batch_number.ilike.%${token}%`,
+        `supplier_name.ilike.%${token}%`,
+      ];
+      const itemIds = await resolveSearchItemIds(token);
+      if (itemIds.length > 0) {
+        orParts.push(`item_id.in.(${itemIds.join(',')})`);
+      }
+      q = q.or(orParts.join(','));
+    }
+  }
+
+  return q;
+};
+
+// Orden del historial: por fecha real del movimiento (movement_date) y, como
+// desempate estable, por created_at descendente.
+const getMovementOrdering = (sortDir: 'asc' | 'desc' = 'desc') => [
+  { column: 'movement_date', ascending: sortDir === 'asc' },
+  { column: 'created_at', ascending: false },
+];
+
+export const usePagedInventoryMovements = (
+  page: number,
+  pageSize: number,
+  filters: InventoryMovementQueryFilters = {},
+) => {
   return useQuery({
-    queryKey: ['inventory-movements', 'paged', page, pageSize, entityFilter],
+    queryKey: ['inventory-movements', 'paged', page, pageSize, filters],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
-      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
-      if (locationIds && locationIds.length === 0) {
-        return { movements: [], total: 0 };
-      }
 
-      let query = supabase
+      const base = supabase
         .from('inventory_movements')
-        .select(
-          INVENTORY_MOVEMENT_SELECT,
-          { count: 'exact' }
-        )
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .select(INVENTORY_MOVEMENT_SELECT, { count: 'exact' })
+        .eq('status', 'active');
 
-      query = applyMovementLocationFilter(query, locationIds);
+      const filtered = await applyInventoryMovementFilters(base, filters);
+      if (!filtered) return { movements: [], total: 0 };
+
+      let query = filtered;
+      for (const { column, ascending } of getMovementOrdering(filters.sortDir)) {
+        query = query.order(column, { ascending });
+      }
 
       const { data, error, count } = await query.range(from, to);
 
@@ -505,9 +600,32 @@ export const usePagedInventoryMovements = (page: number, pageSize: number, entit
       };
     },
     enabled: page > 0 && pageSize > 0,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+};
+
+// Trae TODOS los movimientos que coinciden con los filtros (sin paginar), para
+// exportación. Ordenado igual que el listado.
+export const fetchInventoryMovementsForExport = async (
+  filters: InventoryMovementQueryFilters = {},
+): Promise<InventoryMovement[]> => {
+  const base = supabase
+    .from('inventory_movements')
+    .select(INVENTORY_MOVEMENT_SELECT)
+    .eq('status', 'active');
+
+  const filtered = await applyInventoryMovementFilters(base, filters);
+  if (!filtered) return [];
+
+  let query = filtered;
+  for (const { column, ascending } of MOVEMENT_ORDERING) {
+    query = query.order(column, { ascending });
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as InventoryMovement[];
 };
 
 // Hooks for categories
