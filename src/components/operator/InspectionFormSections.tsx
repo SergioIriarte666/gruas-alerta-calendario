@@ -67,7 +67,7 @@ export const InspectionFormSections = ({
                       type="number"
                       placeholder="Ej: 125000" 
                       {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
+                      className="bg-background border-input focus:border-primary"
                     />
                   </FormControl>
                   <FormMessage />
@@ -97,7 +97,7 @@ export const InspectionFormSections = ({
                           value={level}
                           className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${
                             field.value === level
-                              ? 'bg-violet-600 text-white border-violet-600'
+                              ? 'border-primary bg-primary text-primary-foreground'
                               : 'bg-background border-border text-foreground hover:bg-muted'
                           }`}
                         >
@@ -245,7 +245,7 @@ export const InspectionFormSections = ({
                   <Textarea 
                     placeholder="Añade cualquier observación sobre el estado del vehículo..." 
                     {...field} 
-                    className="bg-background border-input focus:border-violet-500"
+                    className="bg-background border-input focus:border-primary"
                   />
                 </FormControl>
                 <FormMessage />

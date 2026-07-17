@@ -132,7 +132,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
         <div className="text-center">
           <h4 className="text-lg font-semibold text-foreground">{label}</h4>
           {personName && <p className="text-sm mt-1 text-muted-foreground">
-              Nombre: <span className="text-violet-600 font-medium">{personName}</span>
+              Nombre: <span className="font-medium text-primary">{personName}</span>
             </p>}
         </div>
 

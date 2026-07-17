@@ -93,13 +93,13 @@ export const LocationSharingCard = ({
     && (lastPointAgeMs === null || lastPointAgeMs > freshnessThresholdMs);
 
   const modeBadge = isPaused
-    ? { label: 'Pausado por ti', className: 'border-amber-500/25 bg-amber-500/10 text-amber-200' }
+    ? { label: 'Pausado por ti', className: 'border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-200' }
     : trackingMode === 'auto_service'
-      ? { label: 'En servicio', className: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200' }
+      ? { label: 'En servicio', className: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200' }
       : trackingMode === 'auto_schedule'
-        ? { label: 'En jornada', className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200' }
+        ? { label: 'En jornada', className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200' }
         : trackingMode === 'manual'
-          ? { label: 'Manual', className: 'border-zinc-500/25 bg-zinc-500/10 text-zinc-200' }
+          ? { label: 'Manual', className: 'border-border bg-muted text-muted-foreground' }
           : null;
 
   return (
@@ -107,15 +107,15 @@ export const LocationSharingCard = ({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300">
               <MapPin className="size-4" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-cyan-100">Ubicacion del operador</p>
-              <p className="text-xs text-cyan-100/70">{permissionLabel}</p>
+              <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Ubicacion del operador</p>
+              <p className="text-xs text-cyan-800/70 dark:text-cyan-100/70">{permissionLabel}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-cyan-100/75">
+          <p className="mt-3 text-xs text-cyan-800/80 dark:text-cyan-100/75">
             {serviceLabel
               ? `Se asociara a ${serviceLabel}.`
               : scheduleLabel || 'Rastreo automatico segun tu jornada laboral.'}
@@ -129,7 +129,7 @@ export const LocationSharingCard = ({
             size="sm"
             onClick={() => void pauseTracking()}
             disabled={isBusy}
-            className="border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+            className="border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-200"
           >
             {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Pause className="mr-2 size-4" />}
             Pausar
@@ -149,21 +149,21 @@ export const LocationSharingCard = ({
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-white/5 bg-zinc-950/35 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-zinc-500">Ultima lectura</p>
-          <p className="mt-1 text-sm font-medium text-white">{formatTimestamp(lastPoint?.recordedAt ?? null)}</p>
-          <p className="mt-1 text-xs text-zinc-400">{formatAccuracy(lastPoint?.accuracyMeters ?? null)}</p>
+        <div className="rounded-xl border border-border bg-card/70 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Ultima lectura</p>
+          <p className="mt-1 text-sm font-medium text-foreground">{formatTimestamp(lastPoint?.recordedAt ?? null)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{formatAccuracy(lastPoint?.accuracyMeters ?? null)}</p>
         </div>
-        <div className="rounded-xl border border-white/5 bg-zinc-950/35 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-zinc-500">Sincronizacion</p>
-          <p className={`mt-1 text-sm font-medium ${hasStaleReading ? 'text-amber-300' : 'text-white'}`}>
+        <div className="rounded-xl border border-border bg-card/70 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Sincronizacion</p>
+          <p className={`mt-1 text-sm font-medium ${hasStaleReading ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
             {hasStaleReading
               ? 'Sin lecturas recientes'
               : lastSyncAt
                 ? formatTimestamp(lastSyncAt)
                 : pendingCount > 0 ? 'Pendiente' : 'Sin envios'}
           </p>
-          <p className={`mt-1 text-xs ${hasStaleReading ? 'text-amber-300/80' : 'text-zinc-400'}`}>
+          <p className={`mt-1 text-xs ${hasStaleReading ? 'text-amber-700/80 dark:text-amber-300/80' : 'text-muted-foreground'}`}>
             {hasStaleReading
               ? 'Verifica la conexion o el GPS del dispositivo'
               : pendingCount > 0 ? `${pendingCount} punto(s) en cola` : 'Todo al dia'}
@@ -178,7 +178,7 @@ export const LocationSharingCard = ({
           </span>
         )}
         {!navigator.onLine && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-200">
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-200">
             <WifiOff className="size-3" />
             Sin internet
           </span>
@@ -189,7 +189,7 @@ export const LocationSharingCard = ({
             variant="ghost"
             size="sm"
             onClick={() => void flushQueue()}
-            className="h-auto px-2 py-1 text-[11px] text-cyan-200 hover:text-cyan-100"
+            className="h-auto px-2 py-1 text-[11px] text-cyan-700 hover:text-cyan-900 dark:text-cyan-200 dark:hover:text-cyan-100"
           >
             Reintentar sincronizacion
           </Button>
@@ -197,13 +197,13 @@ export const LocationSharingCard = ({
       </div>
 
       {showAlwaysHint && (
-        <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs text-cyan-100">
+        <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs text-cyan-800 dark:text-cyan-100">
           Para rastreo en segundo plano, activa Ubicacion → Siempre en Ajustes de iOS.
         </div>
       )}
 
       {errorMessage && (
-        <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-100">
+        <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-100">
           <div className="flex items-start gap-2">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
             <p>{errorMessage}</p>

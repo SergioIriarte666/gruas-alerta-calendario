@@ -114,7 +114,7 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
   return (
     <Card className="bg-slate-800 border-slate-700">
       <CardHeader>
-        <CardTitle className="text-white">{title}</CardTitle>
+        <CardTitle className="text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <PhotoCaptureControls

@@ -6,10 +6,10 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { OperatorThemeForcer } from '@/components/operator/OperatorThemeForcer';
 import { OperatorBottomNav } from '@/components/operator/OperatorBottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOperatorOfflineSync } from '@/hooks/useOperatorOfflineSync';
+import { ThemeSelector } from '@/components/layout/ThemeSelector';
 
 export const OperatorLayout = () => {
   const { user } = useUser();
@@ -41,14 +41,11 @@ export const OperatorLayout = () => {
   };
 
   return (
-    <>
-      <OperatorThemeForcer />
-
-      <div className="operator-shell-concept min-h-screen bg-zinc-950 flex flex-col">
+      <div className="operator-shell-concept flex min-h-screen flex-col bg-background text-foreground">
 
         {/* ── Header ── */}
         <header
-          className="flex-shrink-0 bg-zinc-900 border-b border-white/5 px-4 flex items-center justify-between"
+          className="flex flex-shrink-0 items-center justify-between border-b border-border/70 bg-card/95 px-4 shadow-sm backdrop-blur-xl"
           style={{
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
             paddingBottom: '10px',
@@ -62,25 +59,28 @@ export const OperatorLayout = () => {
                 className="size-8 rounded-lg object-contain flex-shrink-0"
               />
             ) : (
-              <div className="size-8 bg-violet-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Truck className="size-4 text-white" />
+              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary shadow-sm shadow-primary/20">
+                <Truck className="size-4 text-primary-foreground" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-[11px] text-zinc-500 leading-none mb-0.5">Portal Operador</p>
-              <p className="text-sm font-semibold text-white truncate leading-none">
+              <p className="mb-0.5 text-[11px] leading-none text-muted-foreground">Portal Operador</p>
+              <p className="truncate text-sm font-semibold leading-none text-foreground">
                 {user?.name || user?.email}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors text-xs"
-          >
-            <LogOut className="size-3.5" />
-            <span>Salir</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <ThemeSelector />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="size-3.5" />
+              <span className="hidden min-[380px]:inline">Salir</span>
+            </button>
+          </div>
         </header>
 
         {/* ── Contenido ── */}
@@ -92,7 +92,7 @@ export const OperatorLayout = () => {
             <ErrorBoundary name="Portal Operador">
               <Suspense fallback={
                 <div className="flex items-center justify-center py-20">
-                  <RefreshCw className="size-6 text-violet-500 animate-spin" />
+                  <RefreshCw className="size-6 animate-spin text-primary" />
                 </div>
               }>
                 <Outlet />
@@ -104,6 +104,5 @@ export const OperatorLayout = () => {
         {/* ── Bottom nav ── */}
         <OperatorBottomNav />
       </div>
-    </>
   );
 };

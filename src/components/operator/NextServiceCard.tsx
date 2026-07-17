@@ -41,19 +41,19 @@ export const NextServiceCard = ({ service }: NextServiceCardProps) => {
     <Card className={cn(
       'border transition-colors',
       urgent
-        ? 'bg-violet-50 border-violet-200 dark:bg-violet-950/30 dark:border-violet-800'
+        ? 'border-primary/35 bg-primary/10'
         : 'bg-card border-border'
     )}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CalendarClock className={cn('size-4', urgent ? 'text-violet-500' : 'text-muted-foreground')} />
+            <CalendarClock className={cn('size-4', urgent ? 'text-primary' : 'text-muted-foreground')} />
             <span className="text-sm font-medium text-foreground">Próximo servicio</span>
           </div>
           <span className={cn(
             'text-xs font-bold px-2.5 py-1 rounded-full',
             urgent
-              ? 'bg-violet-500 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground'
           )}>
             {label}

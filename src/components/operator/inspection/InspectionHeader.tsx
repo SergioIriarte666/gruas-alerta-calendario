@@ -10,13 +10,13 @@ export const InspectionHeader = ({ onBack }: InspectionHeaderProps) => {
     <div className="flex items-center gap-3 mb-2">
       <button
         onClick={onBack}
-        className="size-9 flex items-center justify-center rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:scale-95 transition-all flex-shrink-0"
+        className="flex size-9 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:bg-accent hover:text-foreground active:scale-95"
       >
         <ArrowLeft className="size-5" />
       </button>
       <div>
-        <h1 className="text-lg font-bold text-white leading-tight">Inspección</h1>
-        <p className="text-xs text-zinc-500">Pre-servicio</p>
+        <h1 className="text-lg font-bold leading-tight text-foreground">Inspección</h1>
+        <p className="text-xs text-muted-foreground">Pre-servicio</p>
       </div>
     </div>
   );

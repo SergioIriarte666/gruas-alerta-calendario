@@ -53,9 +53,9 @@ const OperatorDashboard = () => {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-20 w-full rounded-2xl bg-zinc-800" />
-        <Skeleton className="h-28 w-full rounded-2xl bg-zinc-800" />
-        <Skeleton className="h-28 w-full rounded-2xl bg-zinc-800" />
+        <Skeleton className="h-20 w-full rounded-2xl bg-muted" />
+        <Skeleton className="h-28 w-full rounded-2xl bg-muted" />
+        <Skeleton className="h-28 w-full rounded-2xl bg-muted" />
       </div>
     );
   }
@@ -63,12 +63,12 @@ const OperatorDashboard = () => {
   if (error) {
     const isNoOperator = error.message.includes('operador');
     return (
-      <div className="rounded-2xl bg-red-950/40 border border-red-900/50 p-6 text-center">
-        <AlertCircle className="size-10 mx-auto mb-3 text-red-400" />
-        <p className="text-sm font-semibold text-red-300 mb-1">
+      <div className="rounded-2xl border border-red-300 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/40">
+        <AlertCircle className="mx-auto mb-3 size-10 text-red-600 dark:text-red-400" />
+        <p className="mb-1 text-sm font-semibold text-red-700 dark:text-red-300">
           {isNoOperator ? 'Usuario no configurado como operador' : 'Error al cargar servicios'}
         </p>
-        <p className="text-xs text-red-400/70 mb-4">
+        <p className="mb-4 text-xs text-red-600/80 dark:text-red-400/70">
           {isNoOperator
             ? 'Tu usuario no tiene un operador asociado. Vincúlalo en Configuración → Gestión de Usuarios (Asignar Operador).'
             : error.message}
@@ -76,7 +76,7 @@ const OperatorDashboard = () => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex items-center gap-2 mx-auto px-4 py-2 rounded-xl border border-red-800 text-red-300 text-sm"
+          className="mx-auto flex items-center gap-2 rounded-xl border border-red-300 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:text-red-300"
         >
           <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           Reintentar
@@ -92,15 +92,15 @@ const OperatorDashboard = () => {
       {/* ── Bienvenida + refresh ── */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-zinc-500">Buenos días</p>
-          <h1 className="text-lg font-bold text-white leading-tight">
+          <p className="text-xs text-muted-foreground">Buenos días</p>
+          <h1 className="text-lg font-bold leading-tight text-foreground">
             {user?.name?.split(' ')[0] || 'Operador'}
           </h1>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="size-9 flex items-center justify-center rounded-xl bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+          className="flex size-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
         >
           <RefreshCw className={`size-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
@@ -115,13 +115,13 @@ const OperatorDashboard = () => {
       {activeTab === 'asignados' && (
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Asignados', count: serviceTabs.asignados.length,          color: 'text-violet-400' },
+            { label: 'Asignados', count: serviceTabs.asignados.length,          color: 'text-primary' },
             { label: 'Activos',   count: serviceTabs.activos.length,            color: 'text-blue-400' },
             { label: 'Entrega',   count: serviceTabs.pendientes_entrega.length, color: 'text-orange-400' },
           ].map(({ label, count, color }) => (
-            <div key={label} className="bg-zinc-900 rounded-xl p-3 text-center border border-white/5">
+            <div key={label} className="rounded-xl border border-border bg-card p-3 text-center shadow-sm">
               <p className={`text-xl font-bold ${color}`}>{count}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">{label}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
             </div>
           ))}
         </div>
@@ -134,11 +134,11 @@ const OperatorDashboard = () => {
       />
 
       {pendingCount > 0 && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
-          <p className="text-sm font-medium text-amber-300">
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3">
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
             {pendingCount} inspección(es) pendiente(s) de sincronización
           </p>
-          <p className="mt-1 text-xs text-amber-200/80">
+          <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-200/80">
             Se enviarán automáticamente cuando el equipo recupere conexión.
           </p>
         </div>
@@ -146,8 +146,8 @@ const OperatorDashboard = () => {
 
       {/* ── Lista de servicios ── */}
       {current.services.length === 0 ? (
-        <div className="rounded-2xl bg-zinc-900 border border-white/5 p-10 text-center">
-          <p className="text-zinc-500 text-sm">{current.emptyLabel}</p>
+        <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+          <p className="text-sm text-muted-foreground">{current.emptyLabel}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -161,7 +161,7 @@ const OperatorDashboard = () => {
         </div>
       )}
 
-      <p className="text-center text-zinc-700 text-xs pb-2">
+      <p className="pb-2 text-center text-xs text-muted-foreground/60">
         Grúas 5 Norte © {businessClock.todayDate().getFullYear()}
       </p>
     </div>

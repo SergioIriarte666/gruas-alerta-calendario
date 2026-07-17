@@ -80,8 +80,8 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
           {allDone ? (
             <CheckCircle className="size-4 text-emerald-500" />
           ) : (
-            <span className="size-4 rounded-full border-2 border-violet-500 inline-flex items-center justify-center">
-              <span className="size-1.5 rounded-full bg-violet-500" />
+            <span className="inline-flex size-4 items-center justify-center rounded-full border-2 border-primary">
+              <span className="size-1.5 rounded-full bg-primary" />
             </span>
           )}
           <span className="text-sm font-medium text-foreground">
@@ -91,7 +91,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
         <span
           className={cn(
             'text-sm font-semibold tabular-nums',
-            allDone ? 'text-emerald-500' : 'text-violet-500'
+            allDone ? 'text-emerald-500' : 'text-primary'
           )}
         >
           {completedCount}/{totalCount}
@@ -103,7 +103,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
         <div
           className={cn(
             'h-full rounded-full transition-all duration-500 ease-out',
-            allDone ? 'bg-emerald-500' : 'bg-violet-500'
+            allDone ? 'bg-emerald-500' : 'bg-primary'
           )}
           style={{ width: `${progressPct}%` }}
         />

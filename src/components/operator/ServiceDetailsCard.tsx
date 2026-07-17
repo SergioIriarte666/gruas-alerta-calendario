@@ -30,7 +30,7 @@ const Row = ({
         {href ? (
           <a
             href={href}
-            className="text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline"
+            className="text-sm font-medium text-primary hover:underline"
           >
             {value}
           </a>
