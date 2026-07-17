@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { RetroProgressBar } from './retro-progress-bar';
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, LoaderCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 
@@ -26,83 +23,78 @@ interface BatchProgressModalProps {
 
 export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) => {
   const { isOpen, current, total, operationName, currentItemName, isComplete, hasError, errorMessage } = state;
-  const percentage = total > 0 ? (current / total) * 100 : 0;
-
-  const getBorderColor = () => {
-    if (hasError) return 'border-red-500/50 shadow-[0_0_30px_rgba(255,0,0,0.2)]';
-    if (isComplete) return 'border-green-500/50 shadow-[0_0_30px_rgba(0,255,0,0.2)]';
-    return 'border-cyan-500/50 shadow-[0_0_30px_rgba(0,255,255,0.2)]';
-  };
+  const percentage = total > 0 ? Math.min(100, (current / total) * 100) : 0;
+  const statusLabel = hasError ? 'Proceso interrumpido' : isComplete ? 'Proceso completado' : 'Procesando registros';
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && (isComplete || hasError) && onClose?.()}>
-      <DialogContent 
-        className={cn(
-          "sm:max-w-md bg-gray-950 border-2 [&>button]:hidden",
-          getBorderColor()
-        )}
-      >
-        <div className="py-6 px-2">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h3 className={cn(
-              "text-lg font-mono font-bold tracking-wide",
-              hasError ? 'text-red-400' : 'text-cyan-400'
-            )}>
-              {operationName}
-            </h3>
-          </div>
+      <DialogContent className="app-overlay-surface overflow-hidden rounded-2xl border-border/80 bg-card p-0 shadow-2xl sm:max-w-[440px] [&>button]:hidden">
+        <div className={cn('h-1 w-full', hasError ? 'bg-destructive' : isComplete ? 'bg-emerald-500' : 'bg-primary')} />
 
-          {/* Progress bar */}
-          <div className="mb-6">
-            <RetroProgressBar value={percentage} hasError={hasError} />
-          </div>
-
-          {/* Counter */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              {hasError ? (
-                <XCircle className="size-5 text-red-500" />
-              ) : isComplete ? (
-                <CheckCircle2 className="size-5 text-green-500" />
-              ) : (
-                <Loader2 className="size-5 text-cyan-400 animate-spin" />
+        <div className="p-6 sm:p-7">
+          <div className="flex items-start gap-3.5">
+            <div
+              className={cn(
+                'flex size-11 shrink-0 items-center justify-center rounded-xl border',
+                hasError
+                  ? 'border-destructive/20 bg-destructive/10 text-destructive'
+                  : isComplete
+                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'border-primary/20 bg-primary/10 text-primary'
               )}
-              <span className={cn(
-                'font-mono text-sm',
-                hasError ? 'text-red-400' : isComplete ? 'text-green-400' : 'text-gray-300'
-              )}>
-                {hasError 
-                  ? `Error en ${current} de ${total}`
-                  : isComplete 
-                    ? `¡${total} ${total === 1 ? 'elemento procesado' : 'elementos procesados'}!`
-                    : `${current} de ${total} ${total === 1 ? 'elemento' : 'elementos'}`
-                }
+            >
+              {hasError ? (
+                <XCircle className="size-5" />
+              ) : isComplete ? (
+                <CheckCircle2 className="size-5" />
+              ) : (
+                <LoaderCircle className="size-5 animate-spin" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-muted-foreground">{statusLabel}</p>
+              <h3 className="mt-1 text-lg font-semibold tracking-tight text-foreground">{operationName}</h3>
+            </div>
+          </div>
+
+          <div className="mt-7">
+            <div className="mb-2.5 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {hasError
+                    ? `Error en ${current} de ${total}`
+                    : isComplete
+                      ? `${total} ${total === 1 ? 'elemento procesado' : 'elementos procesados'}`
+                      : `${current} de ${total} ${total === 1 ? 'elemento' : 'elementos'}`}
+                </p>
+                {!hasError && !isComplete && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">Puedes mantener esta ventana abierta</p>
+                )}
+              </div>
+              <span className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+                {Math.round(percentage)}%
               </span>
             </div>
-            
-            {/* Current item being processed */}
-            {currentItemName && !isComplete && !hasError && (
-              <p className="text-xs text-gray-500 font-mono truncate max-w-[280px] mx-auto">
-                {currentItemName}
-              </p>
-            )}
 
-            {/* Error message */}
-            {hasError && errorMessage && (
-              <p className="mx-auto max-w-[360px] break-words rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-left font-mono text-xs leading-relaxed text-red-300">
-                {errorMessage}
-              </p>
-            )}
+            <RetroProgressBar value={percentage} hasError={hasError} showLabel={false} />
           </div>
 
-          {/* Completion/Error message */}
-          {(isComplete || hasError) && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-gray-400">
-                Haz clic fuera para cerrar
-              </p>
+          {currentItemName && !isComplete && !hasError && (
+            <div className="mt-5 rounded-xl border border-border/70 bg-muted/55 px-3.5 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Elemento actual</p>
+              <p className="mt-1 truncate text-sm font-medium text-foreground">{currentItemName}</p>
             </div>
+          )}
+
+          {hasError && errorMessage && (
+            <p className="mt-5 break-words rounded-xl border border-destructive/20 bg-destructive/10 px-3.5 py-3 text-sm leading-relaxed text-destructive">
+              {errorMessage}
+            </p>
+          )}
+
+          {(isComplete || hasError) && (
+            <p className="mt-5 text-center text-xs text-muted-foreground">Haz clic fuera para cerrar</p>
           )}
         </div>
       </DialogContent>
@@ -110,7 +102,6 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
   );
 };
 
-// Hook helper for managing batch progress state
 export const useBatchProgress = () => {
   const [state, setState] = useState<BatchProgressState>({
     isOpen: false,
@@ -132,11 +123,7 @@ export const useBatchProgress = () => {
   };
 
   const update = (current: number, currentItemName?: string) => {
-    setState(prev => ({
-      ...prev,
-      current,
-      currentItemName,
-    }));
+    setState(prev => ({ ...prev, current, currentItemName }));
   };
 
   const complete = () => {
@@ -162,10 +149,7 @@ export const useBatchProgress = () => {
   };
 
   const close = () => {
-    setState(prev => ({
-      ...prev,
-      isOpen: false,
-    }));
+    setState(prev => ({ ...prev, isOpen: false }));
   };
 
   return { state, start, update, complete, error, close };

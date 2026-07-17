@@ -111,7 +111,7 @@ export const ServiceBatchUpdateModal = ({
     }
     if (enableObservations) fields.observations = observations || null;
 
-    batchProgress.start('ACTUALIZANDO SERVICIOS', activeServices.length);
+    batchProgress.start('Actualizando servicios', activeServices.length);
 
     const updateData: ServiceBatchUpdateData = {
       serviceIds: activeServices.map(s => s.id),

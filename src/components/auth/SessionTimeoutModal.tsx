@@ -60,129 +60,50 @@ export const SessionTimeoutModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent 
-        className="sm:max-w-md border-2 border-cyan-500/50 bg-gray-950/95 backdrop-blur-sm shadow-[0_0_30px_rgba(0,255,255,0.2)]"
+        className="app-overlay-surface overflow-hidden rounded-2xl border-border/80 bg-card p-0 shadow-2xl sm:max-w-md [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        {/* Scanline effect overlay */}
-        <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.1)_2px,rgba(0,0,0,0.1)_4px)] pointer-events-none rounded-lg" />
-        
-        {/* Header with retro icon */}
-        <div className="relative flex flex-col items-center gap-y-4 pt-4">
-          {/* Animated icon container */}
-          <div className={cn(
-            "relative p-4 rounded-lg border-2",
-            isLowTime 
-              ? "border-red-500/70 bg-red-950/30 shadow-[0_0_20px_rgba(255,0,0,0.4)]" 
-              : "border-yellow-500/70 bg-yellow-950/30 shadow-[0_0_20px_rgba(255,200,0,0.3)]"
-          )}>
-            <Timer className={cn(
-              "size-10",
-              isLowTime 
-                ? "text-red-400 animate-pulse" 
-                : "text-yellow-400"
-            )} />
-            
-            {/* Pixel corners */}
-            <div className="absolute -top-1 -left-1 size-2 bg-cyan-400" />
-            <div className="absolute -top-1 -right-1 size-2 bg-cyan-400" />
-            <div className="absolute -bottom-1 -left-1 size-2 bg-cyan-400" />
-            <div className="absolute -bottom-1 -right-1 size-2 bg-cyan-400" />
+        <div className={cn('h-1 w-full', isLowTime ? 'bg-destructive' : 'bg-amber-500')} />
+
+        <div className="p-6 sm:p-7">
+          <div className="flex items-start gap-3.5">
+            <div className={cn(
+              'flex size-11 shrink-0 items-center justify-center rounded-xl border',
+              isLowTime
+                ? 'border-destructive/20 bg-destructive/10 text-destructive'
+                : 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+            )}>
+              <Timer className="size-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">Tu sesión está por vencer</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Se cerrará automáticamente por inactividad.</p>
+            </div>
           </div>
 
-          {/* Title */}
-          <div className="text-center space-y-2">
-            <h2 className="text-xl font-mono font-bold tracking-wider text-cyan-400 animate-pulse">
-              ⚠ SESIÓN EXPIRANDO ⚠
-            </h2>
-            <p className="text-sm font-mono text-gray-400">
-              Tu sesión se cerrará por inactividad
-            </p>
-          </div>
-        </div>
-
-        {/* Countdown display */}
-        <div className="relative my-6">
-          {/* Large digital countdown */}
-          <div className={cn(
-            "text-center py-4 px-6 rounded-lg border-2 bg-gray-900/80",
-            isLowTime 
-              ? "border-red-500/50 shadow-[inset_0_0_20px_rgba(255,0,0,0.2)]" 
-              : "border-cyan-500/50 shadow-[inset_0_0_20px_rgba(0,255,255,0.1)]"
-          )}>
+          <div className="my-7 rounded-xl border border-border/70 bg-muted/45 px-5 py-5 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Tiempo restante</p>
             <span className={cn(
-              "text-5xl font-mono font-bold tabular-nums tracking-widest",
-              isLowTime 
-                ? "text-red-400 animate-pulse" 
-                : "text-white"
+              'mt-1 block text-5xl font-semibold tabular-nums tracking-tight',
+              isLowTime ? 'text-destructive' : 'text-foreground'
             )}>
               {formattedTime}
             </span>
           </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="relative mb-6">
-          <RetroProgressBar 
-            value={progressPercent} 
-            showLabel={false}
-            hasError={isLowTime}
-          />
-        </div>
+          <RetroProgressBar value={progressPercent} showLabel={false} hasError={isLowTime} />
 
-        {/* Action buttons with glow effects */}
-        <div className="relative flex gap-4">
-          {/* Extend session button - Green glow */}
-          <Button
-            onClick={handleExtend}
-            className={cn(
-              "flex-1 h-12 font-mono font-bold tracking-wide text-sm",
-              "bg-gradient-to-b from-green-600 to-green-700",
-              "border-2 border-green-400/50",
-              "hover:from-green-500 hover:to-green-600",
-              "shadow-[0_0_15px_rgba(0,255,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]",
-              "hover:shadow-[0_0_25px_rgba(0,255,0,0.5),inset_0_1px_0_rgba(255,255,255,0.3)]",
-              "transition-all duration-200",
-              "text-white"
-            )}
-          >
-            <RefreshCw className="mr-2 size-4" />
-            CONTINUAR
-          </Button>
-
-          {/* Logout button - Red glow */}
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className={cn(
-              "flex-1 h-12 font-mono font-bold tracking-wide text-sm",
-              "bg-gradient-to-b from-red-900/50 to-red-950/50",
-              "border-2 border-red-500/50",
-              "hover:from-red-800/60 hover:to-red-900/60",
-              "shadow-[0_0_15px_rgba(255,0,0,0.2)]",
-              "hover:shadow-[0_0_25px_rgba(255,0,0,0.4)]",
-              "transition-all duration-200",
-              "text-red-400 hover:text-red-300"
-            )}
-          >
-            <LogOut className="mr-2 size-4" />
-            SALIR
-          </Button>
-        </div>
-
-        {/* Bottom decoration */}
-        <div className="flex justify-center gap-1 mt-4">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div 
-              key={i}
-              className={cn(
-                "size-2 rounded-sm",
-                i < Math.ceil((progressPercent / 100) * 7)
-                  ? isLowTime ? "bg-red-500" : "bg-cyan-500"
-                  : "bg-gray-700"
-              )}
-            />
-          ))}
+          <div className="mt-7 grid grid-cols-2 gap-3">
+            <Button onClick={handleExtend} className="h-11 font-semibold">
+              <RefreshCw className="mr-2 size-4" />
+              Continuar sesión
+            </Button>
+            <Button onClick={handleLogout} variant="outline" className="h-11 font-medium text-destructive hover:bg-destructive/10 hover:text-destructive">
+              <LogOut className="mr-2 size-4" />
+              Cerrar sesión
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

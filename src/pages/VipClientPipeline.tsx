@@ -119,7 +119,7 @@ export default function VipClientPipeline() {
       }
       
       // Start progress modal
-      batchProgress.start('REGISTRANDO LOTE', servicesToUpdate.length);
+      batchProgress.start('Registrando lote', servicesToUpdate.length);
       
       const serviceLabelById = new Map<string, string>(
         servicesToUpdate.map((serviceUpdate: any, index: number) => [
