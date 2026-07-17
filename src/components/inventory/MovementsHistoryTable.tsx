@@ -91,7 +91,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
     setPage(1);
   }, [filters]);
 
-  const { data, isLoading, isFetching, refetch } = usePagedInventoryMovements(page, PAGE_SIZE, filters);
+  const { data, error, isLoading, isFetching, refetch } = usePagedInventoryMovements(page, PAGE_SIZE, filters);
   const movements = data?.movements ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -185,7 +185,11 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{total} resultados</Badge>
+              {error ? (
+                <Badge variant="destructive">Error al cargar</Badge>
+              ) : (
+                <Badge variant="outline">{total} resultados</Badge>
+              )}
               {total > 0 ? (
                 <Badge variant="outline">
                   Mostrando {rangeStart}–{rangeEnd}
@@ -311,6 +315,21 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                         <RefreshCw className="size-4 animate-spin" />
                         Cargando historial de movimientos...
                       </span>
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-10 text-center">
+                      <div className="mx-auto flex max-w-md flex-col items-center gap-3">
+                        <p className="font-medium text-destructive">No se pudo cargar el historial de movimientos.</p>
+                        <p className="text-sm text-muted-foreground">
+                          {error instanceof Error ? error.message : 'Actualiza la consulta para volver a intentarlo.'}
+                        </p>
+                        <Button variant="outline" size="sm" onClick={() => refetch()}>
+                          <RefreshCw className="mr-2 size-4" />
+                          Reintentar
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : movements.length === 0 ? (

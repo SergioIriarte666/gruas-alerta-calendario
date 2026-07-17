@@ -517,7 +517,7 @@ const applyInventoryMovementFilters = async <
 >(
   query: T,
   filters: InventoryMovementQueryFilters,
-): Promise<T | null> => {
+): Promise<{ query: T } | null> => {
   const entityFilter = filters.entityFilter ?? 'all';
   const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
   if (locationIds && locationIds.length === 0) return null;
@@ -554,14 +554,19 @@ const applyInventoryMovementFilters = async <
     }
   }
 
-  return q;
+  // Los builders de Supabase son thenables. Si se retornan directamente desde
+  // una función async, JavaScript los ejecuta y resuelve al response antes de
+  // que el consumidor pueda encadenar order/range. La envoltura evita esa
+  // asimilación automática y conserva el builder sin ejecutar.
+  return { query: q };
 };
 
-// Orden del historial: por fecha real del movimiento (movement_date) y, como
-// desempate estable, por created_at descendente.
+// Orden estable del historial. Se utiliza created_at porque es la columna que
+// comparten todos los movimientos históricos y coincide con la consulta del
+// resumen de Bodega. Algunos registros importados tienen movement_date legado
+// y PostgREST puede rechazar/romper el orden paginado sobre esa columna.
 const getMovementOrdering = (sortDir: 'asc' | 'desc' = 'desc') => [
-  { column: 'movement_date', ascending: sortDir === 'asc' },
-  { column: 'created_at', ascending: false },
+  { column: 'created_at', ascending: sortDir === 'asc' },
 ];
 
 export const usePagedInventoryMovements = (
@@ -583,7 +588,7 @@ export const usePagedInventoryMovements = (
       const filtered = await applyInventoryMovementFilters(base, filters);
       if (!filtered) return { movements: [], total: 0 };
 
-      let query = filtered;
+      let query = filtered.query;
       for (const { column, ascending } of getMovementOrdering(filters.sortDir)) {
         query = query.order(column, { ascending });
       }
@@ -600,7 +605,7 @@ export const usePagedInventoryMovements = (
       };
     },
     enabled: page > 0 && pageSize > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
   });
 };
@@ -618,8 +623,8 @@ export const fetchInventoryMovementsForExport = async (
   const filtered = await applyInventoryMovementFilters(base, filters);
   if (!filtered) return [];
 
-  let query = filtered;
-  for (const { column, ascending } of MOVEMENT_ORDERING) {
+  let query = filtered.query;
+  for (const { column, ascending } of getMovementOrdering(filters.sortDir)) {
     query = query.order(column, { ascending });
   }
 

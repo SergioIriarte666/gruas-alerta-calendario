@@ -656,12 +656,14 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
       </Dialog>
 
       <Dialog open={showDuplicateMerge} onOpenChange={setShowDuplicateMerge}>
-        <DialogContent className="inventory-dialog max-h-[90vh] max-w-6xl border-border/70 bg-card">
-          <DialogHeader>
+        <DialogContent className="inventory-dialog flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-6xl flex-col gap-0 overflow-hidden border-border/70 bg-card p-0">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 pr-14">
             <DialogTitle>Administrar Productos Duplicados</DialogTitle>
             <DialogDescription className="sr-only">Panel para revisar y fusionar productos duplicados del catálogo de inventario.</DialogDescription>
           </DialogHeader>
-          <DuplicateProductsPanel onMerged={() => setShowDuplicateMerge(false)} />
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
+            <DuplicateProductsPanel onMerged={() => setShowDuplicateMerge(false)} />
+          </div>
         </DialogContent>
       </Dialog>
 
