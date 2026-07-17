@@ -19,7 +19,10 @@ export interface WhatsAppSettings {
   notifyServiceNoOperator: boolean;
   notifyInvoiceOverdue: boolean;
   notifyDailyReminder: boolean;
+  notifyInspectionCompleted: boolean;
   notifyVehiclePickup: boolean;
+  notifyWeeklySummary: boolean;
+  notifyOperatorDocumentExpiry: boolean;
   notifyOperatorSelfDocument: boolean;
   notifyServiceResourceRisk: boolean;
 }
@@ -36,7 +39,10 @@ const defaultSettings: WhatsAppSettings = {
   notifyServiceNoOperator: false,
   notifyInvoiceOverdue: false,
   notifyDailyReminder: false,
+  notifyInspectionCompleted: true,
   notifyVehiclePickup: true,
+  notifyWeeklySummary: false,
+  notifyOperatorDocumentExpiry: true,
   notifyOperatorSelfDocument: true,
   notifyServiceResourceRisk: true,
 };
@@ -66,7 +72,10 @@ const buildNotificationPayload = (currentSettings: WhatsAppSettings, forceDisabl
   notify_service_no_operator: forceDisableAll ? false : currentSettings.notifyServiceNoOperator,
   notify_invoice_overdue: forceDisableAll ? false : currentSettings.notifyInvoiceOverdue,
   notify_daily_reminder: forceDisableAll ? false : currentSettings.notifyDailyReminder,
+  notify_inspection_completed: forceDisableAll ? false : currentSettings.notifyInspectionCompleted,
   notify_vehicle_pickup: forceDisableAll ? false : currentSettings.notifyVehiclePickup,
+  notify_weekly_summary: forceDisableAll ? false : currentSettings.notifyWeeklySummary,
+  notify_operator_document_expiry: forceDisableAll ? false : currentSettings.notifyOperatorDocumentExpiry,
   notify_operator_self_document: forceDisableAll ? false : currentSettings.notifyOperatorSelfDocument,
   notify_service_resource_risk: forceDisableAll ? false : currentSettings.notifyServiceResourceRisk,
 });
@@ -120,7 +129,10 @@ export const useWhatsAppSettings = () => {
           notifyServiceNoOperator: data.notify_service_no_operator ?? false,
           notifyInvoiceOverdue: data.notify_invoice_overdue ?? false,
           notifyDailyReminder: data.notify_daily_reminder ?? false,
+          notifyInspectionCompleted: data.notify_inspection_completed ?? true,
           notifyVehiclePickup: data.notify_vehicle_pickup ?? true,
+          notifyWeeklySummary: data.notify_weekly_summary ?? false,
+          notifyOperatorDocumentExpiry: data.notify_operator_document_expiry ?? true,
           notifyOperatorSelfDocument: data.notify_operator_self_document ?? true,
           notifyServiceResourceRisk: data.notify_service_resource_risk ?? true,
         });

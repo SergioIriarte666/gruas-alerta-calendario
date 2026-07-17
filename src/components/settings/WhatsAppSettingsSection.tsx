@@ -15,17 +15,64 @@ import { WhatsAppMessageHistory } from './WhatsAppMessageHistory';
 
 type NotificationKey = Exclude<keyof WhatsAppSettings, 'id' | 'whatsappEnabled' | 'adminPhone1' | 'adminPhone2'>;
 
-const notifications: { key: NotificationKey; label: string; desc: string }[] = [
-  { key: 'notifyOperatorAssigned', label: 'Operador asignado a servicio', desc: 'WhatsApp al operador cuando se le asigna un servicio' },
-  { key: 'notifyServiceCompleted', label: 'Servicio completado', desc: 'WhatsApp a admins cuando un servicio cambia a completado' },
-  { key: 'notifyVehiclePickup', label: 'Retiro de vehículo', desc: 'WhatsApp al cliente cuando el operador completa la inspección de retiro' },
-  { key: 'notifyDocumentExpiry', label: 'Documento próximo a vencer', desc: 'WhatsApp a admins (lun-vie 08:00) sobre licencias, seguros y revisiones próximas a vencer en 30 días' },
-  { key: 'notifyServiceNoQuote', label: 'Servicio creado sin cotización', desc: 'WhatsApp a admins al crear un servicio sin precio asignado' },
-  { key: 'notifyServiceNoOperator', label: 'Servicio programado sin operador', desc: 'WhatsApp a admins (lun-vie 08:00) si hay servicios programados hoy o mañana sin operador asignado' },
-  { key: 'notifyInvoiceOverdue', label: 'Factura vencida sin pago', desc: 'WhatsApp a admins (lun-vie 08:00) sobre facturas con due_date pasada y saldo pendiente' },
-  { key: 'notifyDailyReminder', label: 'Resumen diario a admins', desc: 'WhatsApp a admins (lun-vie 08:00) con cantidad de servicios del día y facturas pendientes' },
-  { key: 'notifyOperatorSelfDocument', label: 'Aviso al operador de sus propios documentos', desc: 'WhatsApp directo al operador cuando SUS documentos están por vencer o vencidos' },
-  { key: 'notifyServiceResourceRisk', label: 'Servicio con recurso no apto', desc: 'WhatsApp a admins cuando un servicio queda asignado a una grúa u operador con documentos vencidos o por vencer' },
+interface NotificationItem {
+  key: NotificationKey;
+  label: string;
+  desc: string;
+  /** Plantilla(s) Meta asociada(s). Sirve de mapa toggle → plantilla. */
+  templates: string;
+  /** Nota informativa (ej. columna sin emisor activo todavía). */
+  note?: string;
+}
+
+interface NotificationGroup {
+  group: string;
+  audience: string;
+  items: NotificationItem[];
+}
+
+// Cada grupo agrupa las 14 columnas notify_* por audiencia del mensaje.
+// El texto `templates` refleja la(s) plantilla(s) Meta reales que dispara cada
+// columna según las edge functions (no renombrar plantillas ni columnas).
+const notificationGroups: NotificationGroup[] = [
+  {
+    group: 'Administración',
+    audience: 'A los números de administrador',
+    items: [
+      { key: 'notifyServiceCompleted', label: 'Servicio completado', desc: 'Cuando un servicio cambia a estado completado.', templates: 'admin_servicio_completado' },
+      { key: 'notifyPaymentPending', label: 'Pago pendiente', desc: 'Al marcar un servicio/factura con pago pendiente.', templates: 'admin_pago_pendiente' },
+      { key: 'notifyServiceNoQuote', label: 'Servicio sin cotización', desc: 'Al crear un servicio sin precio asignado.', templates: 'admin_servicio_sin_cotizacion' },
+      { key: 'notifyServiceNoOperator', label: 'Servicio sin operador', desc: 'Alerta diaria (lun-vie 08:00) de servicios de hoy/mañana sin operador.', templates: 'admin_servicio_sin_operador' },
+      { key: 'notifyInvoiceOverdue', label: 'Factura vencida', desc: 'Alerta diaria (lun-vie 08:00) de facturas vencidas con saldo pendiente.', templates: 'admin_pago_pendiente' },
+      { key: 'notifyDailyReminder', label: 'Resumen diario', desc: 'Resumen diario (lun-vie 08:00) con servicios del día y facturas pendientes.', templates: 'admin_resumen_diario' },
+      { key: 'notifyWeeklySummary', label: 'Resumen semanal', desc: 'Consolidado semanal para administradores.', templates: 'sin plantilla asociada', note: 'La columna existe en la base pero aún no hay un emisor activo para el resumen semanal.' },
+      { key: 'notifyServiceResourceRisk', label: 'Recurso no apto', desc: 'Cuando un servicio queda con grúa u operador con documentos vencidos o por vencer.', templates: 'admin_servicio_recurso_no_apto' },
+    ],
+  },
+  {
+    group: 'Documentos',
+    audience: 'A los números de administrador',
+    items: [
+      { key: 'notifyDocumentExpiry', label: 'Documento de equipo (aviso manual)', desc: 'Aviso puntual de vencimiento de documento de grúa disparado desde una acción.', templates: 'admin_documento_vence' },
+      { key: 'notifyOperatorDocumentExpiry', label: 'Documentos de operadores y grúas (diario)', desc: 'Alerta diaria (lun-vie 08:00) de documentos de operadores y de grúas próximos a vencer o vencidos.', templates: 'admin_doc_op_vencido · admin_doc_op_vencimiento · admin_doc_grua_vencido · admin_doc_grua_vencimiento' },
+    ],
+  },
+  {
+    group: 'Operador',
+    audience: 'Al operador directamente',
+    items: [
+      { key: 'notifyOperatorAssigned', label: 'Servicio asignado', desc: 'Cuando se asigna un servicio al operador.', templates: 'servicio_asignado_v3' },
+      { key: 'notifyOperatorSelfDocument', label: 'Sus propios documentos', desc: 'Aviso directo al operador cuando SUS documentos están por vencer o vencidos.', templates: 'operador_mi_doc_vencido · operador_mi_doc_vencimiento' },
+    ],
+  },
+  {
+    group: 'Cliente',
+    audience: 'Al cliente del servicio',
+    items: [
+      { key: 'notifyInspectionCompleted', label: 'Inspección completada', desc: 'Cuando el operador completa la inspección y se genera el documento.', templates: 'inspeccion_completada_doc' },
+      { key: 'notifyVehiclePickup', label: 'Retiro de vehículo', desc: 'Cuando el operador completa la inspección de retiro del vehículo.', templates: 'retiro_completado' },
+    ],
+  },
 ];
 
 // Validación visual de teléfono chileno (móvil)
@@ -190,22 +237,57 @@ export const WhatsAppSettingsSection = () => {
 
         <Separator />
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Notificaciones activas</h3>
-          <div className={cn('space-y-3', !settings.whatsappEnabled && 'opacity-50 pointer-events-none')}>
-            {notifications.map(({ key, label, desc }) => (
-              <div
-                key={key}
-                className="flex items-start justify-between gap-4 rounded-lg border border-border/60 p-3"
-              >
-                <div className="space-y-0.5">
-                  <Label className="font-medium">{label}</Label>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold">Notificaciones activas</h3>
+            <p className="text-xs text-muted-foreground">
+              Agrupadas por audiencia. El texto en tono técnico bajo cada toggle indica la plantilla Meta que dispara.
+            </p>
+          </div>
+          <div className={cn('space-y-6', !settings.whatsappEnabled && 'opacity-50 pointer-events-none')}>
+            {notificationGroups.map(({ group, audience, items }) => (
+              <div key={group} className="space-y-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-foreground">{group}</h4>
+                  <span className="text-xs text-muted-foreground">{audience}</span>
                 </div>
-                <Switch
-                  checked={Boolean(settings[key])}
-                  onCheckedChange={(checked) => updateSettings({ [key]: checked } as Partial<WhatsAppSettings>)}
-                />
+                <div className="space-y-3">
+                  {items.map(({ key, label, desc, templates, note }) => (
+                    <div
+                      key={key}
+                      className="flex items-start justify-between gap-4 rounded-lg border border-border/60 p-3"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <Label className="font-medium">{label}</Label>
+                        <p className="text-xs text-muted-foreground">{desc}</p>
+                        <p className="font-mono text-[11px] leading-4 text-muted-foreground/70 break-words">
+                          {templates}
+                        </p>
+                        {note && (
+                          <p className="text-[11px] leading-4 text-amber-600 dark:text-amber-500">{note}</p>
+                        )}
+                      </div>
+                      <Switch
+                        checked={Boolean(settings[key])}
+                        onCheckedChange={(checked) => updateSettings({ [key]: checked } as Partial<WhatsAppSettings>)}
+                      />
+                    </div>
+                  ))}
+                  {group === 'Cliente' && (
+                    <div className="flex items-start justify-between gap-4 rounded-lg border border-dashed border-border/60 bg-muted/30 p-3">
+                      <div className="min-w-0 space-y-1">
+                        <Label className="font-medium text-muted-foreground">Seguimiento de grúa en vivo</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Enlace de seguimiento al cliente al iniciar el servicio.
+                        </p>
+                        <p className="font-mono text-[11px] leading-4 text-muted-foreground/70 break-words">
+                          cliente_seguimiento_grua
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="shrink-0">Envío automático</Badge>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
