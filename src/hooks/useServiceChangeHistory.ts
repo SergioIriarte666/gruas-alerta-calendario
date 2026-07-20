@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isMeaningfulServiceChange } from '@/lib/serviceChangeHistory';
 
 import { createLogger } from "@/lib/logger";
 
@@ -62,22 +63,24 @@ const fetchServiceChangeHistory = async (serviceId: string | null): Promise<Serv
     throw error;
   }
 
-  return (data || []).map((entry: any) => ({
-    id: entry.id,
-    eventId: entry.event_id,
-    serviceId: entry.service_id,
-    serviceFolio: entry.service_folio,
-    changedBy: entry.changed_by,
-    changerName: entry.profiles?.full_name || null,
-    changerEmail: entry.profiles?.email || null,
-    changedAt: entry.changed_at,
-    changeType: entry.change_type as 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPSHOT',
-    fieldName: entry.field_name,
-    oldValue: entry.old_value,
-    newValue: entry.new_value,
-    changeSummary: entry.change_summary,
-    changeContext: entry.change_context,
-  }));
+  return (data || [])
+    .map((entry: any): ServiceChangeEntry => ({
+      id: entry.id,
+      eventId: entry.event_id,
+      serviceId: entry.service_id,
+      serviceFolio: entry.service_folio,
+      changedBy: entry.changed_by,
+      changerName: entry.profiles?.full_name || null,
+      changerEmail: entry.profiles?.email || null,
+      changedAt: entry.changed_at,
+      changeType: entry.change_type as 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPSHOT',
+      fieldName: entry.field_name,
+      oldValue: entry.old_value,
+      newValue: entry.new_value,
+      changeSummary: entry.change_summary,
+      changeContext: entry.change_context,
+    }))
+    .filter(isMeaningfulServiceChange);
 };
 
 // Agrupa por event_id: todas las filas insertadas por el mismo trigger dentro
