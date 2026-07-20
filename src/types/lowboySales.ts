@@ -4,14 +4,14 @@ export type LowboySaleVehicleRow = Database['public']['Tables']['lowboy_sale_veh
 
 /**
  * Vehículo/maquinaria trasladado en un flete (fila del formulario). Todos los campos
- * son opcionales; una fila es válida si aporta al menos uno. `service_value` se maneja
- * como texto en el formulario ('' = sin valor) y admite signo negativo (líneas de ajuste).
+ * son opcionales; una fila es válida si aporta al menos uno (marca/modelo/patente/valor).
+ * `service_value` se maneja como texto en el formulario ('' = sin valor). El ajuste
+ * comercial ya no es una fila: es un campo único de la venta (`adjustment`).
  */
 export type LowboySaleVehicleFormValue = {
   plate: string;
   make: string;
   model: string;
-  notes: string;
   service_value: string;
 };
 
@@ -121,6 +121,8 @@ export type LowboySaleFormValues = {
   net_amount: number;
   notes: string;
   vehicles: LowboySaleVehicleFormValue[];
+  /** Ajuste comercial del flete en CLP como texto ('' = sin ajuste); admite signo. */
+  adjustment: string;
 };
 
 export type LowboySaleInitialStatus = 'ejecutada' | 'facturada' | 'pagada';

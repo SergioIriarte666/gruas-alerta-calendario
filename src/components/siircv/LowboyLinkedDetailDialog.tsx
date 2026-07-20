@@ -208,7 +208,7 @@ function SaleBody({ detail, documentNet }: { detail: LinkedSaleDetail; documentN
         <Field label="Neto venta" value={formatCLP(detail.netAmount)} />
         <Field label="Contenedores" value={detail.containers.length ? detail.containers.map((container) => container.serial_number || `Contenedor ${container.size}`).join(', ') : '—'} />
       </div>
-      {detail.vehicles.length > 0 && (
+      {(detail.vehicles.length > 0 || detail.adjustment !== 0) && (
         <>
           <Separator />
           <div>
@@ -237,7 +237,15 @@ function SaleBody({ detail, documentNet }: { detail: LinkedSaleDetail; documentN
                   </li>
                 );
               })}
-              {detail.vehicles.some((vehicle) => vehicle.service_value != null) && (
+              {detail.adjustment !== 0 && (
+                <li className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm">
+                  <span className="text-muted-foreground">Ajuste</span>
+                  <span className={`shrink-0 tabular-nums font-medium ${detail.adjustment < 0 ? 'text-destructive' : ''}`}>
+                    {formatCLP(detail.adjustment)}
+                  </span>
+                </li>
+              )}
+              {(detail.vehicles.some((vehicle) => vehicle.service_value != null) || detail.adjustment !== 0) && (
                 <li className="flex items-center justify-between gap-3 bg-muted/40 px-3 py-1.5 text-sm font-semibold">
                   <span>Total</span>
                   <span className="tabular-nums">{formatCLP(detail.netAmount)}</span>

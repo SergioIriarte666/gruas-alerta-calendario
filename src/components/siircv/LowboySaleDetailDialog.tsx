@@ -217,6 +217,10 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
   const total = net + iva;
   const invoice = sale.linked_rcv_records?.[0] ?? null;
   const vehicles = [...(sale.lowboy_sale_vehicles ?? [])].sort((a, b) => a.position - b.position);
+  const adjustment = Number(sale.flete_adjustment) || 0;
+  const hasVehicleValues = vehicles.some((vehicle) => vehicle.service_value != null);
+  // El desglose (lista de vehículos + total) se muestra si hay vehículos o un ajuste.
+  const showVehicleBreakdown = vehicles.length > 0 || adjustment !== 0;
 
   const skips = skipTargetsForStatus(sale.status);
   const canEdit = !['pagada', 'cancelada'].includes(sale.status);
@@ -281,7 +285,7 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold">Flete</h3>
                 <Field label="Ruta" value={`${dash(sale.origin)} → ${dash(sale.destination)}`} />
-                {vehicles.length > 0 && (
+                {showVehicleBreakdown && (
                   <div className="mt-2">
                     <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <Truck className="size-3.5" />Vehículos trasladados ({vehicles.length})
@@ -311,7 +315,15 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
                           </li>
                         );
                       })}
-                      {vehicles.some((vehicle) => vehicle.service_value != null) && (
+                      {adjustment !== 0 && (
+                        <li className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                          <span className="text-muted-foreground">Ajuste</span>
+                          <span className={cn('shrink-0 tabular-nums font-medium', adjustment < 0 ? 'text-destructive' : undefined)}>
+                            {formatCLP(adjustment)}
+                          </span>
+                        </li>
+                      )}
+                      {(hasVehicleValues || adjustment !== 0) && (
                         <li className="flex items-center justify-between gap-3 bg-muted/40 px-3 py-2 text-sm font-semibold">
                           <span>Total</span>
                           <span className="tabular-nums">{formatCLP(net)}</span>

@@ -35,6 +35,7 @@ import type { LowboyContainerRow } from '@/types/lowboyContainers';
 import { CONTAINER_CONDITION_LABEL, CONTAINER_SIZE_LABEL, CONTAINER_TYPE_LABEL, containerTotalCost } from '@/types/lowboyContainers';
 import type { LowboyContainerSaleAssignment, LowboyContainerSaleAssignmentDraft, LowboySaleFormValues, LowboySaleInitialState, LowboySaleInitialStatus, LowboySaleRow, LowboySaleType } from '@/types/lowboySales';
 import { composeLowboyContainerDescription, recalculateLowboyAssignmentDefaults } from '@/utils/lowboyContainerAssignments';
+import { computeFleteNeto } from '@/utils/lowboyFleteNeto';
 import { getLowboySaleMatch } from '@/utils/lowboySaleMatching';
 
 const logger = createLogger('LowboyVentas');
@@ -53,6 +54,7 @@ const emptyValues = (): LowboySaleFormValues => ({
   net_amount: 0,
   notes: '',
   vehicles: [],
+  adjustment: '',
 });
 
 const valuesFromSale = (sale: LowboySaleRow): LowboySaleFormValues => ({
@@ -71,14 +73,14 @@ const valuesFromSale = (sale: LowboySaleRow): LowboySaleFormValues => ({
       plate: vehicle.plate ?? '',
       make: vehicle.make ?? '',
       model: vehicle.model ?? '',
-      notes: vehicle.notes ?? '',
       service_value: vehicle.service_value == null ? '' : String(vehicle.service_value),
     })),
+  adjustment: sale.flete_adjustment == null ? '' : String(sale.flete_adjustment),
 });
 
-/** Fila de vehículo/línea nueva y vacía (comparte forma con el schema zod). */
+/** Fila de vehículo nueva y vacía (comparte forma con el schema zod). */
 const emptyVehicleRow = (): LowboySaleFormValues['vehicles'][number] => ({
-  plate: '', make: '', model: '', notes: '', service_value: '',
+  plate: '', make: '', model: '', service_value: '',
 });
 
 interface LowboySaleFormProps {
@@ -167,15 +169,16 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
   };
 
   const watchedVehicles = form.watch('vehicles');
+  const watchedAdjustment = form.watch('adjustment');
 
-  // Desglose del flete: si al menos una fila trae "Valor Servicio", el Neto se calcula
-  // como la suma de todos los valores y se bloquea. Sin valores, el Neto es manual.
-  const breakdown = useMemo(() => {
-    const rows = showVehicles ? (watchedVehicles ?? []) : [];
-    const valuedRows = rows.filter((row) => (row?.service_value ?? '').trim() !== '');
-    const sum = valuedRows.reduce((total, row) => total + Number(row.service_value), 0);
-    return { hasBreakdown: valuedRows.length > 0, sum };
-  }, [showVehicles, watchedVehicles]);
+  // Desglose del flete: el Neto = suma de "Valor Servicio" de los vehículos + el ajuste
+  // comercial (que puede ser negativo). Si hay algún valor de línea O un ajuste distinto
+  // de 0, el Neto se calcula y se bloquea; si no, es manual. Fuente única compartida con
+  // el schema y el manager.
+  const breakdown = useMemo(
+    () => computeFleteNeto(showVehicles ? watchedVehicles : [], showVehicles ? watchedAdjustment : ''),
+    [showVehicles, watchedVehicles, watchedAdjustment],
+  );
 
   useEffect(() => {
     if (!breakdown.hasBreakdown) return;
@@ -303,8 +306,8 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
         : undefined;
       setRetroactiveError('');
       await onSubmit(
-        // Los vehículos solo viajan cuando la sección está visible (flete no histórico).
-        { ...values, vehicles: showVehicles ? values.vehicles : [] },
+        // Los vehículos y el ajuste solo viajan cuando la sección está visible (flete no histórico).
+        { ...values, vehicles: showVehicles ? values.vehicles : [], adjustment: showVehicles ? values.adjustment : '' },
         initialState,
         containerAssignments.map(({ container_id, sale_net_price }) => ({ container_id, sale_net_price })),
         rcvRecordId || undefined,
@@ -456,11 +459,11 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                       <Truck className="size-4 text-indigo-600" />Vehículos trasladados (opcional)
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Registre las máquinas o vehículos del flete y su valor. Los ajustes (descuentos o recargos) se agregan como línea adicional con monto en + o −. La patente autocompleta marca y modelo.
+                      Registre las máquinas o vehículos del flete y su valor. La patente autocompleta marca y modelo. Los descuentos o recargos van en el campo "Ajuste (CLP)".
                     </p>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={() => vehicleFields.append(emptyVehicleRow())}>
-                    <Plus className="mr-1.5 size-4" />Agregar línea
+                    <Plus className="mr-1.5 size-4" />Agregar vehículo
                   </Button>
                 </div>
 
@@ -471,12 +474,12 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
 
                 {vehicleFields.fields.length === 0 ? (
                   <p className="py-2 text-center text-xs text-muted-foreground">
-                    Sin líneas. Agregue los vehículos del flete o una línea de ajuste (solo notas y monto).
+                    Sin vehículos. Agregue las máquinas o vehículos del flete con su valor.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {vehicleFields.fields.map((fieldItem, index) => (
-                      <div key={fieldItem.id} className="space-y-2 rounded-md border bg-muted/30 p-2.5">
+                      <div key={fieldItem.id} className="rounded-md border bg-muted/30 p-2.5">
                         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_auto] sm:items-start">
                           <FormField control={form.control} name={`vehicles.${index}.make`} render={({ field }) => (
                             <FormItem className="space-y-1">
@@ -533,7 +536,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                                     className="text-right tabular-nums"
                                     autoComplete="off"
                                     onChange={(event) => {
-                                      // Solo dígitos y un signo negativo al inicio (líneas de ajuste).
+                                      // Solo dígitos y un signo negativo al inicio.
                                       const sanitized = event.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '');
                                       field.onChange(sanitized);
                                     }}
@@ -553,29 +556,23 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                             variant="ghost"
                             size="icon"
                             className="text-muted-foreground hover:text-destructive"
-                            aria-label={`Eliminar línea ${index + 1}`}
+                            aria-label={`Eliminar vehículo ${index + 1}`}
                             onClick={() => vehicleFields.remove(index)}
                           >
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
-                        <FormField control={form.control} name={`vehicles.${index}.notes`} render={({ field }) => (
-                          <FormItem className="space-y-1">
-                            <FormLabel className="text-xs sm:sr-only">Notas de la línea</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Notas de la línea (ej: Descuento cliente frecuente)" autoComplete="off" />
-                            </FormControl>
-                          </FormItem>
-                        )} />
                       </div>
                     ))}
+                  </div>
+                )}
 
-                    {breakdown.hasBreakdown && (
-                      <div className="flex items-center justify-between gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-sm">
-                        <span className="font-medium text-muted-foreground">Neto calculado ({vehicleFields.fields.length} línea{vehicleFields.fields.length === 1 ? '' : 's'})</span>
-                        <span className={`font-semibold tabular-nums ${breakdown.sum < 0 ? 'text-destructive' : 'text-foreground'}`}>{formatCLP(breakdown.sum)}</span>
-                      </div>
-                    )}
+                {breakdown.hasBreakdown && (
+                  <div className="flex items-center justify-between gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-sm">
+                    <span className="font-medium text-muted-foreground">
+                      Neto calculado ({breakdown.vehicleCount} vehículo{breakdown.vehicleCount === 1 ? '' : 's'}{breakdown.hasAdjustment ? ' + ajuste' : ''})
+                    </span>
+                    <span className={`font-semibold tabular-nums ${breakdown.sum < 0 ? 'text-destructive' : 'text-foreground'}`}>{formatCLP(breakdown.sum)}</span>
                   </div>
                 )}
               </section>
@@ -604,7 +601,9 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                     />
                   </FormControl>
                   {breakdown.hasBreakdown && (
-                    <p className="text-xs text-muted-foreground">Calculado desde el desglose de vehículos</p>
+                    <p className="text-xs text-muted-foreground">
+                      {breakdown.hasAdjustment ? 'Calculado desde los vehículos y el ajuste' : 'Calculado desde el desglose de vehículos'}
+                    </p>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -709,6 +708,39 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                   </SelectContent>
                 </Select>
               </div>
+            )}
+
+            {showVehicles && (
+              <FormField control={form.control} name="adjustment" render={({ field }) => {
+                const raw = (field.value ?? '').trim();
+                const numeric = /^-?\d+$/.test(raw) ? Number(raw) : null;
+                return (
+                  <FormItem>
+                    <FormLabel>Ajuste (CLP)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        placeholder="0"
+                        autoComplete="off"
+                        className={`text-right tabular-nums ${numeric != null && numeric < 0 ? 'text-destructive' : ''}`}
+                        onChange={(event) => {
+                          // Solo dígitos y un signo negativo al inicio.
+                          const sanitized = event.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '');
+                          field.onChange(sanitized);
+                        }}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Descuento (−) o recargo (+). Detalle el motivo en Notas.</p>
+                    {numeric != null && numeric !== 0 && (
+                      <p className={`text-right text-[11px] tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {formatCLP(numeric)}
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                );
+              }} />
             )}
 
             <FormField control={form.control} name="notes" render={({ field }) => (

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { validateRut } from '@/utils/csvValidations';
+import { computeFleteNeto } from '@/utils/lowboyFleteNeto';
 
 export const lowboySaleFormSchema = z
   .object({
@@ -15,16 +16,15 @@ export const lowboySaleFormSchema = z
     net_amount: z.coerce.number(),
     notes: z.string().trim(),
     // Vehículos/maquinarias trasladados (solo flete, opcional). Cada fila es válida si
-    // aporta al menos un campo (patente, marca, modelo, notas o valor); las filas
-    // totalmente vacías se descartan al enviar. `service_value` es texto: '' = sin
-    // valor, y admite signo negativo para líneas de ajuste comercial.
+    // aporta al menos un campo (patente, marca, modelo o valor); las filas totalmente
+    // vacías se descartan al enviar. `service_value` es texto: '' = sin valor, y admite
+    // signo negativo. El ajuste comercial ya NO es una fila: es el campo `adjustment`.
     vehicles: z
       .array(
         z.object({
           plate: z.string().default(''),
           make: z.string().default(''),
           model: z.string().default(''),
-          notes: z.string().default(''),
           service_value: z
             .string()
             .default('')
@@ -35,6 +35,15 @@ export const lowboySaleFormSchema = z
         }),
       )
       .default([]),
+    // Ajuste comercial único del flete (descuento − / recargo +). Texto entero opcional.
+    adjustment: z
+      .string()
+      .trim()
+      .default('')
+      .refine(
+        (value) => value === '' || /^-?\d+$/.test(value),
+        'Ingrese un monto entero (puede ser negativo)',
+      ),
   })
   .superRefine((values, ctx) => {
     const isFlete = values.sale_type === 'flete';
@@ -43,13 +52,15 @@ export const lowboySaleFormSchema = z
       if (!values.destination) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['destination'], message: 'Ingrese el destino' });
     }
 
-    // ¿El flete tiene desglose por línea? (al menos una fila con valor cargado).
-    const valuedRows = isFlete
-      ? values.vehicles.filter((vehicle) => vehicle.service_value.trim() !== '')
-      : [];
+    // ¿El flete tiene desglose? (algún valor de línea O un ajuste distinto de 0). La
+    // suma algebraica —valores + ajuste, con signo— sale de la fuente única compartida
+    // con la UI y el manager.
+    const { hasBreakdown, sum } = computeFleteNeto(
+      isFlete ? values.vehicles : [],
+      isFlete ? values.adjustment : '',
+    );
 
-    if (valuedRows.length > 0) {
-      const sum = valuedRows.reduce((total, vehicle) => total + Number(vehicle.service_value), 0);
+    if (hasBreakdown) {
       if (sum < 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

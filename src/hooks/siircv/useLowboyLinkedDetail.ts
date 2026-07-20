@@ -58,6 +58,7 @@ export type LinkedSaleDetail = {
   scheduledDate: string | null;
   executedDate: string | null;
   netAmount: number;
+  adjustment: number;
   status: string | null;
   notes: string | null;
   containers: Array<{ id: string; serial_number: string | null; size: string; sale_net_price: number | null }>;
@@ -126,7 +127,7 @@ async function fetchSaleDetail(saleId: string): Promise<LinkedDetail> {
     .from('lowboy_sales')
     .select(`
       id, client_rut, client_name, description, sale_type, scheduled_date,
-      executed_date, net_amount, status, notes,
+      executed_date, net_amount, flete_adjustment, status, notes,
       containers:lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size, sale_net_price),
       vehicles:lowboy_sale_vehicles!lowboy_sale_vehicles_sale_id_fkey(id, plate, make, model, notes, service_value, position)
     `)
@@ -146,6 +147,7 @@ async function fetchSaleDetail(saleId: string): Promise<LinkedDetail> {
     scheduledDate: data.scheduled_date,
     executedDate: data.executed_date,
     netAmount: Number(data.net_amount) || 0,
+    adjustment: Number(data.flete_adjustment) || 0,
     status: data.status,
     notes: data.notes,
     containers: data.containers ?? [],

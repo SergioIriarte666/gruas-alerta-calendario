@@ -15,11 +15,12 @@ const baseFlete = (overrides: Record<string, unknown> = {}) => ({
   net_amount: 0,
   notes: '',
   vehicles: [],
+  adjustment: '',
   ...overrides,
 });
 
 const vehicle = (service_value: string, extra: Record<string, unknown> = {}) => ({
-  plate: '', make: '', model: '', notes: '', service_value, ...extra,
+  plate: '', make: '', model: '', service_value, ...extra,
 });
 
 const netIssue = (result: { success: boolean; error?: { issues: Array<{ path: (string | number)[]; message: string }> } }) =>
@@ -33,26 +34,44 @@ describe('lowboySaleFormSchema — desglose de flete', () => {
     expect(result.success).toBe(true);
   });
 
-  it('acepta una línea de ajuste negativa que reduce el neto', () => {
+  it('acepta un ajuste negativo que reduce el neto (2 vehículos + ajuste)', () => {
     const result = lowboySaleFormSchema.safeParse(
       baseFlete({
-        net_amount: 800000,
-        vehicles: [
-          vehicle('450000', { plate: 'GHKL22' }),
-          vehicle('450000', { plate: 'JXYZ88' }),
-          vehicle('-100000', { notes: 'Descuento cliente frecuente' }),
-        ],
+        net_amount: 70000,
+        vehicles: [vehicle('50000', { plate: 'GHKL22' }), vehicle('30000', { plate: 'JXYZ88' })],
+        adjustment: '-10000',
       }),
     );
     expect(result.success).toBe(true);
   });
 
-  it('bloquea cuando la suma del desglose queda negativa', () => {
+  it('acepta un flete con solo ajuste positivo, sin valores de vehículos', () => {
     const result = lowboySaleFormSchema.safeParse(
-      baseFlete({ net_amount: -100000, vehicles: [vehicle('900000'), vehicle('-1000000', { notes: 'Ajuste' })] }),
+      baseFlete({ net_amount: 5000, vehicles: [vehicle('', { plate: 'GHKL22' })], adjustment: '5000' }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it('bloquea cuando la suma (valores + ajuste) queda negativa', () => {
+    const result = lowboySaleFormSchema.safeParse(
+      baseFlete({ net_amount: 0, vehicles: [vehicle('900000')], adjustment: '-1000000' }),
     );
     expect(result.success).toBe(false);
     expect(netIssue(result)?.message).toBe('El neto no puede ser negativo. Revisa las líneas de ajuste.');
+  });
+
+  it('bloquea un flete con solo ajuste negativo (sin valores de vehículos)', () => {
+    const result = lowboySaleFormSchema.safeParse(
+      baseFlete({ net_amount: 0, vehicles: [], adjustment: '-10000' }),
+    );
+    expect(result.success).toBe(false);
+    expect(netIssue(result)?.message).toBe('El neto no puede ser negativo. Revisa las líneas de ajuste.');
+  });
+
+  it('rechaza un ajuste no entero', () => {
+    const result = lowboySaleFormSchema.safeParse(baseFlete({ net_amount: 10, adjustment: '10.5' }));
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path[0] === 'adjustment')).toBe(true);
   });
 
   it('sin valores en las filas, el neto es manual y no puede ser negativo', () => {

@@ -4049,6 +4049,7 @@ export type Database = {
           description: string
           destination: string | null
           executed_date: string | null
+          flete_adjustment: number | null
           id: string
           net_amount: number
           notes: string | null
@@ -4066,6 +4067,7 @@ export type Database = {
           description: string
           destination?: string | null
           executed_date?: string | null
+          flete_adjustment?: number | null
           id?: string
           net_amount: number
           notes?: string | null
@@ -4083,6 +4085,7 @@ export type Database = {
           description?: string
           destination?: string | null
           executed_date?: string | null
+          flete_adjustment?: number | null
           id?: string
           net_amount?: number
           notes?: string | null
@@ -8995,6 +8998,7 @@ export type Database = {
           p_description: string
           p_destination: string
           p_executed_date: string
+          p_flete_adjustment?: number
           p_net_amount: number
           p_notes: string
           p_origin: string
