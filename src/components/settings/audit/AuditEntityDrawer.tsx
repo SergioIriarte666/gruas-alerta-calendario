@@ -95,61 +95,37 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
     entry.source === 'service_change_history' ? entry.entityId ?? null : null;
 
   const { data: changes = [], isLoading } = useServiceChangeHistory(serviceId);
+  const updateChanges = changes.filter((change) => change.changeType === 'UPDATE');
 
-  if (entry.source === 'service_change_history' && entry.fieldName) {
-    // Mostrar el cambio individual del entry
+  if (entry.source === 'service_change_history' && serviceId) {
     return (
-      <div className="space-y-3">
-        <div className="rounded-lg border border-border/50 p-3">
-          <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {formatFieldLabel(entry.fieldName)}
-          </p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="rounded bg-red-50 px-2 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
-              {formatFieldValue(entry.fieldName, entry.oldValue)}
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="rounded bg-green-50 px-2 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
-              {formatFieldValue(entry.fieldName, entry.newValue)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {formatTimeLabel(entry.timestamp)} · {entry.userEmail || entry.userName || 'sistema'}
-          </p>
-        </div>
-
-        {serviceId && (
-          <>
-            {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14 w-full rounded-lg" />
-                ))}
+      <div className="space-y-2">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))
+        ) : updateChanges.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No hay modificaciones campo a campo para este servicio.</p>
+        ) : (
+          updateChanges.slice(0, 20).map((change) => (
+            <div key={change.id} className="rounded-lg border border-border/40 bg-muted/20 p-3">
+              <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {formatFieldLabel(change.fieldName)}
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                  {formatFieldValue(change.fieldName, change.oldValue)}
+                </span>
+                <span className="text-muted-foreground">→</span>
+                <span className="rounded bg-green-50 px-1.5 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                  {formatFieldValue(change.fieldName, change.newValue)}
+                </span>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {changes.slice(0, 20).map((c) => (
-                  <div key={c.id} className="rounded-lg border border-border/40 bg-muted/20 p-3">
-                    <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {formatFieldLabel(c.fieldName)}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
-                        {formatFieldValue(c.fieldName, c.oldValue)}
-                      </span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="rounded bg-green-50 px-1.5 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
-                        {formatFieldValue(c.fieldName, c.newValue)}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {formatTimeLabel(c.changedAt)} · {c.changerEmail || c.changerName || 'sistema'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {formatTimeLabel(change.changedAt)} · {change.changerEmail || change.changerName || 'sistema'}
+              </p>
+            </div>
+          ))
         )}
       </div>
     );

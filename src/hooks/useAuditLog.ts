@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isMeaningfulServiceChange } from '@/lib/serviceChangeHistory';
 import { createLogger } from "@/lib/logger";
 
 
@@ -251,25 +252,32 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         source: 'audit_log' as const,
       }));
 
-      const serviceEntries: AuditEntry[] = (serviceHistResult.data || []).map((r: any) => ({
-        id: nextId(),
-        tableName: 'service_change_history',
-        module: 'services' as AuditModule,
-        operation: (r.change_type === 'CREATE' ? 'INSERT' : r.change_type === 'DELETE' ? 'DELETE' : 'UPDATE') as AuditOperation,
-        timestamp: r.changed_at,
-        userId: r.changed_by || null,
-        userEmail: r.profiles?.email || null,
-        userName: r.profiles?.full_name || null,
-        oldData: null,
-        newData: null,
-        entityId: r.service_id,
-        entityFolio: r.service_folio,
-        fieldName: r.field_name,
-        oldValue: r.old_value,
-        newValue: r.new_value,
-        changeSummary: r.change_summary,
-        source: 'service_change_history' as const,
-      }));
+      const serviceEntries: AuditEntry[] = (serviceHistResult.data || [])
+        .filter((r: any) => isMeaningfulServiceChange({
+          changeType: r.change_type,
+          fieldName: r.field_name,
+          oldValue: r.old_value,
+          newValue: r.new_value,
+        }))
+        .map((r: any) => ({
+          id: nextId(),
+          tableName: 'service_change_history',
+          module: 'services' as AuditModule,
+          operation: (r.change_type === 'CREATE' ? 'INSERT' : r.change_type === 'DELETE' ? 'DELETE' : 'UPDATE') as AuditOperation,
+          timestamp: r.changed_at,
+          userId: r.changed_by || null,
+          userEmail: r.profiles?.email || null,
+          userName: r.profiles?.full_name || null,
+          oldData: null,
+          newData: null,
+          entityId: r.service_id,
+          entityFolio: r.service_folio,
+          fieldName: r.field_name,
+          oldValue: r.old_value,
+          newValue: r.new_value,
+          changeSummary: r.change_summary,
+          source: 'service_change_history' as const,
+        }));
 
       const backupEntries: AuditEntry[] = (backupResult.data || []).map((r: any) => ({
         id: nextId(),

@@ -3,6 +3,7 @@ import { AuditEntry, AuditModule, tableToModule } from '@/hooks/useAuditLog';
 export { tableToModule };
 
 const FIELD_LABELS: Record<string, string> = {
+  folio: 'Folio',
   value: 'Valor del servicio',
   purchase_order: 'Orden de compra',
   purchase_order_number: 'N° orden de compra',
@@ -120,6 +121,12 @@ export function formatAuditDescription(entry: AuditEntry): string {
   }
 
   if (source === 'service_change_history') {
+    if (operation === 'INSERT') {
+      return entityFolio ? `Servicio ${entityFolio} creado` : 'Servicio creado';
+    }
+    if (operation === 'DELETE') {
+      return entityFolio ? `Servicio ${entityFolio} eliminado` : 'Servicio eliminado';
+    }
     if (entityFolio && fieldName) {
       return `Servicio ${entityFolio}: ${formatFieldLabel(fieldName)} modificado`;
     }
