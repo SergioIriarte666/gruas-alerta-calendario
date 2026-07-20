@@ -286,13 +286,37 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
                     <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <Truck className="size-3.5" />Vehículos trasladados ({vehicles.length})
                     </p>
-                    <ul className="space-y-1">
-                      {vehicles.map((vehicle) => (
-                        <li key={vehicle.id} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                          <span>{[vehicle.make, vehicle.model].map((p) => p?.trim()).filter(Boolean).join(' ') || (vehicle.plate ? '' : '—')}</span>
-                          {vehicle.plate && <span className="font-mono font-semibold">{vehicle.plate}</span>}
+                    <ul className="divide-y rounded-md border">
+                      {vehicles.map((vehicle) => {
+                        const label = [vehicle.make, vehicle.model].map((p) => p?.trim()).filter(Boolean).join(' ');
+                        const isAdjustment = !label && !vehicle.plate;
+                        const value = vehicle.service_value;
+                        return (
+                          <li key={vehicle.id} className="flex items-start justify-between gap-3 px-3 py-2 text-sm">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-baseline gap-x-2">
+                                <span>{label || (isAdjustment ? (vehicle.notes?.trim() || 'Ajuste') : '')}</span>
+                                {vehicle.plate && <span className="font-mono font-semibold">{vehicle.plate}</span>}
+                              </div>
+                              {!isAdjustment && vehicle.notes?.trim() && (
+                                <p className="text-xs text-muted-foreground">{vehicle.notes}</p>
+                              )}
+                            </div>
+                            <span className={cn(
+                              'shrink-0 tabular-nums',
+                              value == null ? 'text-muted-foreground' : value < 0 ? 'font-medium text-destructive' : 'font-medium',
+                            )}>
+                              {value == null ? '—' : formatCLP(value)}
+                            </span>
+                          </li>
+                        );
+                      })}
+                      {vehicles.some((vehicle) => vehicle.service_value != null) && (
+                        <li className="flex items-center justify-between gap-3 bg-muted/40 px-3 py-2 text-sm font-semibold">
+                          <span>Total</span>
+                          <span className="tabular-nums">{formatCLP(net)}</span>
                         </li>
-                      ))}
+                      )}
                     </ul>
                   </div>
                 )}

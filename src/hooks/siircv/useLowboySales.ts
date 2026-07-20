@@ -58,7 +58,7 @@ export function useLowboySales() {
         .select(`
           *,
           lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size),
-          lowboy_sale_vehicles!lowboy_sale_vehicles_sale_id_fkey(id, plate, make, model, position),
+          lowboy_sale_vehicles!lowboy_sale_vehicles_sale_id_fkey(id, plate, make, model, notes, service_value, position),
           linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_sale_id_fkey(
             id, folio, doc_date, doc_type, counterpart_rut, counterpart_name, net_amount, tax_amount, total_amount
           )

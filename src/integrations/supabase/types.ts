@@ -4006,6 +4006,7 @@ export type Database = {
           plate: string | null
           position: number
           sale_id: string
+          service_value: number | null
         }
         Insert: {
           created_at?: string
@@ -4016,6 +4017,7 @@ export type Database = {
           plate?: string | null
           position?: number
           sale_id: string
+          service_value?: number | null
         }
         Update: {
           created_at?: string
@@ -4026,6 +4028,7 @@ export type Database = {
           plate?: string | null
           position?: number
           sale_id?: string
+          service_value?: number | null
         }
         Relationships: [
           {

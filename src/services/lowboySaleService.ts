@@ -7,6 +7,9 @@ export type LowboySaleVehiclePayload = {
   plate: string | null;
   make: string | null;
   model: string | null;
+  notes: string | null;
+  /** Valor del servicio de la línea en CLP como texto ('' = sin valor); el RPC lo castea a bigint. */
+  service_value: string;
 };
 
 export type SaveLowboySaleInput = {
@@ -29,8 +32,11 @@ function buildVehiclesPayload(values: LowboySaleFormValues): LowboySaleVehiclePa
       plate: vehicle.plate.trim().toUpperCase() || null,
       make: vehicle.make.trim() || null,
       model: vehicle.model.trim() || null,
+      notes: vehicle.notes.trim() || null,
+      service_value: vehicle.service_value.trim(),
     }))
-    .filter((vehicle) => vehicle.plate || vehicle.make || vehicle.model);
+    // Fila válida si aporta al menos un campo (incluye "solo notas" o "solo valor").
+    .filter((vehicle) => vehicle.plate || vehicle.make || vehicle.model || vehicle.notes || vehicle.service_value);
 }
 
 export async function saveLowboySaleWithContainers({

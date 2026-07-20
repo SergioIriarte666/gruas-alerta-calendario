@@ -2,11 +2,17 @@ import type { Database } from '@/integrations/supabase/types';
 
 export type LowboySaleVehicleRow = Database['public']['Tables']['lowboy_sale_vehicles']['Row'];
 
-/** Vehículo/maquinaria trasladado en un flete (fila del formulario). Todos opcionales. */
+/**
+ * Vehículo/maquinaria trasladado en un flete (fila del formulario). Todos los campos
+ * son opcionales; una fila es válida si aporta al menos uno. `service_value` se maneja
+ * como texto en el formulario ('' = sin valor) y admite signo negativo (líneas de ajuste).
+ */
 export type LowboySaleVehicleFormValue = {
   plate: string;
   make: string;
   model: string;
+  notes: string;
+  service_value: string;
 };
 
 export type LowboySaleRow = Database['public']['Tables']['lowboy_sales']['Row'] & {
@@ -21,6 +27,8 @@ export type LowboySaleRow = Database['public']['Tables']['lowboy_sales']['Row'] 
     plate: string | null;
     make: string | null;
     model: string | null;
+    notes: string | null;
+    service_value: number | null;
     position: number;
   }>;
   linked_rcv_records?: Array<{

@@ -71,7 +71,14 @@ const valuesFromSale = (sale: LowboySaleRow): LowboySaleFormValues => ({
       plate: vehicle.plate ?? '',
       make: vehicle.make ?? '',
       model: vehicle.model ?? '',
+      notes: vehicle.notes ?? '',
+      service_value: vehicle.service_value == null ? '' : String(vehicle.service_value),
     })),
+});
+
+/** Fila de vehículo/línea nueva y vacía (comparte forma con el schema zod). */
+const emptyVehicleRow = (): LowboySaleFormValues['vehicles'][number] => ({
+  plate: '', make: '', model: '', notes: '', service_value: '',
 });
 
 interface LowboySaleFormProps {
@@ -160,6 +167,23 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
   };
 
   const watchedVehicles = form.watch('vehicles');
+
+  // Desglose del flete: si al menos una fila trae "Valor Servicio", el Neto se calcula
+  // como la suma de todos los valores y se bloquea. Sin valores, el Neto es manual.
+  const breakdown = useMemo(() => {
+    const rows = showVehicles ? (watchedVehicles ?? []) : [];
+    const valuedRows = rows.filter((row) => (row?.service_value ?? '').trim() !== '');
+    const sum = valuedRows.reduce((total, row) => total + Number(row.service_value), 0);
+    return { hasBreakdown: valuedRows.length > 0, sum };
+  }, [showVehicles, watchedVehicles]);
+
+  useEffect(() => {
+    if (!breakdown.hasBreakdown) return;
+    // Solo escribimos cuando difiere, para no entrar en bucle de renders.
+    if ((Number(form.getValues('net_amount')) || 0) !== breakdown.sum) {
+      form.setValue('net_amount', breakdown.sum, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [breakdown.hasBreakdown, breakdown.sum, form]);
 
   const handleVehiclePlateBlur = async (index: number, rawPlate: string) => {
     const clean = rawPlate.trim().replace(/[-\s]/g, '').toUpperCase();
@@ -432,11 +456,11 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                       <Truck className="size-4 text-indigo-600" />Vehículos trasladados (opcional)
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Registre las máquinas o vehículos del flete. La patente autocompleta marca y modelo.
+                      Registre las máquinas o vehículos del flete y su valor. Los ajustes (descuentos o recargos) se agregan como línea adicional con monto en + o −. La patente autocompleta marca y modelo.
                     </p>
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => vehicleFields.append({ plate: '', make: '', model: '' })}>
-                    <Plus className="mr-1.5 size-4" />Agregar vehículo
+                  <Button type="button" variant="outline" size="sm" onClick={() => vehicleFields.append(emptyVehicleRow())}>
+                    <Plus className="mr-1.5 size-4" />Agregar línea
                   </Button>
                 </div>
 
@@ -447,65 +471,111 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
 
                 {vehicleFields.fields.length === 0 ? (
                   <p className="py-2 text-center text-xs text-muted-foreground">
-                    Sin vehículos. Un flete de estructuras o contenedores puede quedar sin vehículos.
+                    Sin líneas. Agregue los vehículos del flete o una línea de ajuste (solo notas y monto).
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {vehicleFields.fields.map((fieldItem, index) => (
-                      <div key={fieldItem.id} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] sm:items-start">
-                        <FormField control={form.control} name={`vehicles.${index}.make`} render={({ field }) => (
-                          <FormItem className="space-y-1">
-                            <FormLabel className="text-xs sm:sr-only">Marca</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Marca" list="lowboy-vehicle-brands" autoComplete="off" />
-                            </FormControl>
-                          </FormItem>
-                        )} />
-                        <FormField control={form.control} name={`vehicles.${index}.model`} render={({ field }) => (
-                          <FormItem className="space-y-1">
-                            <FormLabel className="text-xs sm:sr-only">Modelo</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Modelo" list={`lowboy-vehicle-models-${index}`} autoComplete="off" />
-                            </FormControl>
-                            <datalist id={`lowboy-vehicle-models-${index}`}>
-                              {modelSuggestionsFor(watchedVehicles?.[index]?.make ?? '').map((name) => (
-                                <option key={name} value={name} />
-                              ))}
-                            </datalist>
-                          </FormItem>
-                        )} />
-                        <FormField control={form.control} name={`vehicles.${index}.plate`} render={({ field }) => (
-                          <FormItem className="space-y-1">
-                            <FormLabel className="text-xs sm:sr-only">Patente</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  placeholder="Patente"
-                                  className="font-mono uppercase"
-                                  autoComplete="off"
-                                  onChange={(event) => field.onChange(event.target.value.toUpperCase())}
-                                  onBlur={() => { field.onBlur(); void handleVehiclePlateBlur(index, field.value); }}
-                                />
-                                {plateLoading[index] && (
-                                  <Loader2 className="absolute right-2 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+                      <div key={fieldItem.id} className="space-y-2 rounded-md border bg-muted/30 p-2.5">
+                        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_auto] sm:items-start">
+                          <FormField control={form.control} name={`vehicles.${index}.make`} render={({ field }) => (
+                            <FormItem className="space-y-1">
+                              <FormLabel className="text-xs sm:sr-only">Marca</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Marca" list="lowboy-vehicle-brands" autoComplete="off" />
+                              </FormControl>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name={`vehicles.${index}.model`} render={({ field }) => (
+                            <FormItem className="space-y-1">
+                              <FormLabel className="text-xs sm:sr-only">Modelo</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Modelo" list={`lowboy-vehicle-models-${index}`} autoComplete="off" />
+                              </FormControl>
+                              <datalist id={`lowboy-vehicle-models-${index}`}>
+                                {modelSuggestionsFor(watchedVehicles?.[index]?.make ?? '').map((name) => (
+                                  <option key={name} value={name} />
+                                ))}
+                              </datalist>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name={`vehicles.${index}.plate`} render={({ field }) => (
+                            <FormItem className="space-y-1">
+                              <FormLabel className="text-xs sm:sr-only">Patente</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    {...field}
+                                    placeholder="Patente"
+                                    className="font-mono uppercase"
+                                    autoComplete="off"
+                                    onChange={(event) => field.onChange(event.target.value.toUpperCase())}
+                                    onBlur={() => { field.onBlur(); void handleVehiclePlateBlur(index, field.value); }}
+                                  />
+                                  {plateLoading[index] && (
+                                    <Loader2 className="absolute right-2 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+                                  )}
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name={`vehicles.${index}.service_value`} render={({ field }) => {
+                            const raw = (field.value ?? '').trim();
+                            const numeric = /^-?\d+$/.test(raw) ? Number(raw) : null;
+                            return (
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-xs sm:sr-only">Valor Servicio</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    inputMode="numeric"
+                                    placeholder="Valor"
+                                    className="text-right tabular-nums"
+                                    autoComplete="off"
+                                    onChange={(event) => {
+                                      // Solo dígitos y un signo negativo al inicio (líneas de ajuste).
+                                      const sanitized = event.target.value.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '');
+                                      field.onChange(sanitized);
+                                    }}
+                                  />
+                                </FormControl>
+                                {numeric != null && (
+                                  <p className={`text-right text-[11px] tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                    {formatCLP(numeric)}
+                                  </p>
                                 )}
-                              </div>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }} />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive"
+                            aria-label={`Eliminar línea ${index + 1}`}
+                            onClick={() => vehicleFields.remove(index)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                        <FormField control={form.control} name={`vehicles.${index}.notes`} render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs sm:sr-only">Notas de la línea</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Notas de la línea (ej: Descuento cliente frecuente)" autoComplete="off" />
                             </FormControl>
                           </FormItem>
                         )} />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          aria-label={`Eliminar vehículo ${index + 1}`}
-                          onClick={() => vehicleFields.remove(index)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
                       </div>
                     ))}
+
+                    {breakdown.hasBreakdown && (
+                      <div className="flex items-center justify-between gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-sm">
+                        <span className="font-medium text-muted-foreground">Neto calculado ({vehicleFields.fields.length} línea{vehicleFields.fields.length === 1 ? '' : 's'})</span>
+                        <span className={`font-semibold tabular-nums ${breakdown.sum < 0 ? 'text-destructive' : 'text-foreground'}`}>{formatCLP(breakdown.sum)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
@@ -522,7 +592,20 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
               <FormField control={form.control} name="net_amount" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Neto (CLP)</FormLabel>
-                  <FormControl><Input type="number" min={0} step="1" {...field} /></FormControl>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="1"
+                      {...field}
+                      readOnly={breakdown.hasBreakdown}
+                      aria-readonly={breakdown.hasBreakdown}
+                      className={breakdown.hasBreakdown ? 'cursor-not-allowed bg-muted/60 font-semibold' : undefined}
+                    />
+                  </FormControl>
+                  {breakdown.hasBreakdown && (
+                    <p className="text-xs text-muted-foreground">Calculado desde el desglose de vehículos</p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )} />

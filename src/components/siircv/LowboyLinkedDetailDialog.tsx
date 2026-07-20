@@ -215,13 +215,34 @@ function SaleBody({ detail, documentNet }: { detail: LinkedSaleDetail; documentN
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Vehículos trasladados ({detail.vehicles.length})
             </p>
-            <ul className="mt-2 space-y-1.5">
-              {detail.vehicles.map((vehicle) => (
-                <li key={vehicle.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-                  <span>{[vehicle.make, vehicle.model].map((part) => part?.trim()).filter(Boolean).join(' ') || (vehicle.plate ? '' : '—')}</span>
-                  {vehicle.plate && <span className="font-mono font-semibold">{vehicle.plate}</span>}
+            <ul className="mt-2 divide-y rounded-md border">
+              {detail.vehicles.map((vehicle) => {
+                const label = [vehicle.make, vehicle.model].map((part) => part?.trim()).filter(Boolean).join(' ');
+                const isAdjustment = !label && !vehicle.plate;
+                const value = vehicle.service_value;
+                return (
+                  <li key={vehicle.id} className="flex items-start justify-between gap-3 px-3 py-1.5 text-sm">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span>{label || (isAdjustment ? (vehicle.notes?.trim() || 'Ajuste') : '')}</span>
+                        {vehicle.plate && <span className="font-mono font-semibold">{vehicle.plate}</span>}
+                      </div>
+                      {!isAdjustment && vehicle.notes?.trim() && (
+                        <p className="text-xs text-muted-foreground">{vehicle.notes}</p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 tabular-nums ${value == null ? 'text-muted-foreground' : value < 0 ? 'font-medium text-destructive' : 'font-medium'}`}>
+                      {value == null ? '—' : formatCLP(value)}
+                    </span>
+                  </li>
+                );
+              })}
+              {detail.vehicles.some((vehicle) => vehicle.service_value != null) && (
+                <li className="flex items-center justify-between gap-3 bg-muted/40 px-3 py-1.5 text-sm font-semibold">
+                  <span>Total</span>
+                  <span className="tabular-nums">{formatCLP(detail.netAmount)}</span>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
         </>
