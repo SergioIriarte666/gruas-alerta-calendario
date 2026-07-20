@@ -1,3 +1,5 @@
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Invoice } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvoicesListTabContent } from '@/components/invoices/InvoicesListTabContent';
@@ -13,6 +15,9 @@ import {
   InvoicesProtectedDeleteDialog,
   InvoicesProtectedDeleteDialogState,
 } from '@/components/invoices/InvoicesProtectedDeleteDialog';
+
+// Lazy: el cálculo de IVA (F29) trae recharts; solo se carga al abrir su pestaña.
+const IvaF29Panel = lazy(() => import('@/components/invoices/IvaF29Panel'));
 
 interface InvoicesPageContentProps {
   activeTab: string;
@@ -113,10 +118,14 @@ export const InvoicesPageContent = ({
         className="w-full"
       >
         <SectionCard flush className="finance-panel border-border/70 bg-card/80 shadow-sm" contentClassName="p-2">
-          <TabsList className="finance-tabs w-full gap-1 lg:grid lg:grid-cols-5">
+          <TabsList className="finance-tabs w-full gap-1 lg:grid lg:grid-cols-6">
             <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Facturas</span>
               <span className="sm:hidden">Fact.</span>
+            </TabsTrigger>
+            <TabsTrigger value="iva-f29" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">IVA (F29)</span>
+              <span className="sm:hidden">IVA</span>
             </TabsTrigger>
             <TabsTrigger value="pipeline" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Pipeline
@@ -166,6 +175,18 @@ export const InvoicesPageContent = ({
             onPageChange={onPageChange}
             getInvoiceWithDetails={getInvoiceWithDetails}
           />
+        </TabsContent>
+
+        <TabsContent value="iva-f29">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> Cargando IVA (F29)…
+              </div>
+            }
+          >
+            <IvaF29Panel />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="pipeline" className="space-y-6">

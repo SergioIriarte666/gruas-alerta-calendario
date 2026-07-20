@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, DollarSign, Receipt } from 'lucide-react';
+import { Search, X, DollarSign, Receipt, Wallet } from 'lucide-react';
 
 import { PaymentWithDetails } from '@/types/payments';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
@@ -27,6 +28,7 @@ interface Invoice {
   folio: string;
   numero_fiscal: string;
   total: number;
+  vat: number;
   paid_amount: number;
   status: string;
   remaining_amount: number;
@@ -57,7 +59,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('id, folio, numero_fiscal, total, paid_amount, status, due_date, remaining_amount')
+        .select('id, folio, numero_fiscal, total, vat, paid_amount, status, due_date, remaining_amount')
         .eq('client_id', payment.client_id)
         .in('status', ['sent', 'overdue', 'partial'])
         .not('folio', 'like', 'HIST-%')
@@ -105,12 +107,17 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
         await new Promise(resolve => setTimeout(resolve, 150));
       }
       
+      const { total: ivaTotal } = computeIvaToSeparate(selectedInvoices);
+
       await onApply(selectedFiscalNumbers, true);
       batchProgress.complete();
-      
+
       setTimeout(() => {
         batchProgress.close();
         toast.success('Pago aplicado exitosamente a las facturas seleccionadas');
+        if (ivaTotal > 0) {
+          toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, { duration: 8000 });
+        }
         onClose();
       }, 1500);
     } catch (error) {
@@ -263,9 +270,22 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                 })}
               </div>
               <div className="mt-2 text-sm text-muted-foreground">
-                Total a aplicar: {formatCurrency(totalSelectedAmount)} | 
+                Total a aplicar: {formatCurrency(totalSelectedAmount)} |
                 Saldo restante: {formatCurrency(remainingPaymentAmount)}
               </div>
+              {(() => {
+                const { total: ivaTotal } = computeIvaToSeparate(selectedInvoices);
+                if (ivaTotal <= 0) return null;
+                return (
+                  <div className="mt-3 flex items-center gap-3 rounded-lg border-2 border-primary/50 bg-primary/5 p-3">
+                    <Wallet className="size-5 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                      <p className="text-lg font-bold text-primary">{formatCurrency(ivaTotal)}</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

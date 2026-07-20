@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { formatCurrency } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { Invoice } from '@/types';
 import { InvoicesProtectedDeleteDialogState } from '@/components/invoices/InvoicesProtectedDeleteDialog';
 import { createLogger } from "@/lib/logger";
@@ -238,6 +240,17 @@ export const useInvoicesPageActions = ({
     toast.success("Factura marcada como pagada", {
       description: "El estado de la factura ha sido actualizado.",
     });
+
+    // Recordatorio del IVA a apartar para el F29 (débito fiscal de la factura).
+    const invoice = invoiceById.get(invoiceId);
+    if (invoice) {
+      const { total: ivaTotal } = computeIvaToSeparate([invoice]);
+      if (ivaTotal > 0) {
+        toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, {
+          duration: 8000,
+        });
+      }
+    }
   };
 
   const handleEditInvoice = (invoice: Invoice) => {
@@ -271,6 +284,22 @@ export const useInvoicesPageActions = ({
 
       if (errorCount === 0) {
         batchProgress.complete();
+
+        // Recordatorio del IVA total a apartar para el F29, con desglose por folio.
+        const paidInvoices = invoiceIds
+          .map((id) => invoiceById.get(id))
+          .filter((inv): inv is Invoice => Boolean(inv));
+        const { total: ivaTotal, items } = computeIvaToSeparate(paidInvoices);
+        if (ivaTotal > 0) {
+          const breakdown = items
+            .filter((item) => item.iva > 0)
+            .map((item) => `${item.folio}: ${formatCurrency(item.iva)}`)
+            .join(' · ');
+          toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, {
+            description: items.length > 1 ? breakdown : undefined,
+            duration: 8000,
+          });
+        }
       } else {
         batchProgress.error(`${errorCount} factura(s) con error`);
       }

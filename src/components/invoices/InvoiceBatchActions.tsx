@@ -17,10 +17,13 @@ import {
   Trash2, 
   FileSpreadsheet,
   X,
-  ShieldAlert
+  ShieldAlert,
+  Wallet
 } from 'lucide-react';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 
 interface InvoiceBatchActionsProps {
   selectedInvoices: Invoice[];
@@ -178,6 +181,32 @@ const InvoiceBatchActions = ({
               : `Se eliminarán ${selectedInvoices.length} factura(s). Las históricas se borrarán de inmediato y las protegidas pedirán validación reforzada.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {confirmAction === 'paid' && (() => {
+          const { total: ivaTotal, items } = computeIvaToSeparate(unpaidInvoices);
+          if (ivaTotal <= 0) return null;
+          return (
+            <div className="rounded-lg border-2 border-primary/50 bg-primary/5 p-3">
+              <div className="flex items-center gap-3">
+                <Wallet className="size-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(ivaTotal)}</p>
+                </div>
+              </div>
+              {items.length > 1 && (
+                <ul className="mt-2 max-h-32 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
+                  {items.filter((item) => item.iva > 0).map((item) => (
+                    <li key={item.folio} className="flex justify-between gap-4">
+                      <span className="truncate">{item.folio}</span>
+                      <span className="whitespace-nowrap">{formatCurrency(item.iva)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })()}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setConfirmAction(null)}>Cancelar</AlertDialogCancel>
           <AlertDialogAction

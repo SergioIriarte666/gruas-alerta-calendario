@@ -14,9 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Zap, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getTodayLocal, formatForDisplay } from '@/utils/timezoneUtils';
@@ -149,6 +150,11 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       .reduce((sum, inv) => sum + (inv.remaining_amount || inv.total), 0);
   };
 
+  // IVA a separar para el F29 = suma del vat de las facturas seleccionadas.
+  // Política G5N: el pago cubre el total de cada factura → aporta su IVA completo.
+  const getSelectedInvoiceObjects = () =>
+    clientInvoices.filter(inv => selectedInvoiceIds.includes(inv.id));
+
   const getPaymentRecommendation = () => {
     const paymentAmount = parseFloat(formData.amount) || 0;
     if (selectedInvoiceIds.length === 0) return null;
@@ -218,11 +224,15 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
           batchProgress.update(i + 2, invoice?.numero_fiscal || invoice?.folio || `Factura ${i + 1}`);
           await new Promise(resolve => setTimeout(resolve, 150));
         }
+        const { total: ivaTotal } = computeIvaToSeparate(getSelectedInvoiceObjects());
         await applyPaymentManual(payment.id, applications);
         batchProgress.complete();
         setTimeout(() => {
           batchProgress.close();
           toast.success(`Pago registrado y aplicado a ${selectedInvoiceIds.length} factura(s)`);
+          if (ivaTotal > 0) {
+            toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, { duration: 8000 });
+          }
           if (onPaymentCreated) onPaymentCreated(payment.id, formData.client_id);
           onClose();
         }, 1500);
@@ -353,6 +363,32 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                   </div>
                 </Alert>
               )}
+
+              {selectedInvoiceIds.length > 0 && (() => {
+                const { total: ivaTotal, items } = computeIvaToSeparate(getSelectedInvoiceObjects());
+                if (ivaTotal <= 0) return null;
+                return (
+                  <div className="mt-2 rounded-lg border-2 border-primary/50 bg-primary/5 p-3">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="size-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                        <p className="text-lg font-bold text-primary">{formatCurrency(ivaTotal)}</p>
+                      </div>
+                    </div>
+                    {items.length > 1 && (
+                      <ul className="mt-2 max-h-28 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
+                        {items.filter(item => item.iva > 0).map(item => (
+                          <li key={item.folio} className="flex justify-between gap-4">
+                            <span className="truncate">{item.folio}</span>
+                            <span className="whitespace-nowrap">{formatCurrency(item.iva)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
 
               {Object.keys(paymentStatusWarnings).length > 0 && <Alert className="mt-2">
                 <AlertTriangle className="size-4" />

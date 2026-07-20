@@ -10,6 +10,8 @@ export interface PendingInvoiceSummary {
   folio: string;
   numero_fiscal?: string;
   total: number;
+  /** IVA débito fiscal de la factura (para el indicador "IVA a separar" del F29). */
+  vat: number;
   remaining_amount: number;
   due_date: string;
   status: string;
@@ -23,7 +25,7 @@ export const usePendingClientInvoices = (clientId: string | null) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('id, folio, numero_fiscal, total, remaining_amount, due_date, status')
+        .select('id, folio, numero_fiscal, total, vat, remaining_amount, due_date, status')
         .eq('client_id', clientId!)
         .in('status', ['draft', 'sent', 'overdue', 'partial'])
         .not('folio', 'like', 'HIST-%')

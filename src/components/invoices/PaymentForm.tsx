@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, formatCurrency } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { X, FileText, Calendar, AlertTriangle } from 'lucide-react';
+import { X, FileText, Calendar, AlertTriangle, Wallet } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -106,6 +107,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
     return selectedInvoices.reduce((sum, sel) => sum + sel.amount, 0);
   };
 
+  // IVA a separar para el F29 = suma del vat de las facturas seleccionadas.
+  // Política G5N: el pago cubre el total de cada factura → aporta su IVA completo.
+  const getSelectedInvoiceObjects = () =>
+    selectedInvoices
+      .map(sel => unpaidInvoices.find(inv => inv.id === sel.invoice_id))
+      .filter((inv): inv is (typeof unpaidInvoices)[number] => Boolean(inv));
+
   // Detectar folio en notas o referencia bancaria
   const detectedFolioInNotes = React.useMemo(
     () => extractFolioFromDescription(formData.notes),
@@ -155,7 +163,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
       // If specific payment, apply to selected invoices
       if (paymentType === 'specific' && selectedInvoices.length > 0) {
         logger.debug('🔍 Applying payment to specific invoices:', selectedInvoices);
+        const { total: ivaTotal } = computeIvaToSeparate(getSelectedInvoiceObjects());
         await applyPaymentManual(payment.id, selectedInvoices);
+        if (ivaTotal > 0) {
+          toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, { duration: 8000 });
+        }
       }
 
       onClose();
@@ -294,6 +306,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                           <span>Total Seleccionado:</span>
                           <span>${getTotalSelectedAmount().toLocaleString()}</span>
                         </div>
+                        {(() => {
+                          const { total: ivaTotal } = computeIvaToSeparate(getSelectedInvoiceObjects());
+                          if (ivaTotal <= 0) return null;
+                          return (
+                            <div className="flex items-center gap-3 rounded-lg border-2 border-primary/50 bg-primary/5 p-3">
+                              <Wallet className="size-5 shrink-0 text-primary" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                                <p className="text-lg font-bold text-primary">{formatCurrency(ivaTotal)}</p>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </>
                     )}
                   </div>

@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Calculator, CheckCircle } from 'lucide-react';
+import { X, Calculator, CheckCircle, Wallet } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -82,6 +83,13 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
 
   const getTotalSelected = () => Math.max(0, applications.reduce((sum, app) => sum + (app.amount || 0), 0));
 
+  // IVA a separar para el F29 = suma del vat de las facturas seleccionadas.
+  // Política G5N: el pago cubre el total, así que la factura pagada aporta su IVA completo.
+  const getSelectedInvoiceObjects = () =>
+    applications
+      .map(app => sortedInvoices.find(inv => inv.id === app.invoice_id))
+      .filter((inv): inv is (typeof sortedInvoices)[number] => Boolean(inv));
+
   const _isValidApplication = () => {
     const total = getTotalSelected();
     const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
@@ -122,9 +130,14 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
       await applyPaymentManual(payment.id, applications);
       batchProgress.complete();
       
+      const { total: ivaTotal } = computeIvaToSeparate(getSelectedInvoiceObjects());
+
       setTimeout(() => {
         batchProgress.close();
         toast.success(`Pago aplicado exitosamente a ${applications.length} factura(s)`);
+        if (ivaTotal > 0) {
+          toast.info(`Separar ${formatCurrency(ivaTotal)} para pago de IVA (F29)`, { duration: 8000 });
+        }
         onClose();
       }, 1500);
     } catch (error) {
@@ -191,6 +204,32 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
                 </div>
               )}
             </div>
+
+            {applications.length > 0 && (() => {
+              const { total: ivaTotal, items } = computeIvaToSeparate(getSelectedInvoiceObjects());
+              if (ivaTotal <= 0) return null;
+              return (
+                <div className="rounded-xl border-2 border-primary/50 bg-primary/5 p-4">
+                  <div className="flex items-center gap-3">
+                    <Wallet className="size-5 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                      <p className="text-lg font-bold text-primary">{formatCurrency(ivaTotal)}</p>
+                    </div>
+                  </div>
+                  {items.length > 1 && (
+                    <ul className="mt-2 max-h-28 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
+                      {items.filter(item => item.iva > 0).map(item => (
+                        <li key={item.folio} className="flex justify-between gap-4">
+                          <span className="truncate">{item.folio}</span>
+                          <span className="whitespace-nowrap">{formatCurrency(item.iva)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
 
             <Table>
               <TableHeader>

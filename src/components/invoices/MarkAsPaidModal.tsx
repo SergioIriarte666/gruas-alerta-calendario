@@ -9,10 +9,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Wallet } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Invoice } from '@/types';
 import { getTodayString } from '@/utils/timezoneUtils';
+import { formatCurrency } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 
 
@@ -75,6 +76,15 @@ export const MarkAsPaidModal = ({ invoice, isOpen, onClose, onConfirm }: MarkAsP
                 <Badge className="bg-primary text-primary-foreground text-sm">
                   ${Number(invoice.total).toLocaleString('es-CL')}
                 </Badge>
+              </div>
+            </div>
+
+            {/* IVA a separar para el F29 (débito fiscal de esta factura). */}
+            <div className="flex items-center gap-3 rounded-lg border-2 border-primary/50 bg-primary/5 p-3">
+              <Wallet className="size-5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-muted-foreground">IVA a separar para F29</p>
+                <p className="text-lg font-bold text-primary">{formatCurrency(Number(invoice.vat || 0))}</p>
               </div>
             </div>
 

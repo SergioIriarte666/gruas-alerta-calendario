@@ -3694,6 +3694,39 @@ export type Database = {
           },
         ]
       }
+      iva_f29_separations: {
+        Row: {
+          invoice_id: string
+          separated_at: string
+          separated_by: string | null
+        }
+        Insert: {
+          invoice_id: string
+          separated_at?: string
+          separated_by?: string | null
+        }
+        Update: {
+          invoice_id?: string
+          separated_at?: string
+          separated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iva_f29_separations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: true
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "iva_f29_separations_separated_by_fkey"
+            columns: ["separated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legacy_service_imports: {
         Row: {
           created_at: string
