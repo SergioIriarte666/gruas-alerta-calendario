@@ -1,4 +1,5 @@
 import { AuditEntry, AuditModule, tableToModule } from '@/hooks/useAuditLog';
+import { isServiceItemField } from '@/lib/serviceChangeHistory';
 
 export { tableToModule };
 
@@ -122,9 +123,15 @@ export function formatAuditDescription(entry: AuditEntry): string {
 
   if (source === 'service_change_history') {
     if (operation === 'INSERT') {
+      if (entityFolio && isServiceItemField(fieldName)) {
+        return `Servicio ${entityFolio}: ${formatFieldLabel(fieldName)} agregado`;
+      }
       return entityFolio ? `Servicio ${entityFolio} creado` : 'Servicio creado';
     }
     if (operation === 'DELETE') {
+      if (entityFolio && isServiceItemField(fieldName)) {
+        return `Servicio ${entityFolio}: ${formatFieldLabel(fieldName)} eliminado`;
+      }
       return entityFolio ? `Servicio ${entityFolio} eliminado` : 'Servicio eliminado';
     }
     if (entityFolio && fieldName) {

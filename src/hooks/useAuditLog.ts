@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { isMeaningfulServiceChange } from '@/lib/serviceChangeHistory';
+import { isMeaningfulServiceChange, serviceChangeIdentity } from '@/lib/serviceChangeHistory';
 import { createLogger } from "@/lib/logger";
 
 
@@ -190,7 +190,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
       let serviceHistQuery = supabase
         .from('service_change_history')
         .select(
-          'id, service_id, service_folio, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)',
+          'id, event_id, service_id, service_folio, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)',
         )
         .order('changed_at', { ascending: false })
         .limit(scopedLimit);
@@ -252,6 +252,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         source: 'audit_log' as const,
       }));
 
+      const seenServiceChanges = new Set<string>();
       const serviceEntries: AuditEntry[] = (serviceHistResult.data || [])
         .filter((r: any) => isMeaningfulServiceChange({
           changeType: r.change_type,
@@ -259,6 +260,20 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
           oldValue: r.old_value,
           newValue: r.new_value,
         }))
+        .filter((r: any) => {
+          const identity = serviceChangeIdentity({
+            id: r.id,
+            eventId: r.event_id,
+            serviceId: r.service_id,
+            changeType: r.change_type,
+            fieldName: r.field_name,
+            oldValue: r.old_value,
+            newValue: r.new_value,
+          });
+          if (seenServiceChanges.has(identity)) return false;
+          seenServiceChanges.add(identity);
+          return true;
+        })
         .map((r: any) => ({
           id: nextId(),
           tableName: 'service_change_history',

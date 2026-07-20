@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExternalLink } from 'lucide-react';
+import { isServiceItemField } from '@/lib/serviceChangeHistory';
 
 // ── JsonDiff ──────────────────────────────────────────────────────────────────
 
@@ -95,7 +96,9 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
     entry.source === 'service_change_history' ? entry.entityId ?? null : null;
 
   const { data: changes = [], isLoading } = useServiceChangeHistory(serviceId);
-  const updateChanges = changes.filter((change) => change.changeType === 'UPDATE');
+  const fieldChanges = changes.filter(
+    (change) => change.changeType === 'UPDATE' || isServiceItemField(change.fieldName),
+  );
 
   if (entry.source === 'service_change_history' && serviceId) {
     return (
@@ -104,10 +107,10 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-14 w-full rounded-lg" />
           ))
-        ) : updateChanges.length === 0 ? (
+        ) : fieldChanges.length === 0 ? (
           <p className="text-sm text-muted-foreground">No hay modificaciones campo a campo para este servicio.</p>
         ) : (
-          updateChanges.slice(0, 20).map((change) => (
+          fieldChanges.slice(0, 20).map((change) => (
             <div key={change.id} className="rounded-lg border border-border/40 bg-muted/20 p-3">
               <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {formatFieldLabel(change.fieldName)}

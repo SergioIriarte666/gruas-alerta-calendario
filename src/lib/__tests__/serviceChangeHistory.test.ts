@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isMeaningfulServiceChange } from '@/lib/serviceChangeHistory';
+import {
+  isMeaningfulServiceChange,
+  isServiceItemField,
+  serviceChangeIdentity,
+} from '@/lib/serviceChangeHistory';
 
 const update = (fieldName: string, oldValue: string | null, newValue: string | null) => ({
   changeType: 'UPDATE',
@@ -35,5 +39,40 @@ describe('isMeaningfulServiceChange', () => {
       oldValue: null,
       newValue: null,
     })).toBe(true);
+  });
+});
+
+describe('service change audit helpers', () => {
+  it('distingue los campos de ítems de la creación del servicio', () => {
+    expect(isServiceItemField('Item: Traslado')).toBe(true);
+    expect(isServiceItemField('servicio')).toBe(false);
+  });
+
+  it('genera la misma identidad para filas duplicadas del mismo evento', () => {
+    const base = {
+      eventId: 'event-1',
+      serviceId: 'service-1',
+      changeType: 'CREATE',
+      fieldName: 'servicio',
+      oldValue: null,
+      newValue: null,
+    };
+
+    expect(serviceChangeIdentity({ ...base, id: 'row-1' }))
+      .toBe(serviceChangeIdentity({ ...base, id: 'row-2' }));
+  });
+
+  it('no mezcla filas antiguas sin event_id', () => {
+    const base = {
+      eventId: null,
+      serviceId: 'service-1',
+      changeType: 'CREATE',
+      fieldName: 'servicio',
+      oldValue: null,
+      newValue: null,
+    };
+
+    expect(serviceChangeIdentity({ ...base, id: 'row-1' }))
+      .not.toBe(serviceChangeIdentity({ ...base, id: 'row-2' }));
   });
 });

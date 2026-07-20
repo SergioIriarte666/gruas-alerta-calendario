@@ -5,6 +5,12 @@ interface ComparableServiceChange {
   newValue: string | null;
 }
 
+interface IdentifiableServiceChange extends ComparableServiceChange {
+  id: string;
+  eventId: string | null;
+  serviceId: string | null;
+}
+
 const ZERO_DEFAULT_FIELDS = new Set([
   'operator_commission',
   'outsourced_cost',
@@ -33,4 +39,24 @@ export const isMeaningfulServiceChange = (change: ComparableServiceChange): bool
   const newValue = normalizeComparableValue(change.fieldName, change.newValue);
 
   return !Object.is(oldValue, newValue);
+};
+
+export const isServiceItemField = (fieldName: string | null | undefined): boolean =>
+  fieldName?.startsWith('Item: ') ?? false;
+
+/**
+ * Dos triggers ejecutados dentro del mismo evento pueden dejar filas idénticas.
+ * Sin event_id no se deduplica para no mezclar operaciones legítimas antiguas.
+ */
+export const serviceChangeIdentity = (change: IdentifiableServiceChange): string => {
+  if (!change.eventId) return `legacy:${change.id}`;
+
+  return [
+    change.eventId,
+    change.serviceId,
+    change.changeType,
+    change.fieldName,
+    change.oldValue,
+    change.newValue,
+  ].join('|');
 };
