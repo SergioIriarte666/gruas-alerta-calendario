@@ -13,6 +13,7 @@ interface ServiceChangeHistoryProps {
 }
 
 const FIELD_LABELS: Record<string, string> = {
+  folio: 'Folio',
   value: 'Valor del Servicio',
   purchase_order: 'Orden de Compra',
   purchase_order_number: 'N° Orden de Compra',
