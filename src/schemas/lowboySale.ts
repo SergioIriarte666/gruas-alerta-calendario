@@ -12,6 +12,17 @@ export const lowboySaleFormSchema = z
     scheduled_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ingrese una fecha válida').or(z.literal('')),
     net_amount: z.coerce.number().nonnegative('El monto no puede ser negativo'),
     notes: z.string().trim(),
+    // Vehículos/maquinarias trasladados (solo flete, opcional). Cada fila es válida si
+    // aporta al menos un campo; las filas totalmente vacías se descartan al enviar.
+    vehicles: z
+      .array(
+        z.object({
+          plate: z.string().default(''),
+          make: z.string().default(''),
+          model: z.string().default(''),
+        }),
+      )
+      .default([]),
   })
   .superRefine((values, ctx) => {
     if (values.sale_type !== 'flete') return;

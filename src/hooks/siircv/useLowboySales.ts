@@ -58,6 +58,7 @@ export function useLowboySales() {
         .select(`
           *,
           lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size),
+          lowboy_sale_vehicles!lowboy_sale_vehicles_sale_id_fkey(id, plate, make, model, position),
           linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_sale_id_fkey(
             id, folio, doc_date, doc_type, counterpart_rut, counterpart_name, net_amount, tax_amount, total_amount
           )
@@ -68,6 +69,43 @@ export function useLowboySales() {
         throw error;
       }
       return sortSales((data ?? []) as LowboySaleRow[]);
+    },
+  });
+}
+
+/** Contenedor de una venta Producto con sus costos, para el desglose económico del detalle. */
+export type LowboySaleContainerDetail = {
+  id: string;
+  serial_number: string | null;
+  size: string;
+  container_type: string;
+  condition: string;
+  acquisition_net_cost: number;
+  sale_net_price: number | null;
+  costs: Array<{ id: string; concept: string; net_amount: number; cost_date: string }>;
+};
+
+/**
+ * Carga perezosa de los contenedores (con costos itemizados) de una venta Producto,
+ * para el desglose de costo/margen del modal de detalle. Visible para todos los roles
+ * con acceso al módulo (la RLS de lowboy_containers ya lo permite).
+ */
+export function useLowboySaleContainers(saleId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['lowboy-sale-containers', saleId],
+    enabled: enabled && !!saleId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<LowboySaleContainerDetail[]> => {
+      const { data, error } = await supabase
+        .from('lowboy_containers')
+        .select('id, serial_number, size, container_type, condition, acquisition_net_cost, sale_net_price, costs:lowboy_container_costs(id, concept, net_amount, cost_date)')
+        .eq('sale_id', saleId!)
+        .order('acquisition_date', { ascending: true });
+      if (error) {
+        logger.error('Error cargando contenedores de la venta', error);
+        throw error;
+      }
+      return (data ?? []) as LowboySaleContainerDetail[];
     },
   });
 }

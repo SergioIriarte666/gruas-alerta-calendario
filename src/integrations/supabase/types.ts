@@ -2703,7 +2703,6 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
-          entity: string
           id: string
           is_active: boolean
           name: string
@@ -2714,7 +2713,6 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          entity?: string
           id?: string
           is_active?: boolean
           name: string
@@ -2725,7 +2723,6 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          entity?: string
           id?: string
           is_active?: boolean
           name?: string
@@ -2920,6 +2917,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          entity: string
           id: string
           is_active: boolean
           name: string
@@ -2931,6 +2929,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string
           id?: string
           is_active?: boolean
           name: string
@@ -2942,6 +2941,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string
           id?: string
           is_active?: boolean
           name?: string
@@ -3953,6 +3953,83 @@ export type Database = {
           },
           {
             foreignKeyName: "lowboy_containers_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "lowboy_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lowboy_sale_change_history: {
+        Row: {
+          change_summary: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          sale_id: string
+        }
+        Insert: {
+          change_summary?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sale_id: string
+        }
+        Update: {
+          change_summary?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sale_id?: string
+        }
+        Relationships: []
+      }
+      lowboy_sale_vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          make: string | null
+          model: string | null
+          notes: string | null
+          plate: string | null
+          position: number
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          make?: string | null
+          model?: string | null
+          notes?: string | null
+          plate?: string | null
+          position?: number
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          make?: string | null
+          model?: string | null
+          notes?: string | null
+          plate?: string | null
+          position?: number
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lowboy_sale_vehicles_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "lowboy_sales"
@@ -8000,50 +8077,6 @@ export type Database = {
         Args: { p_version: string }
         Returns: undefined
       }
-      sell_lowboy_container: {
-        Args: {
-          p_container_id: string
-          p_mark_as_invoiced?: boolean
-          p_rcv_record_id?: string
-          p_sale_id: string
-          p_sale_net_price: number
-        }
-        Returns: undefined
-      }
-      save_lowboy_sale_with_containers: {
-        Args: {
-          p_client_name: string
-          p_client_rut: string
-          p_container_assignments?: Json
-          p_description: string
-          p_destination: string | null
-          p_executed_date: string | null
-          p_net_amount: number
-          p_notes: string | null
-          p_origin: string | null
-          p_rcv_record_id?: string | null
-          p_sale_id: string | null
-          p_sale_type: string
-          p_scheduled_date: string | null
-          p_status: string
-        }
-        Returns: string
-      }
-      set_lowboy_rcv_sale_link: {
-        Args: {
-          p_mark_as_invoiced?: boolean
-          p_record_id: string
-          p_sale_id: string | null
-        }
-        Returns: undefined
-      }
-      set_lowboy_rcv_cost_link: {
-        Args: {
-          p_cost_id: string | null
-          p_record_id: string
-        }
-        Returns: undefined
-      }
       admin_create_user: {
         Args: {
           p_client_id?: string
@@ -8080,6 +8113,14 @@ export type Database = {
           new_role?: Database["public"]["Enums"]["app_role"]
           target_client_id?: string
           target_user_id: string
+        }
+        Returns: undefined
+      }
+      assign_lowboy_container_to_sale: {
+        Args: {
+          p_container_id: string
+          p_sale_id: string
+          p_sale_net_price: number
         }
         Returns: undefined
       }
@@ -8943,6 +8984,26 @@ export type Database = {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
       }
+      save_lowboy_sale_with_containers: {
+        Args: {
+          p_client_name: string
+          p_client_rut: string
+          p_container_assignments?: Json
+          p_description: string
+          p_destination: string
+          p_executed_date: string
+          p_net_amount: number
+          p_notes: string
+          p_origin: string
+          p_rcv_record_id?: string
+          p_sale_id: string
+          p_sale_type: string
+          p_scheduled_date: string
+          p_status: string
+          p_vehicles?: Json
+        }
+        Returns: string
+      }
       search_voidable_inventory_purchases: {
         Args: { p_search?: string }
         Returns: {
@@ -8965,6 +9026,28 @@ export type Database = {
           supplier_name: string
           supplier_payment_id: string
         }[]
+      }
+      sell_lowboy_container: {
+        Args: {
+          p_container_id: string
+          p_mark_as_invoiced?: boolean
+          p_rcv_record_id?: string
+          p_sale_id: string
+          p_sale_net_price: number
+        }
+        Returns: undefined
+      }
+      set_lowboy_rcv_cost_link: {
+        Args: { p_cost_id: string; p_record_id: string }
+        Returns: undefined
+      }
+      set_lowboy_rcv_sale_link: {
+        Args: {
+          p_mark_as_invoiced?: boolean
+          p_record_id: string
+          p_sale_id: string
+        }
+        Returns: undefined
       }
       smart_apply_payment: {
         Args: { p_auto_apply?: boolean; p_payment_id: string }

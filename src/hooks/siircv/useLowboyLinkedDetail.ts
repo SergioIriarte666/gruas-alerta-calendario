@@ -61,6 +61,7 @@ export type LinkedSaleDetail = {
   status: string | null;
   notes: string | null;
   containers: Array<{ id: string; serial_number: string | null; size: string; sale_net_price: number | null }>;
+  vehicles: Array<{ id: string; plate: string | null; make: string | null; model: string | null; position: number }>;
 };
 
 export type LinkedDetail = LinkedCostDetail | LinkedSaleDetail | { kind: 'deleted' };
@@ -126,7 +127,8 @@ async function fetchSaleDetail(saleId: string): Promise<LinkedDetail> {
     .select(`
       id, client_rut, client_name, description, sale_type, scheduled_date,
       executed_date, net_amount, status, notes,
-      containers:lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size, sale_net_price)
+      containers:lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size, sale_net_price),
+      vehicles:lowboy_sale_vehicles!lowboy_sale_vehicles_sale_id_fkey(id, plate, make, model, position)
     `)
     .eq('id', saleId)
     .maybeSingle();
@@ -147,6 +149,7 @@ async function fetchSaleDetail(saleId: string): Promise<LinkedDetail> {
     status: data.status,
     notes: data.notes,
     containers: data.containers ?? [],
+    vehicles: [...(data.vehicles ?? [])].sort((a, b) => a.position - b.position),
   };
 }
 

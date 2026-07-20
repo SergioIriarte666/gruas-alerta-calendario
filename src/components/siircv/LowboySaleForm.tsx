@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, Box, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { AlertTriangle, Box, Loader2, Plus, Trash2, Truck } from 'lucide-react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +22,10 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { resolveRazonSocial } from '@/hooks/siircv/rutResolver';
 import { useLowboyContainerInvoiceCandidates, useLowboyContainers } from '@/hooks/siircv/useLowboyContainers';
+import { useVehicleBrands } from '@/hooks/useVehicleBrands';
+import { useVehicleModels } from '@/hooks/useVehicleModels';
+import { fetchVehicleByPlate } from '@/services/vehiclePatentLookup';
+import { isChileanPlate } from '@/utils/vehicleIdentifiers';
 import { createLogger } from '@/lib/logger';
 import { lowboySaleFormSchema, lowboySaleInitialStateSchema } from '@/schemas/lowboySale';
 import { validateRut } from '@/utils/csvValidations';
@@ -48,6 +52,7 @@ const emptyValues = (): LowboySaleFormValues => ({
   scheduled_date: '',
   net_amount: 0,
   notes: '',
+  vehicles: [],
 });
 
 const valuesFromSale = (sale: LowboySaleRow): LowboySaleFormValues => ({
@@ -60,6 +65,13 @@ const valuesFromSale = (sale: LowboySaleRow): LowboySaleFormValues => ({
   scheduled_date: sale.scheduled_date ?? '',
   net_amount: Number(sale.net_amount),
   notes: sale.notes ?? '',
+  vehicles: [...(sale.lowboy_sale_vehicles ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((vehicle) => ({
+      plate: vehicle.plate ?? '',
+      make: vehicle.make ?? '',
+      model: vehicle.model ?? '',
+    })),
 });
 
 interface LowboySaleFormProps {
@@ -113,6 +125,65 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
   const clientRut = form.watch('client_rut');
   const netAmount = Number(form.watch('net_amount')) || 0;
   const isFlete = saleType === 'flete';
+  // Los vehículos solo aplican al flujo de venta nueva no histórica; en edición de un
+  // flete existente sí se cargan y editan.
+  const showVehicles = isFlete && (sale ? true : !retroactive);
+
+  const vehicleFields = useFieldArray({ control: form.control, name: 'vehicles' });
+  const [plateLoading, setPlateLoading] = useState<Record<number, boolean>>({});
+  const { brands } = useVehicleBrands();
+  const { models } = useVehicleModels();
+  const brandNames = useMemo(
+    () => Array.from(new Set(brands.map((brand) => brand.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')),
+    [brands],
+  );
+  const modelsByBrand = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const model of models) {
+      const brandName = model.vehicle_brands?.name?.trim().toLowerCase();
+      if (!brandName || !model.name) continue;
+      const list = map.get(brandName) ?? [];
+      if (!list.includes(model.name)) list.push(model.name);
+      map.set(brandName, list);
+    }
+    return map;
+  }, [models]);
+  const allModelNames = useMemo(
+    () => Array.from(new Set(models.map((model) => model.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')),
+    [models],
+  );
+  // Modelos sugeridos para una fila: si la marca escrita coincide con el catálogo, se
+  // acotan a esa marca; si no, se ofrecen todos (nunca se bloquea la escritura libre).
+  const modelSuggestionsFor = (make: string): string[] => {
+    const matched = modelsByBrand.get(make.trim().toLowerCase());
+    return matched && matched.length > 0 ? matched : allModelNames;
+  };
+
+  const watchedVehicles = form.watch('vehicles');
+
+  const handleVehiclePlateBlur = async (index: number, rawPlate: string) => {
+    const clean = rawPlate.trim().replace(/[-\s]/g, '').toUpperCase();
+    if (!isChileanPlate(clean)) return;
+    setPlateLoading((prev) => ({ ...prev, [index]: true }));
+    try {
+      const result = await fetchVehicleByPlate(clean);
+      if (result) {
+        // Nunca sobrescribimos lo que el usuario ya escribió a mano.
+        const makePath = `vehicles.${index}.make` as const;
+        const modelPath = `vehicles.${index}.model` as const;
+        if (!form.getValues(makePath)?.trim() && result.marca && result.marca !== 'No disponible') {
+          form.setValue(makePath, result.marca, { shouldDirty: true });
+        }
+        if (!form.getValues(modelPath)?.trim() && result.modelo && result.modelo !== 'No disponible') {
+          form.setValue(modelPath, result.modelo, { shouldDirty: true });
+        }
+      }
+    } catch (error) {
+      logger.warn('No se pudo consultar la patente del vehículo', error);
+    } finally {
+      setPlateLoading((prev) => ({ ...prev, [index]: false }));
+    }
+  };
   const { data: stockContainers, isLoading: stockLoading } = useLowboyContainers(open && !isFlete);
   const shouldOfferInvoice = !sale && retroactive && ['facturada', 'pagada'].includes(initialStatus);
   const { data: invoiceCandidates, isLoading: invoicesLoading } = useLowboyContainerInvoiceCandidates(open && shouldOfferInvoice);
@@ -208,7 +279,8 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
         : undefined;
       setRetroactiveError('');
       await onSubmit(
-        values,
+        // Los vehículos solo viajan cuando la sección está visible (flete no histórico).
+        { ...values, vehicles: showVehicles ? values.vehicles : [] },
         initialState,
         containerAssignments.map(({ container_id, sale_net_price }) => ({ container_id, sale_net_price })),
         rcvRecordId || undefined,
@@ -350,6 +422,93 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                   </FormItem>
                 )} />
               </div>
+            )}
+
+            {showVehicles && (
+              <section className="space-y-3 rounded-md border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <Truck className="size-4 text-indigo-600" />Vehículos trasladados (opcional)
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Registre las máquinas o vehículos del flete. La patente autocompleta marca y modelo.
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => vehicleFields.append({ plate: '', make: '', model: '' })}>
+                    <Plus className="mr-1.5 size-4" />Agregar vehículo
+                  </Button>
+                </div>
+
+                {/* Sugerencias de marca compartidas (texto libre, no bloqueante). */}
+                <datalist id="lowboy-vehicle-brands">
+                  {brandNames.map((name) => <option key={name} value={name} />)}
+                </datalist>
+
+                {vehicleFields.fields.length === 0 ? (
+                  <p className="py-2 text-center text-xs text-muted-foreground">
+                    Sin vehículos. Un flete de estructuras o contenedores puede quedar sin vehículos.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {vehicleFields.fields.map((fieldItem, index) => (
+                      <div key={fieldItem.id} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] sm:items-start">
+                        <FormField control={form.control} name={`vehicles.${index}.make`} render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs sm:sr-only">Marca</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Marca" list="lowboy-vehicle-brands" autoComplete="off" />
+                            </FormControl>
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name={`vehicles.${index}.model`} render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs sm:sr-only">Modelo</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Modelo" list={`lowboy-vehicle-models-${index}`} autoComplete="off" />
+                            </FormControl>
+                            <datalist id={`lowboy-vehicle-models-${index}`}>
+                              {modelSuggestionsFor(watchedVehicles?.[index]?.make ?? '').map((name) => (
+                                <option key={name} value={name} />
+                              ))}
+                            </datalist>
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name={`vehicles.${index}.plate`} render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs sm:sr-only">Patente</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  {...field}
+                                  placeholder="Patente"
+                                  className="font-mono uppercase"
+                                  autoComplete="off"
+                                  onChange={(event) => field.onChange(event.target.value.toUpperCase())}
+                                  onBlur={() => { field.onBlur(); void handleVehiclePlateBlur(index, field.value); }}
+                                />
+                                {plateLoading[index] && (
+                                  <Loader2 className="absolute right-2 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+                                )}
+                              </div>
+                            </FormControl>
+                          </FormItem>
+                        )} />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label={`Eliminar vehículo ${index + 1}`}
+                          onClick={() => vehicleFields.remove(index)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">

@@ -3,24 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
 import { createLogger } from '@/lib/logger';
+import {
+  getAuthHeaders,
+  invokeVehicleApi,
+  parseVehiclePayload,
+  type VehicleData,
+} from '@/services/vehiclePatentLookup';
 
 const logger = createLogger('usePatentLookup');
 
 // ── Tipos ──────────────────────────────────────────────────────────
-export interface VehicleData {
-  marca: string;
-  modelo: string;
-  año: number | null;
-  color: string | null;
-  // Campos Pro Light
-  vin?: string | null;
-  combustible?: string | null;
-  transmision?: string | null;
-  motor?: string | null;
-  rtFecha?: string | null;
-  rtResultado?: string | null;
-  mesRT?: string | null;
-}
+export type { VehicleData };
 
 export interface VinData {
   year: number | null;
@@ -59,41 +52,6 @@ interface UsePatentLookupReturn {
   clearHistory: () => void;
   reset: () => void;
 }
-
-// ── Helpers ────────────────────────────────────────────────────────
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Sin sesión activa');
-  return { Authorization: `Bearer ${session.access_token}` };
-};
-
-// Intenta vehicle-api primero; si falla cae a check-vehicle-patent (solo endpoint plate)
-const invokeVehicleApi = async (
-  endpoint: string,
-  value: string,
-  headers: Record<string, string>
-) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('vehicle-api', {
-      body: { endpoint, value },
-      headers,
-    });
-    if (!error) return data;
-  } catch {
-    // vehicle-api no disponible — fallback solo para plate
-  }
-
-  if (endpoint === 'plate') {
-    const { data, error } = await supabase.functions.invoke('check-vehicle-patent', {
-      body: { licensePlate: value },
-      headers,
-    });
-    if (error) throw error;
-    return data;
-  }
-
-  return null;
-};
 
 // ── Hook ───────────────────────────────────────────────────────────
 export const usePatentLookup = (): UsePatentLookupReturn => {
@@ -190,44 +148,21 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
         lookupStolen(cleanValue),
       ]);
 
-      if (!plateResult) {
+      let vehicleData: VehicleData | null;
+      try {
+        vehicleData = parseVehiclePayload(plateResult);
+      } catch (parseErr) {
+        const msg = parseErr instanceof Error ? parseErr.message : 'Error al consultar la patente';
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!vehicleData) {
         setError('No se encontró información para esta patente');
         toast.error('No se encontró información para esta patente');
         return;
       }
-
-      // Manejar errores de la función (tanto vehicle-api como check-vehicle-patent)
-      const errMsg = plateResult.error ?? plateResult.message;
-      if (errMsg) {
-        setError(errMsg);
-        toast.error(errMsg);
-        return;
-      }
-
-      // vehicle-api devuelve { success, data } — check-vehicle-patent devuelve { data }
-      const raw = plateResult.success !== undefined
-        ? (plateResult.success ? plateResult.data : null)
-        : plateResult.data;
-
-      if (!raw) {
-        setError('No se encontró información para esta patente');
-        toast.error('No se encontró información para esta patente');
-        return;
-      }
-
-      const vehicleData: VehicleData = {
-        marca:       raw.marca        ?? raw.model?.brand?.name ?? 'No disponible',
-        modelo:      raw.modelo       ?? raw.model?.name        ?? 'No disponible',
-        año:         raw.año          ?? raw.year               ?? null,
-        color:       raw.color                                  ?? null,
-        vin:         raw.vin          ?? raw.vinNumber          ?? null,
-        combustible: raw.combustible  ?? raw.fuel               ?? null,
-        transmision: raw.transmision  ?? raw.transmission       ?? null,
-        motor:       raw.motor        ?? raw.engine             ?? null,
-        rtFecha:     raw.rtFecha      ?? raw.rtDate             ?? null,
-        rtResultado: raw.rtResultado  ?? raw.rtResult           ?? null,
-        mesRT:       raw.mesRT        ?? raw.monthRT            ?? null,
-      };
 
       setData(vehicleData);
       setDataPlate(cleanValue);

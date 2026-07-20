@@ -2,6 +2,13 @@ import { supabase } from '@/integrations/supabase/client';
 import type { LowboyContainerSaleAssignment, LowboySaleFormValues, LowboySaleStatus } from '@/types/lowboySales';
 import { normalizeRut } from '@/utils/rutFormatter';
 
+/** Vehículo listo para persistir (patente normalizada a mayúsculas, campos vacíos → null). */
+export type LowboySaleVehiclePayload = {
+  plate: string | null;
+  make: string | null;
+  model: string | null;
+};
+
 export type SaveLowboySaleInput = {
   saleId?: string;
   values: LowboySaleFormValues;
@@ -10,6 +17,21 @@ export type SaveLowboySaleInput = {
   containerAssignments?: LowboyContainerSaleAssignment[];
   rcvRecordId?: string;
 };
+
+/**
+ * Depura la lista de vehículos del formulario: descarta filas totalmente vacías,
+ * recorta espacios y normaliza la patente a mayúsculas. Solo aplica a fletes.
+ */
+function buildVehiclesPayload(values: LowboySaleFormValues): LowboySaleVehiclePayload[] {
+  if (values.sale_type !== 'flete') return [];
+  return (values.vehicles ?? [])
+    .map((vehicle) => ({
+      plate: vehicle.plate.trim().toUpperCase() || null,
+      make: vehicle.make.trim() || null,
+      model: vehicle.model.trim() || null,
+    }))
+    .filter((vehicle) => vehicle.plate || vehicle.make || vehicle.model);
+}
 
 export async function saveLowboySaleWithContainers({
   saleId,
@@ -35,6 +57,7 @@ export async function saveLowboySaleWithContainers({
     p_notes: values.notes.trim() || null,
     p_container_assignments: containerAssignments,
     p_rcv_record_id: rcvRecordId ?? null,
+    p_vehicles: buildVehiclesPayload(values),
   });
   if (error) throw error;
   return data;

@@ -208,6 +208,24 @@ function SaleBody({ detail, documentNet }: { detail: LinkedSaleDetail; documentN
         <Field label="Neto venta" value={formatCLP(detail.netAmount)} />
         <Field label="Contenedores" value={detail.containers.length ? detail.containers.map((container) => container.serial_number || `Contenedor ${container.size}`).join(', ') : '—'} />
       </div>
+      {detail.vehicles.length > 0 && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Vehículos trasladados ({detail.vehicles.length})
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {detail.vehicles.map((vehicle) => (
+                <li key={vehicle.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+                  <span>{[vehicle.make, vehicle.model].map((part) => part?.trim()).filter(Boolean).join(' ') || (vehicle.plate ? '' : '—')}</span>
+                  {vehicle.plate && <span className="font-mono font-semibold">{vehicle.plate}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
       {detail.notes && <Field label="Notas" value={<span className="whitespace-pre-wrap">{detail.notes}</span>} />}
     </div>
   );

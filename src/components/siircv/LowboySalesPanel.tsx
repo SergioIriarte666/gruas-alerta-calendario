@@ -7,6 +7,7 @@ import {
   Ban,
   Box,
   CheckCircle2,
+  Eye,
   FileText,
   Loader2,
   MoreHorizontal,
@@ -14,8 +15,11 @@ import {
   Plus,
   Search,
   Trash2,
+  Truck,
 } from 'lucide-react';
 import { LowboySaleForm } from '@/components/siircv/LowboySaleForm';
+import { LowboySaleDetailDialog, type LowboySaleDetailActions } from '@/components/siircv/LowboySaleDetailDialog';
+import { StatusBadge, TypeBadge } from '@/components/siircv/lowboySaleBadges';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import {
   AlertDialog,
@@ -68,6 +72,10 @@ import {
   NEXT_STATUS,
   SALE_STATUS_LABEL,
   SALE_TYPE_LABEL,
+  canAdvanceSale,
+  canCancelSale,
+  nextActionLabel,
+  skipTargetsForStatus,
 } from '@/types/lowboySales';
 
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', {
@@ -75,46 +83,6 @@ const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', {
   currency: 'CLP',
   maximumFractionDigits: 0,
 }).format(Number(value) || 0);
-
-const STATUS_BADGE: Record<LowboySaleStatus, string> = {
-  confirmada: 'bg-sky-600 hover:bg-sky-700 lowboy-on-color',
-  ejecutada: 'bg-amber-500 hover:bg-amber-600 lowboy-on-color',
-  facturada: 'bg-cyan-800 hover:bg-cyan-900 lowboy-on-color',
-  pagada: 'bg-emerald-600 hover:bg-emerald-700 lowboy-on-color',
-  cancelada: 'bg-muted text-muted-foreground line-through',
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const key = status as LowboySaleStatus;
-  return (
-    <Badge className={cn('whitespace-nowrap font-medium', STATUS_BADGE[key] ?? 'bg-muted')}>
-      {SALE_STATUS_LABEL[key] ?? status}
-    </Badge>
-  );
-}
-
-function TypeBadge({ type }: { type: string }) {
-  const key = type as LowboySaleType;
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'whitespace-nowrap font-normal',
-        key === 'flete' ? 'border-indigo-400 text-indigo-600' : 'border-teal-400 text-teal-600',
-      )}
-    >
-      {SALE_TYPE_LABEL[key] ?? type}
-    </Badge>
-  );
-}
-
-const NEXT_ACTION_LABEL: Record<LowboySaleStatus, string> = {
-  confirmada: 'Marcar ejecutada',
-  ejecutada: 'Marcar facturada',
-  facturada: 'Marcar pagada',
-  pagada: '',
-  cancelada: '',
-};
 
 type TypeFilter = 'all' | LowboySaleType;
 
@@ -157,7 +125,15 @@ interface SaleDescriptionProps {
   sale: LowboySaleRow;
 }
 
+const vehicleLabel = (vehicle: { plate: string | null; make: string | null; model: string | null }): string =>
+  [vehicle.make, vehicle.model, vehicle.plate].map((part) => part?.trim()).filter(Boolean).join(' ');
+
 function SaleDescription({ sale }: SaleDescriptionProps) {
+  const vehicles = sale.sale_type === 'flete'
+    ? [...(sale.lowboy_sale_vehicles ?? [])].sort((a, b) => a.position - b.position)
+    : [];
+  const firstVehicle = vehicles[0];
+  const vehiclesTitle = vehicles.map(vehicleLabel).filter(Boolean).join(' · ');
   return (
     <div className="max-w-72">
       <p className="truncate" title={sale.description}>{sale.description}</p>
@@ -165,6 +141,19 @@ function SaleDescription({ sale }: SaleDescriptionProps) {
         <p className="mt-0.5 text-xs text-muted-foreground">
           {sale.origin || '—'} → {sale.destination || '—'}
         </p>
+      )}
+      {vehicles.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1" title={vehiclesTitle}>
+          <Badge variant="outline" className="gap-1 border-indigo-500/40 bg-indigo-500/5 px-1.5 py-0 text-[11px] text-indigo-600">
+            <Truck className="size-3" />
+            {vehicles.length} {vehicles.length === 1 ? 'vehículo' : 'vehículos'}
+          </Badge>
+          {firstVehicle && vehicleLabel(firstVehicle) && (
+            <span className="truncate text-[11px] text-muted-foreground">
+              {vehicleLabel(firstVehicle)}{vehicles.length > 1 ? ` y ${vehicles.length - 1} más` : ''}
+            </span>
+          )}
+        </div>
       )}
       {sale.sale_type === 'producto' && (sale.lowboy_containers?.length ?? 0) > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -202,6 +191,9 @@ export function LowboySalesPanel() {
   const [cancelingSale, setCancelingSale] = useState<LowboySaleRow | null>(null);
   const [skip, setSkip] = useState<{ sale: LowboySaleRow; status: LowboySaleStatus } | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<LinkedInvoice | null>(null);
+  // El modal se dirige por id (no por objeto) para reflejar datos frescos tras cada
+  // acción sin cerrarse: se re-lee la venta desde la lista ya invalidada.
+  const [detailSaleId, setDetailSaleId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -234,6 +226,12 @@ export function LowboySalesPanel() {
 
   const openCreate = () => { setEditingSale(null); setFormOpen(true); };
   const openEdit = (sale: LowboySaleRow) => { setEditingSale(sale); setFormOpen(true); };
+
+  // Venta mostrada en el modal, re-leída desde la lista viva para reflejar cambios.
+  const detailSale = useMemo(
+    () => (detailSaleId ? sales?.find((s) => s.id === detailSaleId) ?? null : null),
+    [sales, detailSaleId],
+  );
 
   const handleSave = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, containerAssignments?: LowboyContainerSaleAssignment[], rcvRecordId?: string) => {
     if (editingSale) {
@@ -290,17 +288,21 @@ export function LowboySalesPanel() {
       .catch(() => { /* handled */ });
   };
 
-  // Estados "hacia adelante" a los que un admin puede saltar (más de una etapa).
-  const skipTargets = (sale: LowboySaleRow): LowboySaleStatus[] => {
-    const order: LowboySaleStatus[] = ['confirmada', 'ejecutada', 'facturada', 'pagada'];
-    const idx = order.indexOf(sale.status as LowboySaleStatus);
-    if (idx < 0) return [];
-    const next = NEXT_STATUS[sale.status as LowboySaleStatus];
-    return order.slice(idx + 1).filter((s) => s !== next);
-  };
+  // Elegibilidad de transiciones desde helpers compartidos (fuente única con el modal).
+  const skipTargets = (sale: LowboySaleRow): LowboySaleStatus[] => skipTargetsForStatus(sale.status);
+  const canAdvance = (sale: LowboySaleRow) => canAdvanceSale(sale.status);
+  const canCancel = (sale: LowboySaleRow) => canCancelSale(sale.status);
 
-  const canAdvance = (sale: LowboySaleRow) => Boolean(NEXT_STATUS[sale.status as LowboySaleStatus]);
-  const canCancel = (sale: LowboySaleRow) => sale.status === 'confirmada' || sale.status === 'ejecutada';
+  // El modal reutiliza exactamente los mismos flujos que el menú ⋯ (cero lógica nueva).
+  // Cancelar/eliminar cierran el modal; el resto lo mantienen abierto y lo refrescan.
+  const detailActions: LowboySaleDetailActions = {
+    onEdit: openEdit,
+    onAdvance: advance,
+    onSkip: (sale, status) => setSkip({ sale, status }),
+    onCancel: (sale) => { setDetailSaleId(null); setCancelingSale(sale); },
+    onDelete: (sale) => { setDetailSaleId(null); setDeletingSale(sale); },
+    onViewInvoice: (invoice) => setViewingInvoice(invoice),
+  };
 
   function SortHeader({ sortKey, label, align = 'left' }: { sortKey: SortKey; label: string; align?: 'left' | 'right' }) {
     const active = sort?.key === sortKey;
@@ -325,15 +327,19 @@ export function LowboySalesPanel() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={`Acciones para ${sale.client_name}`}>
+          <Button variant="ghost" size="icon" aria-label={`Acciones para ${sale.client_name}`} onClick={(event) => event.stopPropagation()}>
             <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setDetailSaleId(sale.id)}>
+            <Eye className="mr-2 size-4" />Ver detalle
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {canAdvance(sale) && (
             <DropdownMenuItem onClick={() => advance(sale)}>
               <ArrowRight className="mr-2 size-4" />
-              {NEXT_ACTION_LABEL[sale.status as LowboySaleStatus]}
+              {nextActionLabel(sale.status)}
             </DropdownMenuItem>
           )}
           {skips.length > 0 && (
@@ -421,7 +427,14 @@ export function LowboySalesPanel() {
           ) : isMobile ? (
             <div className="space-y-2 p-3">
               {sorted.map((sale) => (
-                <div key={sale.id} className={cn('rounded-lg border p-3 text-sm', sale.status === 'cancelada' && 'opacity-60')}>
+                <div
+                  key={sale.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDetailSaleId(sale.id)}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setDetailSaleId(sale.id); } }}
+                  className={cn('cursor-pointer rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50', sale.status === 'cancelada' && 'opacity-60')}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{sale.client_name}</p>
@@ -438,7 +451,7 @@ export function LowboySalesPanel() {
                     <p className="font-semibold">{formatCLP(sale.net_amount)}</p>
                   </div>
                   {sale.linked_rcv_records?.[0] && (
-                    <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => setViewingInvoice(sale.linked_rcv_records?.[0] ?? null)}>
+                    <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={(event) => { event.stopPropagation(); setViewingInvoice(sale.linked_rcv_records?.[0] ?? null); }}>
                       <FileText className="mr-1.5 size-3.5" />Factura folio {sale.linked_rcv_records[0].folio}
                     </Button>
                   )}
@@ -462,7 +475,11 @@ export function LowboySalesPanel() {
                 </TableHeader>
                 <TableBody>
                   {sorted.map((sale) => (
-                    <TableRow key={sale.id} className={cn(sale.status === 'cancelada' && 'opacity-60')}>
+                    <TableRow
+                      key={sale.id}
+                      onClick={() => setDetailSaleId(sale.id)}
+                      className={cn('cursor-pointer', sale.status === 'cancelada' && 'opacity-60')}
+                    >
                       <TableCell className="whitespace-nowrap">{sale.scheduled_date ?? '—'}</TableCell>
                       <TableCell><TypeBadge type={sale.sale_type} /></TableCell>
                       <TableCell>
@@ -476,12 +493,12 @@ export function LowboySalesPanel() {
                       <TableCell><StatusBadge status={sale.status} /></TableCell>
                       <TableCell>
                         {sale.linked_rcv_records?.[0] ? (
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setViewingInvoice(sale.linked_rcv_records?.[0] ?? null)}>
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={(event) => { event.stopPropagation(); setViewingInvoice(sale.linked_rcv_records?.[0] ?? null); }}>
                             <FileText className="mr-1.5 size-3.5" />Folio {sale.linked_rcv_records[0].folio}
                           </Button>
                         ) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
-                      {isAdmin && <TableCell><div className="flex justify-end"><RowActions sale={sale} /></div></TableCell>}
+                      {isAdmin && <TableCell onClick={(event) => event.stopPropagation()}><div className="flex justify-end"><RowActions sale={sale} /></div></TableCell>}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -614,6 +631,16 @@ export function LowboySalesPanel() {
           <DialogFooter><Button variant="outline" onClick={() => setViewingInvoice(null)}>Cerrar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Detalle por venta: disponible para todos los roles (acciones solo admin). */}
+      <LowboySaleDetailDialog
+        open={Boolean(detailSale)}
+        onOpenChange={(open) => { if (!open) setDetailSaleId(null); }}
+        sale={detailSale}
+        isAdmin={isAdmin}
+        actionPending={manager.setStatus.isPending || manager.updateSale.isPending}
+        actions={detailActions}
+      />
     </div>
   );
 }

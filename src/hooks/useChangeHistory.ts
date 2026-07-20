@@ -97,6 +97,25 @@ export const useCranePartChangeHistory = (cranePartId: string | null) =>
     enabled: !!cranePartId,
   });
 
+export const useLowboySaleChangeHistory = (saleId: string | null) =>
+  useQuery({
+    queryKey: ['lowboy-sale-change-history', saleId],
+    queryFn: async (): Promise<ChangeHistoryEntry[]> => {
+      if (!saleId) return [];
+      const { data, error } = await supabase
+        .from('lowboy_sale_change_history')
+        .select('id, sale_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
+        .eq('sale_id', saleId)
+        .order('changed_at', { ascending: false });
+      if (error) {
+        logger.error('[useChangeHistory] Error cargando historial de cambios de venta LowBoy:', error);
+        throw error;
+      }
+      return (data || []).map((r: any) => mapRow(r, 'sale_id'));
+    },
+    enabled: !!saleId,
+  });
+
 export const groupChangesByDateAndUser = (changes: ChangeHistoryEntry[]): GroupedChanges[] => {
   const groups = new Map<string, GroupedChanges>();
   changes.forEach((change) => {
