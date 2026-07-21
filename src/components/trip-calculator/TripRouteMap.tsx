@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { loadGoogleMaps } from '@/lib/googleMapsLoader';
+import { loadGoogleMaps, onGoogleMapsAuthFailure } from '@/lib/googleMapsLoader';
 import { createLogger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Map as MapIcon, ExternalLink, Maximize2, Loader2, MapPinOff } from 'lucide-react';
@@ -42,10 +42,24 @@ function InteractiveRouteMap({
 }: InteractiveRouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [errorReason, setErrorReason] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let resizeTimer: number | undefined;
+
+    // Los errores de autorización de la key (RefererNotAllowedMapError, etc.) no
+    // lanzan excepción: Google los avisa por gm_authFailure. Sin esto, el mapa
+    // quedaría en blanco con status 'ready' y sin diagnóstico visible.
+    const unsubscribeAuth = onGoogleMapsAuthFailure(() => {
+      if (cancelled) return;
+      const reason =
+        'La API key de Google Maps no autoriza este dominio ' +
+        `(${window.location.origin}). Revisa las restricciones de referer de la key en Google Cloud Console.`;
+      logger.error('Fallo de autorización de Google Maps', reason);
+      setErrorReason(reason);
+      setStatus('error');
+    });
 
     const init = async () => {
       try {
@@ -122,10 +136,19 @@ function InteractiveRouteMap({
           map.fitBounds(bounds, 48);
         }, 150);
 
-        if (!cancelled) setStatus('ready');
+        // gm_authFailure puede haber disparado durante la inicialización: si la
+        // autorización falló, prevalece ese estado de error sobre 'ready'.
+        if (!cancelled) setStatus((prev) => (prev === 'error' ? prev : 'ready'));
       } catch (error) {
-        logger.error('No se pudo inicializar el mapa interactivo', error);
-        if (!cancelled) setStatus('error');
+        const reason = error instanceof Error ? error.message : String(error);
+        logger.error('No se pudo inicializar el mapa interactivo', {
+          reason,
+          type: typeof error,
+        });
+        if (!cancelled) {
+          setErrorReason(reason);
+          setStatus('error');
+        }
       }
     };
 
@@ -133,15 +156,19 @@ function InteractiveRouteMap({
 
     return () => {
       cancelled = true;
+      unsubscribeAuth();
       if (resizeTimer) window.clearTimeout(resizeTimer);
     };
   }, [geometry, originCoords, destinationCoords, gestureHandling]);
 
   if (status === 'error') {
     return (
-      <div className={`${className ?? ''} flex flex-col items-center justify-center gap-2 text-muted-foreground`}>
+      <div className={`${className ?? ''} flex flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground`}>
         <MapPinOff className="size-6" />
         <span className="text-sm">No se pudo cargar el mapa. Usa el botón Google Maps.</span>
+        {errorReason && (
+          <span className="text-xs text-muted-foreground/80">{errorReason}</span>
+        )}
       </div>
     );
   }
