@@ -970,17 +970,17 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         {step === 'upload' && (
           <div className="min-h-0 overflow-y-auto space-y-4 pr-1">
             <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
-              <Card className="border-violet-200/70 bg-violet-50/40">
+              <Card className="border-primary/30 bg-accent">
                 <CardHeader className="pb-3">
                   <CollapsibleTrigger asChild>
                     <button type="button" className="flex w-full items-center justify-between text-left">
                       <div>
-                        <CardTitle className="text-base text-violet-700">¿Cómo obtener este archivo?</CardTitle>
+                        <CardTitle className="text-base text-primary">¿Cómo obtener este archivo?</CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
                           Descarga el libro desde Facturacion.cl antes de importarlo.
                         </p>
                       </div>
-                      <Badge variant="outline" className="border-violet-200 text-violet-700">
+                      <Badge variant="outline" className="border-primary/30 text-primary">
                         {instructionsOpen ? 'Ocultar' : 'Mostrar'}
                       </Badge>
                     </button>
@@ -993,8 +993,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                       'Selecciona el rango de fechas que quieres importar y haz clic en Buscar.',
                       'Usa Exportar y descarga el archivo en formato Excel (.xlsx) o CSV.',
                     ].map((stepText, index) => (
-                      <div key={stepText} className="flex items-start gap-3 rounded-lg border border-violet-200/60 bg-background/90 p-3">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-semibold text-white">
+                      <div key={stepText} className="flex items-start gap-3 rounded-lg border border-primary/30 bg-background/90 p-3">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                           {index + 1}
                         </div>
                         <p className="text-sm text-foreground">{stepText}</p>
@@ -1008,7 +1008,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
-                ${isDragActive ? 'border-violet-600 bg-violet-600/5' : 'border-muted-foreground/30 hover:border-violet-600/50'}`}
+                ${isDragActive ? 'border-primary/30 bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/30'}`}
             >
               <input
                 {...getInputProps({
@@ -1033,14 +1033,14 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               <CardContent className="grid gap-3 p-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <FileSpreadsheet className="size-4 text-violet-600" />
+                    <FileSpreadsheet className="size-4 text-primary" />
                     Formatos aceptados
                   </div>
                   <p className="text-sm text-muted-foreground">`.csv`, `.xlsx`, `.xls`</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <CalendarRange className="size-4 text-violet-600" />
+                    <CalendarRange className="size-4 text-primary" />
                     Columnas esperadas
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -1056,7 +1056,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-none px-1 py-4 gap-y-4">
               {overlappingImportLog && (
-                <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                <Alert className="mb-4 border-warning/30 bg-warning-soft text-warning-text [&>svg]:text-warning-text">
                   <AlertTriangle className="size-4" />
                   <AlertTitle>Posible período ya importado</AlertTitle>
                   <AlertDescription>
@@ -1071,11 +1071,11 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   <p className="text-xs text-muted-foreground">Documentos detectados</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-green-500">{preview.matched.length}</p>
+                  <p className="text-2xl font-bold text-success-text">{preview.matched.length}</p>
                   <p className="text-xs text-muted-foreground">Con cliente</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-500">{preview.unmatched.length}</p>
+                  <p className="text-2xl font-bold text-warning-text">{preview.unmatched.length}</p>
                   <p className="text-xs text-muted-foreground">Sin cliente</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
@@ -1096,16 +1096,16 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </div>
                 {(preview.creditNoteCount > 0 || preview.debitNoteCount > 0) && (
                   <div className="flex gap-3 flex-wrap">
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-xs">
                       {preview.facturaCount} Facturas
                     </Badge>
                     {preview.creditNoteCount > 0 && (
-                      <Badge variant="outline" className="text-[10px] border-red-300 text-red-600">
+                      <Badge variant="outline" className="text-xs border-danger/30 text-danger-text">
                         {preview.creditNoteCount} Notas de Crédito
                       </Badge>
                     )}
                     {preview.debitNoteCount > 0 && (
-                      <Badge variant="outline" className="text-[10px] border-blue-300 text-blue-600">
+                      <Badge variant="outline" className="text-xs border-info/30 text-info-text">
                         {preview.debitNoteCount} Notas de Débito
                       </Badge>
                     )}
@@ -1124,7 +1124,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 Seleccionar todos
                 <span className="text-xs font-normal text-muted-foreground">({selectedImportableCount} seleccionados)</span>
               </label>
-              <div className="flex flex-1 flex-col gap-1 sm:ml-auto sm:max-w-[230px]">
+              <div className="flex flex-1 flex-col gap-1 sm:ml-auto sm:max-w-56">
                 <Label htmlFor="sales-document-status" className="text-xs">Estado de documentos</Label>
                 <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as InvoiceImportStatus)}>
                   <SelectTrigger id="sales-document-status" aria-label="Estado de documentos de venta" className="h-9">
@@ -1152,8 +1152,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                     Sin Cliente ({preview.unmatched.length})
                     {pendingUnmatchedClients.length > 0 && (
                       <span className="absolute top-0 right-0 -mt-1 -mr-1 flex size-3">
-                        <span className="animate-ping absolute inline-flex size-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full size-3 bg-amber-500"></span>
+                        <span className="animate-ping absolute inline-flex size-full rounded-full bg-warning opacity-75"></span>
+                        <span className="relative inline-flex size-3 rounded-full bg-warning"></span>
                       </span>
                     )}
                   </TabsTrigger>
@@ -1171,7 +1171,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                              <CheckCircle className="size-4 text-green-500" />
+                              <CheckCircle className="size-4 text-success-text" />
                               Facturas listas ({getSelectedMatchedCount()}/{preview.matched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1206,14 +1206,14 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                              <AlertTriangle className="size-4 text-amber-500" />
+                              <AlertTriangle className="size-4 text-warning-text" />
                               Clientes no encontrados ({unmatchedClients.length}) — {preview.unmatched.length} facturas
                             </h3>
                           </div>
 
                           {allUnmatchedPending && (
                             <Button
-                              className="mb-4 bg-violet-600 hover:bg-violet-700"
+                              className="mb-4 bg-primary hover:bg-primary/90"
                               onClick={() => handleBulkAction('create')}
                             >
                               Crear todos como nuevos ({unmatchedClients.length})
@@ -1272,7 +1272,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                   selectedUnmatchedClientIndices.has(index) ? 'border-primary/50 bg-primary/5' : ''
                                 } ${
                                   uc.suggestion && uc.suggestion.score > 0.75 && uc.assignedClientId === uc.suggestion.clientId
-                                    ? 'border-violet-200 bg-violet-50/40'
+                                    ? 'border-primary/30 bg-accent'
                                     : ''
                                 }`}
                               >
@@ -1291,7 +1291,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                                   <TooltipProvider>
                                                     <Tooltip>
                                                       <TooltipTrigger asChild>
-                                                        <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 p-1 text-violet-600">
+                                                        <span className="inline-flex rounded-full border border-primary/30 bg-accent p-1 text-primary">
                                                           <RotateCw className="size-3" />
                                                         </span>
                                                       </TooltipTrigger>
@@ -1316,8 +1316,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                             </p>
                                             {(uc.email || uc.address) && (
                                             <div className="flex flex-wrap gap-2 mt-1">
-                                                {uc.email && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded flex items-center gap-1">📧 {uc.email}</span>}
-                                                {uc.address && <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded flex items-center gap-1">📍 {toTitleCase(uc.address)}</span>}
+                                                {uc.email && <span className="text-xs bg-info-soft text-info-text px-1.5 py-0.5 rounded flex items-center gap-1">📧 {uc.email}</span>}
+                                                {uc.address && <span className="text-xs bg-muted text-foreground px-1.5 py-0.5 rounded flex items-center gap-1">📍 {toTitleCase(uc.address)}</span>}
                                             </div>
                                             )}
                                         </div>
@@ -1326,7 +1326,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                   </div>
 
                                   {uc.suggestion && uc.suggestion.score > 0.75 && uc.assignedClientId === uc.suggestion.clientId && (
-                                    <div className="ml-8 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+                                    <div className="ml-8 rounded-md border border-primary/30 bg-accent px-3 py-2 text-xs text-primary">
                                       <span className="inline-flex items-center gap-2">
                                         <Sparkles className="size-3.5" />
                                         Sugerencia preseleccionada: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)
@@ -1335,15 +1335,15 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                   )}
 
                                   {uc.suggestion && uc.suggestion.score <= 0.75 && uc.resolution === 'pending' && (
-                                    <div className="ml-8 p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 rounded flex items-center justify-between gap-2">
-                                      <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400">
+                                    <div className="ml-8 p-2 bg-warning-soft border border-warning/30 rounded flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2 text-xs text-warning-text">
                                         <Sparkles className="size-3.5" />
                                         <span>Sugerencia: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)</span>
                                       </div>
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        className="h-6 text-xs hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700"
+                                        className="h-6 text-xs hover:bg-warning-soft text-warning-text"
                                         onClick={() => applySuggestion(index)}
                                       >
                                         Aplicar
@@ -1380,7 +1380,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                           value={uc.assignedClientId || ''}
                                           onValueChange={(val) => handleClientResolution(index, 'assign', val)}
                                         >
-                                          <SelectTrigger className="w-[200px] h-8 text-xs">
+                                          <SelectTrigger className="w-48 h-8 text-xs">
                                             <SelectValue placeholder="Seleccionar cliente..." />
                                           </SelectTrigger>
                                           <SelectContent>
@@ -1530,8 +1530,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             {importResult.errors > 0 && importResult.imported === 0 ? (
               lastError?.includes('ya existen') || lastError?.includes('ya fueron importadas') ? (
                 <>
-                  <div className="size-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-                    <Ban className="size-6 text-amber-600 dark:text-amber-400" />
+                  <div className="size-12 rounded-full bg-warning-soft flex items-center justify-center mb-4">
+                    <Ban className="size-6 text-warning-text" />
                   </div>
                   <p className="text-lg font-medium text-foreground">
                     Facturas ya importadas
@@ -1539,7 +1539,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   <p className="text-sm text-muted-foreground mt-2 max-w-sm">
                     Las {importResult.errors} facturas seleccionadas ya se encuentran registradas en el sistema. No se crearon duplicados.
                   </p>
-                  <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm rounded-md max-w-md">
+                  <div className="mt-4 p-3 bg-warning-soft border border-warning/30 text-warning-text text-sm rounded-md max-w-md">
                     💡 Si necesita re-importar, elimine primero las facturas existentes desde el historial de ventas.
                   </div>
                 </>
@@ -1559,7 +1559,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               )
             ) : (
               <>
-                <CheckCircle className="size-12 text-green-500 mb-4" />
+                <CheckCircle className="size-12 text-success-text mb-4" />
                 <p className="text-lg font-medium text-foreground">Importación completada</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   {importResult.imported} facturas importadas exitosamente
@@ -1666,13 +1666,13 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 const ResolutionBadge: React.FC<{ resolution: string }> = ({ resolution }) => {
   switch (resolution) {
     case 'create':
-      return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Crear nuevo</Badge>;
+      return <Badge className="border-info/30 bg-info-soft text-info-text">Crear nuevo</Badge>;
     case 'assign':
-      return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Asignar existente</Badge>;
+      return <Badge className="border-success/30 bg-success-soft text-success-text">Asignar existente</Badge>;
     case 'ignore':
       return <Badge variant="secondary">Ignorar</Badge>;
     default:
-      return <Badge variant="outline" className="text-amber-500 border-amber-500/30">Pendiente</Badge>;
+      return <Badge variant="outline" className="text-warning-text border-warning/30">Pendiente</Badge>;
   }
 };
 
@@ -1686,11 +1686,11 @@ interface InvoicePreviewTableProps {
 const DocTypeBadge: React.FC<{ type: DocumentType }> = ({ type }) => {
   switch (type) {
     case 'nota_credito':
-      return <Badge variant="outline" className="text-[9px] border-red-300 text-red-600">NC</Badge>;
+      return <Badge variant="outline" className="text-xs border-danger/30 text-danger-text">NC</Badge>;
     case 'nota_debito':
-      return <Badge variant="outline" className="text-[9px] border-blue-300 text-blue-600">ND</Badge>;
+      return <Badge variant="outline" className="text-xs border-info/30 text-info-text">ND</Badge>;
     default:
-      return <Badge variant="outline" className="text-[9px]">F</Badge>;
+      return <Badge variant="outline" className="text-xs">F</Badge>;
   }
 };
 
@@ -1698,7 +1698,7 @@ const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, sel
   <Table>
     <TableHeader>
       <TableRow>
-        {onToggle && <TableHead className="w-[40px]"></TableHead>}
+        {onToggle && <TableHead className="w-10"></TableHead>}
         <TableHead className="text-xs">Tipo</TableHead>
         <TableHead className="text-xs">Folio</TableHead>
         <TableHead className="text-xs">Cliente</TableHead>
@@ -1727,11 +1727,11 @@ const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, sel
               <DocTypeBadge type={inv.documentType} />
             </TableCell>
             <TableCell className="text-xs font-medium">{inv.numeroFiscal}</TableCell>
-            <TableCell className="text-xs truncate max-w-[200px]">{toTitleCase(inv.razonSocial)}</TableCell>
+            <TableCell className="text-xs truncate max-w-52">{toTitleCase(inv.razonSocial)}</TableCell>
             <TableCell className="text-xs">{inv.issueDate}</TableCell>
             <TableCell className="text-xs text-right">{formatCLP(inv.total)}</TableCell>
             <TableCell>
-              <Badge variant={effectiveStatus === 'paid' ? 'default' : effectiveStatus === 'overdue' ? 'destructive' : 'secondary'} className="text-[10px]">
+              <Badge variant={effectiveStatus === 'paid' ? 'default' : effectiveStatus === 'overdue' ? 'destructive' : 'secondary'} className="text-xs">
                 {effectiveStatus === 'paid' ? 'Pagada' : effectiveStatus === 'overdue' ? 'Vencida' : 'Enviada'}
               </Badge>
             </TableCell>

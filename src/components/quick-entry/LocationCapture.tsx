@@ -114,12 +114,12 @@ export function LocationCapture({ onLocationChange }: LocationCaptureProps) {
           </>
         ) : location ? (
           <>
-            <Check className="size-4 mr-2 text-green-500" />
+            <Check className="size-4 mr-2 text-success" />
             Ubicación guardada
           </>
         ) : error ? (
           <>
-            <AlertCircle className="size-4 mr-2 text-red-500" />
+            <AlertCircle className="size-4 mr-2 text-danger" />
             Reintentar ubicación
           </>
         ) : (
@@ -140,7 +140,7 @@ export function LocationCapture({ onLocationChange }: LocationCaptureProps) {
       )}
 
       {error && (
-        <div className="text-xs text-red-500 p-2 bg-red-50 dark:bg-red-950/20 rounded-md">
+        <div className="rounded-md bg-danger-soft p-2 text-xs text-danger-text">
           {error}
         </div>
       )}

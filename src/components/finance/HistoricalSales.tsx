@@ -370,12 +370,12 @@ export const HistoricalSales = () => {
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
         <RecentImportLogsCard
           importType="sale"
-          accentClassName="text-violet-600"
+          accentClassName="text-primary"
           title="Últimas importaciones"
         />
         <Button
           onClick={() => setImportHistoryOpen(true)}
-          className="w-full bg-violet-600 hover:bg-violet-700 sm:w-auto"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
         >
           <Plus className="mr-2 size-4" />
           Importar Histórico
@@ -475,20 +475,20 @@ export const HistoricalSales = () => {
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(
         <div className="fixed left-1/2 top-1/2 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-violet-400 bg-violet-200/95 px-3 py-2.5 text-slate-950 shadow-2xl shadow-violet-300/50 backdrop-blur-sm sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-primary/40 bg-primary-soft/95 px-3 py-2.5 text-foreground shadow-2xl shadow-primary/20 backdrop-blur-sm sm:gap-3">
             <div className="flex items-center gap-2 px-1">
-              <span className="min-w-[1.5rem] rounded-full bg-violet-600 px-2 py-0.5 text-center text-xs font-bold text-white">
+              <span className="min-w-6 rounded-full bg-primary px-2 py-0.5 text-center text-xs font-bold text-primary-foreground">
                 {selectedIds.length}
               </span>
               <span className="whitespace-nowrap text-sm font-medium">
                 seleccionados
               </span>
-              <span className="hidden whitespace-nowrap text-xs text-black/70 lg:inline">
+              <span className="hidden whitespace-nowrap text-xs text-foreground/70 lg:inline">
                 de {filteredAndSortedInvoices.length} registros filtrados
               </span>
             </div>
             
-            <div className="hidden h-5 w-px bg-black/20 sm:block" />
+            <div className="hidden h-5 w-px bg-border sm:block" />
             
             <Button 
               variant="outline"
@@ -541,7 +541,7 @@ export const HistoricalSales = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="ml-1 size-8 rounded-full text-black/70 hover:bg-black/10 hover:text-black"
+              className="ml-1 size-8 rounded-full text-foreground/70 hover:bg-foreground/10 hover:text-foreground"
               onClick={() => setSelectedIds([])}
               title="Cancelar selección"
             >

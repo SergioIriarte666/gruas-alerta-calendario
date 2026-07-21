@@ -205,9 +205,9 @@ export const ProductCatalogTable = () => {
                     <TableCell>{product.unit_of_measure}</TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <span className="text-orange-600">{product.minimum_stock}</span>
+                        <span className="text-warning">{product.minimum_stock}</span>
                         {' / '}
-                        <span className="text-green-600">{product.maximum_stock}</span>
+                        <span className="text-success">{product.maximum_stock}</span>
                       </div>
                     </TableCell>
                     <TableCell>

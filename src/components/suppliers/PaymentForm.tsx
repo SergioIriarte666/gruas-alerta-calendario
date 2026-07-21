@@ -558,7 +558,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Estado:</span>
-                        <Badge className={`${getStatusColor(duplicatePayment.status)} text-black text-xs`}>
+                        <Badge className={`${getStatusColor(duplicatePayment.status)} text-xs`}>
                           {getStatusLabel(duplicatePayment.status)}
                         </Badge>
                       </div>

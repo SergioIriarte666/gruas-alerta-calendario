@@ -39,13 +39,13 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
               className="h-11 rounded-xl border-border/70 bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground"
             />
           </div>
-          <div className="relative min-w-[200px]">
+          <div className="relative min-w-[12.5rem]">
             <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4 z-10" />
             <Select value={clientFilter} onValueChange={onClientFilterChange}>
               <SelectTrigger className="h-11 rounded-xl border-border/70 bg-background/70 pl-10 text-foreground">
                 <SelectValue placeholder="Filtrar por cliente" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-border max-h-[300px]">
+              <SelectContent className="bg-background border-border max-h-[18.75rem]">
                 <SelectItem value="all" className="text-foreground hover:bg-muted">
                   Todos los clientes
                 </SelectItem>
@@ -57,7 +57,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
               </SelectContent>
             </Select>
           </div>
-          <div className="relative min-w-[200px]">
+          <div className="relative min-w-[12.5rem]">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4 z-10" />
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="h-11 rounded-xl border-border/70 bg-background/70 pl-10 text-foreground">

@@ -273,7 +273,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
       ) : (
         <SectionCard flush className="resources-panel border-border/70 bg-card/80 shadow-sm">
           <div className="overflow-x-auto">
-          <Table className="min-w-[500px]">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead 

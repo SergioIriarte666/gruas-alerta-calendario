@@ -131,7 +131,7 @@ export const InventoryReportsPage: React.FC<InventoryReportsPageProps> = ({ enti
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
           <div className="overflow-x-auto">
-            <TabsList className="inventory-tabs grid h-auto w-full min-w-[760px] grid-cols-5 p-1">
+            <TabsList className="inventory-tabs grid h-auto w-full min-w-[47.5rem] grid-cols-5 p-1">
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}

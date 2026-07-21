@@ -346,11 +346,11 @@ export const ProductSalesSection = ({
               placeholder={selectedProduct ? selectedProduct.unit_cost.toString() : '0'}
               disabled={disabled}
               className={cn(
-                selectedProduct && (customPrice ?? 0) < selectedProduct.unit_cost && 'border-amber-500 focus-visible:ring-amber-500'
+                selectedProduct && (customPrice ?? 0) < selectedProduct.unit_cost && 'border-warning focus-visible:ring-warning'
               )}
             />
             {selectedProduct && (customPrice ?? 0) < selectedProduct.unit_cost && (
-              <p className="text-xs text-amber-600">
+              <p className="text-xs text-warning-text">
                 Bajo el costo: ${selectedProduct.unit_cost.toLocaleString('es-CL')}
               </p>
             )}
@@ -442,7 +442,7 @@ export const ProductSalesSection = ({
                       size="sm"
                       onClick={() => removeProduct(item.id)}
                       disabled={disabled}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-danger-text hover:text-danger-text/80"
                     >
                       <Trash2 className="size-4" />
                     </Button>

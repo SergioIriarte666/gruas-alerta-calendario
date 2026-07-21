@@ -135,9 +135,9 @@ export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason
         </div>
 
         {quantity && unitCost && Number(quantity) > 0 && Number(unitCost) > 0 && (
-          <div className="sticky top-0 z-10 px-3 py-2 bg-violet-100 dark:bg-violet-950/30 border-l-4 border-violet-500 dark:border-violet-400 rounded shadow-sm">
+          <div className="sticky top-0 z-10 px-3 py-2 bg-accent border-l-4 border-primary/30 rounded shadow-sm">
             <p className="text-xs font-medium text-foreground">
-              📦 {quantity} unidad{Number(quantity) !== 1 ? 'es' : ''} × ${Number(unitCost).toLocaleString('es-CL')} = <span className="text-violet-700 dark:text-violet-300 font-bold">${(Number(quantity) * Number(unitCost)).toLocaleString('es-CL')}</span>
+              📦 {quantity} unidad{Number(quantity) !== 1 ? 'es' : ''} × ${Number(unitCost).toLocaleString('es-CL')} = <span className="text-primary font-bold">${(Number(quantity) * Number(unitCost)).toLocaleString('es-CL')}</span>
             </p>
           </div>
         )}
@@ -175,7 +175,7 @@ export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason
                   htmlFor="immediate_consumption" 
                   className="flex items-center gap-2 cursor-pointer font-medium text-sm"
                 >
-                  <Zap className="size-3.5 text-orange-500" />
+                  <Zap className="size-3.5 text-warning-text" />
                   Consumo Inmediato
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -185,7 +185,7 @@ export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason
             </div>
             
             {immediateConsumption && (
-              <div className="flex items-center gap-2 text-xs bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-full border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-2 text-xs bg-warning-soft text-warning-text px-3 py-1.5 rounded-full border border-warning/30">
                 <Zap className="size-3" />
                 {craneId && craneId !== 'none' ? (
                   <span className="font-medium">→ 1 grúa seleccionada</span>

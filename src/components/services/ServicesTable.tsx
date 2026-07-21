@@ -148,7 +148,7 @@ export const ServicesTable = React.memo(({
         size: 180,
         meta: { headerTitle: 'Cliente' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Cliente</span>
+          <span className="text-secondary-foreground/80 text-sm font-normal">Cliente</span>
         ),
         cell: ({ row }) => (
           <div>
@@ -165,7 +165,7 @@ export const ServicesTable = React.memo(({
         size: 140,
         meta: { headerTitle: 'Vehículo' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Vehículo</span>
+          <span className="text-secondary-foreground/80 text-sm font-normal">Vehículo</span>
         ),
         cell: ({ row }) => <span>{formatVehicleInfo(row.original)}</span>,
       },
@@ -175,7 +175,7 @@ export const ServicesTable = React.memo(({
         size: 180,
         meta: { headerTitle: 'Origen/Destino' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">
+          <span className="text-secondary-foreground/80 text-sm font-normal">
             Origen/Destino
           </span>
         ),
@@ -194,7 +194,7 @@ export const ServicesTable = React.memo(({
         size: 110,
         meta: { headerTitle: 'Grúa' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Grúa</span>
+          <span className="text-secondary-foreground/80 text-sm font-normal">Grúa</span>
         ),
         cell: ({ row }) =>
           row.original.crane?.licensePlate || 'Sin asignar',
@@ -205,7 +205,7 @@ export const ServicesTable = React.memo(({
         size: 130,
         meta: { headerTitle: 'Operador' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Operador</span>
+          <span className="text-secondary-foreground/80 text-sm font-normal">Operador</span>
         ),
         cell: ({ row }) =>
           row.original.operator?.name || 'Sin asignar',
@@ -247,7 +247,7 @@ export const ServicesTable = React.memo(({
         size: 160,
         meta: { headerTitle: 'Acciones' },
         header: () => (
-          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">
+          <span className="text-secondary-foreground/80 text-sm font-normal">
             Acciones
           </span>
         ),
@@ -260,7 +260,7 @@ export const ServicesTable = React.memo(({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
+                  className="action-button border-success/30 bg-success/10 text-success hover:bg-success/20 hover:border-success/40"
                   onClick={(e) => { e.stopPropagation(); onCloseService(service); }}
                   title="Cerrar Servicio"
                 >
@@ -271,7 +271,7 @@ export const ServicesTable = React.memo(({
               <Button
                 variant="outline"
                 size="sm"
-                className="action-button border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40"
+                className="action-button border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/40"
                 onClick={(e) => { e.stopPropagation(); onViewDetails(service); }}
                 title="Ver detalles del servicio"
               >
@@ -282,7 +282,7 @@ export const ServicesTable = React.memo(({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
+                  className="action-button border-success/30 bg-success/10 text-success hover:bg-success/20 hover:border-success/40"
                   onClick={async (e) => { e.stopPropagation();
                     const oc = service.purchaseOrderNumber || service.purchaseOrder;
                     const { data, error } = await supabase.functions.invoke('send-whatsapp-admin', {
@@ -326,7 +326,7 @@ export const ServicesTable = React.memo(({
                   size="sm"
                   className={isInvoiced && !isAdmin
                     ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground"
-                    : "action-button border-info/30 bg-info/10 text-info hover:bg-info/15 hover:border-info/40"}
+                    : "action-button border-info/30 bg-info/10 text-info hover:bg-info/20 hover:border-info/40"}
                   onClick={(e) => { e.stopPropagation(); onEdit(service); }}
                   title={isInvoiced && !isAdmin
                     ? "No se puede editar un servicio facturado"
@@ -345,7 +345,7 @@ export const ServicesTable = React.memo(({
                   size="sm"
                   className={isInvoiced
                     ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground"
-                    : "action-button border-danger/30 bg-danger/10 text-danger hover:bg-danger/15 hover:border-danger/40"}
+                    : "action-button border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 hover:border-danger/40"}
                   onClick={isInvoiced ? undefined : (e) => { e.stopPropagation(); onDelete(service); }}
                   title={isInvoiced
                     ? "No se puede eliminar un servicio facturado"

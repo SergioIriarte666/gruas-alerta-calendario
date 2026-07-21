@@ -204,7 +204,7 @@ export default function VipClientPipeline() {
         </div>
         <Card className="operations-panel border bg-card">
           <CardContent className="p-8 text-center">
-            <AlertTriangle className="size-12 text-amber-500 mx-auto mb-4" />
+            <AlertTriangle className="mx-auto mb-4 size-12 text-warning" />
             <h2 className="text-xl font-semibold text-foreground mb-2">Cliente no encontrado</h2>
             <p className="text-muted-foreground">El cliente solicitado no existe o no tienes permisos para verlo.</p>
           </CardContent>
@@ -278,7 +278,7 @@ export default function VipClientPipeline() {
         </TabsList>
 
         <TabsContent value="pipeline" className="space-y-0">
-          <div className="min-h-[600px]">
+          <div className="min-h-[37.5rem]">
             <PipelineListView 
               services={services} 
               loading={loading}

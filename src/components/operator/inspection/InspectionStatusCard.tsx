@@ -11,12 +11,12 @@ interface InspectionStatusCardProps {
 
 export const InspectionStatusCard = ({ metadata }: InspectionStatusCardProps) => {
   return (
-    <Card className="mb-6 border-orange-200 bg-orange-50">
+    <Card className="mb-6 border-warning/30 bg-warning-soft">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Clock className="size-5 text-orange-600" />
+          <Clock className="size-5 text-warning-text" />
           Estado de Inspección
-          <Badge variant="secondary" className="bg-orange-500/80 text-white">
+          <Badge variant="secondary" className="bg-warning text-warning-foreground">
             {metadata.inspection_phase === 'initial' ? 'Fase Inicial' : 'Fase Final'}
           </Badge>
         </CardTitle>
@@ -34,19 +34,19 @@ export const InspectionStatusCard = ({ metadata }: InspectionStatusCardProps) =>
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-1">
               <CheckCircle
-                className={`size-4 ${metadata.signatures_status.operator ? 'text-green-600' : 'text-gray-400'}`}
+                className={`size-4 ${metadata.signatures_status.operator ? 'text-success-text' : 'text-muted-foreground'}`}
               />
               <span className="text-sm">Firma Operador</span>
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle
-                className={`size-4 ${metadata.signatures_status.client ? 'text-green-600' : 'text-gray-400'}`}
+                className={`size-4 ${metadata.signatures_status.client ? 'text-success-text' : 'text-muted-foreground'}`}
               />
               <span className="text-sm">Firma Cliente</span>
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle
-                className={`size-4 ${metadata.signatures_status.reception ? 'text-green-600' : 'text-gray-400'}`}
+                className={`size-4 ${metadata.signatures_status.reception ? 'text-success-text' : 'text-muted-foreground'}`}
               />
               <span className="text-sm">Firma Recepción</span>
             </div>

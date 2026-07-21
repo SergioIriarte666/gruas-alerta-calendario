@@ -25,14 +25,14 @@ export const DocumentStatusBanner = ({ operatorId }: DocumentStatusBannerProps) 
 
   if (expiredDocuments.length > 0) {
     return (
-      <Alert variant="destructive" className="rounded-2xl border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/40">
+      <Alert variant="destructive" className="rounded-2xl border-danger/30 bg-danger-soft">
         <AlertTriangle className="size-4" />
         <AlertTitle>Tienes {expiredDocuments.length} documento(s) vencido(s)</AlertTitle>
         <AlertDescription className="space-y-2">
           <p>
             No podras ser asignado a nuevos servicios hasta regularizarlos.
           </p>
-          <ul className="space-y-1 text-xs text-red-700/90 dark:text-red-100/90">
+          <ul className="space-y-1 text-xs text-danger-text/90">
             {expiredDocuments.map((doc) => (
               <li key={`${doc.documentType}-${doc.expiryDate}`}>
                 {DOCUMENT_TYPE_LABELS[doc.documentType]}: vencio el {formatDate(doc.expiryDate)}

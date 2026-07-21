@@ -15,6 +15,7 @@ La pagina actual esta estructurada por tabs y centraliza varias capacidades que 
 
 ## Arquitectura actual
 Tabs vigentes de la pagina:
+- `appearance`
 - `company`
 - `timezone`
 - `system`
@@ -23,6 +24,11 @@ Tabs vigentes de la pagina:
 - `users`
 - `categories`
 - `liberation`
+
+### Preferencias visuales
+- La pestaña `appearance` controla tema, densidad, escala de lectura, reducción de movimiento y estado del menú lateral.
+- Los cambios se aplican inmediatamente, se respaldan en el navegador y se sincronizan por usuario en `user_settings`.
+- Las reglas y límites de personalización se definen únicamente en [la guía visual](../design-system.md).
 
 ## Componentes y flujos clave
 - `CompanySettingsTab`

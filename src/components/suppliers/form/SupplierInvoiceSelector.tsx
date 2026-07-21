@@ -135,7 +135,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
         )}
       </div>
 
-      <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+      <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
         {pendingInvoices.map((invoice) => {
           const isSelected = selectedInvoices.includes(invoice.id);
           const balance = invoice.balance || invoice.amount || 0;

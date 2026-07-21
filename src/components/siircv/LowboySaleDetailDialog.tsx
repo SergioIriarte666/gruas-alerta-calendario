@@ -104,19 +104,19 @@ function PipelineTimeline({ status }: { status: string }) {
                 <div
                   className={cn(
                     'flex size-7 items-center justify-center rounded-full border-2 text-xs font-semibold',
-                    current && 'border-emerald-600 bg-emerald-600 text-white',
-                    completed && 'border-emerald-600 bg-emerald-600/15 text-emerald-700 dark:text-emerald-400',
+                    current && 'border-success bg-success text-success-foreground',
+                    completed && 'border-success bg-success-soft text-success',
                     !done && 'border-muted-foreground/30 text-muted-foreground',
                   )}
                 >
                   {idx + 1}
                 </div>
-                <span className={cn('text-[11px] font-medium', done ? 'text-foreground' : 'text-muted-foreground')}>
+                <span className={cn('text-xs font-medium', done ? 'text-foreground' : 'text-muted-foreground')}>
                   {SALE_STATUS_LABEL[step]}
                 </span>
               </div>
               {idx < PIPELINE_ORDER.length - 1 && (
-                <div className={cn('mx-1 h-0.5 flex-1', completed ? 'bg-emerald-600' : 'bg-muted-foreground/20')} />
+                <div className={cn('mx-1 h-0.5 flex-1', completed ? 'bg-success' : 'bg-muted-foreground/20')} />
               )}
             </div>
           );
@@ -157,7 +157,7 @@ function ProductCostSection({ saleId, netAmount, enabled }: { saleId: string; ne
         return (
           <div key={container.id} className="rounded-md border p-3">
             <div className="flex items-center gap-2">
-              <Box className="size-4 text-teal-600" />
+              <Box className="size-4 text-primary" />
               <span className="font-mono text-sm font-semibold">{container.serial_number || 'Sin serie'}</span>
               <span className="text-xs text-muted-foreground">
                 {CONTAINER_SIZE_LABEL[container.size as keyof typeof CONTAINER_SIZE_LABEL] ?? container.size}
@@ -196,7 +196,7 @@ function ProductCostSection({ saleId, netAmount, enabled }: { saleId: string; ne
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Margen</p>
-          <p className={cn('font-bold', margin >= 0 ? 'text-emerald-600' : 'text-destructive')}>
+          <p className={cn('font-bold', margin >= 0 ? 'text-success' : 'text-destructive')}>
             {formatCLP(margin)}<span className="ml-1 text-xs font-medium">({marginPct.toFixed(1)}%)</span>
           </p>
         </div>
@@ -371,7 +371,7 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
                 className="flex w-full items-center justify-between rounded-md border p-3 text-sm font-semibold transition-colors hover:bg-muted/50"
               >
                 <span className="flex items-center gap-2">
-                  <History className="size-4 text-amber-600" />
+                  <History className="size-4 text-warning" />
                   Historial de cambios
                   {historyCount > 0 && <Badge variant="secondary" className="text-xs">{historyCount}</Badge>}
                 </span>
@@ -411,7 +411,7 @@ export function LowboySaleDetailDialog({ open, onOpenChange, sale, isAdmin, acti
                 ))}
                 {skips.length > 0 && <DropdownMenuSeparator />}
                 {canCancelSale(sale.status) && (
-                  <DropdownMenuItem className="text-amber-600 focus:text-amber-600" onClick={() => actions.onCancel(sale)}>
+                  <DropdownMenuItem className="text-warning focus:text-warning" onClick={() => actions.onCancel(sale)}>
                     <Ban className="mr-2 size-4" />Cancelar venta
                   </DropdownMenuItem>
                 )}

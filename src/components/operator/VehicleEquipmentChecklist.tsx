@@ -76,12 +76,12 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                             </span>
                             <div className="ml-3 flex-shrink-0">
                               {isChecked ? (
-                                <div className="size-6 rounded-full bg-green-500 flex items-center justify-center">
-                                  <Check className="size-4 text-white" />
+                                <div className="flex size-6 items-center justify-center rounded-full bg-success">
+                                  <Check className="size-4 text-success-foreground" />
                                 </div>
                               ) : (
-                                <div className="size-6 rounded-full bg-red-500 flex items-center justify-center">
-                                  <X className="size-4 text-white" />
+                                <div className="flex size-6 items-center justify-center rounded-full bg-danger">
+                                  <X className="size-4 text-danger-foreground" />
                                 </div>
                               )}
                             </div>
@@ -91,7 +91,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                     )}
                   </div>
                 </div>
-                <FormMessage className="text-red-500" />
+                <FormMessage className="text-danger-text" />
               </FormItem>
             );
           }}

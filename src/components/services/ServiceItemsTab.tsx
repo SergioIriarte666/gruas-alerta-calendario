@@ -123,7 +123,7 @@ export function ServiceItemsTab({ serviceId, readOnly = false }: ServiceItemsTab
                     value={draft.glosa}
                     disabled={readOnly}
                     placeholder="Descripción del trabajo"
-                    className="h-8 min-w-[180px]"
+                    className="h-8 min-w-44"
                     onChange={(e) => updateDraft(draft.id, 'glosa', e.target.value)}
                   />
                 </td>

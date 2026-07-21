@@ -6,15 +6,15 @@ import { ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DOT_COLOR: Record<AuditOperation, string> = {
-  INSERT: 'bg-green-500',
-  UPDATE: 'bg-amber-500',
-  DELETE: 'bg-red-500',
+  INSERT: 'bg-success',
+  UPDATE: 'bg-warning',
+  DELETE: 'bg-danger',
 };
 
 const BADGE_COLOR: Record<AuditOperation, string> = {
-  INSERT: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  UPDATE: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  DELETE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  INSERT: 'bg-success-soft text-success',
+  UPDATE: 'bg-warning-soft text-warning',
+  DELETE: 'bg-danger-soft text-danger',
 };
 
 const OPERATION_LABEL: Record<AuditOperation, string> = {
@@ -77,7 +77,7 @@ export const AuditTimeline = ({
     }
   }
 
-  const dotColor = (op: AuditOperation) => DOT_COLOR[op] ?? 'bg-violet-500';
+  const dotColor = (op: AuditOperation) => DOT_COLOR[op] ?? 'bg-primary';
 
   return (
     <div className="space-y-1">
@@ -118,7 +118,7 @@ export const AuditTimeline = ({
                   <span
                     className={cn(
                       'mt-1.5 size-2 shrink-0 rounded-full',
-                      isSystemOrActivity ? 'bg-violet-500' : dotColor(entry.operation),
+                      isSystemOrActivity ? 'bg-primary' : dotColor(entry.operation),
                     )}
                   />
 

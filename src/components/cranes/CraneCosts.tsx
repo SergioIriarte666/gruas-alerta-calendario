@@ -148,7 +148,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
               <span className={cn(
                 'text-xs px-1.5 py-0.5 rounded-full leading-none tabular-nums flex-shrink-0 ml-1',
                 filterCategory === 'all'
-                  ? 'bg-white/20 text-primary-foreground'
+                  ? 'bg-card/20 text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
               )}>
                 {costs.length}
@@ -179,7 +179,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
                 <span className={cn(
                   'text-xs px-1.5 py-0.5 rounded-full leading-none tabular-nums flex-shrink-0',
                   filterCategory === category
-                    ? 'bg-white/20 text-primary-foreground'
+                    ? 'bg-card/20 text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
                 )}>
                   {categoryCounts[category!] ?? 0}

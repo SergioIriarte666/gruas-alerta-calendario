@@ -72,7 +72,7 @@ export const ClientFormStep3 = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onIsAddingDepartmentChange(!isAddingDepartment)}
-                className="border-violet-500/50 text-violet-600 hover:bg-violet-500/10"
+                className="border-primary/50 text-primary hover:bg-primary-soft"
               >
                 <Plus className="size-4 mr-1" />
                 Agregar Departamento
@@ -86,7 +86,7 @@ export const ClientFormStep3 = ({
             />
             
             {isAddingDepartment && (
-              <div className="p-4 border border-violet-500/30 rounded-lg bg-violet-500/5">
+              <div className="rounded-lg border border-primary/30 bg-primary-soft p-4">
                 <Label className="text-foreground mb-2 block">Nuevo Departamento *</Label>
                 <Input
                   value={newDepartmentName}
@@ -113,7 +113,7 @@ export const ClientFormStep3 = ({
                   variant="outline"
                   size="sm"
                   onClick={addDepartment}
-                  className="border-violet-500/50 text-violet-600 hover:bg-violet-500/10"
+                  className="border-primary/50 text-primary hover:bg-primary-soft"
                 >
                   <Plus className="size-4 mr-1" />
                   Agregar

@@ -16,11 +16,11 @@ export const InspectionSuccess = ({
   onBackToList,
 }: InspectionSuccessProps) => (
   <div className="mx-auto max-w-xl py-6">
-    <Card className="overflow-hidden border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-950/5">
-      <div className="h-1.5 bg-emerald-500" />
+    <Card className="overflow-hidden border-success/30 bg-success-soft shadow-lg">
+      <div className="h-1.5 bg-success" />
       <CardHeader className="items-center text-center">
-        <div className="mb-2 rounded-full bg-emerald-500/15 p-3">
-          <CheckCircle2 className="size-10 text-emerald-500" />
+        <div className="mb-2 rounded-full bg-success/15 p-3">
+          <CheckCircle2 className="size-10 text-success-text" />
         </div>
         <CardTitle>Inspección guardada</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -28,7 +28,7 @@ export const InspectionSuccess = ({
             ? `El servicio ${folio} quedó guardado en este dispositivo y se sincronizará cuando vuelva la conexión.`
             : `El servicio ${folio} quedó listo para entrega y ya salió de las inspecciones disponibles.`}
         </p>
-        <div className="rounded-full border border-emerald-500/25 bg-background/70 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <div className="rounded-full border border-success/30 bg-background/70 px-3 py-1 text-xs font-medium text-success-text dark:text-success-text">
           {queuedOffline
             ? 'Fotos · firmas · formulario guardados localmente'
             : 'Fotos · PDF · registro · estado sincronizados'}
@@ -41,7 +41,7 @@ export const InspectionSuccess = ({
           {queuedOffline ? 'PDF disponible al sincronizar' : 'Descargar PDF'}
         </Button>
 
-        <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+        <div className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm text-success-text">
           <div className="flex items-center gap-2 font-medium">
             <Send className="size-4" />
             Notificaciones automáticas

@@ -176,7 +176,7 @@ const ReportsPage = () => {
     return getPeriodDates(selectedPeriod);
   }, [selectedPeriod, customFrom, customTo]);
   const customDateTriggerClassName =
-    'h-11 w-full justify-start rounded-xl border-border/70 px-3 text-left text-sm font-normal shadow-sm transition-colors sm:w-[176px]';
+    'h-11 w-full justify-start rounded-xl border-border/70 px-3 text-left text-sm font-normal shadow-sm transition-colors sm:w-44';
 
   const { appliedFilters } = useReportFilters();
 
@@ -263,19 +263,19 @@ const ReportsPage = () => {
         return (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <ReportMetricCard title="Total Servicios" value={m.totalServices} />
-            <ReportMetricCard title="Completados" value={m.servicesByStatus.find(s => s.status === 'completed')?.count || 0} valueClassName="text-green-600 dark:text-green-400" />
-            <ReportMetricCard title="Cancelados" value={m.servicesByStatus.find(s => s.status === 'cancelled')?.count || 0} valueClassName="text-red-600 dark:text-red-400" />
-            <ReportMetricCard title="Ingresos" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
+            <ReportMetricCard title="Completados" value={m.servicesByStatus.find(s => s.status === 'completed')?.count || 0} valueClassName="text-success-text" />
+            <ReportMetricCard title="Cancelados" value={m.servicesByStatus.find(s => s.status === 'cancelled')?.count || 0} valueClassName="text-danger-text" />
+            <ReportMetricCard title="Ingresos" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-success-text" />
             <ReportMetricCard title="Ticket Promedio" value={`$${m.averageServiceValue.toLocaleString()}`} />
           </div>
         );
       case 'ingresos':
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <ReportMetricCard title="Ingresos Totales" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
+            <ReportMetricCard title="Ingresos Totales" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-success-text" />
             <ReportMetricCard title="Ingreso Promedio" value={`$${m.averageServiceValue.toLocaleString()}`} />
             <ReportMetricCard title="Total Servicios" value={m.totalServices} />
-            <ReportMetricCard title="Beneficio Neto" value={`$${m.netProfit.toLocaleString()}`} valueClassName={m.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} />
+            <ReportMetricCard title="Beneficio Neto" value={`$${m.netProfit.toLocaleString()}`} valueClassName={m.netProfit >= 0 ? 'text-success-text' : 'text-danger-text'} />
           </div>
         );
       case 'clientes':
@@ -284,7 +284,7 @@ const ReportsPage = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <ReportMetricCard title="Cliente" value={toTitleCase(selectedClientData.clientName)} />
               <ReportMetricCard title="Servicios" value={selectedClientData.services} />
-              <ReportMetricCard title="Ingresos" value={`$${selectedClientData.revenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
+              <ReportMetricCard title="Ingresos" value={`$${selectedClientData.revenue.toLocaleString()}`} valueClassName="text-success-text" />
               <ReportMetricCard title="Ticket Promedio" value={`$${selectedClientData.services > 0 ? Math.round(selectedClientData.revenue / selectedClientData.services).toLocaleString() : 0}`} />
             </div>
           );
@@ -292,7 +292,7 @@ const ReportsPage = () => {
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <ReportMetricCard title="Total Clientes" value={m.activeClients} />
-            <ReportMetricCard title="Ingresos Totales" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
+            <ReportMetricCard title="Ingresos Totales" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-success-text" />
             <ReportMetricCard title="Ingreso Promedio" value={`$${m.activeClients > 0 ? Math.round(m.totalRevenue / m.activeClients).toLocaleString() : 0}`} />
             <ReportMetricCard title="Top Clientes" value={m.topClients.length} description="Con servicios en el período" />
           </div>
@@ -303,7 +303,7 @@ const ReportsPage = () => {
             <ReportMetricCard title={selectedOperatorData ? 'Operador' : 'Total Operadores'} value={selectedOperatorData ? selectedOperatorData.name : m.activeOperators} />
             <ReportMetricCard title="Servicios/Operador" value={operatorCountInView > 0 ? (m.totalServices / operatorCountInView).toFixed(1) : '0'} />
             <ReportMetricCard title="Total Servicios" value={m.totalServices} />
-            <ReportMetricCard title="Ingresos del Período" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-violet-600 dark:text-violet-400" />
+            <ReportMetricCard title="Ingresos del Período" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-primary" />
           </div>
         );
       case 'flota':
@@ -317,16 +317,16 @@ const ReportsPage = () => {
       case 'finanzas':
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <ReportMetricCard title="Beneficio Neto" value={`$${m.netProfit.toLocaleString()}`} valueClassName={m.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} />
+            <ReportMetricCard title="Beneficio Neto" value={`$${m.netProfit.toLocaleString()}`} valueClassName={m.netProfit >= 0 ? 'text-success-text' : 'text-danger-text'} />
             <ReportMetricCard title="Margen" value={`${m.profitMargin.toFixed(1)}%`} />
-            <ReportMetricCard title="Facturas Pendientes" value={m.pendingInvoices} valueClassName="text-yellow-600 dark:text-yellow-400" />
-            <ReportMetricCard title="Vencidas" value={m.overdueInvoices} valueClassName="text-red-600 dark:text-red-400" />
+            <ReportMetricCard title="Facturas Pendientes" value={m.pendingInvoices} valueClassName="text-warning-text" />
+            <ReportMetricCard title="Vencidas" value={m.overdueInvoices} valueClassName="text-danger-text" />
           </div>
         );
       case 'costos':
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <ReportMetricCard title="Total Costos" value={`$${m.totalCosts.toLocaleString()}`} valueClassName="text-red-600 dark:text-red-400" />
+            <ReportMetricCard title="Total Costos" value={`$${m.totalCosts.toLocaleString()}`} valueClassName="text-danger-text" />
             <ReportMetricCard title="Costo/Servicio" value={`$${m.averageCostPerService.toLocaleString()}`} />
             <ReportMetricCard title="Ratio Costo/Ingreso" value={`${m.costRevenueRatio.toFixed(1)}%`} />
             <ReportMetricCard title="Categorías" value={m.costsByCategory.length} />
@@ -466,7 +466,7 @@ const ReportsPage = () => {
           <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Trophy className="size-5 text-yellow-500" />
+                <Trophy className="size-5 text-warning-text" />
                 {selectedClientData ? `Detalle: ${toTitleCase(selectedClientData.clientName)}` : 'Ranking de Clientes'}
               </CardTitle>
             </CardHeader>
@@ -491,7 +491,7 @@ const ReportsPage = () => {
                           </div>
                         </div>
                         <div className="text-right shrink-0 ml-2">
-                          <div className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                          <div className="text-sm font-bold text-primary">
                             ${client.revenue.toLocaleString()}
                           </div>
                           <div className="text-xs text-muted-foreground">{client.services} servicios</div>
@@ -520,7 +520,7 @@ const ReportsPage = () => {
             <Card className="border-border/70 bg-card/80 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-foreground flex items-center gap-2">
-                  <Trophy className="size-5 text-yellow-500" />
+                  <Trophy className="size-5 text-warning-text" />
                   {selectedOperatorData ? `Detalle Operativo: ${selectedOperatorData.name}` : 'Ranking de Operadores'}
                 </CardTitle>
               </CardHeader>
@@ -528,10 +528,10 @@ const ReportsPage = () => {
                 <div className="space-y-4">
                   {m.operatorUtilization.map((op, index) => {
                     const utilizationColor = op.utilization >= 30
-                      ? 'text-green-600 dark:text-green-400'
+                      ? 'text-success-text'
                       : op.utilization >= 15
-                        ? 'text-yellow-600 dark:text-yellow-400'
-                        : 'text-red-600 dark:text-red-400';
+                        ? 'text-warning-text'
+                        : 'text-danger-text';
                     return (
                       <div key={op.operatorId} className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -581,7 +581,7 @@ const ReportsPage = () => {
                   </div>
                   <div className="rounded-xl border border-border/70 bg-background/60 p-3">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">Ingresos del período</div>
-                    <div className="mt-1 text-xl font-semibold text-violet-600 dark:text-violet-400">
+                    <div className="mt-1 text-xl font-semibold text-primary">
                       ${m.totalRevenue.toLocaleString()}
                     </div>
                   </div>
@@ -636,10 +636,10 @@ const ReportsPage = () => {
               <div className="space-y-4">
                 {m.craneUtilization.map((crane) => {
                   const utilizationColor = crane.utilization >= 50
-                    ? 'text-green-600 dark:text-green-400'
+                    ? 'text-success-text'
                     : crane.utilization >= 20
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-red-600 dark:text-red-400';
+                      ? 'text-warning-text'
+                      : 'text-danger-text';
                   return (
                     <div key={crane.craneId} className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -734,18 +734,18 @@ const ReportsPage = () => {
                         {format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="font-medium">{service.folio}</TableCell>
-                      <TableCell className="min-w-[220px]">{toTitleCase(service.clientName)}</TableCell>
-                      <TableCell className="min-w-[180px]">{service.serviceTypeName}</TableCell>
-                      <TableCell className="min-w-[180px]">{service.operatorName}</TableCell>
-                      <TableCell className="min-w-[220px]">{service.craneName}</TableCell>
-                      <TableCell className="min-w-[220px]">{service.origin}</TableCell>
-                      <TableCell className="min-w-[220px]">{service.destination}</TableCell>
+                      <TableCell className="min-w-56">{toTitleCase(service.clientName)}</TableCell>
+                      <TableCell className="min-w-44">{service.serviceTypeName}</TableCell>
+                      <TableCell className="min-w-44">{service.operatorName}</TableCell>
+                      <TableCell className="min-w-56">{service.craneName}</TableCell>
+                      <TableCell className="min-w-56">{service.origin}</TableCell>
+                      <TableCell className="min-w-56">{service.destination}</TableCell>
                       <TableCell>
                         <Badge className={`${statusColors[service.status] || 'bg-muted text-foreground'} text-xs`}>
                           {statusLabels[service.status] || service.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right whitespace-nowrap font-medium text-violet-600 dark:text-violet-400">
+                      <TableCell className="text-right whitespace-nowrap font-medium text-primary">
                         ${service.value.toLocaleString()}
                       </TableCell>
                     </TableRow>
@@ -788,7 +788,7 @@ const ReportsPage = () => {
               }`}
             >
               <Icon className="size-4 sm:size-5" />
-              <span className="text-[10px] sm:text-xs leading-tight truncate w-full text-center">{tab.label}</span>
+              <span className="text-xs sm:text-xs leading-tight truncate w-full text-center">{tab.label}</span>
             </button>
           );
         })}
@@ -798,7 +798,7 @@ const ReportsPage = () => {
       {activeTab !== 'disputas' && (
       <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-background/70 border-border/70">
+          <SelectTrigger className="w-full sm:w-44 h-9 text-sm bg-background/70 border-border/70">
             <Calendar className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
@@ -874,7 +874,7 @@ const ReportsPage = () => {
         {/* Client selector - only visible on Clientes tab */}
         {(activeTab === 'clientes' || activeTab === 'servicios') && (
           <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
+            <SelectTrigger className="w-full sm:w-56 h-9 text-sm bg-background/70 border-border/70">
               <Users className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todos los clientes" />
             </SelectTrigger>
@@ -897,7 +897,7 @@ const ReportsPage = () => {
 
         {/* Company selector */}
         <Select value={selectedCompanyRut} onValueChange={setSelectedCompanyRut}>
-          <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
+          <SelectTrigger className="w-full sm:w-56 h-9 text-sm bg-background/70 border-border/70">
             <Truck className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue placeholder="Todas las empresas" />
           </SelectTrigger>
@@ -914,7 +914,7 @@ const ReportsPage = () => {
 
         {activeTab === 'operadores' && (
           <Select value={selectedOperatorId} onValueChange={setSelectedOperatorId}>
-            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
+            <SelectTrigger className="w-full sm:w-56 h-9 text-sm bg-background/70 border-border/70">
               <UserCog className="mr-1.5 size-4 text-muted-foreground" />
               <SelectValue placeholder="Todos los operadores" />
             </SelectTrigger>
@@ -935,7 +935,7 @@ const ReportsPage = () => {
         {/* Cost category selector - only visible on Costos tab */}
         {activeTab === 'costos' && (
           <Select value={selectedCostCategoryId} onValueChange={setSelectedCostCategoryId}>
-            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
+            <SelectTrigger className="w-full sm:w-56 h-9 text-sm bg-background/70 border-border/70">
               <Receipt className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todas las categorías" />
             </SelectTrigger>

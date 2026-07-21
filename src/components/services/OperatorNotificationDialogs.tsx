@@ -32,28 +32,28 @@ export const OperatorNotificationDialogs = ({
     <>
       <AlertDialog open={confirmOpen} onOpenChange={(open) => !open && onDecline()}>
         <AlertDialogContent
-          className="max-w-md rounded-xl border-slate-300 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-950"
-          overlayClassName="bg-slate-950/72 backdrop-blur-[2px]"
+          className="max-w-md rounded-xl border-border bg-card p-5 shadow-2xl"
+          overlayClassName="bg-overlay/75 backdrop-blur-sm"
         >
           <AlertDialogHeader className="space-y-3 text-left">
-            <AlertDialogTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            <AlertDialogTitle className="text-xl font-semibold text-foreground">
               Notificar operador
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            <AlertDialogDescription className="text-base leading-relaxed text-muted-foreground">
               ¿Desea notificar al operador asignado sobre este nuevo servicio a través de WhatsApp?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-2">
             <AlertDialogCancel
               onClick={onDecline}
-              className="border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="border-border bg-muted text-foreground hover:bg-muted/80"
             >
               No
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onConfirmSend}
               disabled={isSending}
-              className="bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-500"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary"
             >
               {isSending ? 'Enviando...' : 'Sí'}
             </AlertDialogAction>
@@ -63,26 +63,26 @@ export const OperatorNotificationDialogs = ({
 
       <AlertDialog open={retryOpen} onOpenChange={(open) => !open && onRetryCancel()}>
         <AlertDialogContent
-          className="max-w-md rounded-xl border-slate-300 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-950"
-          overlayClassName="bg-slate-950/72 backdrop-blur-[2px]"
+          className="max-w-md rounded-xl border-border bg-card p-5 shadow-2xl"
+          overlayClassName="bg-overlay/75 backdrop-blur-sm"
         >
           <AlertDialogHeader className="space-y-3 text-left">
-            <AlertDialogTitle className="text-amber-700 dark:text-amber-300">Error de notificación</AlertDialogTitle>
-            <AlertDialogDescription className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            <AlertDialogTitle className="text-warning-text">Error de notificación</AlertDialogTitle>
+            <AlertDialogDescription className="text-base leading-relaxed text-muted-foreground">
               No se pudo enviar la notificación de WhatsApp. ¿Desea intentarlo nuevamente?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-2">
             <AlertDialogCancel
               onClick={onRetryCancel}
-              className="border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="border-border bg-muted text-foreground hover:bg-muted/80"
             >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onRetry}
               disabled={isSending}
-              className="bg-amber-600 text-white hover:bg-amber-700 focus-visible:ring-amber-500"
+              className="bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-warning"
             >
               {isSending ? 'Enviando...' : 'Reintentar'}
             </AlertDialogAction>

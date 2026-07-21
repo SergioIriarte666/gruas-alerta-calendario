@@ -180,8 +180,8 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
             </div>
 
             {formData.serviceCategory === 'externo_tercero' && (
-              <div className="flex items-start gap-3 rounded-md border border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800 p-3 text-sm">
-                <div className="text-purple-700 dark:text-purple-300">
+              <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info-soft p-3 text-sm">
+                <div className="text-info-text">
                   <p className="font-medium">Servicio ejecutado por proveedor externo</p>
                   <p className="text-xs mt-1 opacity-90">
                     Al crear servicios de este tipo se solicitarán automáticamente

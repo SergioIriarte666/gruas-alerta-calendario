@@ -103,7 +103,7 @@ export const CreateHistoricalPurchaseModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Nueva Factura de Compra</DialogTitle>
           <DialogDescription>
@@ -138,7 +138,7 @@ export const CreateHistoricalPurchaseModal = ({
                 )}
               />
               {errors.supplier_id && (
-                <p className="text-sm text-red-500">{errors.supplier_id.message}</p>
+                <p className="text-sm text-danger-text">{errors.supplier_id.message}</p>
               )}
             </div>
 
@@ -150,7 +150,7 @@ export const CreateHistoricalPurchaseModal = ({
                 placeholder="Ej: 123456"
               />
               {errors.invoice_number && (
-                <p className="text-sm text-red-500">{errors.invoice_number.message}</p>
+                <p className="text-sm text-danger-text">{errors.invoice_number.message}</p>
               )}
             </div>
           </div>
@@ -169,7 +169,7 @@ export const CreateHistoricalPurchaseModal = ({
                 )}
               />
               {errors.issue_date && (
-                <p className="text-sm text-red-500">{errors.issue_date.message}</p>
+                <p className="text-sm text-danger-text">{errors.issue_date.message}</p>
               )}
             </div>
 
@@ -186,7 +186,7 @@ export const CreateHistoricalPurchaseModal = ({
                 )}
               />
               {errors.due_date && (
-                <p className="text-sm text-red-500">{errors.due_date.message}</p>
+                <p className="text-sm text-danger-text">{errors.due_date.message}</p>
               )}
             </div>
           </div>
@@ -200,7 +200,7 @@ export const CreateHistoricalPurchaseModal = ({
                 {...form.register('net_amount')}
               />
               {errors.net_amount && (
-                <p className="text-sm text-red-500">{errors.net_amount.message}</p>
+                <p className="text-sm text-danger-text">{errors.net_amount.message}</p>
               )}
             </div>
 
@@ -212,7 +212,7 @@ export const CreateHistoricalPurchaseModal = ({
                 {...form.register('tax_amount')}
               />
               {errors.tax_amount && (
-                <p className="text-sm text-red-500">{errors.tax_amount.message}</p>
+                <p className="text-sm text-danger-text">{errors.tax_amount.message}</p>
               )}
             </div>
 
@@ -224,7 +224,7 @@ export const CreateHistoricalPurchaseModal = ({
                 {...form.register('amount')}
               />
               {errors.amount && (
-                <p className="text-sm text-red-500">{errors.amount.message}</p>
+                <p className="text-sm text-danger-text">{errors.amount.message}</p>
               )}
             </div>
           </div>
@@ -249,7 +249,7 @@ export const CreateHistoricalPurchaseModal = ({
               )}
             />
             {errors.status && (
-              <p className="text-sm text-red-500">{errors.status.message}</p>
+              <p className="text-sm text-danger-text">{errors.status.message}</p>
             )}
           </div>
 
@@ -263,7 +263,7 @@ export const CreateHistoricalPurchaseModal = ({
               rows={4}
             />
             {errors.product_service_description && (
-              <p className="text-sm text-red-500">{errors.product_service_description.message}</p>
+              <p className="text-sm text-danger-text">{errors.product_service_description.message}</p>
             )}
           </div>
 

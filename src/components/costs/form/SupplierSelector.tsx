@@ -153,7 +153,7 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
                       setShowQuickModal(true);
                     }}
                   >
-                    <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-medium">
+                    <div className="flex items-center gap-2 text-primary font-medium">
                       <Plus className="size-4" />
                       Crear nuevo proveedor...
                     </div>

@@ -334,12 +334,12 @@ const EnhancedServicesSelector = ({
 
       {/* Global Search Banner */}
       {isGlobalSearch && (
-        <Alert className="border border-amber-500/30 bg-amber-500/5">
+        <Alert className="border border-warning/30 bg-warning-soft">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="size-4 text-amber-600 mt-0.5" />
+            <AlertTriangle className="mt-0.5 size-4 text-warning" />
             <div className="flex-1">
               <AlertDescription className="text-foreground">
-                <div className="font-medium text-amber-700">Búsqueda Global Activa</div>
+                <div className="font-medium text-warning">Búsqueda Global Activa</div>
                 <div className="text-sm mt-1 text-muted-foreground">
                   Mostrando servicios sin límite de fecha. Busca por OC, folio o patente.
                 </div>
@@ -349,7 +349,7 @@ const EnhancedServicesSelector = ({
                     variant="outline"
                     size="sm"
                     onClick={handleAutoFillDates}
-                    className="mt-2 text-amber-700 border-amber-500/30 hover:bg-amber-500/10"
+                    className="mt-2 border-warning/30 text-warning hover:bg-warning-soft"
                   >
                     <CalendarDays className="size-4 mr-2" />
                     Auto-rellenar fechas ({selectedServiceIds.length} servicio{selectedServiceIds.length !== 1 ? 's' : ''})
@@ -420,26 +420,26 @@ const EnhancedServicesSelector = ({
       {searchTerm.trim() && filteredServices.length === 0 && filteredPendingServices.length === 0 && (
         <>
           {searchingProcessed ? (
-            <Alert className="border border-blue-500/30 bg-blue-500/5">
+            <Alert className="border border-info/30 bg-info-soft">
               <div className="flex items-center gap-2">
-                <div className="animate-spin size-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <div className="size-4 animate-spin rounded-full border-2 border-info border-t-transparent"></div>
                 <AlertDescription className="text-foreground">
                   Buscando en servicios ya procesados...
                 </AlertDescription>
               </div>
             </Alert>
           ) : processedServices.length > 0 ? (
-            <Alert className="border border-blue-500/30 bg-blue-500/5">
+            <Alert className="border border-info/30 bg-info-soft">
               <div className="flex items-start gap-2">
-                <FileText className="size-4 text-blue-600 mt-0.5" />
+                <FileText className="mt-0.5 size-4 text-info" />
                 <div className="flex-1">
                   <AlertDescription className="text-foreground">
-                    <div className="font-medium text-blue-700 mb-2">
+                    <div className="mb-2 font-medium text-info">
                       Servicio encontrado (ya procesado)
                     </div>
                     <div className="space-y-3">
                       {processedServices.map(ps => (
-                        <div key={ps.serviceId} className="text-sm bg-background/50 rounded-md p-3 border border-blue-200/50">
+                        <div key={ps.serviceId} className="rounded-md border border-info/30 bg-background/50 p-3 text-sm">
                           <div className="grid grid-cols-2 gap-2">
                             <div className="flex items-center gap-2">
                               <span className="text-muted-foreground">📋 Servicio:</span>
@@ -462,9 +462,9 @@ const EnhancedServicesSelector = ({
                           </div>
                           
                           {ps.invoiceFolio ? (
-                            <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center justify-between">
+                            <div className="mt-2 flex items-center justify-between border-t border-info/30 pt-2">
                               <div className="flex items-center gap-2">
-                                <Receipt className="size-4 text-green-600" />
+                                <Receipt className="size-4 text-success" />
                                 <span className="text-muted-foreground">Factura:</span>
                                 <span className="font-medium">{ps.invoiceFolio}</span>
                                 {ps.invoiceNumeroFiscal && (
@@ -489,9 +489,9 @@ const EnhancedServicesSelector = ({
                               </Badge>
                             </div>
                           ) : (
-                            <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center gap-2">
-                              <Clock className="size-4 text-amber-600" />
-                              <span className="text-amber-700 text-sm">Sin facturar aún</span>
+                            <div className="mt-2 flex items-center gap-2 border-t border-info/30 pt-2">
+                              <Clock className="size-4 text-warning" />
+                              <span className="text-sm text-warning">Sin facturar aún</span>
                             </div>
                           )}
                         </div>
@@ -565,7 +565,7 @@ const EnhancedServicesSelector = ({
                           {service.quoteNumber && (
                             <>
                               <span>•</span>
-                              <Badge variant="outline" className="text-[10px] h-4 px-1">
+                              <Badge variant="outline" className="h-4 px-1 text-xs">
                                 COT: {service.quoteNumber}
                               </Badge>
                             </>
@@ -573,7 +573,7 @@ const EnhancedServicesSelector = ({
                           {(service.purchaseOrder || service.purchaseOrderNumber) && (
                             <>
                               <span>•</span>
-                              <Badge variant="outline" className="text-[10px] h-4 px-1">
+                              <Badge variant="outline" className="h-4 px-1 text-xs">
                                 OC: {service.purchaseOrder || service.purchaseOrderNumber}
                               </Badge>
                             </>
@@ -675,17 +675,17 @@ const EnhancedServicesSelector = ({
                       <span className="flex items-center gap-1.5">
                         {service.folio} - {toTitleCase(service.client.name)}
                         {(service as any)._closureType === 'covered' && (
-                          <Badge className="bg-teal-500/15 text-teal-700 border border-teal-500/30 text-[10px] h-4 px-1 hover:bg-teal-500/15">
+                          <Badge className="h-4 border border-info/30 bg-info-soft px-1 text-xs text-info hover:bg-info-soft">
                             Cubierto
                           </Badge>
                         )}
                         {(service as any)._closureType === 'excess' && (
-                          <Badge className="bg-amber-500/15 text-amber-700 border border-amber-500/30 text-[10px] h-4 px-1 hover:bg-amber-500/15">
+                          <Badge className="h-4 border border-warning/30 bg-warning-soft px-1 text-xs text-warning hover:bg-warning-soft">
                             Excedente
                           </Badge>
                         )}
                       </span>
-                      <span className="font-medium text-violet-600">${getServiceValueForClosure(service).toLocaleString()}</span>
+                      <span className="font-medium text-primary">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">
                       <span>{service.serviceDate}</span>
@@ -694,7 +694,7 @@ const EnhancedServicesSelector = ({
                       {service.quoteNumber && (
                         <>
                           <span>•</span>
-                          <Badge variant="outline" className="text-[10px] h-4 px-1">
+                          <Badge variant="outline" className="h-4 px-1 text-xs">
                             COT: {service.quoteNumber}
                           </Badge>
                         </>
@@ -702,7 +702,7 @@ const EnhancedServicesSelector = ({
                       {(service.purchaseOrder || service.purchaseOrderNumber) && (
                         <>
                           <span>•</span>
-                          <Badge variant="outline" className="text-[10px] h-4 px-1">
+                          <Badge variant="outline" className="h-4 px-1 text-xs">
                             OC: {service.purchaseOrder || service.purchaseOrderNumber}
                           </Badge>
                         </>
@@ -710,7 +710,7 @@ const EnhancedServicesSelector = ({
                       {disputeReason && (
                         <>
                           <span>•</span>
-                          <Badge variant="destructive" className="text-[10px] h-4 px-1">
+                          <Badge variant="destructive" className="h-4 px-1 text-xs">
                             En disputa: {disputeReason.slice(0, 30)}{disputeReason.length > 30 ? '…' : ''}
                           </Badge>
                         </>

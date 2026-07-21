@@ -32,9 +32,9 @@ import { generateLowboyContainersPdf } from '@/utils/pdf/lowboyContainersPdfGene
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
 const STATUS_CLASS: Record<LowboyContainerStatus, string> = {
-  disponible: 'bg-emerald-600 lowboy-on-color',
-  reservado: 'bg-amber-500 lowboy-on-color',
-  vendido: 'bg-sky-700 lowboy-on-color',
+  disponible: 'bg-success text-success-foreground',
+  reservado: 'bg-warning text-warning-foreground',
+  vendido: 'bg-info text-info-foreground',
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -45,7 +45,7 @@ function StatusBadge({ status }: { status: string }) {
 function SerialLabel({ container }: { container: LowboyContainerRow }) {
   return container.serial_number
     ? <span className="font-mono text-xs font-semibold sm:text-sm">{container.serial_number}</span>
-    : <Badge className="bg-amber-500 lowboy-on-color">Sin serie</Badge>;
+    : <Badge variant="warning">Sin serie</Badge>;
 }
 
 function Kpi({ label, value, detail, tone }: { label: string; value: string; detail?: string; tone: string }) {
@@ -142,16 +142,16 @@ export function LowboyContainersPanel() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Disponibles" value={String(kpis.availableCount)} detail={`${formatCLP(kpis.availableCapital)} invertidos`} tone="text-emerald-600" />
-        <Kpi label="Reservados" value={String(kpis.reservedCount)} tone="text-amber-600" />
-        <Kpi label="Vendidos del año" value={String(kpis.soldThisYearCount)} tone="text-sky-700" />
-        <Kpi label="Margen del año" value={formatCLP(kpis.soldThisYearMargin)} tone={kpis.soldThisYearMargin >= 0 ? 'text-emerald-600' : 'text-destructive'} />
+        <Kpi label="Disponibles" value={String(kpis.availableCount)} detail={`${formatCLP(kpis.availableCapital)} invertidos`} tone="text-success" />
+        <Kpi label="Reservados" value={String(kpis.reservedCount)} tone="text-warning" />
+        <Kpi label="Vendidos del año" value={String(kpis.soldThisYearCount)} tone="text-info" />
+        <Kpi label="Margen del año" value={formatCLP(kpis.soldThisYearMargin)} tone={kpis.soldThisYearMargin >= 0 ? 'text-success' : 'text-destructive'} />
       </div>
 
       <section className="border-y bg-card">
         <div className="flex flex-col gap-3 px-0 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="flex items-center gap-2 text-base font-semibold"><Box className="size-4 text-teal-600" />Inventario seriado</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold"><Box className="size-4 text-primary" />Inventario seriado</h2>
             <p className="text-sm text-muted-foreground">Costo específico y margen por unidad</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -170,7 +170,7 @@ export function LowboyContainersPanel() {
                 key={status}
                 type="button"
                 onClick={() => setStatusFilter(status)}
-                className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition-colors', statusFilter === status ? 'border-teal-700 bg-teal-700 lowboy-on-color' : 'bg-background text-muted-foreground hover:bg-muted')}
+                className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition-colors', statusFilter === status ? 'border-primary bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}
               >
                 {status === 'all' ? 'Todos' : CONTAINER_STATUS_LABEL[status]}
               </button>
@@ -198,7 +198,7 @@ export function LowboyContainersPanel() {
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div><p className="text-xs text-muted-foreground">Costo total</p><p className="font-semibold">{formatCLP(containerTotalCost(container))}</p></div>
-                    {container.status === 'vendido' ? <div className="text-right"><p className="text-xs text-muted-foreground">Margen</p><p className={cn('font-semibold', margin >= 0 ? 'text-emerald-600' : 'text-destructive')}>{formatCLP(margin)}</p></div> : <div className="text-right"><p className="text-xs text-muted-foreground">Adicionales</p><p className="font-semibold">{formatCLP(containerAdditionalCost(container))}</p></div>}
+                    {container.status === 'vendido' ? <div className="text-right"><p className="text-xs text-muted-foreground">Margen</p><p className={cn('font-semibold', margin >= 0 ? 'text-success' : 'text-destructive')}>{formatCLP(margin)}</p></div> : <div className="text-right"><p className="text-xs text-muted-foreground">Adicionales</p><p className="font-semibold">{formatCLP(containerAdditionalCost(container))}</p></div>}
                   </div>
                 </button>
               );
@@ -217,7 +217,7 @@ export function LowboyContainersPanel() {
                   <TableCell>{formatCLP(containerAdditionalCost(container))}</TableCell>
                   <TableCell className="font-semibold">{formatCLP(containerTotalCost(container))}</TableCell>
                   <TableCell><StatusBadge status={container.status} /></TableCell>
-                  <TableCell>{container.status === 'vendido' ? <div><p>{formatCLP(Number(container.sale_net_price))}</p><p className={cn('text-xs font-semibold', margin >= 0 ? 'text-emerald-600' : 'text-destructive')}>{formatCLP(margin)} margen</p></div> : '—'}</TableCell>
+                  <TableCell>{container.status === 'vendido' ? <div><p>{formatCLP(Number(container.sale_net_price))}</p><p className={cn('text-xs font-semibold', margin >= 0 ? 'text-success' : 'text-destructive')}>{formatCLP(margin)} margen</p></div> : '—'}</TableCell>
                   <TableCell><div className="flex justify-end"><Actions container={container} /></div></TableCell>
                 </TableRow>;
               })}</TableBody>

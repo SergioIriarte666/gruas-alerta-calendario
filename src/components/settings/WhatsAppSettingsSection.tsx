@@ -177,13 +177,13 @@ export const WhatsAppSettingsSection = () => {
         <div className={cn(
           'flex items-center justify-between p-4 rounded-lg border',
           settings.whatsappEnabled
-            ? 'border-green-500/30 bg-green-500/5'
+            ? 'border-success/30 bg-success-soft'
             : 'border-destructive/30 bg-destructive/5'
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
               'w-2 h-2 rounded-full',
-              settings.whatsappEnabled ? 'bg-green-500' : 'bg-destructive'
+              settings.whatsappEnabled ? 'bg-success' : 'bg-destructive'
             )} />
             <div>
               <p className="text-sm font-medium">
@@ -260,11 +260,11 @@ export const WhatsAppSettingsSection = () => {
                       <div className="min-w-0 space-y-1">
                         <Label className="font-medium">{label}</Label>
                         <p className="text-xs text-muted-foreground">{desc}</p>
-                        <p className="font-mono text-[11px] leading-4 text-muted-foreground/70 break-words">
+                        <p className="break-words font-mono text-xs leading-4 text-muted-foreground/70">
                           {templates}
                         </p>
                         {note && (
-                          <p className="text-[11px] leading-4 text-amber-600 dark:text-amber-500">{note}</p>
+                          <p className="text-xs leading-4 text-warning">{note}</p>
                         )}
                       </div>
                       <Switch
@@ -280,7 +280,7 @@ export const WhatsAppSettingsSection = () => {
                         <p className="text-xs text-muted-foreground">
                           Enlace de seguimiento al cliente al iniciar el servicio.
                         </p>
-                        <p className="font-mono text-[11px] leading-4 text-muted-foreground/70 break-words">
+                        <p className="break-words font-mono text-xs leading-4 text-muted-foreground/70">
                           cliente_seguimiento_grua
                         </p>
                       </div>

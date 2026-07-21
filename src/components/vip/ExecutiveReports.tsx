@@ -77,19 +77,19 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
     const now = businessClock.now();
     const periodDays = parseInt(selectedPeriod);
     const periodStart = subDays(now, periodDays);
-    
-    const periodServices = services.filter(s => 
+
+    const periodServices = services.filter(s =>
       new Date(s.serviceDate) >= periodStart
     );
 
-    const completedServices = periodServices.filter(s => 
+    const completedServices = periodServices.filter(s =>
       ['completed', 'invoiced'].includes(s.status)
     );
 
     const totalRevenue = completedServices.reduce((sum, s) => sum + s.value, 0);
-    
+
     // Calculate average service time (from pending to completed)
-    const avgServiceTime = completedServices.length > 0 
+    const avgServiceTime = completedServices.length > 0
       ? completedServices.reduce((sum, s) => {
           // Simulate service duration based on status progression
           return sum + (s.status === 'completed' ? 2.5 : 4); // hours
@@ -97,8 +97,8 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       : 0;
 
     // Calculate completion rate
-    const completionRate = periodServices.length > 0 
-      ? (completedServices.length / periodServices.length) * 100 
+    const completionRate = periodServices.length > 0
+      ? (completedServices.length / periodServices.length) * 100
       : 0;
 
     // Simulate response time (hours from quoted to purchase_order_pending)
@@ -118,24 +118,24 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   const generateTrendData = (): TrendData[] => {
     const months = [];
     const now = businessClock.now();
-    
+
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
       const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
       const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-      
+
       const monthServices = services.filter(s => {
         const serviceDate = new Date(s.serviceDate);
         return serviceDate >= monthStart && serviceDate <= monthEnd;
       });
 
-      const completedServices = monthServices.filter(s => 
+      const completedServices = monthServices.filter(s =>
         ['completed', 'invoiced'].includes(s.status)
       );
 
       const monthRevenue = completedServices.reduce((sum, s) => sum + s.value, 0);
-      const completionRate = monthServices.length > 0 
-        ? (completedServices.length / monthServices.length) * 100 
+      const completionRate = monthServices.length > 0
+        ? (completedServices.length / monthServices.length) * 100
         : 0;
 
       months.push({
@@ -145,7 +145,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
         completionRate
       });
     }
-    
+
     return months;
   };
 
@@ -153,11 +153,11 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   const trendData = generateTrendData();
 
   const statusDistribution = [
-    { name: 'Completados', value: services.filter(s => s.status === 'completed').length, color: '#10B981' },
-    { name: 'En Progreso', value: services.filter(s => s.status === 'in_progress').length, color: '#8B5CF6' },
-    { name: 'Pendientes', value: services.filter(s => s.status === 'pending').length, color: '#3B82F6' },
-    { name: 'Esperando O.C.', value: services.filter(s => s.status === 'purchase_order_pending').length, color: '#F59E0B' },
-    { name: 'Cotizados', value: services.filter(s => s.status === 'quoted').length, color: '#6B7280' }
+    { name: 'Completados', value: services.filter(s => s.status === 'completed').length, color: 'hsl(var(--chart-1))' },
+    { name: 'En Progreso', value: services.filter(s => s.status === 'in_progress').length, color: 'hsl(var(--chart-5))' },
+    { name: 'Pendientes', value: services.filter(s => s.status === 'pending').length, color: 'hsl(var(--chart-4))' },
+    { name: 'Esperando O.C.', value: services.filter(s => s.status === 'purchase_order_pending').length, color: 'hsl(var(--chart-2))' },
+    { name: 'Cotizados', value: services.filter(s => s.status === 'quoted').length, color: 'hsl(var(--text-muted))' }
   ];
 
   const performanceIndicators = [
@@ -199,17 +199,17 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
     try {
       toast.loading(`Generando reporte ejecutivo en formato ${exportFormat.toUpperCase()}...`);
-      
+
       const metrics = calculateMetrics();
       const currentDate = businessClock.today();
       const fileName = `reporte-ejecutivo-${clientName}-${currentDate}`;
-      
+
       if (exportFormat === 'pdf') {
         await exportToPDF(metrics, fileName);
       } else {
         await exportToExcel(metrics, fileName);
       }
-      
+
       toast.success(`Reporte ejecutivo exportado exitosamente como ${fileName}.${exportFormat}`);
     } catch (error) {
       logger.error('Error exportando reporte:', error);
@@ -269,17 +269,17 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
     const statusData = [
       ['Estado', 'Cantidad', 'Porcentaje'],
-      ['Cotizados', services.filter(s => s.status === 'quoted').length.toString(), 
+      ['Cotizados', services.filter(s => s.status === 'quoted').length.toString(),
        `${((services.filter(s => s.status === 'quoted').length / services.length) * 100).toFixed(1)}%`],
-      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length.toString(), 
+      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length.toString(),
        `${((services.filter(s => s.status === 'purchase_order_pending').length / services.length) * 100).toFixed(1)}%`],
-      ['Programados', services.filter(s => s.status === 'pending').length.toString(), 
+      ['Programados', services.filter(s => s.status === 'pending').length.toString(),
        `${((services.filter(s => s.status === 'pending').length / services.length) * 100).toFixed(1)}%`],
-      ['En Progreso', services.filter(s => s.status === 'in_progress').length.toString(), 
+      ['En Progreso', services.filter(s => s.status === 'in_progress').length.toString(),
        `${((services.filter(s => s.status === 'in_progress').length / services.length) * 100).toFixed(1)}%`],
-      ['Completados', services.filter(s => s.status === 'completed').length.toString(), 
+      ['Completados', services.filter(s => s.status === 'completed').length.toString(),
        `${((services.filter(s => s.status === 'completed').length / services.length) * 100).toFixed(1)}%`],
-      ['Facturados', services.filter(s => s.status === 'invoiced').length.toString(), 
+      ['Facturados', services.filter(s => s.status === 'invoiced').length.toString(),
        `${((services.filter(s => s.status === 'invoiced').length / services.length) * 100).toFixed(1)}%`]
     ];
 
@@ -314,17 +314,17 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       [''],
       ['DISTRIBUCIÓN POR ESTADO'],
       ['Estado', 'Cantidad', 'Porcentaje'],
-      ['Cotizados', services.filter(s => s.status === 'quoted').length, 
+      ['Cotizados', services.filter(s => s.status === 'quoted').length,
        `${((services.filter(s => s.status === 'quoted').length / services.length) * 100).toFixed(1)}%`],
-      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length, 
+      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length,
        `${((services.filter(s => s.status === 'purchase_order_pending').length / services.length) * 100).toFixed(1)}%`],
-      ['Programados', services.filter(s => s.status === 'pending').length, 
+      ['Programados', services.filter(s => s.status === 'pending').length,
        `${((services.filter(s => s.status === 'pending').length / services.length) * 100).toFixed(1)}%`],
-      ['En Progreso', services.filter(s => s.status === 'in_progress').length, 
+      ['En Progreso', services.filter(s => s.status === 'in_progress').length,
        `${((services.filter(s => s.status === 'in_progress').length / services.length) * 100).toFixed(1)}%`],
-      ['Completados', services.filter(s => s.status === 'completed').length, 
+      ['Completados', services.filter(s => s.status === 'completed').length,
        `${((services.filter(s => s.status === 'completed').length / services.length) * 100).toFixed(1)}%`],
-      ['Facturados', services.filter(s => s.status === 'invoiced').length, 
+      ['Facturados', services.filter(s => s.status === 'invoiced').length,
        `${((services.filter(s => s.status === 'invoiced').length / services.length) * 100).toFixed(1)}%`]
     ];
 
@@ -361,11 +361,11 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent': return 'text-green-400';
-      case 'good': return 'text-blue-400';
-      case 'warning': return 'text-amber-400';
-      case 'critical': return 'text-red-400';
-      default: return 'text-gray-400';
+      case 'excellent': return 'text-success-text';
+      case 'good': return 'text-info-text';
+      case 'warning': return 'text-warning-text';
+      case 'critical': return 'text-danger-text';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -375,7 +375,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <FileText className="size-5 text-purple-400" />
+            <FileText className="size-5 text-primary" />
             Reportes Ejecutivos - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -411,7 +411,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <Button
             variant="outline"
             onClick={() => exportReport('pdf')}
-            className="border-purple-500/30 text-purple-300"
+            className="border-primary/30 text-primary"
           >
             <Download className="size-4 mr-2" />
             PDF
@@ -420,7 +420,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <Button
             variant="outline"
             onClick={() => exportReport('excel')}
-            className="border-green-500/30 text-green-300"
+            className="border-success/30 text-success-text"
           >
             <Download className="size-4 mr-2" />
             Excel
@@ -430,33 +430,33 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
       {/* Key Metrics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-blue-500/20">
+        <Card className="bg-card border-info/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Target className="size-5 text-blue-400" />
+              <div className="p-2 bg-info/20 rounded-lg">
+                <Target className="size-5 text-info-text" />
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">{metrics.totalServices}</p>
-                <p className="text-xs text-blue-400">Servicios Total</p>
+                <p className="text-xs text-info-text">Servicios Total</p>
                 <p className="text-xs text-muted-foreground">{selectedPeriod} días</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-green-500/20">
+        <Card className="bg-card border-success/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <DollarSign className="size-5 text-green-400" />
+              <div className="p-2 bg-success/20 rounded-lg">
+                <DollarSign className="size-5 text-success-text" />
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
                   {formatCurrency(metrics.totalRevenue)}
                 </p>
-                <p className="text-xs text-green-400">Ingresos Total</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-success-text">Ingresos Total</p>
+                <p className="text-xs text-muted-foreground">
                   Promedio: {formatCurrency(metrics.totalRevenue / Math.max(metrics.totalServices, 1))}
                 </p>
               </div>
@@ -464,35 +464,35 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-purple-500/20">
+        <Card className="glass-card border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Clock className="size-5 text-purple-400" />
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Clock className="size-5 text-primary" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {metrics.averageServiceTime.toFixed(1)}h
                 </p>
-                <p className="text-xs text-purple-400">Tiempo Promedio</p>
-                <p className="text-xs text-gray-500">Por servicio</p>
+                <p className="text-xs text-primary">Tiempo Promedio</p>
+                <p className="text-xs text-muted-foreground">Por servicio</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-amber-500/20">
+        <Card className="glass-card border-warning/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg">
-                <Award className="size-5 text-amber-400" />
+              <div className="p-2 bg-warning/20 rounded-lg">
+                <Award className="size-5 text-warning-text" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {metrics.completionRate.toFixed(1)}%
                 </p>
-                <p className="text-xs text-amber-400">Tasa Completación</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-warning-text">Tasa Completación</p>
+                <p className="text-xs text-muted-foreground">
                   {services.filter(s => ['completed', 'invoiced'].includes(s.status)).length} de {metrics.totalServices}
                 </p>
               </div>
@@ -504,8 +504,8 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       {/* Performance Indicators */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <TrendingUp className="size-5 text-green-400" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <TrendingUp className="size-5 text-success-text" />
             Indicadores de Rendimiento
           </CardTitle>
         </CardHeader>
@@ -514,21 +514,21 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
             {performanceIndicators.map((indicator, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-black">{indicator.title}</span>
+                  <span className="text-sm text-foreground">{indicator.title}</span>
                   {indicator.trend === 'up' ? (
-                    <TrendingUp className="size-4 text-green-400" />
+                    <TrendingUp className="size-4 text-success-text" />
                   ) : (
-                    <TrendingDown className="size-4 text-red-400" />
+                    <TrendingDown className="size-4 text-danger-text" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className={`text-2xl font-bold ${getStatusColor(indicator.status)}`}>
                     {indicator.value}
                   </span>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={`text-xs ${
-                      indicator.trend === 'up' ? 'text-green-400 border-green-500/30' : 'text-red-400 border-red-500/30'
+                      indicator.trend === 'up' ? 'text-success-text border-success/30' : 'text-danger-text border-danger/30'
                     }`}
                   >
                     {indicator.trend === 'up' ? '+' : '-'}{indicator.improvement}
@@ -545,18 +545,18 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
         {/* Revenue Trend */}
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-white text-sm">Tendencia de Ingresos (6 meses)</CardTitle>
+            <CardTitle className="text-foreground text-sm">Tendencia de Ingresos (6 meses)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
-                <YAxis stroke="#9CA3AF" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" stroke="hsl(var(--text-muted))" fontSize={12} />
+                <YAxis stroke="hsl(var(--text-muted))" fontSize={12} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--surface-elevated))',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
                   formatter={(value, name) => [
@@ -564,12 +564,12 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
                     name === 'revenue' ? 'Ingresos' : 'Servicios'
                   ]}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#10B981" 
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={2}
-                  dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                  dot={{ fill: 'hsl(var(--chart-1))', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -579,7 +579,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
         {/* Service Distribution */}
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-white text-sm">Distribución por Estado</CardTitle>
+            <CardTitle className="text-foreground text-sm">Distribución por Estado</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -597,15 +597,15 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--surface-elevated))',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
                 />
-                <Legend 
-                  wrapperStyle={{ color: '#E5E7EB', fontSize: '12px' }}
+                <Legend
+                  wrapperStyle={{ color: 'hsl(var(--text))', fontSize: '12px' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -616,85 +616,85 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       {/* Monthly Performance Chart */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-white">Rendimiento Mensual</CardTitle>
+          <CardTitle className="text-foreground">Rendimiento Mensual</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" stroke="hsl(var(--text-muted))" />
+              <YAxis stroke="hsl(var(--text-muted))" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--surface-elevated))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px'
                 }}
                 formatter={(value, name) => [
                   name === 'completionRate' ? `${value}%` : value,
-                  name === 'services' ? 'Servicios' : 
+                  name === 'services' ? 'Servicios' :
                   name === 'completionRate' ? 'Tasa Completación' : name
                 ]}
               />
-              <Legend wrapperStyle={{ color: '#E5E7EB' }} />
-              <Bar dataKey="services" fill="#3B82F6" name="Servicios" />
-              <Bar dataKey="completionRate" fill="#10B981" name="Tasa Completación %" />
+              <Legend wrapperStyle={{ color: 'hsl(var(--text))' }} />
+              <Bar dataKey="services" fill="hsl(var(--chart-4))" name="Servicios" />
+              <Bar dataKey="completionRate" fill="hsl(var(--chart-1))" name="Tasa Completación %" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
       {/* Report Summary */}
-      <Card className="glass-card border-purple-500/20">
+      <Card className="glass-card border-primary/20">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="size-5 text-purple-400" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <FileText className="size-5 text-primary" />
             Resumen Ejecutivo
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 text-black">
+        <CardContent className="space-y-4 text-foreground">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="font-medium text-white">Destacados del Período</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
+              <h4 className="font-medium text-foreground">Destacados del Período</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <Award className="size-4 text-green-400" />
+                  <Award className="size-4 text-success-text" />
                   Tasa de completación superior al 85%
                 </li>
                 <li className="flex items-center gap-2">
-                  <TrendingUp className="size-4 text-blue-400" />
+                  <TrendingUp className="size-4 text-info-text" />
                   Tiempo de respuesta mejorado en 15%
                 </li>
                 <li className="flex items-center gap-2">
-                  <DollarSign className="size-4 text-green-400" />
+                  <DollarSign className="size-4 text-success-text" />
                   Ingresos estables con tendencia positiva
                 </li>
               </ul>
             </div>
-            
+
             <div className="space-y-3">
-              <h4 className="font-medium text-white">Áreas de Mejora</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
+              <h4 className="font-medium text-foreground">Áreas de Mejora</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <AlertTriangle className="size-4 text-amber-400" />
+                  <AlertTriangle className="size-4 text-warning-text" />
                   Reducir servicios completados sin facturar
                 </li>
                 <li className="flex items-center gap-2">
-                  <Clock className="size-4 text-orange-400" />
+                  <Clock className="size-4 text-warning-text" />
                   Optimizar proceso de órdenes de compra
                 </li>
                 <li className="flex items-center gap-2">
-                  <Target className="size-4 text-purple-400" />
+                  <Target className="size-4 text-primary" />
                   Implementar seguimiento automatizado
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-gray-400">
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
               Reporte generado el {businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')} •
-              Datos de los últimos {selectedPeriod} días • 
+              Datos de los últimos {selectedPeriod} días •
               {services.length} servicios analizados
             </p>
           </div>

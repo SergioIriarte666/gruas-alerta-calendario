@@ -42,7 +42,7 @@ export const AuditTab = () => {
   };
 
   return (
-    <div className="flex gap-5 min-h-[600px]">
+    <div className="flex min-h-[37.5rem] gap-5">
       {/* Panel de filtros */}
       <div className="w-52 shrink-0">
         <AuditFiltersPanel

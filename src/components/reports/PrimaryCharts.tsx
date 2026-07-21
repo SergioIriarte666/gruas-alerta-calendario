@@ -17,7 +17,7 @@ export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthCo
         <CardTitle className="text-foreground">Servicios por Mes</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={servicesByMonthConfig} className="w-full h-[300px]">
+        <ChartContainer config={servicesByMonthConfig} className="w-full h-72">
           <BarChart data={metrics.servicesByMonth}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
@@ -34,7 +34,7 @@ export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthCo
         <CardTitle className="text-foreground">Ingresos por Mes</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={revenueByMonthConfig} className="w-full h-[300px]">
+        <ChartContainer config={revenueByMonthConfig} className="w-full h-72">
           <LineChart data={metrics.servicesByMonth}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />

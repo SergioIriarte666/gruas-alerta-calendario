@@ -25,7 +25,7 @@ export const HistoricalPaginationControls = ({
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">Mostrar:</span>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v) as PageSize)}>
-          <SelectTrigger className="w-[80px] h-9" aria-label="Registros por página">
+          <SelectTrigger className="w-20 h-9" aria-label="Registros por página">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -63,7 +63,7 @@ interface OutboxRow {
 
 const STATUS_META: Record<LogStatus, { label: string; icon: React.ElementType; className: string }> = {
   queued: { label: 'En cola', icon: Clock, className: 'bg-muted text-muted-foreground' },
-  sent: { label: 'Enviado', icon: Send, className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
+  sent: { label: 'Enviado', icon: Send, className: 'border-info/30 bg-info-soft text-info' },
   delivered: { label: 'Entregado', icon: Check, className: 'bg-primary/10 text-primary border-primary/30' },
   read: { label: 'Leído', icon: CheckCheck, className: 'bg-primary/15 text-primary border-primary/40' },
   failed: { label: 'Fallido', icon: XCircle, className: 'bg-destructive/10 text-destructive border-destructive/30' },
@@ -249,7 +249,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
             </Label>
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-            <SelectTrigger className="h-8 w-[160px]">
+            <SelectTrigger className="h-8 w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -307,11 +307,11 @@ export const WhatsAppMessageHistory: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[140px]">Fecha</TableHead>
+              <TableHead className="w-[8.75rem]">Fecha</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Folio</TableHead>
-              <TableHead className="w-[110px]">Estado</TableHead>
-              <TableHead className="w-[90px]">Intentos</TableHead>
+              <TableHead className="w-[6.875rem]">Estado</TableHead>
+              <TableHead className="w-[5.625rem]">Intentos</TableHead>
               <TableHead>Detalle</TableHead>
             </TableRow>
           </TableHeader>
@@ -357,7 +357,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]">
+              <TableHead className="w-10">
                 <Checkbox
                   checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                   onCheckedChange={toggleSelectAll}
@@ -365,12 +365,12 @@ export const WhatsAppMessageHistory: React.FC = () => {
                   aria-label="Seleccionar todo"
                 />
               </TableHead>
-              <TableHead className="w-[140px]">Fecha</TableHead>
+              <TableHead className="w-[8.75rem]">Fecha</TableHead>
               <TableHead>Evento / Plantilla</TableHead>
               <TableHead>Destinatario</TableHead>
-              <TableHead className="w-[120px]">Estado</TableHead>
+              <TableHead className="w-[7.5rem]">Estado</TableHead>
               <TableHead>Detalle</TableHead>
-              <TableHead className="w-[60px] text-right">Acción</TableHead>
+              <TableHead className="w-[3.75rem] text-right">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

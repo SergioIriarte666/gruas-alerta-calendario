@@ -29,16 +29,16 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
   );
 
   const getStockStatus = (currentStock: number, totalPurchased: number, _totalConsumed: number) => {
-    if (currentStock === 0) return { label: 'Sin Stock', color: 'bg-red-500' };
-    if (currentStock <= totalPurchased * 0.2) return { label: 'Stock Bajo', color: 'bg-yellow-500' };
-    return { label: 'Stock Normal', color: 'bg-green-500' };
+    if (currentStock === 0) return { label: 'Sin Stock', color: 'bg-danger text-danger-foreground' };
+    if (currentStock <= totalPurchased * 0.2) return { label: 'Stock Bajo', color: 'bg-warning text-warning-foreground' };
+    return { label: 'Stock Normal', color: 'bg-success text-success-foreground' };
   };
 
   const getTraceabilityStatus = (inventoryItemId?: string) => {
     if (inventoryItemId) {
-      return { label: 'Sincronizado', color: 'bg-tms-green', icon: Link };
+      return { label: 'Sincronizado', color: 'bg-success text-success-foreground', icon: Link };
     }
-    return { label: 'No Sincronizado', color: 'bg-gray-500', icon: Package };
+    return { label: 'No Sincronizado', color: 'bg-muted text-muted-foreground', icon: Package };
   };
 
   return (
@@ -46,61 +46,61 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       {/* Stats Cards */}
       {syncStats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-black border-tms-green/30">
+          <Card className="bg-card border-primary/30">
             <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Sincronización</CardTitle>
-              <BarChart3 className="size-4 text-tms-green" />
+              <CardTitle className="text-sm font-medium text-foreground">Sincronización</CardTitle>
+              <BarChart3 className="size-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-tms-green">
+              <div className="text-2xl font-bold text-primary">
                 {syncStats.sync_percentage.toFixed(1)}%
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {syncStats.synced_parts} de {syncStats.total_parts} piezas
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-black border-tms-green/30">
+          <Card className="bg-card border-primary/30">
             <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Items Creados</CardTitle>
-              <Package className="size-4 text-tms-green" />
+              <CardTitle className="text-sm font-medium text-foreground">Items Creados</CardTitle>
+              <Package className="size-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-tms-green">
+              <div className="text-2xl font-bold text-primary">
                 {syncStats.auto_created_items}
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Items de inventario auto-creados
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-black border-tms-green/30">
+          <Card className="bg-card border-primary/30">
             <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Items Inventario</CardTitle>
-              <TrendingUp className="size-4 text-tms-green" />
+              <CardTitle className="text-sm font-medium text-foreground">Items Inventario</CardTitle>
+              <TrendingUp className="size-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-tms-green">
+              <div className="text-2xl font-bold text-primary">
                 {syncStats.total_inventory_items}
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Total items en inventario
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-black border-tms-green/30">
+          <Card className="bg-card border-primary/30">
             <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Sin Sincronizar</CardTitle>
-              <TrendingDown className="size-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-foreground">Sin Sincronizar</CardTitle>
+              <TrendingDown className="size-4 text-warning-text" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-500">
+              <div className="text-2xl font-bold text-warning-text">
                 {syncStats.unsynced_parts}
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Piezas pendientes
               </p>
             </CardContent>
@@ -109,25 +109,25 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       )}
 
       {/* Filters */}
-      <Card className="bg-black border-tms-green/30">
+      <Card className="bg-card border-primary/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Search className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Search className="size-5 text-primary" />
             Filtros de Trazabilidad
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="crane-select" className="text-white">Grúa</Label>
+              <Label htmlFor="crane-select" className="text-foreground">Grúa</Label>
               <Select
                 value={selectedCraneId}
                 onValueChange={setSelectedCraneId}
               >
-                <SelectTrigger className="bg-white/5 border-tms-green/30 text-white">
+                <SelectTrigger className="bg-card/5 border-primary/30 text-foreground">
                   <SelectValue placeholder="Todas las grúas" />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-tms-green/30">
+                <SelectContent className="bg-card border-primary/30">
                   <SelectItem value="all">Todas las grúas</SelectItem>
                   {cranes?.map((crane) => (
                     <SelectItem key={crane.id} value={crane.id}>
@@ -139,13 +139,13 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="search" className="text-white">Buscar</Label>
+              <Label htmlFor="search" className="text-foreground">Buscar</Label>
               <Input
                 id="search"
                 placeholder="Buscar por pieza o proveedor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-card/5 border-primary/30 text-foreground"
               />
             </div>
           </div>
@@ -153,37 +153,37 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       </Card>
 
       {/* Traceability Table */}
-      <Card className="bg-black border-tms-green/30">
+      <Card className="bg-card border-primary/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Package className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Package className="size-5 text-primary" />
             Trazabilidad de Piezas
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               Cargando datos de trazabilidad...
             </div>
           ) : !filteredData || filteredData.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               No se encontraron datos de trazabilidad
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-tms-green/30">
-                    <TableHead className="text-tms-green">Pieza</TableHead>
-                    <TableHead className="text-tms-green">Grúa</TableHead>
-                    <TableHead className="text-tms-green">Proveedor</TableHead>
-                    <TableHead className="text-tms-green">Fecha Compra</TableHead>
-                    <TableHead className="text-tms-green">Costo</TableHead>
-                    <TableHead className="text-tms-green">Stock Actual</TableHead>
-                    <TableHead className="text-tms-green">Comprado</TableHead>
-                    <TableHead className="text-tms-green">Consumido</TableHead>
-                    <TableHead className="text-tms-green">Estado</TableHead>
-                    <TableHead className="text-tms-green">Sincronización</TableHead>
+                  <TableRow className="border-primary/30">
+                    <TableHead className="text-primary">Pieza</TableHead>
+                    <TableHead className="text-primary">Grúa</TableHead>
+                    <TableHead className="text-primary">Proveedor</TableHead>
+                    <TableHead className="text-primary">Fecha Compra</TableHead>
+                    <TableHead className="text-primary">Costo</TableHead>
+                    <TableHead className="text-primary">Stock Actual</TableHead>
+                    <TableHead className="text-primary">Comprado</TableHead>
+                    <TableHead className="text-primary">Consumido</TableHead>
+                    <TableHead className="text-primary">Estado</TableHead>
+                    <TableHead className="text-primary">Sincronización</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,42 +193,42 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
                     const SyncIcon = syncStatus.icon;
 
                     return (
-                      <TableRow key={`${item.part_id}-${index}`} className="border-tms-green/20">
-                        <TableCell className="text-white font-medium">
+                      <TableRow key={`${item.part_id}-${index}`} className="border-primary/20">
+                        <TableCell className="text-foreground font-medium">
                           <div>
                             <div>{item.part_name}</div>
                             {item.inventory_item_name && item.inventory_item_name !== item.part_name && (
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-muted-foreground">
                                 Inventario: {item.inventory_item_name}
                               </div>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-white">{item.crane_license_plate}</TableCell>
-                        <TableCell className="text-white">{item.supplier}</TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">{item.crane_license_plate}</TableCell>
+                        <TableCell className="text-foreground">{item.supplier}</TableCell>
+                        <TableCell className="text-foreground">
                           {format(new Date(item.purchase_date), 'dd/MM/yyyy', { locale: es })}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           ${item.purchase_cost.toLocaleString('es-CL')}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           <div className="flex items-center gap-2">
                             <span>{item.current_stock}</span>
-                            <Badge className={`text-xs ${stockStatus.color} text-white`}>
+                            <Badge className={`text-xs ${stockStatus.color}`}>
                               {stockStatus.label}
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white">{item.total_purchased}</TableCell>
-                        <TableCell className="text-white">{item.total_consumed}</TableCell>
-                        <TableCell className="text-white">
-                          <Badge className={`text-xs ${stockStatus.color} text-white`}>
+                        <TableCell className="text-foreground">{item.total_purchased}</TableCell>
+                        <TableCell className="text-foreground">{item.total_consumed}</TableCell>
+                        <TableCell className="text-foreground">
+                          <Badge className={`text-xs ${stockStatus.color}`}>
                             {stockStatus.label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-white">
-                          <Badge className={`text-xs ${syncStatus.color} text-white flex items-center gap-1`}>
+                        <TableCell className="text-foreground">
+                          <Badge className={`flex items-center gap-1 text-xs ${syncStatus.color}`}>
                             <SyncIcon className="size-3" />
                             {syncStatus.label}
                           </Badge>

@@ -140,23 +140,23 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
         {state.step === 'preview' && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 border-violet-600/20">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                 <CheckCircle className="size-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
               {state.parsedQuotes.length > 0 && (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                <Badge variant="secondary" className="bg-success/10 text-success-text border-success/20">
                   💰 Total Cot: {formatCurrency(state.parsedQuotes[0]?.totals.neto || 0, getUserCurrencySync())}
                 </Badge>
               )}
               {sameQuoteCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                <Badge variant="secondary" className="bg-info/10 text-info-text border-info/20">
                   <CheckCheck className="size-3 mr-1" />
                   {sameQuoteCount} ya asignada
                 </Badge>
               )}
               {alreadyHasQuoteCount > 0 && (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                <Badge variant="secondary" className="bg-warning/10 text-warning-text border-warning/20">
                   <AlertTriangle className="size-3 mr-1" />
                   {alreadyHasQuoteCount} Cot. diferente
                 </Badge>
@@ -179,7 +179,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                     <TableHead className="text-xs">Cot. Actual</TableHead>
                     <TableHead className="text-xs">N° Cot. Nueva</TableHead>
                     <TableHead className="text-xs text-right">Valor Servicio</TableHead>
-                    
+
                     <TableHead className="text-xs">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -203,7 +203,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                               value={match.service?.id ?? ''}
                               onValueChange={(val) => reassignMatch(index, val)}
                             >
-                              <SelectTrigger className="h-7 text-xs font-mono w-[180px]">
+                              <SelectTrigger className="h-7 text-xs font-mono w-44">
                                 <SelectValue placeholder="Seleccionar..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -220,7 +220,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
-                                className="text-violet-600 hover:text-violet-600/80"
+                                className="text-primary hover:text-primary/80"
                                 title="Ver detalle"
                               >
                                 <Eye className="size-3.5" />
@@ -230,7 +230,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                         ) : match.service ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
-                            className="text-violet-600 underline hover:text-violet-600/80 cursor-pointer font-medium"
+                            className="text-primary underline hover:text-primary/80 cursor-pointer font-medium"
                           >
                             {match.service.folio}
                             {match.service.serviceDate && (
@@ -258,19 +258,19 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                       </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
-                          <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
                             <CheckCircle className="size-3 mr-1" />
                             Match
                           </Badge>
                         )}
                         {match.status === 'same_quote' && (
-                          <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 text-xs">
+                          <Badge variant="secondary" className="bg-info/10 text-info-text text-xs">
                             <CheckCheck className="size-3 mr-1" />
                             Ya asignada
                           </Badge>
                         )}
                         {match.status === 'already_has_quote' && (
-                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
+                          <Badge variant="secondary" className="bg-warning/10 text-warning-text text-xs">
                             <AlertTriangle className="size-3 mr-1" />
                             Cot. diferente
                           </Badge>

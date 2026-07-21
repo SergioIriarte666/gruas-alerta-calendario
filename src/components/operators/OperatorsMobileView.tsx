@@ -133,7 +133,7 @@ export const OperatorsMobileView = ({
                   />
                 ) : null}
                 {operator.trackingEnabled === false && (
-                  <Badge variant="secondary" className="border-zinc-500/30 bg-zinc-500/10 text-zinc-400 text-xs">
+                  <Badge variant="outline" className="border-border bg-muted/50 text-xs text-muted-foreground">
                     Sin rastreo
                   </Badge>
                 )}
@@ -207,8 +207,8 @@ export const OperatorsMobileView = ({
                 className={cn(
                   `border touch-target ${
                     operator.isActive 
-                      ? 'text-red-600 hover:text-red-500 hover:bg-red-600/10 border-red-600/50' 
-                      : 'text-green-600 hover:text-green-500 hover:bg-green-600/10 border-green-600/50'
+                      ? 'border-danger/50 text-danger hover:bg-danger/10 hover:text-danger-text'
+                      : 'border-success/50 text-success hover:bg-success/10 hover:text-success-text'
                   }`,
                   isMobile ? "w-full" : "flex-1"
                 )}
@@ -222,7 +222,7 @@ export const OperatorsMobileView = ({
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onDelete(operator.id, operator.name)}
                 className={cn(
-                  "text-red-600 hover:text-red-500 hover:bg-red-600/10 border border-red-600/50 touch-target",
+                  "touch-target border border-danger/50 text-danger hover:bg-danger/10 hover:text-danger-text",
                   isMobile ? "w-full" : "px-3"
                 )}
               >

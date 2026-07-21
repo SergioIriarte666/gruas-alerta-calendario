@@ -19,14 +19,14 @@ export type StatusTone =
   | "neutral";
 
 const toneClasses: Record<StatusTone, string> = {
-  paid: "bg-success-soft text-success border-success/20",
-  completed: "bg-success-soft text-success border-success/20",
-  pending: "bg-warning-soft text-warning border-warning/30",
-  in_progress: "bg-info-soft text-info border-info/20",
-  overdue: "bg-danger-soft text-danger border-danger/20",
+  paid: "bg-success-soft text-success-text border-success/30",
+  completed: "bg-success-soft text-success-text border-success/30",
+  pending: "bg-warning-soft text-warning-text border-warning/35",
+  in_progress: "bg-info-soft text-info-text border-info/30",
+  overdue: "bg-danger-soft text-danger-text border-danger/30",
   cancelled: "bg-muted text-muted-foreground border-border",
   draft: "bg-muted text-muted-foreground border-border",
-  info: "bg-info-soft text-info border-info/20",
+  info: "bg-info-soft text-info-text border-info/30",
   neutral: "bg-muted text-foreground border-border",
 };
 

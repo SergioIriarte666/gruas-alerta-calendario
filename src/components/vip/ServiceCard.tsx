@@ -3,11 +3,11 @@ import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  MapPin, 
-  Truck, 
-  DollarSign, 
+import {
+  Calendar,
+  MapPin,
+  Truck,
+  DollarSign,
   Clock,
   User,
   FileText,
@@ -30,7 +30,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   // Calcular días desde la fecha del servicio
   const serviceDate = new Date(service.serviceDate);
   const daysSince = Math.floor((businessClock.todayDate().getTime() - serviceDate.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   // Determinar color de urgencia
   const getUrgencyColor = () => {
     if (service.status === 'invoiced' || service.status === 'completed') return 'text-muted-foreground';
@@ -74,8 +74,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           </div>
           <div className="flex gap-1">
             {service.status === 'purchase_order_pending' && !service.purchaseOrderNumber && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-muted-foreground hover:text-foreground"
                 onClick={(e) => {
@@ -86,8 +86,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
                 <FileText className="size-3" />
               </Button>
             )}
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
             >
@@ -103,8 +103,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             <Calendar className="size-3" />
             <span>{format(serviceDate, 'dd/MM/yyyy', { locale: es })}</span>
             <span className={`ml-auto font-medium ${getUrgencyColor()}`}>
-              {daysSince === 0 ? 'Hoy' : 
-               daysSince === 1 ? 'Ayer' : 
+              {daysSince === 0 ? 'Hoy' :
+               daysSince === 1 ? 'Ayer' :
                `${daysSince}d`}
             </span>
           </div>
@@ -149,10 +149,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
               ${getDisplayServiceValue(service).toLocaleString()}
             </span>
           </div>
-            
+
             {/* Status Badge */}
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="text-xs px-1.5 py-0.5 opacity-70"
             >
               {getStatusLabel()}

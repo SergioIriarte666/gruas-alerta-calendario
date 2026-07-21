@@ -144,9 +144,9 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
               key={`${stockRow.item_id}-${stockRow.location_id}`}
               variant="outline"
               className={cn(
-                'rounded-full px-2 py-0 text-[11px] font-medium',
+                'rounded-full px-2 py-0 text-xs font-medium',
                 entity === 'lowboy'
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+                  ? 'border-success/30 bg-success-soft text-success'
                   : 'border-primary/20 bg-primary/10 text-primary',
               )}
             >
@@ -375,7 +375,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[220px]">
+              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[13.75rem]">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
               <SelectContent>
@@ -429,7 +429,7 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
             </div>
           ) : viewMode === 'table' ? (
             <div className="overflow-x-auto rounded-xl border border-border/70 bg-background/40">
-              <table className="min-w-[500px] w-full text-sm">
+              <table className="min-w-[31.25rem] w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/70 text-muted-foreground">
                     <th className="px-4 py-3 text-left font-medium">Producto</th>

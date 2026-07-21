@@ -140,8 +140,8 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
         <Card>
           <CardContent className="p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Margen</p>
-            <p className={`mt-1 text-2xl font-bold ${margenPositive ? 'text-emerald-600' : 'text-destructive'}`}>{formatCLP(margen)}</p>
-            <p className={`text-xs ${margenPositive ? 'text-emerald-600' : 'text-destructive'}`}>{(data?.margenPct ?? 0).toFixed(1)}%</p>
+            <p className={`mt-1 text-2xl font-bold ${margenPositive ? 'text-success' : 'text-destructive'}`}>{formatCLP(margen)}</p>
+            <p className={`text-xs ${margenPositive ? 'text-success' : 'text-destructive'}`}>{(data?.margenPct ?? 0).toFixed(1)}%</p>
           </CardContent>
         </Card>
       </div>
@@ -201,7 +201,7 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
               </TableBody>
             </Table>
           ) : (
-            <p className="py-6 text-center text-emerald-600">Todo cuadra.</p>
+            <p className="py-6 text-center text-success">Todo cuadra.</p>
           )}
         </CardContent>
       </Card>

@@ -61,7 +61,7 @@ export const DisputeDetailModal = ({ dispute, onOpenChange }: DisputeDetailModal
                   {dispute.resolvedByName && ` por ${dispute.resolvedByName}`}
                 </div>
                 {dispute.resolutionNotes && (
-                  <div className="rounded-lg border bg-emerald-500/5 border-emerald-500/30 p-3">
+                  <div className="rounded-lg border border-success/30 bg-success-soft p-3">
                     <p className="text-xs text-muted-foreground mb-1">Notas de resolución</p>
                     <p className="text-foreground whitespace-pre-wrap">{dispute.resolutionNotes}</p>
                   </div>

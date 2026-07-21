@@ -41,12 +41,7 @@ export const PhotoCaptureControls = ({
           size="sm"
           onClick={handleCameraCapture}
           disabled={disabled || isLoading}
-          className="flex items-center gap-2 border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"
-          style={{
-            borderColor: 'rgba(59, 130, 246, 0.5)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            color: '#3b82f6'
-          }}
+          className="flex items-center gap-2 border-info/30 bg-info-soft text-info-text hover:border-info/40 hover:bg-info-soft/80"
         >
           <Camera className="size-4" />
           Tomar Foto
@@ -57,12 +52,7 @@ export const PhotoCaptureControls = ({
           size="sm"
           onClick={handleFileUpload}
           disabled={disabled || isLoading}
-          className="flex items-center gap-2 border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
-          style={{
-            borderColor: 'rgba(34, 197, 94, 0.5)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            color: '#22c55e'
-          }}
+          className="flex items-center gap-2 border-success/30 bg-success-soft text-success-text hover:border-success/40 hover:bg-success-soft/80"
         >
           <Upload className="size-4" />
           Subir Foto
@@ -74,12 +64,7 @@ export const PhotoCaptureControls = ({
             size="sm"
             onClick={onRefresh}
             disabled={isLoading}
-            className="flex items-center gap-1 border-gray-400/50 bg-gray-400/10 text-gray-300 hover:bg-gray-400/20 hover:border-gray-400"
-            style={{
-              borderColor: 'rgba(156, 163, 175, 0.5)',
-              backgroundColor: 'rgba(156, 163, 175, 0.1)',
-              color: '#d1d5db'
-            }}
+            className="flex items-center gap-1 border-border bg-muted text-muted-foreground hover:border-foreground/30 hover:bg-muted/80"
           >
             <RefreshCw className={`size-3 ${isLoading ? 'animate-spin' : ''}`} />
             Sincronizar

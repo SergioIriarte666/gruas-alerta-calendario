@@ -47,7 +47,7 @@ export const OriginPinMap = ({ lat, lng, onChange }: OriginPinMapProps) => {
         });
         localMap.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), 'top-right');
 
-        const marker = new mapboxgl.default.Marker({ color: '#0891b2', draggable: true })
+        const marker = new mapboxgl.default.Marker({ color: 'hsl(var(--info))', draggable: true })
           .setLngLat([lng, lat])
           .addTo(localMap);
 
@@ -90,7 +90,7 @@ export const OriginPinMap = ({ lat, lng, onChange }: OriginPinMapProps) => {
 
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-center text-xs text-amber-700">
+      <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-warning/20 bg-warning/10 p-4 text-center text-xs text-warning-text">
         <TriangleAlert className="size-4" />
         <p>Mapa no disponible: falta configurar VITE_MAPBOX_PUBLIC_TOKEN.</p>
       </div>

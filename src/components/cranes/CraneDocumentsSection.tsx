@@ -212,7 +212,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
             {document && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Archivo:</span>
-                <span className="max-w-[150px] truncate text-foreground" title={document.fileName}>
+                <span className="max-w-36 truncate text-foreground" title={document.fileName}>
                   {document.fileName}
                 </span>
               </div>

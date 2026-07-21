@@ -40,8 +40,8 @@ export const ConnectionStatus: React.FC = () => {
     <div className={cn(
       "fixed top-20 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all duration-300",
       isOnline 
-        ? "bg-green-500/90 text-white" 
-        : "bg-red-500/90 text-white"
+        ? "bg-success/90 text-success-foreground"
+        : "bg-danger/90 text-danger-foreground"
     )}>
       <div className="flex items-center gap-x-2">
         {isOnline ? (

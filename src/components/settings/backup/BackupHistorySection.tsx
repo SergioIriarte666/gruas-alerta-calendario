@@ -21,26 +21,26 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="size-4 text-green-500" />;
+        return <CheckCircle className="size-4 text-success" />;
       case 'failed':
-        return <XCircle className="size-4 text-red-500" />;
+        return <XCircle className="size-4 text-danger" />;
       case 'started':
-        return <Clock className="size-4 text-yellow-500" />;
+        return <Clock className="size-4 text-warning" />;
       default:
-        return <Clock className="size-4 text-gray-500" />;
+        return <Clock className="size-4 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="text-green-600 border-green-500/30 bg-green-100">Completado</Badge>;
+        return <Badge variant="outline" className="border-success/30 bg-success-soft text-success">Completado</Badge>;
       case 'failed':
-        return <Badge variant="destructive" className="bg-red-100 text-red-600 border-red-500/30">Fallido</Badge>;
+        return <Badge variant="outline" className="border-danger/30 bg-danger-soft text-danger">Fallido</Badge>;
       case 'started':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-600 border-yellow-500/30">En Progreso</Badge>;
+        return <Badge variant="outline" className="border-warning/30 bg-warning-soft text-warning">En progreso</Badge>;
       default:
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Desconocido</Badge>;
+        return <Badge variant="outline" className="border-border text-muted-foreground">Desconocido</Badge>;
     }
   };
 

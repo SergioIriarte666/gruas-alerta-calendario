@@ -355,19 +355,12 @@ const isMobile = window.innerWidth < 768
 
 ### Touch-Friendly Design
 
-```css
-/* Tamaños mínimos para elementos táctiles */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 8px;
-}
-
-/* Espaciado entre elementos táctiles */
-.touch-spacing {
-  gap: 8px;
-}
+```tsx
+<Button className="min-h-11 min-w-11 p-2">Acción</Button>
+<div className="flex gap-2">...</div>
 ```
+
+Las decisiones visuales adicionales deben seguir `docs/design-system.md`.
 
 ## Estándares de Calidad
 
@@ -414,7 +407,7 @@ const DeviceDebugInfo = () => {
   
   if (process.env.NODE_ENV === 'development') {
     return (
-      <div className="fixed top-0 right-0 bg-red-500 text-white p-2 z-50 text-xs">
+      <div className="fixed right-0 top-0 z-50 bg-danger p-2 text-xs text-danger-foreground">
         {device.deviceType} - {window.innerWidth}px
       </div>
     )

@@ -14,6 +14,10 @@ import { useActiveAlerts, useAlertStats } from '@/hooks/useInventoryAlerts';
 import { useInventoryStats } from '@/hooks/useInventory';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
+const CRITICAL_CHART_COLOR = 'hsl(var(--danger))';
+const WARNING_CHART_COLOR = 'hsl(var(--warning))';
+const INFO_CHART_COLOR = 'hsl(var(--info))';
+
 export const AlertDashboard: React.FC = () => {
   const { data: activeAlerts = [] } = useActiveAlerts();
   const { data: alertStats } = useAlertStats();
@@ -35,9 +39,9 @@ export const AlertDashboard: React.FC = () => {
   }));
 
   const severityData = [
-    { name: 'Críticas', value: activeAlerts.filter(a => a.severity === 'critical').length, color: '#ef4444' },
-    { name: 'Advertencias', value: activeAlerts.filter(a => a.severity === 'warning').length, color: '#f59e0b' },
-    { name: 'Información', value: activeAlerts.filter(a => a.severity === 'info').length, color: '#06b6d4' }
+    { name: 'Críticas', value: activeAlerts.filter(a => a.severity === 'critical').length, color: CRITICAL_CHART_COLOR },
+    { name: 'Advertencias', value: activeAlerts.filter(a => a.severity === 'warning').length, color: WARNING_CHART_COLOR },
+    { name: 'Información', value: activeAlerts.filter(a => a.severity === 'info').length, color: INFO_CHART_COLOR }
   ].filter(item => item.value > 0);
 
   const topCriticalItems = activeAlerts
@@ -130,7 +134,7 @@ export const AlertDashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <div className="flex h-[18.75rem] items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <CheckCircle className="size-12 mx-auto mb-2" />
                   <p>No hay alertas activas</p>
@@ -172,7 +176,7 @@ export const AlertDashboard: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <div className="flex h-[18.75rem] items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <CheckCircle className="size-12 mx-auto mb-2" />
                   <p>No hay alertas activas</p>

@@ -57,13 +57,13 @@ export const EmailNotificationSettingsSection = () => {
         <div className={cn(
           'flex items-center justify-between rounded-lg border p-4',
           settings.emailEnabled
-            ? 'border-green-500/30 bg-green-500/5'
+            ? 'border-success/30 bg-success-soft'
             : 'border-destructive/30 bg-destructive/5'
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
               'h-2 w-2 rounded-full',
-              settings.emailEnabled ? 'bg-green-500' : 'bg-destructive'
+              settings.emailEnabled ? 'bg-success' : 'bg-destructive'
             )} />
             <div>
               <p className="text-sm font-medium">

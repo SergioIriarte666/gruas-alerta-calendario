@@ -123,7 +123,7 @@ export const ReportFilters = ({
                     </div>
 
                     <div>
-                        <Label htmlFor="department-filter" className="text-white">Departamento</Label>
+                        <Label htmlFor="department-filter" className="text-foreground">Departamento</Label>
                         <Select value={filters.department} onValueChange={(v) => onFilterChange('department', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="department-filter" 
@@ -154,7 +154,7 @@ export const ReportFilters = ({
                     </div>
 
                     <div>
-                        <Label htmlFor="crane-filter" className="text-white">Grúa</Label>
+                        <Label htmlFor="crane-filter" className="text-foreground">Grúa</Label>
                         <Select value={filters.craneId} onValueChange={(v) => onFilterChange('craneId', v)} disabled={cranesLoading}>
                             <SelectTrigger 
                                 id="crane-filter" 
@@ -216,7 +216,7 @@ export const ReportFilters = ({
                     </div>
 
                     <div>
-                        <Label htmlFor="cost-category-filter" className="text-white">Categoría de Costo</Label>
+                        <Label htmlFor="cost-category-filter" className="text-foreground">Categoría de Costo</Label>
                         <Select value={filters.costCategoryId} onValueChange={(v) => onFilterChange('costCategoryId', v)} disabled={costCategoriesLoading}>
                             <SelectTrigger 
                                 id="cost-category-filter" 
@@ -249,22 +249,14 @@ export const ReportFilters = ({
                     <div className="flex gap-2 lg:col-start-4">
                         <Button 
                             onClick={onUpdate} 
-                            className="bg-tms-green hover:bg-tms-green/90 text-black flex-1"
-                            style={{
-                                backgroundColor: '#9cfa24',
-                                color: '#000000'
-                            }}
+                            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                             Actualizar
                         </Button>
                         <Button 
                             onClick={onClear} 
                             variant="outline" 
-                            className="text-foreground border-input hover:bg-muted/50 hover:text-foreground px-3"
-                            style={{
-                                color: '#ffffff',
-                                borderColor: 'rgba(255, 255, 255, 0.3)'
-                            }}
+                            className="border-input px-3 text-foreground hover:bg-muted/50 hover:text-foreground"
                         >
                             <FilterX className="size-4" />
                         </Button>
@@ -383,8 +375,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={category.id} 
                                         value={category.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-accent focus:bg-accent"
                                     >
                                         {category.name}
                                     </SelectItem>

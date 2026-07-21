@@ -26,7 +26,7 @@ export const LocationSection = ({
       {/* Origen */}
       <div className="space-y-2">
         <Label htmlFor="origin">
-          Origen {originRequired && <span className="text-red-500">*</span>}
+          Origen {originRequired && <span className="text-danger-text">*</span>}
           {!originRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
         </Label>
         <Input
@@ -42,7 +42,7 @@ export const LocationSection = ({
       {/* Destino */}
       <div className="space-y-2">
         <Label htmlFor="destination">
-          Destino {destinationRequired && <span className="text-red-500">*</span>}
+          Destino {destinationRequired && <span className="text-danger-text">*</span>}
           {!destinationRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
         </Label>
         <Input

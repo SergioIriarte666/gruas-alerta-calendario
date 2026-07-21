@@ -149,7 +149,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
         <div className="flex items-center gap-4">
           {groupByClient && (
             <Select value={groupSortBy} onValueChange={(value) => setGroupSortBy(value as GroupSortBy)}>
-              <SelectTrigger className="h-9 w-[190px] border-border/70 bg-background/70 text-foreground">
+              <SelectTrigger className="h-9 w-[11.875rem] border-border/70 bg-background/70 text-foreground">
                 <SelectValue placeholder="Ordenar grupos" />
               </SelectTrigger>
               <SelectContent className="bg-background border-border">

@@ -20,9 +20,17 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		extend: {
+			extend: {
 			fontFamily: {
 				sans: ['Montserrat', 'system-ui', 'sans-serif'],
+			},
+			boxShadow: {
+				nav: 'var(--shadow-nav)',
+				'glow-primary': '0 0 24px hsl(var(--primary) / 0.35)',
+				'glow-info': '0 0 24px hsl(var(--info) / 0.35)',
+				'glow-success': '0 0 24px hsl(var(--success) / 0.35)',
+				'glow-warning': '0 0 24px hsl(var(--warning) / 0.35)',
+				'glow-danger': '0 0 24px hsl(var(--danger) / 0.35)',
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -30,9 +38,11 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				overlay: 'hsl(var(--overlay))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					soft: 'hsl(var(--primary-soft))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -61,59 +71,58 @@ export default {
 				success: {
 					DEFAULT: 'hsl(var(--success))',
 					foreground: 'hsl(var(--success-foreground))',
+					text: 'hsl(var(--success-text))',
 					soft: 'hsl(var(--success-soft))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))',
+					text: 'hsl(var(--warning-text))',
 					soft: 'hsl(var(--warning-soft))'
 				},
 				danger: {
 					DEFAULT: 'hsl(var(--danger))',
 					foreground: 'hsl(var(--danger-foreground))',
+					text: 'hsl(var(--danger-text))',
 					soft: 'hsl(var(--danger-soft))'
 				},
 				info: {
 					DEFAULT: 'hsl(var(--info))',
 					foreground: 'hsl(var(--info-foreground))',
+					text: 'hsl(var(--info-text))',
 					soft: 'hsl(var(--info-soft))'
 				},
-				// TMS colors → ahora todos apuntan al primary (violeta) para mantener compatibilidad
-				// con clases legacy bg-tms-green / text-tms-green dispersas en la app.
-				tms: {
-					green: 'hsl(var(--primary))',
-					'green-light': 'hsl(var(--primary) / 0.85)',
-					'green-dark': 'hsl(var(--primary-hover))',
-					status: {
-						pending: 'hsl(var(--warning))',
-						closed: 'hsl(var(--info))',
-						invoiced: 'hsl(var(--success))',
-						overdue: 'hsl(var(--danger))'
-					}
+				auth: {
+					background: 'hsl(var(--auth-background))',
+					foreground: 'hsl(var(--auth-foreground))',
+					muted: 'hsl(var(--auth-muted))',
+					surface: 'hsl(var(--auth-surface))',
+					border: 'hsl(var(--auth-border))',
+					success: 'hsl(var(--auth-success))',
+					warning: 'hsl(var(--auth-warning))',
+					danger: 'hsl(var(--auth-danger))',
+					input: 'hsl(var(--auth-input))',
+					'input-foreground': 'hsl(var(--auth-input-foreground))',
+					'input-muted': 'hsl(var(--auth-input-muted))',
+					'input-border': 'hsl(var(--auth-input-border))'
 				},
-				// Sidebar — colores semánticos por grupo de navegación (no marca)
+				signature: {
+					surface: 'hsl(var(--signature-surface))',
+					ink: 'hsl(var(--signature-ink))'
+				},
+				effect: {
+					highlight: 'hsl(var(--effect-highlight))'
+				},
+				// Primitiva sidebar: los roles reutilizan los tokens globales.
 				sidebar: {
-					principal: 'hsl(var(--primary))',
-					operaciones: '217 91% 60%',
-					recursos: '25 95% 53%',
-					inventario: '271 81% 56%',
-					finanzas: '142 76% 36%',
-					analisis: '330 81% 60%',
-					configuracion: '215 16% 47%'
-				},
-				// Color palette - HSL format
-				slate: {
-					50: '210 40% 98%',   /* #f8fafc */
-					100: '210 40% 96%',  /* #f1f5f9 */
-					200: '214 32% 91%',  /* #e2e8f0 */
-					300: '213 27% 84%',  /* #cbd5e1 */
-					400: '215 20% 65%',  /* #94a3b8 */
-					500: '215 16% 47%',  /* #64748b */
-					600: '215 19% 35%',  /* #475569 */
-					700: '215 25% 27%',  /* #334155 */
-					800: '217 33% 17%',  /* #1e293b */
-					900: '222 84% 5%',   /* #0f172a */
-					950: '229 84% 2%'    /* #020617 */
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--foreground))',
+					primary: 'hsl(var(--primary))',
+					'primary-foreground': 'hsl(var(--primary-foreground))',
+					accent: 'hsl(var(--accent))',
+					'accent-foreground': 'hsl(var(--accent-foreground))',
+					border: 'hsl(var(--border))',
+					ring: 'hsl(var(--ring))'
 				}
 			},
 			borderRadius: {
@@ -125,6 +134,9 @@ export default {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)', 
 				'gradient-card': 'var(--gradient-card)',
+				'gradient-portal': 'var(--gradient-portal)',
+				'auth-glow': 'var(--auth-glow)',
+				'auth-vignette': 'var(--auth-vignette)',
 				'gradient-hero': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%)',
 			},
 			keyframes: {
@@ -156,10 +168,10 @@ export default {
 				},
 				'pulse-glow': {
 					'0%, 100%': {
-						boxShadow: '0 0 5px rgba(156, 250, 36, 0.5)'
+						boxShadow: '0 0 5px hsl(var(--primary) / 0.35)'
 					},
 					'50%': {
-						boxShadow: '0 0 20px rgba(156, 250, 36, 0.8)'
+						boxShadow: '0 0 20px hsl(var(--primary) / 0.6)'
 					}
 				},
 				'shimmer': {

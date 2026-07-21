@@ -1,14 +1,12 @@
 import { Client } from '@/types';
 
 export const DEPARTMENT_COLORS = [
-  { bg: 'bg-violet-500/20', text: 'text-violet-600 dark:text-violet-400', border: 'border-violet-500/30' },
-  { bg: 'bg-blue-500/20', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/30' },
-  { bg: 'bg-cyan-500/20', text: 'text-cyan-600 dark:text-cyan-400', border: 'border-cyan-500/30' },
-  { bg: 'bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/30' },
-  { bg: 'bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/30' },
-  { bg: 'bg-pink-500/20', text: 'text-pink-600 dark:text-pink-400', border: 'border-pink-500/30' },
-  { bg: 'bg-indigo-500/20', text: 'text-indigo-600 dark:text-indigo-400', border: 'border-indigo-500/30' },
-  { bg: 'bg-teal-500/20', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-500/30' },
+  { bg: 'bg-primary-soft', text: 'text-primary', border: 'border-primary/30' },
+  { bg: 'bg-info-soft', text: 'text-info', border: 'border-info/30' },
+  { bg: 'bg-success-soft', text: 'text-success', border: 'border-success/30' },
+  { bg: 'bg-warning-soft', text: 'text-warning', border: 'border-warning/30' },
+  { bg: 'bg-danger-soft', text: 'text-danger', border: 'border-danger/30' },
+  { bg: 'bg-secondary', text: 'text-secondary-foreground', border: 'border-border' },
 ];
 
 /**

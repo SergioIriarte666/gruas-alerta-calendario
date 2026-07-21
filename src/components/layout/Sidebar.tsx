@@ -233,7 +233,7 @@ export const Sidebar = ({
           "group relative flex items-center gap-3 rounded-xl text-sm transition-all duration-150",
           collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
           isActive
-            ? "bg-primary/12 font-semibold text-foreground shadow-sm ring-1 ring-primary/15"
+            ? "bg-primary/[0.12] font-semibold text-foreground shadow-sm ring-1 ring-primary/15"
             : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
         )}
       >
@@ -244,7 +244,7 @@ export const Sidebar = ({
         {!collapsed && <span className="truncate">{item.name}</span>}
         {showPendingBadge && !collapsed && (
           <span
-            className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+            className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-xs font-semibold text-danger-foreground"
             aria-label={`${pendingUsersCount} usuarios pendientes`}
           >
             {pendingUsersCount}
@@ -252,13 +252,13 @@ export const Sidebar = ({
         )}
         {showPendingBadge && collapsed && (
           <span
-            className="absolute -right-0.5 -top-0.5 inline-flex size-2 rounded-full bg-red-600 ring-2 ring-card"
+            className="absolute -right-0.5 -top-0.5 inline-flex size-2 rounded-full bg-danger ring-2 ring-card"
             aria-label={`${pendingUsersCount} usuarios pendientes`}
           />
         )}
         {showBadge && !collapsed && (
           <span
-            className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground"
+            className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground"
             aria-label={`${upcomingCount} servicios programados para hoy o mañana`}
           >
             {upcomingCount}
@@ -301,7 +301,7 @@ export const Sidebar = ({
 
         {!isCollapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
             <p className="truncate text-sm font-semibold text-foreground">{user?.name}</p>
             <p className="truncate text-xs text-muted-foreground">{companyName}</p>
           </div>
@@ -348,7 +348,7 @@ export const Sidebar = ({
                     aria-expanded={group.alwaysExpanded ? undefined : isExpanded}
                     aria-label={`${group.name}${group.alwaysExpanded ? '' : isExpanded ? ' - colapsar' : ' - expandir'}`}
                     className={cn(
-                      "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
+                      "flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                       !group.alwaysExpanded && "cursor-pointer hover:text-foreground"
                     )}
                   >
@@ -399,7 +399,7 @@ export const Sidebar = ({
         </Button>
 
         {!isCollapsed && (
-          <p className="text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
+          <p className="text-center text-xs uppercase tracking-[0.16em] text-muted-foreground/80">
             Centro de Operaciones
           </p>
         )}
@@ -422,7 +422,7 @@ export const Sidebar = ({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
           <p className="truncate text-sm font-semibold text-foreground">{user?.name}</p>
           <p className="truncate text-xs text-muted-foreground">{companyName}</p>
         </div>
@@ -450,7 +450,7 @@ export const Sidebar = ({
                 aria-expanded={group.alwaysExpanded ? undefined : isExpanded}
                 aria-label={`${group.name}${group.alwaysExpanded ? '' : isExpanded ? ' - colapsar' : ' - expandir'}`}
                 className={cn(
-                  "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
+                  "flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                   !group.alwaysExpanded && "cursor-pointer hover:text-foreground"
                 )}
               >
@@ -492,7 +492,7 @@ export const Sidebar = ({
           <LogOut className="size-4 shrink-0" />
           <span className="ml-2">Cerrar Sesión</span>
         </Button>
-        <p className="text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
+        <p className="text-center text-xs uppercase tracking-[0.16em] text-muted-foreground/80">
           Centro de Operaciones
         </p>
       </div>
@@ -504,7 +504,7 @@ export const Sidebar = ({
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden bg-black/50"
+          className="fixed inset-0 z-40 bg-overlay/50 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

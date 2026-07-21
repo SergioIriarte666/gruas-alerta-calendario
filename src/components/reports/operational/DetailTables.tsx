@@ -27,7 +27,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
                 <p className="text-sm text-foreground">{client.services} servicios</p>
               </div>
               <div className="text-right">
-                <p className="font-medium text-green-400">${client.revenue.toLocaleString()}</p>
+                <p className="font-medium text-success-text">${client.revenue.toLocaleString()}</p>
                 <p className="text-xs text-foreground">#{index + 1}</p>
               </div>
             </div>
@@ -48,26 +48,26 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Users className="size-5 text-blue-400 mr-3" />
+              <Users className="size-5 text-info-text mr-3" />
               <span className="text-foreground">Clientes Activos</span>
             </div>
-            <span className="font-medium text-blue-400">{metrics.activeClients}</span>
+            <span className="font-medium text-info-text">{metrics.activeClients}</span>
           </div>
           
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Truck className="size-5 text-green-400 mr-3" />
+              <Truck className="size-5 text-success-text mr-3" />
               <span className="text-foreground">Grúas Activas</span>
             </div>
-            <span className="font-medium text-green-400">{metrics.activeCranes}</span>
+            <span className="font-medium text-success-text">{metrics.activeCranes}</span>
           </div>
           
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Users className="size-5 text-yellow-400 mr-3" />
+              <Users className="size-5 text-warning-text mr-3" />
               <span className="text-foreground">Operadores Activos</span>
             </div>
-            <span className="font-medium text-yellow-400">{metrics.activeOperators}</span>
+            <span className="font-medium text-warning-text">{metrics.activeOperators}</span>
           </div>
         </div>
       </CardContent>

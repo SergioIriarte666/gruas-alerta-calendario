@@ -58,9 +58,9 @@ const ALL_MODULES: AuditModule[] = [
 ];
 
 const OPERATION_STYLES: Record<AuditOperation, string> = {
-  INSERT: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  UPDATE: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  DELETE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  INSERT: 'bg-success-soft text-success',
+  UPDATE: 'bg-warning-soft text-warning',
+  DELETE: 'bg-danger-soft text-danger',
 };
 
 const OPERATION_LABELS: Record<AuditOperation, string> = {

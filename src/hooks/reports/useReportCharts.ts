@@ -3,12 +3,12 @@ import * as React from 'react';
 import { ChartConfig } from "@/components/ui/chart";
 import { ReportMetrics } from '@/hooks/useReports';
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#a855f7', '#d946ef'];
+const COLORS = [1, 2, 3, 4, 5, 6].map((index) => `hsl(var(--chart-${index}))`);
 
 export const useReportCharts = (metrics: ReportMetrics | null) => {
-  const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
-  const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: '#3b82f6' } } satisfies ChartConfig;
-  const craneUtilizationConfig = { utilization: { label: 'Utilización', color: '#f59e0b' } } satisfies ChartConfig;
+  const servicesByMonthConfig = { services: { label: 'Servicios', color: 'hsl(var(--chart-1))' } } satisfies ChartConfig;
+  const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: 'hsl(var(--chart-4))' } } satisfies ChartConfig;
+  const craneUtilizationConfig = { utilization: { label: 'Utilización', color: 'hsl(var(--chart-2))' } } satisfies ChartConfig;
 
   const servicesByStatusConfig = React.useMemo(() => {
     if (!metrics) return {};

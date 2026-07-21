@@ -42,20 +42,20 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading, dis
   return (
     <Select onValueChange={onValueChange} value={value ?? 'none'} disabled={isLoading || disabled}>
       <FormControl>
-        <SelectTrigger className="bg-white/10">
+        <SelectTrigger className="bg-background/70">
           <SelectValue placeholder="Sin asociar" />
         </SelectTrigger>
       </FormControl>
       <SelectContent>
         {/* Campo de búsqueda */}
-        <div className="p-2 border-b border-gray-200">
+        <div className="border-b border-border p-2">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 size-4 text-gray-400" />
+            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por folio, cliente o fecha..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 h-8 text-sm bg-white border-gray-300"
+              className="h-8 border-input bg-background pl-8 text-sm"
             />
           </div>
         </div>
@@ -63,7 +63,7 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading, dis
         <SelectItem value="none">Sin asociar</SelectItem>
         
         {filteredServices.length === 0 && searchTerm ? (
-          <div className="p-2 text-sm text-gray-500 text-center">
+          <div className="p-2 text-center text-sm text-muted-foreground">
             No se encontraron servicios
           </div>
         ) : (
@@ -75,7 +75,7 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading, dis
         )}
         
         {services.length === 0 && !isLoading && (
-          <div className="p-2 text-sm text-gray-500 text-center">
+          <div className="p-2 text-center text-sm text-muted-foreground">
             No hay servicios disponibles
           </div>
         )}

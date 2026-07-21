@@ -52,10 +52,10 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
 
   const getStatusBadge = (inst: DebtInstallment) => {
     if (inst.status === 'paid')
-      return <Badge className="bg-green-100 text-green-800 text-xs">Pagada</Badge>;
+      return <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text">Pagada</Badge>;
     if (inst.due_date < today)
       return <Badge variant="destructive" className="text-xs">Vencida</Badge>;
-    return <Badge className="bg-amber-100 text-amber-800 text-xs">Pendiente</Badge>;
+    return <Badge variant="outline" className="border-warning/30 bg-warning-soft text-xs text-warning-text">Pendiente</Badge>;
   };
 
   return (
@@ -178,13 +178,13 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-bold text-foreground">{formatAmount(Number(debt.total_amount), debt.currency)}</p>
             </div>
-            <div className="rounded-lg bg-green-50 p-3 text-center">
+            <div className="rounded-lg bg-success-soft p-3 text-center">
               <p className="text-xs text-muted-foreground">Pagado</p>
-              <p className="text-lg font-bold text-green-700">{formatAmount(Number(debt.paid_amount), debt.currency)}</p>
+              <p className="text-lg font-bold text-success-text">{formatAmount(Number(debt.paid_amount), debt.currency)}</p>
             </div>
-            <div className="rounded-lg bg-amber-50 p-3 text-center">
+            <div className="rounded-lg bg-warning-soft p-3 text-center">
               <p className="text-xs text-muted-foreground">Pendiente</p>
-              <p className="text-lg font-bold text-amber-700">{formatAmount(Number(debt.pending_amount), debt.currency)}</p>
+              <p className="text-lg font-bold text-warning-text">{formatAmount(Number(debt.pending_amount), debt.currency)}</p>
             </div>
           </div>
 
@@ -196,12 +196,12 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
                 <TableHead>Monto</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Fecha Pago</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {installments?.map((inst) => (
-                <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-red-50/50' : ''}>
+                <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-danger-soft/50' : ''}>
                   <TableCell className="text-foreground">{inst.installment_number}</TableCell>
                   <TableCell className="text-foreground">
                     {format(new Date(inst.due_date + 'T12:00:00'), 'dd/MM/yyyy')}

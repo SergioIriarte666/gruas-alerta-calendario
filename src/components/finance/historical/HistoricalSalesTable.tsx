@@ -44,11 +44,11 @@ interface HistoricalSalesTableProps {
 }
 
 const statusColors: Record<string, string> = {
-  paid: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
-  sent: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-  overdue: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
-  draft: 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100',
-  cancelled: 'bg-gray-100 text-gray-500 border-gray-200 line-through hover:bg-gray-100',
+  paid: 'bg-success-soft text-success-text border-success hover:bg-success/90',
+  sent: 'bg-info-soft text-info-text border-info hover:bg-info/90',
+  overdue: 'bg-danger-soft text-danger-text border-danger hover:bg-danger/90',
+  draft: 'bg-muted text-foreground border-border hover:bg-muted/80',
+  cancelled: 'bg-muted text-muted-foreground border-border line-through hover:bg-muted/80',
 };
 
 const statusLabels: Record<string, string> = {
@@ -93,17 +93,17 @@ export const HistoricalSalesTable = ({
 
   return (
     <div className="rounded-md border shadow-sm bg-card overflow-x-auto">
-      <Table className="min-w-[900px]">
+      <Table className="min-w-[56rem]">
         <TableHeader className="bg-muted/40">
           <TableRow>
-            <TableHead className="w-[40px]">
+            <TableHead className="w-10">
               <Checkbox
                 checked={invoices.length > 0 && invoices.every((inv) => selectedIds.includes(inv.id))}
                 onCheckedChange={(checked) => onSelectAll?.(invoices.map((inv) => inv.id), !!checked)}
                 aria-label="Seleccionar todo"
               />
             </TableHead>
-            <TableHead className="w-[140px]">
+            <TableHead className="w-36">
               <Button
                 variant="ghost"
                 size="sm"
@@ -129,9 +129,9 @@ export const HistoricalSalesTable = ({
               </TableHead>
             )}
 
-            {!hideClientColumn && <TableHead className="w-[140px]">RUT</TableHead>}
+            {!hideClientColumn && <TableHead className="w-36">RUT</TableHead>}
 
-            <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
+            <TableHead className="min-w-64 max-w-sm whitespace-nowrap">
               <Button
                 variant="ghost"
                 size="sm"
@@ -180,7 +180,7 @@ export const HistoricalSalesTable = ({
               </Button>
             </TableHead>
 
-            <TableHead className="text-right w-[80px]">Acciones</TableHead>
+            <TableHead className="text-right w-20">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -213,12 +213,12 @@ export const HistoricalSalesTable = ({
                         : invoice.folio.startsWith('HIST-ND-') ? 'ND'
                         : 'FE';
                       const badgeStyles = docType === 'NC'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-warning-soft text-warning-text border-warning'
                         : docType === 'ND'
-                        ? 'bg-orange-50 text-orange-700 border-orange-200'
-                        : 'bg-gray-50 text-gray-600 border-gray-200';
+                        ? 'bg-warning-soft text-warning-text border-warning'
+                        : 'bg-muted text-muted-foreground border-border';
                       return (
-                        <Badge variant="outline" className={`${badgeStyles} text-[9px] px-1.5 py-0 font-semibold`}>
+                        <Badge variant="outline" className={`${badgeStyles} text-xs px-1.5 py-0 font-semibold`}>
                           {docType}
                         </Badge>
                       );
@@ -240,7 +240,7 @@ export const HistoricalSalesTable = ({
                   </TableCell>
                 )}
 
-                <TableCell className="text-muted-foreground text-sm max-w-[320px]">
+                <TableCell className="text-muted-foreground text-sm max-w-xs">
                   <span className="block truncate" title={invoice.productServiceDescription}>
                     {invoice.productServiceDescription}
                   </span>
@@ -255,7 +255,7 @@ export const HistoricalSalesTable = ({
                 <TableCell>
                   <Badge 
                     variant="outline" 
-                    className={`${statusColors[invoice.status] || 'bg-gray-100'} px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide border`}
+                    className={`${statusColors[invoice.status] || 'bg-muted'} px-2 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide border`}
                   >
                     {statusLabels[invoice.status] || invoice.status}
                   </Badge>
@@ -265,9 +265,9 @@ export const HistoricalSalesTable = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Lock className="size-3.5 text-amber-500 mr-1" />
+                        <Lock className="size-3.5 text-warning-text mr-1" />
                       </TooltipTrigger>
-                      <TooltipContent side="left" className="max-w-[200px] text-xs">
+                      <TooltipContent side="left" className="max-w-48 text-xs">
                         Factura del sistema — edición limitada a notas y metadatos
                       </TooltipContent>
                     </Tooltip>

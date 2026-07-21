@@ -67,7 +67,7 @@ export const DebtCalendar = () => {
               return (
                 <div
                   key={day.toISOString()}
-                  className={`min-h-[60px] rounded-md border p-1 text-xs ${
+                  className={`min-h-16 rounded-md border p-1 text-xs ${
                     isToday(day) ? 'border-primary bg-primary/5' : 'border-border'
                   }`}
                 >
@@ -76,19 +76,19 @@ export const DebtCalendar = () => {
                     <button
                       key={inst.id}
                       onClick={() => inst.status === 'pending' && setPayingInstallment(inst)}
-                      className={`w-full text-left truncate rounded px-1 py-0.5 mt-0.5 text-[10px] ${
+                      className={`mt-0.5 w-full truncate rounded px-1 py-0.5 text-left text-xs ${
                         inst.status === 'paid'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-soft text-success-text'
                           : inst.due_date < today
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'bg-danger-soft text-danger-text'
+                          : 'bg-warning-soft text-warning-text'
                       }`}
                     >
                       {formatAmount(Number(inst.total_amount), inst.debts?.currency)}
                     </button>
                   ))}
                   {dayInstallments.length > 2 && (
-                    <span className="text-[10px] text-muted-foreground">+{dayInstallments.length - 2} más</span>
+                    <span className="text-xs text-muted-foreground">+{dayInstallments.length - 2} más</span>
                   )}
                 </div>
               );

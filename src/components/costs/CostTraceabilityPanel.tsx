@@ -116,7 +116,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {payment && (
           <>
             <ArrowRight className="size-3 text-muted-foreground" />
-            <Badge variant="outline" className="gap-1 border-violet-500/30 text-violet-600">
+            <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
               <CreditCard className="size-3" />
               Pago: {payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
               {payment.paid_date && ` (${format(new Date(payment.paid_date), 'dd/MM', { locale: es })})`}
@@ -128,7 +128,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {movement && (
           <>
             <ArrowRight className="size-3 text-muted-foreground" />
-            <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
+            <Badge variant="outline" className="gap-1 border-info/30 text-info-text">
               <Package className="size-3" />
               Inventario: {(movement as any).inventory_items?.name || 'Item'} ({(movement as any).quantity} uds)
             </Badge>
@@ -138,7 +138,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {!movement && invoiceMovements.length > 0 && (
           <>
             <ArrowRight className="size-3 text-muted-foreground" />
-            <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
+            <Badge variant="outline" className="gap-1 border-info/30 text-info-text">
               <Package className="size-3" />
               Inventario: {invoiceMovements.length} movimiento(s) de factura
             </Badge>
@@ -149,7 +149,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {parts.length > 0 && (
           <>
             <ArrowRight className="size-3 text-muted-foreground" />
-            <Badge variant="outline" className="gap-1 border-green-500/30 text-green-600">
+            <Badge variant="outline" className="gap-1 border-success/30 text-success-text">
               <Wrench className="size-3" />
               Pieza: {parts[0].part_name}
               {parts[0].cranes && ` → ${parts[0].cranes.license_plate}`}

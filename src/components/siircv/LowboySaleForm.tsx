@@ -343,11 +343,11 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                     disabled={Boolean(fixedSaleType)}
                     className="grid grid-cols-2 gap-3"
                   >
-                    <label className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/5">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 has-[:checked]:border-success has-[:checked]:bg-success-soft">
                       <RadioGroupItem value="producto" id="sale_type_producto" />
                       <span className="text-sm font-medium">Producto (contenedor)</span>
                     </label>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/5">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 has-[:checked]:border-success has-[:checked]:bg-success-soft">
                       <RadioGroupItem value="flete" id="sale_type_flete" />
                       <span className="text-sm font-medium">Flete (equipo propio)</span>
                     </label>
@@ -456,7 +456,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="flex items-center gap-2 text-sm font-semibold">
-                      <Truck className="size-4 text-indigo-600" />Vehículos trasladados (opcional)
+                      <Truck className="size-4 text-info" />Vehículos trasladados (opcional)
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Registre las máquinas o vehículos del flete y su valor. La patente autocompleta marca y modelo. Los descuentos o recargos van en el campo "Ajuste (CLP)".
@@ -543,7 +543,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                                   />
                                 </FormControl>
                                 {numeric != null && (
-                                  <p className={`text-right text-[11px] tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                  <p className={`text-right text-xs tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                                     {formatCLP(numeric)}
                                   </p>
                                 )}
@@ -568,7 +568,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                 )}
 
                 {breakdown.hasBreakdown && (
-                  <div className="flex items-center justify-between gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between gap-3 rounded-md border border-success/40 bg-success-soft px-3 py-2 text-sm">
                     <span className="font-medium text-muted-foreground">
                       Neto calculado ({breakdown.vehicleCount} vehículo{breakdown.vehicleCount === 1 ? '' : 's'}{breakdown.hasAdjustment ? ' + ajuste' : ''})
                     </span>
@@ -614,7 +614,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
               <section className="border-y py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="flex items-center gap-2 text-sm font-semibold"><Box className="size-4 text-teal-600" />Contenedores del stock</h3>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><Box className="size-4 text-primary" />Contenedores del stock</h3>
                     <p className="text-xs text-muted-foreground">Selección opcional · {containerAssignments.length} seleccionado(s)</p>
                   </div>
                   {containerAssignments.length > 0 && (
@@ -653,7 +653,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                               </div>
                               <div className="sm:min-w-32 sm:pb-2 sm:text-right">
                                 <p className="text-xs text-muted-foreground">Margen</p>
-                                <p className={`font-semibold ${margin >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{formatCLP(margin)}</p>
+                                <p className={`font-semibold ${margin >= 0 ? 'text-success' : 'text-destructive'}`}>{formatCLP(margin)}</p>
                               </div>
                             </div>
                           )}
@@ -664,7 +664,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                 )}
 
                 {assignmentMismatch && (
-                  <div className="mt-3 flex items-start gap-2 border-l-4 border-amber-500 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+                  <div className="mt-3 flex items-start gap-2 border-l-4 border-warning bg-warning-soft p-3 text-sm text-warning">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                     <span>La suma asignada ({formatCLP(assignedTotal)}) no coincide con el neto de la venta ({formatCLP(netAmount)}). Puede guardar igualmente.</span>
                   </div>
@@ -699,8 +699,8 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                         <SelectItem key={invoice.id} value={invoice.id}>
                           <span className="flex flex-wrap items-center gap-1.5">
                             <span>Folio {invoice.folio} · {invoice.counterpart_name || invoice.counterpart_rut} · {formatCLP(invoice.net_amount)}</span>
-                            {rutMatches && <span className="rounded-full border px-2 py-0.5 text-xs font-semibold text-emerald-700">RUT</span>}
-                            {amountMatches && <span className="rounded-full border px-2 py-0.5 text-xs font-semibold text-emerald-700">Monto</span>}
+                            {rutMatches && <span className="rounded-full border border-success/40 px-2 py-0.5 text-xs font-semibold text-success">RUT</span>}
+                            {amountMatches && <span className="rounded-full border border-success/40 px-2 py-0.5 text-xs font-semibold text-success">Monto</span>}
                           </span>
                         </SelectItem>
                       );
@@ -733,7 +733,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                     </FormControl>
                     <p className="text-xs text-muted-foreground">Descuento (−) o recargo (+). Detalle el motivo en Notas.</p>
                     {numeric != null && numeric !== 0 && (
-                      <p className={`text-right text-[11px] tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      <p className={`text-right text-xs tabular-nums ${numeric < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                         {formatCLP(numeric)}
                       </p>
                     )}

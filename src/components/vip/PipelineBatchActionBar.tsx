@@ -25,7 +25,7 @@ export const PipelineBatchActionBar = ({
               {selectedCount} {selectedCount === 1 ? 'servicio seleccionado' : 'servicios seleccionados'}
             </Badge>
             <div className="flex items-center gap-2 text-foreground font-semibold">
-              <DollarSign className="size-4 text-violet-500" />
+              <DollarSign className="size-4 text-primary" />
               <span>Total: ${totalAmount.toLocaleString('es-CL')}</span>
             </div>
           </div>

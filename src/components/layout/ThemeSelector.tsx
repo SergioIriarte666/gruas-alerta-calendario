@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
+import { useAppearance } from '@/contexts/AppearanceContext';
 
 const themeOptions: Array<{
   value: ThemeMode;
@@ -23,7 +24,9 @@ const themeOptions: Array<{
 ];
 
 export const ThemeSelector = () => {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const { preferences, updatePreferences } = useAppearance();
+  const theme = preferences.theme;
   const ActiveIcon = resolvedTheme === 'dark' ? Moon : Sun;
 
   return (
@@ -51,7 +54,10 @@ export const ThemeSelector = () => {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as ThemeMode)}>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(value) => updatePreferences({ theme: value as ThemeMode })}
+        >
           {themeOptions.map((option) => {
             const Icon = option.icon;
             return (

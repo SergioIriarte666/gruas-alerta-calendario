@@ -40,20 +40,20 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
   };
 
   return (
-    <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in">
+    <Card className="bg-card shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in">
       <CardContent className="p-4">
         {/* Header con fecha y monto */}
         <div className="flex justify-between items-start mb-3">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground ">
               <Calendar className="size-4" />
               <span className="font-medium">{formatDate(cost.date)}</span>
             </div>
-            <Badge variant="outline" className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+            <Badge variant="outline" className="text-xs font-semibold uppercase tracking-widest">
               {getCostShortId(cost.id)}
             </Badge>
           </div>
-          <div className="flex items-center gap-1 text-lg font-bold text-tms-green">
+          <div className="flex items-center gap-1 text-lg font-bold text-success-text">
             <DollarSign className="size-5" />
             <span>{formatCurrency(Number(cost.amount))}</span>
           </div>
@@ -61,24 +61,24 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
 
         {/* Categorización */}
         <div className="flex items-center gap-2 mb-2">
-          <Tag className="size-4 text-gray-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+          <Tag className="size-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground  font-medium">
             {getCategoryDisplay()}
           </span>
         </div>
 
         {/* Descripción */}
-        <p className="text-gray-800 dark:text-gray-200 mb-3 font-medium">
+        <p className="text-foreground  mb-3 font-medium">
           {cost.description}
         </p>
 
         {/* Información de servicios asociados */}
         {(cost.cranes || cost.operators || cost.service_folio) && (
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3 space-y-2">
+          <div className="bg-muted/40 rounded-lg p-3 mb-3 space-y-2">
             {cost.cranes && (
               <div className="flex items-center gap-2 text-sm">
-                <Truck className="size-4 text-gray-500" />
-                <span className="text-gray-700 dark:text-gray-300">
+                <Truck className="size-4 text-muted-foreground" />
+                <span className="text-foreground ">
                   <strong>Grúa:</strong> {cost.cranes.license_plate}
                 </span>
               </div>
@@ -86,8 +86,8 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             
             {cost.operators && (
               <div className="flex items-center gap-2 text-sm">
-                <User className="size-4 text-gray-500" />
-                <span className="text-gray-700 dark:text-gray-300">
+                <User className="size-4 text-muted-foreground" />
+                <span className="text-foreground ">
                   <strong>Operador:</strong> {cost.operators.name}
                 </span>
               </div>
@@ -95,8 +95,8 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             
             {cost.service_folio && (
               <div className="flex items-center gap-2 text-sm">
-                <FileText className="size-4 text-gray-500" />
-                <span className="text-gray-700 dark:text-gray-300">
+                <FileText className="size-4 text-muted-foreground" />
+                <span className="text-foreground ">
                   <strong>Folio:</strong> {cost.service_folio}
                 </span>
               </div>
@@ -106,13 +106,13 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
 
         {/* Notas adicionales */}
         {cost.notes && (
-          <div className="text-sm text-gray-600 dark:text-gray-400 italic mb-3">
+          <div className="text-sm text-muted-foreground  italic mb-3">
             "{cost.notes}"
           </div>
         )}
 
         {/* Acciones */}
-        <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+        <div className="flex gap-2 pt-2 border-t border-border ">
           <Button
             variant="outline"
             size="sm"
@@ -150,7 +150,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             variant="outline"
             size="sm"
             onClick={() => onDelete(cost)}
-            className="text-red-600 hover:text-red-700 hover:border-red-300"
+            className="text-danger-text hover:text-danger-text hover:border-danger/30"
           >
             <Trash2 className="size-4" />
           </Button>

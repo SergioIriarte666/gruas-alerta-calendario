@@ -48,7 +48,7 @@ export const PDFProgress = ({
             {isGenerating ? (
               <Loader2 className="size-4 text-primary animate-spin" />
             ) : (
-              <CheckCircle className="size-4 text-emerald-500" />
+              <CheckCircle className="size-4 text-success-text" />
             )}
             <span className="text-sm font-medium text-foreground">
               {isGenerating ? 'Generando PDF…' : 'PDF listo'}
@@ -79,7 +79,7 @@ export const PDFProgress = ({
                   key={step.label}
                   className={`flex items-center gap-1 text-xs ${
                     isCompleted
-                      ? 'text-emerald-500'
+                      ? 'text-success-text'
                       : isActive
                       ? 'text-primary'
                       : 'text-muted-foreground'

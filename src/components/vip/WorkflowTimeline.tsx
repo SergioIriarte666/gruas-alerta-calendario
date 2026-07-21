@@ -3,11 +3,11 @@ import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
-  FileText, 
-  ShoppingCart, 
+import {
+  CheckCircle2,
+  AlertTriangle,
+  FileText,
+  ShoppingCart,
   PlayCircle,
   Receipt,
   ArrowRight,
@@ -178,7 +178,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
               <span className="text-foreground font-medium">{Math.round(calculateProgress())}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-2">
-              <div 
+              <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${calculateProgress()}%` }}
               />
@@ -217,7 +217,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                 <div className="absolute left-6 top-12 w-px h-8 bg-border" />
               )}
 
-              <Card 
+              <Card
                 className={`glass-card ${colors.border} transition-all duration-200 ${
                   step.isActive ? 'ring-1 ring-primary/20' : ''
                 } ${onStepClick ? 'cursor-pointer hover:bg-muted/40' : ''}`}
@@ -254,9 +254,9 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                           )}
                           {step.completedAt && (
                             <span>
-                              {formatDistanceToNow(new Date(step.completedAt), { 
-                                addSuffix: true, 
-                                locale: es 
+                              {formatDistanceToNow(new Date(step.completedAt), {
+                                addSuffix: true,
+                                locale: es
                               })}
                             </span>
                           )}

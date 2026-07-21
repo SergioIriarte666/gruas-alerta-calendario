@@ -81,10 +81,10 @@ export const TripCostBreakdown = ({
       <Card className="border-border">
         <CardContent className="pt-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="size-4 text-green-600" />
+            <MapPin className="size-4 text-success" />
             <span className="font-medium text-foreground">{originName.split(',')[0]}</span>
             <span>→</span>
-            <MapPin className="size-4 text-red-600" />
+            <MapPin className="size-4 text-danger" />
             <span className="font-medium text-foreground">{destinationName.split(',')[0]}</span>
           </div>
           <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ export const TripCostBreakdown = ({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Fuel className="size-4 text-amber-600" />
+              <Fuel className="size-4 text-warning-text" />
               Combustible
             </CardTitle>
           </CardHeader>
@@ -134,7 +134,7 @@ export const TripCostBreakdown = ({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CreditCard className="size-4 text-blue-600" />
+              <CreditCard className="size-4 text-info" />
               Peajes
             </CardTitle>
           </CardHeader>
@@ -174,7 +174,7 @@ export const TripCostBreakdown = ({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Truck className="size-4 text-purple-600" />
+              <Truck className="size-4 text-primary" />
               Costos Adicionales
             </CardTitle>
           </CardHeader>
@@ -186,18 +186,18 @@ export const TripCostBreakdown = ({
       </div>
 
       {/* Total */}
-      <Card className="border-2 border-green-500/50 bg-green-50/50 dark:bg-green-950/20">
+      <Card className="border-2 border-success/50 bg-success-soft/50">
         <CardContent className="pt-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground font-medium">TOTAL ESTIMADO</p>
-            <p className="text-3xl font-bold text-green-700 dark:text-green-400">
+            <p className="text-3xl font-bold text-success-text">
               {formatCurrency(result.total_estimate)}
             </p>
           </div>
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-violet-600 hover:bg-violet-700 text-white"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Save className="size-4 mr-2" />
             {isSaving ? 'Guardando...' : 'Guardar Estimación'}

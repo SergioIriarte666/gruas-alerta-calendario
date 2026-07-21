@@ -1,77 +1,116 @@
-import { businessClock } from '@/utils/businessClock';
+import { businessClock } from "@/utils/businessClock";
 
-import { useMemo, useState } from 'react';
-import { useClientInvoices, type ClientInvoice } from '@/hooks/portal/useClientInvoices';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, FileText, Download, CalendarIcon, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { formatForDisplay, safeParseDateOnly, safeDaysSince, getBusinessToday } from '@/utils/timezoneUtils';
-import { useSettings } from '@/hooks/useSettings';
-import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
-import { formatCurrency } from '@/utils/statusHelpers';
-import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { useMemo, useState } from "react";
+import {
+  useClientInvoices,
+  type ClientInvoice,
+} from "@/hooks/portal/useClientInvoices";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import {
+  AlertTriangle,
+  FileText,
+  Download,
+  CalendarIcon,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  formatForDisplay,
+  safeParseDateOnly,
+  safeDaysSince,
+  getBusinessToday,
+} from "@/utils/timezoneUtils";
+import { useSettings } from "@/hooks/useSettings";
+import { exportInvoiceReport } from "@/utils/reports/invoiceReportExporter";
+import { formatCurrency } from "@/utils/statusHelpers";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { createLogger } from "@/lib/logger";
-
 
 const logger = createLogger("PortalInvoices");
 
 const getStatusBadge = (status: string) => {
-  const statusConfig: { [key: string]: { label: string; className: string } } = {
-    paid: { label: 'Pagada', className: 'bg-green-500' },
-    sent: { label: 'Enviada', className: 'bg-blue-500' },
-    draft: { label: 'Borrador', className: 'bg-gray-500' },
-    overdue: { label: 'Vencida', className: 'bg-red-500' },
-    cancelled: { label: 'Cancelada', className: 'bg-gray-500' },
-  };
+  const statusConfig: { [key: string]: { label: string; tone: StatusTone } } =
+    {
+      paid: { label: "Pagada", tone: "paid" },
+      sent: { label: "Enviada", tone: "pending" },
+      draft: { label: "Borrador", tone: "draft" },
+      overdue: { label: "Vencida", tone: "overdue" },
+      cancelled: { label: "Cancelada", tone: "cancelled" },
+    };
 
-  const config = statusConfig[status] || { label: status, className: 'bg-gray-500' };
-  return <Badge className={`${config.className} text-white`}>{config.label}</Badge>;
+  const config = statusConfig[status] || {
+    label: status,
+    tone: "neutral" as const,
+  };
+  return <StatusBadge tone={config.tone}>{config.label}</StatusBadge>;
 };
 
-const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Element => {
+const calculateDaysUntilDue = (
+  dueDate: string | null,
+  status: string,
+): JSX.Element => {
   // Si ya está pagada, no mostrar días de atraso
-  if (status === 'paid') {
-    return <Badge className="bg-green-500 text-white">✓ Pagada</Badge>;
+  if (status === "paid") {
+    return <StatusBadge tone="paid">✓ Pagada</StatusBadge>;
   }
 
-  if (!dueDate) return <Badge className="bg-gray-500 text-white">Sin fecha</Badge>;
-  
+  if (!dueDate)
+    return <StatusBadge tone="neutral">Sin fecha</StatusBadge>;
+
   try {
     const todayStr = getBusinessToday();
-    const dueStr = (dueDate || '').slice(0, 10);
+    const dueStr = (dueDate || "").slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dueStr)) {
-      return <Badge className="bg-gray-500 text-white">Fecha inválida</Badge>;
+      return <StatusBadge tone="neutral">Fecha inválida</StatusBadge>;
     }
     // safeDaysSince(dueStr, todayStr) = today - due. Invertimos: días hasta vencer = due - today.
     const days = -safeDaysSince(dueStr, todayStr);
-    
+
     if (days > 7) {
-      return <Badge className="bg-green-500 text-white">+{days} días</Badge>;
+      return <StatusBadge tone="completed">+{days} días</StatusBadge>;
     } else if (days >= 1 && days <= 7) {
-      return <Badge className="bg-yellow-500 text-white">+{days} días</Badge>;
+      return <StatusBadge tone="pending">+{days} días</StatusBadge>;
     } else if (days === 0) {
-      return <Badge className="bg-orange-500 text-white">Hoy</Badge>;
+      return <StatusBadge tone="pending">Hoy</StatusBadge>;
     } else {
-      return <Badge className="bg-red-500 text-white">{days} días</Badge>;
+      return <StatusBadge tone="overdue">{days} días</StatusBadge>;
     }
   } catch (error) {
-    logger.error('Error calculating days until due:', error);
-    return <Badge className="bg-gray-500 text-white">Error</Badge>;
+    logger.error("Error calculating days until due:", error);
+    return <StatusBadge tone="neutral">Error</StatusBadge>;
   }
 };
 
 const PortalInvoices = () => {
   const { settings } = useSettings();
   const { data: invoices, isLoading, isError, error } = useClientInvoices();
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
@@ -79,7 +118,8 @@ const PortalInvoices = () => {
     if (!invoices) return [];
 
     return invoices.filter((invoice) => {
-      if (statusFilter !== 'all' && invoice.status !== statusFilter) return false;
+      if (statusFilter !== "all" && invoice.status !== statusFilter)
+        return false;
 
       const issueDate = safeParseDateOnly(invoice.issue_date);
       if (dateFrom && issueDate < dateFrom) return false;
@@ -89,44 +129,50 @@ const PortalInvoices = () => {
     });
   }, [invoices, statusFilter, dateFrom, dateTo]);
 
-  const hasFilters = statusFilter !== 'all' || dateFrom || dateTo;
+  const hasFilters = statusFilter !== "all" || dateFrom || dateTo;
   const pickerBaseClassName =
-    'h-11 w-[176px] justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors hover:bg-[#f4f7fb]';
+    "h-11 w-44 justify-start rounded-xl border-input px-3 text-left font-normal shadow-sm transition-colors hover:bg-muted/70";
 
   const handleClearFilters = () => {
-    setStatusFilter('all');
+    setStatusFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
   };
 
   const handleDownloadInvoice = async (invoice: ClientInvoice) => {
     if (!settings) {
-      toast.error('No se pudo exportar la factura', {
-        description: 'La configuración de la empresa todavía no está disponible.',
+      toast.error("No se pudo exportar la factura", {
+        description:
+          "La configuración de la empresa todavía no está disponible.",
       });
       return;
     }
 
     try {
       await exportInvoiceReport({
-        format: 'pdf',
-        invoices: [{
-          id: invoice.id,
-          folio: invoice.folio,
-          client: invoice.client ?? undefined,
-          numeroFiscal: invoice.numero_fiscal,
-          issueDate: invoice.issue_date,
-          dueDate: invoice.due_date,
-          paymentDate: invoice.payment_date ?? undefined,
-          subtotal: Number(invoice.subtotal || 0),
-          vat: Number(invoice.vat || 0),
-          total: Number(invoice.total || 0),
-          paidAmount: Number(invoice.total || 0) - Number(invoice.remaining_amount || 0),
-          remainingAmount: Number(invoice.remaining_amount || 0),
-          notes: invoice.notes ?? undefined,
-          productServiceDescription: invoice.product_service_description ?? '',
-          status: invoice.status,
-        }],
+        format: "pdf",
+        invoices: [
+          {
+            id: invoice.id,
+            folio: invoice.folio,
+            client: invoice.client ?? undefined,
+            numeroFiscal: invoice.numero_fiscal,
+            issueDate: invoice.issue_date,
+            dueDate: invoice.due_date,
+            paymentDate: invoice.payment_date ?? undefined,
+            subtotal: Number(invoice.subtotal || 0),
+            vat: Number(invoice.vat || 0),
+            total: Number(invoice.total || 0),
+            paidAmount:
+              Number(invoice.total || 0) -
+              Number(invoice.remaining_amount || 0),
+            remainingAmount: Number(invoice.remaining_amount || 0),
+            notes: invoice.notes ?? undefined,
+            productServiceDescription:
+              invoice.product_service_description ?? "",
+            status: invoice.status,
+          },
+        ],
         settings,
         appliedFilters: {
           clientName: invoice.client?.name,
@@ -135,15 +181,16 @@ const PortalInvoices = () => {
         },
         metrics: {
           totalInvoiced: Number(invoice.total || 0),
-          totalPaid: Number(invoice.total || 0) - Number(invoice.remaining_amount || 0),
+          totalPaid:
+            Number(invoice.total || 0) - Number(invoice.remaining_amount || 0),
           pendingAmount: Number(invoice.remaining_amount || 0),
-          overdueInvoices: invoice.status === 'overdue' ? 1 : 0,
+          overdueInvoices: invoice.status === "overdue" ? 1 : 0,
         },
       });
     } catch (downloadError) {
-      logger.error('Error exporting portal invoice:', downloadError);
-      toast.error('No se pudo exportar la factura', {
-        description: 'Intente nuevamente en unos segundos.',
+      logger.error("Error exporting portal invoice:", downloadError);
+      toast.error("No se pudo exportar la factura", {
+        description: "Intente nuevamente en unos segundos.",
       });
     }
   };
@@ -153,7 +200,7 @@ const PortalInvoices = () => {
       return (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full bg-[#e2e8f0]" />
+            <Skeleton key={i} className="h-12 w-full bg-muted" />
           ))}
         </div>
       );
@@ -161,77 +208,108 @@ const PortalInvoices = () => {
 
     if (isError) {
       return (
-        <div className="flex flex-col items-center justify-center rounded-[10px] border border-red-200 bg-red-50 p-8 text-center">
-          <AlertTriangle className="size-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-[#0f172a]">Error al cargar facturas</h3>
-          <p className="text-red-600">{error?.message || 'Ocurrió un error inesperado.'}</p>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-danger/30 bg-danger-soft p-8 text-center">
+          <AlertTriangle className="size-12 text-danger-text mb-4" />
+          <h3 className="text-lg font-semibold text-foreground">
+            Error al cargar facturas
+          </h3>
+          <p className="text-danger-text">
+            {error?.message || "Ocurrió un error inesperado."}
+          </p>
         </div>
       );
     }
 
     if (!filteredInvoices || filteredInvoices.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center rounded-[10px] border border-[#e2e8f0] bg-white p-8 text-center">
-          <FileText className="mb-4 size-12 text-[#94a3b8]" />
-          <h3 className="text-lg font-semibold text-[#0f172a]">Sin facturas</h3>
-          <p className="text-[#94a3b8]">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center">
+          <FileText className="mb-4 size-12 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-foreground">
+            Sin facturas
+          </h3>
+          <p className="text-muted-foreground">
             {hasFilters
-              ? 'No encontramos facturas para los filtros seleccionados.'
-              : 'No hemos encontrado facturas asociadas a su cuenta.'}
+              ? "No encontramos facturas para los filtros seleccionados."
+              : "No hemos encontrado facturas asociadas a su cuenta."}
           </p>
         </div>
       );
     }
 
     return (
-      <div className="overflow-x-auto rounded-[10px] border border-[#e2e8f0] bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="border-[#e2e8f0] hover:bg-transparent">
-              <TableHead className="text-[#64748b]">N° Fiscal</TableHead>
-              <TableHead className="text-[#64748b]">Fecha Emisión</TableHead>
-              <TableHead className="text-[#64748b]">Fecha Vencimiento</TableHead>
-              <TableHead className="text-center text-[#64748b]">Días para Vencimiento</TableHead>
-              <TableHead className="text-right text-[#64748b]">Total</TableHead>
-              <TableHead className="text-right text-[#64748b]">Saldo pendiente</TableHead>
-              <TableHead className="text-center text-[#64748b]">Estado</TableHead>
-              <TableHead className="text-center text-[#64748b]">Acciones</TableHead>
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead className="text-muted-foreground">N° Fiscal</TableHead>
+              <TableHead className="text-muted-foreground">
+                Fecha Emisión
+              </TableHead>
+              <TableHead className="text-muted-foreground">
+                Fecha Vencimiento
+              </TableHead>
+              <TableHead className="text-center text-muted-foreground">
+                Días para Vencimiento
+              </TableHead>
+              <TableHead className="text-right text-muted-foreground">
+                Total
+              </TableHead>
+              <TableHead className="text-right text-muted-foreground">
+                Saldo pendiente
+              </TableHead>
+              <TableHead className="text-center text-muted-foreground">
+                Estado
+              </TableHead>
+              <TableHead className="text-center text-muted-foreground">
+                Acciones
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredInvoices.map((invoice) => (
-              <TableRow key={invoice.id} className="border-[#f1f5f9] bg-[#f8fafc] hover:bg-[#f5f3ff]">
-                <TableCell className="text-[#64748b]">
+              <TableRow
+                key={invoice.id}
+                className="border-border/60 bg-muted/40 hover:bg-accent/60"
+              >
+                <TableCell className="text-muted-foreground">
                   {invoice.numero_fiscal ? (
-                    <span className="font-medium text-violet-700">{invoice.numero_fiscal}</span>
+                    <span className="font-medium text-primary">
+                      {invoice.numero_fiscal}
+                    </span>
                   ) : (
-                    <span className="italic text-[#94a3b8]">Sin asignar</span>
+                    <span className="italic text-muted-foreground">
+                      Sin asignar
+                    </span>
                   )}
                 </TableCell>
-                <TableCell className="text-[#64748b]">
+                <TableCell className="text-muted-foreground">
                   {formatForDisplay(invoice.issue_date)}
                 </TableCell>
-                <TableCell className="text-[#64748b]">
+                <TableCell className="text-muted-foreground">
                   {formatForDisplay(invoice.due_date)}
                 </TableCell>
                 <TableCell className="text-center">
                   {calculateDaysUntilDue(invoice.due_date, invoice.status)}
                 </TableCell>
-                <TableCell className="text-right font-semibold text-[#0f172a]">
+                <TableCell className="text-right font-semibold text-foreground">
                   {formatCurrency(invoice.total)}
                 </TableCell>
-                <TableCell className="text-right text-amber-600">
-                  {Number(invoice.remaining_amount || 0) > 0
-                    ? formatCurrency(invoice.remaining_amount || 0)
-                    : <span className="text-[#94a3b8]">-</span>}
+                <TableCell className="text-right text-warning-text">
+                  {Number(invoice.remaining_amount || 0) > 0 ? (
+                    formatCurrency(invoice.remaining_amount || 0)
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
-                <TableCell className="text-center">{getStatusBadge(invoice.status)}</TableCell>
+                <TableCell className="text-center">
+                  {getStatusBadge(invoice.status)}
+                </TableCell>
                 <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDownloadInvoice(invoice)}
-                    className="text-violet-700 hover:bg-violet-50 hover:text-violet-800"
+                    className="text-primary hover:bg-accent hover:text-primary/80"
                     title="Descargar PDF"
                   >
                     <Download className="size-4" />
@@ -245,16 +323,23 @@ const PortalInvoices = () => {
     );
   };
 
-  const totalPorPagar = filteredInvoices.filter((invoice) => invoice.status === 'sent').reduce((sum, invoice) => sum + invoice.total, 0);
-  const totalVencido = filteredInvoices.filter((invoice) => invoice.status === 'overdue').reduce((sum, invoice) => sum + invoice.total, 0);
+  const totalPorPagar = filteredInvoices
+    .filter((invoice) => invoice.status === "sent")
+    .reduce((sum, invoice) => sum + invoice.total, 0);
+  const totalVencido = filteredInvoices
+    .filter((invoice) => invoice.status === "overdue")
+    .reduce((sum, invoice) => sum + invoice.total, 0);
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Mis Facturas</h1>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+          Mis Facturas
+        </h1>
         {invoices && (
-          <Badge variant="outline" className="border-violet-200 text-violet-700">
-            {filteredInvoices.length} factura{filteredInvoices.length !== 1 ? 's' : ''}
+          <Badge variant="outline" className="border-primary/25 text-primary">
+            {filteredInvoices.length} factura
+            {filteredInvoices.length !== 1 ? "s" : ""}
           </Badge>
         )}
       </div>
@@ -262,29 +347,43 @@ const PortalInvoices = () => {
       {/* Resumen de facturas */}
       {invoices && invoices.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
-            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total por pagar</h3>
-            <p className="text-[20px] font-medium text-amber-600">{formatCurrency(totalPorPagar)}</p>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="mb-1 text-xs text-muted-foreground">
+              Total por pagar
+            </h3>
+            <p className="text-xl font-medium text-warning-text">
+              {formatCurrency(totalPorPagar)}
+            </p>
           </div>
-          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
-            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total vencido</h3>
-            <p className="text-[20px] font-medium text-red-600">{formatCurrency(totalVencido)}</p>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="mb-1 text-xs text-muted-foreground">
+              Total vencido
+            </h3>
+            <p className="text-xl font-medium text-danger-text">
+              {formatCurrency(totalVencido)}
+            </p>
           </div>
-          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
-            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total facturas</h3>
-            <p className="text-[20px] font-medium text-[#0f172a]">{filteredInvoices.length}</p>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="mb-1 text-xs text-muted-foreground">
+              Total facturas
+            </h3>
+            <p className="text-xl font-medium text-foreground">
+              {filteredInvoices.length}
+            </p>
           </div>
         </div>
       )}
 
-      <div className="mb-6 rounded-[10px] border border-[#e2e8f0] bg-white p-4">
+      <div className="mb-6 rounded-lg border border-border bg-card p-4">
         <div className="flex flex-wrap items-center gap-4">
-          <h3 className="text-sm font-medium text-[#64748b]">Filtros:</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Filtros:
+          </h3>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#94a3b8]">Estado:</span>
+            <span className="text-sm text-muted-foreground">Estado:</span>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] border-[#e2e8f0] bg-[#f8fafc] text-left text-[#0f172a]">
+              <SelectTrigger className="w-44 border-border bg-muted/40 text-left text-foreground">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
@@ -297,22 +396,22 @@ const PortalInvoices = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#94a3b8]">Desde:</span>
+            <span className="text-sm text-muted-foreground">Desde:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                  pickerBaseClassName,
-                  dateFrom
-                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                    : 'bg-[#f8fafc] text-[#0f172a]',
-                    !dateFrom && 'text-[#94a3b8]'
+                    pickerBaseClassName,
+                    dateFrom
+                      ? "border-primary/30 bg-accent text-foreground"
+                      : "bg-muted/40 text-foreground",
+                    !dateFrom && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
                   {dateFrom ? (
-                    format(dateFrom, 'dd/MM/yyyy', { locale: es })
+                    format(dateFrom, "dd/MM/yyyy", { locale: es })
                   ) : (
                     <span>Seleccionar</span>
                   )}
@@ -323,7 +422,9 @@ const PortalInvoices = () => {
                   mode="single"
                   selected={dateFrom}
                   onSelect={setDateFrom}
-                  disabled={(date) => date > businessClock.now() || (dateTo && date > dateTo)}
+                  disabled={(date) =>
+                    date > businessClock.now() || (dateTo && date > dateTo)
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -331,22 +432,22 @@ const PortalInvoices = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#94a3b8]">Hasta:</span>
+            <span className="text-sm text-muted-foreground">Hasta:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                  pickerBaseClassName,
-                  dateTo
-                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                    : 'bg-[#f8fafc] text-[#0f172a]',
-                    !dateTo && 'text-[#94a3b8]'
+                    pickerBaseClassName,
+                    dateTo
+                      ? "border-primary/30 bg-accent text-foreground"
+                      : "bg-muted/40 text-foreground",
+                    !dateTo && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
                   {dateTo ? (
-                    format(dateTo, 'dd/MM/yyyy', { locale: es })
+                    format(dateTo, "dd/MM/yyyy", { locale: es })
                   ) : (
                     <span>Seleccionar</span>
                   )}
@@ -357,7 +458,9 @@ const PortalInvoices = () => {
                   mode="single"
                   selected={dateTo}
                   onSelect={setDateTo}
-                  disabled={(date) => date > businessClock.now() || (dateFrom && date < dateFrom)}
+                  disabled={(date) =>
+                    date > businessClock.now() || (dateFrom && date < dateFrom)
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -369,7 +472,7 @@ const PortalInvoices = () => {
               variant="ghost"
               size="sm"
               onClick={handleClearFilters}
-            className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
+              className="h-11 rounded-xl px-3 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             >
               <X className="mr-1 size-4" />
               Limpiar filtros

@@ -78,10 +78,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  paid: 'bg-green-100 text-green-700',
-  pending: 'bg-yellow-100 text-yellow-700',
-  overdue: 'bg-red-100 text-red-700',
-  cancelled: 'bg-gray-100 text-gray-500',
+  paid: 'bg-success-soft text-success-text',
+  pending: 'bg-warning-soft text-warning-text',
+  overdue: 'bg-danger-soft text-danger-text',
+  cancelled: 'bg-muted text-muted-foreground',
 };
 
 export const HistoricalPurchasesTable = ({
@@ -126,17 +126,17 @@ export const HistoricalPurchasesTable = ({
 
   return (
     <div className="rounded-md border shadow-sm bg-card overflow-x-auto">
-      <Table className="min-w-[900px]">
+      <Table className="min-w-[56rem]">
         <TableHeader className="bg-muted/40">
           <TableRow>
-            <TableHead className="w-[40px]">
+            <TableHead className="w-10">
               <Checkbox
                 checked={invoices.length > 0 && invoices.every((inv) => selectedIds.includes(inv.id))}
                 onCheckedChange={(checked) => onSelectAll?.(invoices.map((inv) => inv.id), !!checked)}
                 aria-label="Seleccionar todo"
               />
             </TableHead>
-            <TableHead className="w-[120px]">
+            <TableHead className="w-32">
               <Button
                 variant="ghost"
                 size="sm"
@@ -162,9 +162,9 @@ export const HistoricalPurchasesTable = ({
               </TableHead>
             )}
 
-            {!hideSupplierColumn && <TableHead className="w-[140px]">RUT</TableHead>}
+            {!hideSupplierColumn && <TableHead className="w-36">RUT</TableHead>}
 
-            <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
+            <TableHead className="min-w-64 max-w-sm whitespace-nowrap">
               <Button
                 variant="ghost"
                 size="sm"
@@ -225,7 +225,7 @@ export const HistoricalPurchasesTable = ({
               </Button>
             </TableHead>
 
-            <TableHead className="text-right w-[80px]">Acciones</TableHead>
+            <TableHead className="text-right w-20">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -268,12 +268,12 @@ export const HistoricalPurchasesTable = ({
                         : num.startsWith('ND-') || num.startsWith('ND ') ? 'ND'
                         : 'FE';
                       const badgeStyles = docType === 'NC'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-warning-soft text-warning-text border-warning'
                         : docType === 'ND'
-                        ? 'bg-orange-50 text-orange-700 border-orange-200'
-                        : 'bg-gray-50 text-gray-600 border-gray-200';
+                        ? 'bg-warning-soft text-warning-text border-warning'
+                        : 'bg-muted text-muted-foreground border-border';
                       return (
-                        <Badge variant="outline" className={`${badgeStyles} text-[9px] px-1.5 py-0 font-semibold`}>
+                        <Badge variant="outline" className={`${badgeStyles} text-xs px-1.5 py-0 font-semibold`}>
                           {docType}
                         </Badge>
                       );
@@ -284,7 +284,7 @@ export const HistoricalPurchasesTable = ({
                 </TableCell>
                 
                 {!hideSupplierColumn && (
-                  <TableCell className="font-medium text-foreground/80 max-w-[320px] whitespace-nowrap truncate">
+                  <TableCell className="font-medium text-foreground/80 max-w-xs whitespace-nowrap truncate">
                     {(() => {
                       const invoiceSupplierName = invoice.supplier?.name || 'Proveedor Desconocido';
                       const rutKey = normalizeSupplierRut(invoice.supplier?.rut);
@@ -305,7 +305,7 @@ export const HistoricalPurchasesTable = ({
                   </TableCell>
                 )}
 
-                <TableCell className="max-w-[320px] text-sm text-muted-foreground">
+                <TableCell className="max-w-xs text-sm text-muted-foreground">
                   <button
                     type="button"
                     onClick={() => onEdit(invoice)}
@@ -332,7 +332,7 @@ export const HistoricalPurchasesTable = ({
                 </TableCell>
                 
                 <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[invoice.status || 'pending'] || 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[invoice.status || 'pending'] || 'bg-muted text-foreground'}`}>
                     {statusLabels[invoice.status || 'pending'] || invoice.status}
                   </span>
                 </TableCell>
@@ -346,7 +346,7 @@ export const HistoricalPurchasesTable = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => onReceiveInventory?.(invoice)}
-                            className={`size-8 ${hasInventory ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
+                            className={`size-8 ${hasInventory ? 'text-success-text hover:text-success-text/80 hover:bg-success/90' : 'text-info-text hover:text-info-text/80 hover:bg-info/90'}`}
                           >
                             <Package className="size-4" />
                           </Button>
@@ -374,10 +374,10 @@ export const HistoricalPurchasesTable = ({
                                         ? `${invoice.supplier_id}-${normalizedRef}`
                                         : normalizedRef;
                                      const items = invoiceItemsMap?.[key] || invoiceItemsMap?.[normalizedRef] || [];
-                                     return items.length > 5 ? <li className="list-none pt-1 text-[10px] italic">... y {items.length - 5} más</li> : null;
+                                     return items.length > 5 ? <li className="list-none pt-1 text-xs italic">... y {items.length - 5} más</li> : null;
                                   })()}
                                 </ul>
-                                <p className="text-[10px] text-blue-500 mt-2 pt-1 border-t border-border">Click para ver/editar detalles</p>
+                                <p className="text-xs text-info-text mt-2 pt-1 border-t border-border">Click para ver/editar detalles</p>
                               </div>
                             ) : (
                               <p>Registrar recepción de inventario</p>
@@ -390,7 +390,7 @@ export const HistoricalPurchasesTable = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEdit(invoice)}
-                      className="size-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      className="size-8 p-0 text-info-text hover:text-info-text/80 hover:bg-info/90"
                     >
                       <Edit className="size-4" />
                       <span className="sr-only">Editar</span>
@@ -400,7 +400,7 @@ export const HistoricalPurchasesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(invoice.id)}
-                        className="size-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="size-8 p-0 text-danger-text hover:text-danger-text/80 hover:bg-danger/90"
                       >
                         <Trash2 className="size-4" />
                         <span className="sr-only">Eliminar</span>

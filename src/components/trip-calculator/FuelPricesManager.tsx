@@ -193,7 +193,7 @@ export const FuelPricesManager = () => {
           </Button>
           <Button
             onClick={() => setIsFormOpen(true)}
-            className="bg-violet-600 hover:bg-violet-700 text-white"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="size-4 mr-2" />
             Nuevo Precio
@@ -206,14 +206,14 @@ export const FuelPricesManager = () => {
         {FUEL_TYPES.map(({ value, label }) => {
           const price = currentPrices.find((p) => p.fuel_type === value);
           return (
-            <Card key={value} className={price ? 'border-green-500/50' : 'border-dashed border-muted-foreground/30'}>
+            <Card key={value} className={price ? 'border-success/50' : 'border-dashed border-muted-foreground/30'}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <Fuel className="size-4" />
                     {label}
                   </span>
-                  {price && <Badge className="bg-green-600 text-white text-xs">Vigente</Badge>}
+                  {price && <Badge className="bg-success text-success-foreground text-xs">Vigente</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -263,13 +263,13 @@ export const FuelPricesManager = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="sticky left-0 bg-background z-10 min-w-[130px]">
+                    <TableHead className="sticky left-0 z-10 min-w-32 bg-background">
                       Tipo Combustible
                     </TableHead>
                     {pivot.weeks.map((week, idx) => (
                       <TableHead
                         key={week}
-                        className={`text-center min-w-[110px] ${idx === 0 ? 'bg-primary/5 font-semibold' : ''}`}
+                        className={`min-w-28 text-center ${idx === 0 ? 'bg-primary/5 font-semibold' : ''}`}
                       >
                         {formatWeekLabel(week)}
                       </TableHead>
@@ -307,7 +307,7 @@ export const FuelPricesManager = () => {
                                     </span>
                                     {variation !== null && variation !== 0 && (
                                       <span className={`flex items-center justify-center gap-0.5 text-xs mt-0.5 ${
-                                        variation > 0 ? 'text-destructive' : 'text-green-600'
+                                        variation > 0 ? 'text-destructive' : 'text-success'
                                       }`}>
                                         {variation > 0 ? (
                                           <TrendingUp className="size-3" />

@@ -323,7 +323,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 variant="outline"
                                 onClick={() => onCloseService(service)}
                                 title="Cerrar servicio"
-                                className="border-success/30 bg-success/10 text-success hover:bg-success/15"
+                                className="border-success/30 bg-success/10 text-success hover:bg-success/20"
                               >
                                 <CheckCircle className="size-4" />
                               </Button>
@@ -334,7 +334,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 variant="outline"
                                 onClick={() => onDelete(service.id)}
                                 title="Eliminar servicio"
-                                className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15"
+                                className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/20"
                               >
                                 <Trash2 className="size-4" />
                               </Button>

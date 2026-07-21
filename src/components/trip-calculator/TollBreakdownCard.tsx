@@ -24,11 +24,11 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
   const noTolls = result.totalCost === 0;
 
   return (
-    <Card className="border-2 border-amber-200 dark:border-amber-800">
+    <Card className="border-2 border-warning/40">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between gap-2 text-sm">
           <div className="flex items-center gap-2">
-            <DollarSign className="size-4 text-amber-600" />
+            <DollarSign className="size-4 text-warning-text" />
             Desglose de peajes
           </div>
           <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
             </Badge>
             <Badge
               variant="outline"
-              className="text-xs font-normal bg-green-100 text-green-800 border-green-300"
+              className="border-success/40 bg-success-soft text-xs font-normal text-success-text"
             >
               Tarifas oficiales (GetAPI)
             </Badge>
@@ -47,7 +47,7 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
       <CardContent className="space-y-2">
         {noTolls ? (
           <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="size-4 text-green-600" />
+            <CheckCircle2 className="size-4 text-success" />
             Sin peajes detectados en esta ruta
           </div>
         ) : (
@@ -82,7 +82,7 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
           </div>
           <div className="flex items-center justify-between border-t pt-1">
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <CheckCircle2 className="size-4 text-green-600" />
+              <CheckCircle2 className="size-4 text-success" />
               Total peajes (ida + vuelta)
             </div>
             <span className="font-mono text-base font-bold">{formatClp(result.totalCost)}</span>

@@ -18,7 +18,7 @@ export const PhotoGrid = ({ photos, onRemovePhoto }: PhotoGridProps) => {
           <img
             src={photo.previewUrl}
             alt={`Foto ${index + 1}`}
-            className="w-full h-24 object-cover rounded border border-slate-600"
+            className="w-full h-24 object-cover rounded border border-border"
           />
           <Button
             type="button"

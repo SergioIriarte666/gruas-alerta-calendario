@@ -131,7 +131,7 @@ export const InspectionFormSections = ({
                         value="si"
                         className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
                           field.value === 'si'
-                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            ? 'border-success/30 bg-success text-success-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
@@ -142,7 +142,7 @@ export const InspectionFormSections = ({
                         value="no"
                         className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
                           field.value === 'no'
-                            ? 'bg-red-500 text-white border-red-500'
+                            ? 'border-danger/30 bg-danger text-danger-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
@@ -176,7 +176,7 @@ export const InspectionFormSections = ({
                         value="si"
                         className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
                           field.value === 'si'
-                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            ? 'border-success/30 bg-success text-success-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
@@ -187,7 +187,7 @@ export const InspectionFormSections = ({
                         value="no"
                         className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
                           field.value === 'no'
-                            ? 'bg-red-500 text-white border-red-500'
+                            ? 'border-danger/30 bg-danger text-danger-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >

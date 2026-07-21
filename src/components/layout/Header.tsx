@@ -122,7 +122,7 @@ export const Header = ({
             <div className="flex items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{currentMeta.title}</p>
               {!isMobile && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/80 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   <Building2 className="size-3" />
                   {companyName}
                 </span>
@@ -130,7 +130,7 @@ export const Header = ({
             </div>
             <p className={cn(
               "truncate text-xs text-muted-foreground",
-              isMobile && "max-w-[160px]",
+              isMobile && "max-w-40",
             )}>
               {isMobile ? currentMeta.title : currentMeta.description}
             </p>
@@ -163,7 +163,7 @@ export const Header = ({
               )} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="z-50 min-w-[220px] border border-border/70 bg-popover/95 shadow-lg backdrop-blur">
+          <DropdownMenuContent align="end" className="z-50 min-w-56 border border-border/70 bg-popover/95 shadow-lg backdrop-blur">
             <DropdownMenuLabel className="text-foreground font-semibold">
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>

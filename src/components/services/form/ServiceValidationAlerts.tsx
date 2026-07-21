@@ -41,12 +41,12 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
       )}
 
       {warnings.length > 0 && (
-        <Alert className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
-          <AlertTriangle className="size-4 text-yellow-600 flex-shrink-0" />
-          <AlertTitle className="font-semibold text-yellow-800 dark:text-yellow-200 text-sm">
+        <Alert className="border-warning/50 bg-warning-soft">
+          <AlertTriangle className="size-4 text-warning-text flex-shrink-0" />
+          <AlertTitle className="font-semibold text-warning-text text-sm">
             Advertencias ({warnings.length})
           </AlertTitle>
-          <AlertDescription className="text-yellow-700 dark:text-yellow-300">
+          <AlertDescription className="text-warning-text">
             <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs">
               {warnings.map((warning, index) => (
                 <li key={index} className="break-words">{warning.message}</li>

@@ -161,7 +161,7 @@ export const PurchaseGroupingView = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-green-600" />
+              <TrendingUp className="size-4 text-success" />
               <div>
                 <div className="text-2xl font-bold">
                   {purchaseGroups.reduce((sum, g) => sum + g.totalItems, 0)}
@@ -175,7 +175,7 @@ export const PurchaseGroupingView = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="size-4 text-blue-600" />
+              <DollarSign className="size-4 text-info" />
               <div>
                 <div className="text-2xl font-bold">
                   ${purchaseGroups.reduce((sum, g) => sum + g.totalCost, 0).toLocaleString()}

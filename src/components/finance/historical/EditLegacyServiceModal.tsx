@@ -279,7 +279,7 @@ export function EditLegacyServiceModal({
 
           {isLoading ? (
             <div className="flex min-h-72 items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-amber-600" />
+              <Loader2 className="size-8 animate-spin text-warning-text" />
             </div>
           ) : (
             <Form {...form}>

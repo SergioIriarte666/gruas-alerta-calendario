@@ -110,7 +110,7 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
               Se encontraron {costsForDoc.length} costo{costsForDoc.length > 1 ? 's' : ''} de este proveedor
             </div>
             {!expandedSearch && (
-              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-[11px] text-info hover:bg-info/20"
+              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs text-info hover:bg-info/20"
                 disabled={isExpandingSearch} onClick={onExpandSearch}>
                 {isExpandingSearch && <Loader2 className="mr-1 size-3 animate-spin" />}
                 Ampliar ±15 días
@@ -140,9 +140,9 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
                       <span className="text-muted-foreground">·</span>
                       <span className="text-muted-foreground">{cost.date}</span>
                       <span className="text-muted-foreground">({ageLabel})</span>
-                      <Badge variant="outline" className={cn('h-5 border px-1.5 text-[10px]', toneClass)}>{quality.label}</Badge>
+                      <Badge variant="outline" className={cn('h-5 border px-1.5 text-xs', toneClass)}>{quality.label}</Badge>
                     </div>
-                    <p className="mt-0.5 line-clamp-2 break-words text-[11px] text-muted-foreground">{cost.description || 'Sin descripción'}</p>
+                    <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground">{cost.description || 'Sin descripción'}</p>
                   </div>
                 </label>
               );
@@ -159,10 +159,10 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
         </div>
       ) : (
         !isDuplicate && document.supplier_rut && document.total_amount ? (
-          <div className="flex items-center justify-between gap-2 rounded border border-dashed border-border/70 bg-muted/30 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between gap-2 rounded border border-dashed border-border/70 bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
             <span>Sin costos coincidentes en ±7 días</span>
             {!expandedSearch && (
-              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-[11px]"
+              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs"
                 disabled={isExpandingSearch} onClick={onExpandSearch}>
                 {isExpandingSearch && <Loader2 className="mr-1 size-3 animate-spin" />}
                 Buscar en ±15 días
@@ -215,7 +215,7 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
                     <div className="flex items-center gap-2 text-primary">
                       <Sparkles className="mt-0.5 size-4 flex-shrink-0" />
                       <span className="font-medium">Glosa sugerida por historial</span>
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-xs">
                         {historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}
                       </Badge>
                     </div>
@@ -231,7 +231,7 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
           </div>
 
           <div className="flex flex-wrap items-end gap-4">
-            <div className="max-w-[220px] min-w-[180px] flex-1">
+            <div className="min-w-44 max-w-56 flex-1">
               <Label className="mb-1.5 block text-xs text-muted-foreground">Forma de pago</Label>
               <Select value={paymentCondition} disabled={loadingTerms}
                 onValueChange={val => { onPaymentConditionChange(val); applyCondition(document.supplier_rut, val === 'credit' ? 'credit' : val, creditDate); }}>
@@ -244,12 +244,12 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
               </Select>
               <p className="mt-1 text-xs text-muted-foreground">Define si el documento queda pagado manualmente o con vencimiento.</p>
             </div>
-            <div className="max-w-[220px] min-w-[180px] flex-1">
+            <div className="min-w-44 max-w-56 flex-1">
               <Label className="mb-1.5 block text-xs text-muted-foreground">Vencimiento</Label>
               <DatePickerInput value={defaultDueDate || ''} onChange={onDueDateChange} className="w-full" />
               <p className="mt-1 text-xs text-muted-foreground">Puedes ajustarlo si el XML no trae una fecha correcta.</p>
             </div>
-            <div className="max-w-[260px] min-w-[200px] flex-1">
+            <div className="min-w-48 max-w-64 flex-1">
               <Label className="mb-1.5 block text-xs text-muted-foreground">Estado de pago</Label>
               <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3">
                 <Switch id={`sup-paid-${documentKey}`} checked={isPaid} onCheckedChange={onPaidChange} />

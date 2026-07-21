@@ -248,7 +248,7 @@ const Closures = () => {
           ))}
         </div>
         <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-[420px] w-full" />
+        <Skeleton className="h-[26.25rem] w-full" />
       </div>
     );
   }

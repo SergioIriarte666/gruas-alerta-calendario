@@ -379,7 +379,7 @@ const Commissions = () => {
       </div>
 
       {isError && (
-        <Card className="border-red-500/40 bg-red-500/10">
+        <Card className="border-danger/40 bg-danger-soft">
           <CardContent className="py-4">
             <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'} gap-3`}>
               <div className="text-sm">

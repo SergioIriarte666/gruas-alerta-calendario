@@ -11,7 +11,12 @@ interface StockReportViewProps {
   filters?: InventoryReportFilters;
 }
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+const COLORS = Array.of(
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))',
+  'hsl(var(--muted))',
+);
 
 export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => {
   const { data: stockData, isLoading } = useStockReport(filters);
@@ -63,10 +68,10 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <AlertTriangle className="size-4 text-orange-500" />
+            <AlertTriangle className="size-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{stockData.lowStockItems}</div>
+            <div className="text-2xl font-bold text-warning">{stockData.lowStockItems}</div>
             <p className="text-xs text-muted-foreground">Productos bajo mínimo</p>
           </CardContent>
         </Card>
@@ -74,10 +79,10 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
-            <AlertTriangle className="size-4 text-red-500" />
+            <AlertTriangle className="size-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stockData.outOfStockItems}</div>
+            <div className="text-2xl font-bold text-danger">{stockData.outOfStockItems}</div>
             <p className="text-xs text-muted-foreground">Productos agotados</p>
           </CardContent>
         </Card>
@@ -127,7 +132,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
                   labelLine={false}
                   label={({ name, value }) => `${name}: ${value}`}
                   outerRadius={100}
-                  fill="#8884d8"
+                  fill="hsl(var(--primary))"
                   dataKey="value"
                 >
                   {stockStatusData.map((entry, index) => (
@@ -171,7 +176,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-orange-500" />
+            <AlertTriangle className="size-5 text-warning" />
             Alertas de Stock Bajo
           </CardTitle>
           <CardDescription>
@@ -188,7 +193,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
           ) : (
             <div className="space-y-4">
               {stockData.lowStockAlert.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg bg-orange-50 dark:bg-orange-950/20">
+                <div key={index} className="flex items-center justify-between rounded-lg border border-warning/30 bg-warning-soft p-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium">{item.item_name}</span>

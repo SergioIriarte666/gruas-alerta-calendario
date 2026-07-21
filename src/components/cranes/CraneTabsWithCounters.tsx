@@ -128,7 +128,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
                   <span className={cn(
                     'text-xs px-1.5 py-0.5 rounded-full leading-none font-medium tabular-nums',
                     isActive
-                      ? 'bg-white/20 text-primary-foreground'
+                      ? 'bg-card/20 text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                   )}>
                     {count}
@@ -162,7 +162,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
                   <span className={cn(
                     'text-xs px-1.5 py-0.5 rounded-full leading-none font-medium tabular-nums',
                     isActive
-                      ? 'bg-white/20 text-primary-foreground'
+                      ? 'bg-card/20 text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                   )}>
                     {count}

@@ -19,13 +19,13 @@ const RequirementRow = ({ label, required }: { label: string; required: boolean 
     <div className="flex items-center gap-2">
       {required ? (
         <>
-          <Check className="size-4 text-green-600" />
-          <span className="text-sm font-medium text-green-600">Requerido</span>
+          <Check className="size-4 text-success" />
+          <span className="text-sm font-medium text-success">Requerido</span>
         </>
       ) : (
         <>
-          <X className="size-4 text-gray-400" />
-          <span className="text-sm text-gray-500">Opcional</span>
+          <X className="size-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Opcional</span>
         </>
       )}
     </div>
@@ -88,9 +88,9 @@ export function ServiceTypeDetailsModal({
 
             <TabsContent value="general" className="mt-0">
               <div className="space-y-4">
-                <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                    <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+                <div className="rounded-lg border border-border border-l-4 border-l-info bg-info-soft p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-info">
+                    <div className="rounded bg-info/10 p-1 text-info">
                       <Info className="size-4" />
                     </div>
                     Información General
@@ -121,9 +121,9 @@ export function ServiceTypeDetailsModal({
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                    <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+                <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning-soft p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-warning">
+                    <div className="rounded bg-warning/10 p-1 text-warning">
                       <Settings className="size-4" />
                     </div>
                     Fechas
@@ -144,9 +144,9 @@ export function ServiceTypeDetailsModal({
 
             <TabsContent value="vehicle" className="mt-0">
               <div className="space-y-4">
-                <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                    <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+                <div className="rounded-lg border border-border border-l-4 border-l-success bg-success-soft p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-success">
+                    <div className="rounded bg-success/10 p-1 text-success">
                       <Car className="size-4" />
                     </div>
                     Configuración de Vehículo
@@ -160,13 +160,13 @@ export function ServiceTypeDetailsModal({
                   </div>
 
                   <div className="space-y-2">
-                    <div className="p-3 border rounded-lg border-l-4 border-l-emerald-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-success/30 bg-background p-3">
                       <RequirementRow label="Marca del vehículo" required={serviceType.vehicleBrandRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-emerald-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-success/30 bg-background p-3">
                       <RequirementRow label="Modelo del vehículo" required={serviceType.vehicleModelRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-emerald-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-success/30 bg-background p-3">
                       <RequirementRow label="Patente" required={serviceType.licensePlateRequired} />
                     </div>
                   </div>
@@ -176,28 +176,28 @@ export function ServiceTypeDetailsModal({
 
             <TabsContent value="requirements" className="mt-0">
               <div className="space-y-4">
-                <div className="rounded-lg border border-border border-l-4 border-l-violet-500 bg-violet-500/5 p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-violet-700 dark:text-violet-300">
-                    <div className="p-1 rounded bg-violet-500/10 text-violet-600">
+                <div className="rounded-lg border border-border border-l-4 border-l-primary bg-primary-soft p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-primary">
+                    <div className="rounded bg-primary/10 p-1 text-primary">
                       <Wrench className="size-4" />
                     </div>
                     Requerimientos del Servicio
                   </h3>
                   
                   <div className="space-y-2">
-                    <div className="p-3 border rounded-lg border-l-4 border-l-violet-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-primary/30 bg-background p-3">
                       <RequirementRow label="Orden de compra" required={serviceType.purchaseOrderRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-violet-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-primary/30 bg-background p-3">
                       <RequirementRow label="Origen" required={serviceType.originRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-violet-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-primary/30 bg-background p-3">
                       <RequirementRow label="Destino" required={serviceType.destinationRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-violet-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-primary/30 bg-background p-3">
                       <RequirementRow label="Grúa" required={serviceType.craneRequired} />
                     </div>
-                    <div className="p-3 border rounded-lg border-l-4 border-l-violet-300 bg-background">
+                    <div className="rounded-lg border border-l-4 border-l-primary/30 bg-background p-3">
                       <RequirementRow label="Operador" required={serviceType.operatorRequired} />
                     </div>
                   </div>

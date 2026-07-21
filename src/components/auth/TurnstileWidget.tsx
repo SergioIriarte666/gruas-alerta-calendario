@@ -127,7 +127,7 @@ export const TurnstileWidget = ({
   return (
     <div className="space-y-2">
       <div ref={containerRef} />
-      {loadError ? <p className="text-xs text-red-300">{loadError}</p> : null}
+      {loadError ? <p className="text-xs text-auth-danger">{loadError}</p> : null}
     </div>
   );
 };

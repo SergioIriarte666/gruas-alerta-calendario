@@ -57,13 +57,13 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-black">Grúa</TableHead>
-                    <TableHead className="text-black">Marca/Modelo</TableHead>
-                    <TableHead className="text-black">Costo Mantenimiento</TableHead>
-                    <TableHead className="text-black">Costo Partes</TableHead>
-                    <TableHead className="text-black">Total Intervenciones</TableHead>
-                    <TableHead className="text-black">Último Mantenimiento</TableHead>
-                    <TableHead className="text-black">Próximo Mantenimiento</TableHead>
+                    <TableHead className="text-foreground">Grúa</TableHead>
+                    <TableHead className="text-foreground">Marca/Modelo</TableHead>
+                    <TableHead className="text-foreground">Costo Mantenimiento</TableHead>
+                    <TableHead className="text-foreground">Costo Partes</TableHead>
+                    <TableHead className="text-foreground">Total Intervenciones</TableHead>
+                    <TableHead className="text-foreground">Último Mantenimiento</TableHead>
+                    <TableHead className="text-foreground">Próximo Mantenimiento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -86,10 +86,10 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                       <TableCell className="text-foreground">
                         {crane.interventionCount}
                       </TableCell>
-                      <TableCell className="text-black">
+                      <TableCell className="text-foreground">
                         {formatDate(crane.lastMaintenance)}
                       </TableCell>
-                      <TableCell className="text-black">
+                      <TableCell className="text-foreground">
                         {formatDate(crane.nextMaintenance)}
                       </TableCell>
                     </TableRow>
@@ -111,10 +111,10 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-black">Proveedor</TableHead>
-                    <TableHead className="text-black">Costo Total</TableHead>
-                    <TableHead className="text-black">Número de Intervenciones</TableHead>
-                    <TableHead className="text-black">Costo Promedio</TableHead>
+                    <TableHead className="text-foreground">Proveedor</TableHead>
+                    <TableHead className="text-foreground">Costo Total</TableHead>
+                    <TableHead className="text-foreground">Número de Intervenciones</TableHead>
+                    <TableHead className="text-foreground">Costo Promedio</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -615,7 +615,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Activity className="size-8 text-blue-500" />
+                <Activity className="size-8 text-info-text" />
                 <div>
                   <p className="text-sm text-muted-foreground">Sincronización</p>
                   <p className="text-2xl font-bold text-foreground">
@@ -757,28 +757,28 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       {/* Consumos de Inventario de esta Grúa */}
       {craneConsumptions.length > 0 && (
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card/5 border-primary/30">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <ArrowUpDown className="size-5 text-tms-green" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <ArrowUpDown className="size-5 text-primary" />
               Consumos de Inventario de esta Grúa
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-300">
+            <div className="bg-info/10 border border-info/30 rounded-lg p-3 mb-4">
+              <p className="text-sm text-info-text">
                 <strong>Nota:</strong> Esta sección muestra únicamente los consumos (salidas) de materiales específicos de esta grúa. 
                 Las compras generales de inventario se gestionan en el módulo de <strong>Inventario</strong>.
               </p>
             </div>
             <div className="space-y-4">
               {craneConsumptions.slice(0, 5).map((movement) => (
-                <div key={movement.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div key={movement.id} className="flex items-center justify-between p-3 bg-card/5 rounded-lg">
                   <div className="flex items-center gap-3">
                     {getMovementTypeIcon(movement.movement_type)}
                     <div>
-                      <p className="text-white font-medium">{movement.item?.name || 'Item no especificado'}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-foreground font-medium">{movement.item?.name || 'Item no especificado'}</p>
+                      <p className="text-sm text-muted-foreground">
                         {getMovementTypeLabel(movement.movement_type)} • Cantidad: {movement.quantity}
                       </p>
                     </div>
@@ -788,14 +788,14 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
                       <Badge 
                         variant={movement.movement_type === 'entry' ? 'default' : 'secondary'}
                         className={movement.movement_type === 'entry' 
-                          ? 'bg-green-500/20 text-green-300 border-green-500/30' 
-                          : 'bg-red-500/20 text-red-300 border-red-500/30'
+                          ? 'bg-success/20 text-success-text border-success/30'
+                          : 'bg-danger/20 text-danger-text border-danger/30'
                         }
                       >
                         {movement.movement_type === 'entry' ? '+' : '-'}{movement.quantity}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {format(new Date(movement.movement_date), 'dd/MM/yyyy', { locale: es })}
                     </p>
                   </div>
@@ -803,7 +803,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
               ))}
               
               {craneConsumptions.length > 5 && (
-                <p className="text-center text-gray-400 text-sm">
+                <p className="text-center text-muted-foreground text-sm">
                   ... y {craneConsumptions.length - 5} movimientos más
                 </p>
               )}
@@ -814,17 +814,17 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       {/* Estado del Último Consumo */}
       {metrics?.lastMovementDate && (
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card/5 border-primary/30">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calendar className="size-5 text-tms-green" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Calendar className="size-5 text-primary" />
               Último Consumo
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-300">
+            <p className="text-muted-foreground">
               Último consumo de inventario registrado el{' '}
-              <span className="text-tms-green font-medium">
+              <span className="text-primary font-medium">
                 {format(new Date(metrics.lastMovementDate), 'dd/MM/yyyy HH:mm', { locale: es })}
               </span>
             </p>
@@ -834,16 +834,16 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       {/* Mensaje si no hay consumos */}
       {craneConsumptions.length === 0 && (
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card/5 border-primary/30">
           <CardContent className="p-6">
             <div className="text-center">
-              <ArrowUpDown className="size-12 text-gray-500 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Sin consumos registrados</h3>
-              <p className="text-gray-400 text-sm mb-4">
+              <ArrowUpDown className="size-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Sin consumos registrados</h3>
+              <p className="text-muted-foreground text-sm mb-4">
                 Esta grúa aún no tiene consumos de inventario registrados.
               </p>
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 max-w-md mx-auto">
-                <p className="text-sm text-blue-300">
+              <div className="bg-info/10 border border-info/30 rounded-lg p-3 max-w-md mx-auto">
+                <p className="text-sm text-info-text">
                   Para registrar consumos, dirígete al módulo de <strong>Inventario</strong> y registra una salida asignándola a esta grúa.
                 </p>
               </div>

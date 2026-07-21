@@ -85,7 +85,7 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
     <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <DialogTitle className="flex items-center gap-3 text-lg sm:text-xl">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-10px_hsl(var(--primary))]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
             <Icon className="size-5" aria-hidden="true" />
           </span>
           {title}
@@ -120,7 +120,7 @@ export const XMLImportStatsGrid: React.FC<XMLImportStatsGridProps> = ({ items, c
               <Icon className="size-5" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{title}</p>
+              <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
               <div className={cn('truncate text-xl font-bold tabular-nums sm:text-2xl', classes.value)}>{value}</div>
             </div>
           </CardContent>
@@ -136,7 +136,7 @@ export const XMLImportStepGuide: React.FC<XMLImportStepGuideProps> = ({ step, ti
     <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary sm:absolute sm:left-4 sm:top-4 sm:mb-0">
       {String(step).padStart(2, '0')}
     </div>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">Paso {step}</p>
+    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Paso {step}</p>
     <p className="mt-0.5 font-semibold text-foreground">{title}</p>
     <p className="mt-1 max-w-4xl text-sm leading-relaxed text-muted-foreground">{description}</p>
   </div>

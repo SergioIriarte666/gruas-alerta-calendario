@@ -121,17 +121,17 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
 
   return (
     <div className="mt-4">
-      <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-4">
+      <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-cyan-500/10">
+            <div className="p-1.5 rounded-lg bg-info/10">
               {isVehicleSpecific ? (
-                <Car className="size-4 text-cyan-600 dark:text-cyan-400" />
+                <Car className="size-4 text-info-text" />
               ) : (
-                <User className="size-4 text-cyan-600 dark:text-cyan-400" />
+                <User className="size-4 text-info-text" />
               )}
             </div>
-            <h3 className="text-base font-semibold text-cyan-700 dark:text-cyan-300">
+            <h3 className="text-base font-semibold text-info-text">
               {isVehicleSpecific 
                 ? `Historial de Servicios - Patente ${licensePlate}`
                 : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
@@ -144,7 +144,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
         </div>
       
       <div className="overflow-x-auto -mx-2 px-2">
-        <Table className="min-w-[650px]">
+        <Table className="min-w-[40rem]">
           <TableHeader>
             <TableRow className="border-border">
               <TableHead className="text-foreground">Folio</TableHead>

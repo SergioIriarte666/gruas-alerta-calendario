@@ -205,7 +205,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
           </div>
 
           <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-end">
-            <div className="relative flex-1 xl:min-w-[220px]">
+            <div className="relative flex-1 xl:min-w-[13.75rem]">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar por producto, documento o motivo..."
@@ -216,7 +216,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
             </div>
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[170px]">
+              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[10.625rem]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -229,7 +229,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
             </Select>
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[210px]">
+              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[13.125rem]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -248,7 +248,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                 value={dateFrom}
                 onChange={setDateFrom}
                 placeholder="Sin límite"
-                className="border-border/70 bg-background/60 xl:w-[160px]"
+                className="border-border/70 bg-background/60 xl:w-[10rem]"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -257,7 +257,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                 value={dateTo}
                 onChange={setDateTo}
                 placeholder="Sin límite"
-                className="border-border/70 bg-background/60 xl:w-[160px]"
+                className="border-border/70 bg-background/60 xl:w-[10rem]"
               />
             </div>
 
@@ -377,9 +377,9 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                             <Badge
                               variant="outline"
                               className={cn(
-                                'rounded-full px-2 py-0 text-[11px] font-medium',
+                                'rounded-full px-2 py-0 text-xs font-medium',
                                 getLocationEntity(movement.location) === 'lowboy'
-                                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+                                  ? 'border-success/30 bg-success-soft text-success'
                                   : 'border-primary/20 bg-primary/10 text-primary',
                               )}
                             >
@@ -387,7 +387,7 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                             </Badge>
                           ) : null}
                           {intercompanyByReference[`inv_movement:${movement.id}`] !== undefined ? (
-                            <Badge variant="outline" className="rounded-full border-amber-500/30 bg-amber-500/10 px-2 py-0 text-[11px] font-medium text-amber-700">
+                            <Badge variant="outline" className="rounded-full border-warning/30 bg-warning-soft px-2 py-0 text-xs font-medium text-warning">
                               Intercompañía ${intercompanyByReference[`inv_movement:${movement.id}`].toLocaleString('es-CL')}
                             </Badge>
                           ) : null}

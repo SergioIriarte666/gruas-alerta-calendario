@@ -25,6 +25,7 @@ Este directorio reúne documentación operativa y técnica del sistema. La inten
 
 ### Arquitectura y capas transversales
 
+- [Guía visual](design-system.md): única fuente normativa para tokens, componentes, apariencia, accesibilidad y validación de la interfaz.
 - [Integración cruzada entre módulos](architecture/cross-module-integration.md): relaciones y sincronización entre áreas.
 - [Core app](modules/core-app.md): bootstrap, providers globales y routing.
 - [Integración Supabase](modules/supabase-integration.md): acceso a datos, cliente tipado y patrones de uso.

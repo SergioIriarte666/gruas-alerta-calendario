@@ -284,7 +284,7 @@ export const TripCalculatorForm = () => {
             type="button"
             onClick={handleCalculate}
             disabled={!canCalculate || isCalculating || tollV3Loading}
-            className="w-full md:w-auto bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8"
+            className="w-full bg-primary px-8 font-semibold text-primary-foreground hover:bg-primary/90 md:w-auto"
             size="lg"
           >
             {isCalculating || tollV3Loading ? (
@@ -299,8 +299,8 @@ export const TripCalculatorForm = () => {
 
           {/* Manual toll fallback — shown when automatic calculation fails */}
           {showManualToll && (
-            <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 space-y-3">
-              <p className="text-sm text-amber-700 dark:text-amber-400">
+            <div className="space-y-3 rounded-lg border border-warning/40 bg-warning-soft p-4">
+              <p className="text-sm text-warning-text">
                 ⚠️ No se pudieron calcular los peajes automáticamente. Puede ingresar el monto manualmente:
               </p>
               <div className="flex gap-3 items-end">

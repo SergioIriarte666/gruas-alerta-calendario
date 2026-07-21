@@ -27,8 +27,8 @@ export const LogoDropzone: React.FC<LogoDropzoneProps> = ({
   return (
     <Card 
       className={`glass-card transition-colors ${
-        isDragging ? 'border-tms-green' : 'border-gray-700'
-      } ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-gray-600'}`}
+        isDragging ? 'border-primary' : 'border-border'
+      } ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-primary/60'}`}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragEnter={onDragEnter}
@@ -37,17 +37,17 @@ export const LogoDropzone: React.FC<LogoDropzoneProps> = ({
     >
       <CardContent className="p-8">
         <div className="flex flex-col items-center justify-center text-center gap-y-4">
-          <div className="size-16 rounded-full bg-white/10 flex items-center justify-center">
-            <Image className="size-8 text-gray-400" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+            <Image className="size-8 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-white font-medium">
+            <p className="font-medium text-foreground">
               {isProcessing ? 'Procesando imagen...' : isDragging ? 'Suelta para subir' : 'Subir Logotipo'}
             </p>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Arrastra una imagen aquí o haz clic para seleccionar
             </p>
-            <p className="text-gray-500 text-xs mt-2">
+            <p className="mt-2 text-xs text-muted-foreground/80">
               PNG, JPG o SVG • Máximo 2MB • Se redimensionará a 200px
             </p>
           </div>

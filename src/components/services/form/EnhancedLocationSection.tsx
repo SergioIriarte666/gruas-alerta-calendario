@@ -67,7 +67,7 @@ export const EnhancedLocationSection = ({
       {/* Origen */}
       <div className="space-y-2">
         <Label htmlFor="origin" className={originError ? 'text-destructive' : ''}>
-          Origen {originRequired && <span className="text-red-500">*</span>}
+          Origen {originRequired && <span className="text-danger-text">*</span>}
           {!originRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
           {originError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
@@ -96,7 +96,7 @@ export const EnhancedLocationSection = ({
       {/* Destino */}
       <div className="space-y-2">
         <Label htmlFor="destination" className={destinationError ? 'text-destructive' : ''}>
-          Destino {destinationRequired && <span className="text-red-500">*</span>}
+          Destino {destinationRequired && <span className="text-danger-text">*</span>}
           {!destinationRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
           {destinationError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">

@@ -42,7 +42,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
                 <Button 
                   type="submit" 
                   disabled={disabled || loading}
-                  className="min-w-[120px]"
+                  className="min-w-32"
                 >
                   {loading ? (
                     <Loader2 className="size-4 mr-2 animate-spin" />

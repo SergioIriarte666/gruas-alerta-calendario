@@ -145,7 +145,7 @@ export const HistoricalPurchasesFilters = ({
                 <SlidersHorizontal className="size-4" />
                 Filtros
                 {activeFilterCount > 0 && (
-                  <Badge variant="default" className="ml-1 rounded-full size-5 p-0 flex items-center justify-center text-[10px]">
+                  <Badge variant="default" className="ml-1 rounded-full size-5 p-0 flex items-center justify-center text-xs">
                     {activeFilterCount}
                   </Badge>
                 )}
@@ -228,7 +228,7 @@ export const HistoricalPurchasesFilters = ({
                       </Popover>
                     </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Si "Desde" queda después de "Hasta", se ajusta automáticamente para mantener el rango válido.
                   </p>
                 </div>
@@ -342,12 +342,12 @@ export const HistoricalPurchasesFilters = ({
         <div className="flex flex-wrap gap-2 pt-2 border-t mt-4">
           <span className="text-xs text-muted-foreground self-center mr-2">Filtros activos:</span>
           {localFilters.dateFrom && (
-            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-info-soft text-info-text hover:bg-info/90 border-info">
               Desde: {format(localFilters.dateFrom, "P", { locale: es })}
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-info-text"
                 onClick={() => handleChange('dateFrom', undefined)}
               >
                 <X className="size-3" />
@@ -355,12 +355,12 @@ export const HistoricalPurchasesFilters = ({
             </Badge>
           )}
           {localFilters.dateTo && (
-            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-info-soft text-info-text hover:bg-info/90 border-info">
               Hasta: {format(localFilters.dateTo, "P", { locale: es })}
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-info-text"
                 onClick={() => handleChange('dateTo', undefined)}
               >
                 <X className="size-3" />
@@ -368,12 +368,12 @@ export const HistoricalPurchasesFilters = ({
             </Badge>
           )}
           {localFilters.source && localFilters.source !== 'all' && (
-            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-primary/10 text-primary hover:bg-primary/90 border-primary">
               Origen: {SOURCE_FILTER_OPTIONS.find((o) => o.value === localFilters.source)?.label}
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-auto p-0 ml-2 hover:bg-transparent text-purple-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-primary"
                 onClick={() => handleChange('source', 'all')}
               >
                 <X className="size-3" />
@@ -381,12 +381,12 @@ export const HistoricalPurchasesFilters = ({
             </Badge>
           )}
           {localFilters.status && localFilters.status !== 'all' && (
-            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200">
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-warning-soft text-warning-text hover:bg-warning/90 border-warning">
               Estado: {localFilters.status}
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-auto p-0 ml-2 hover:bg-transparent text-orange-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-warning-text"
                 onClick={() => handleChange('status', 'all')}
               >
                 <X className="size-3" />
@@ -394,12 +394,12 @@ export const HistoricalPurchasesFilters = ({
             </Badge>
           )}
           {(localFilters.minAmount || localFilters.maxAmount) && (
-            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-success-soft text-success-text hover:bg-success/90 border-success">
               Monto: {localFilters.minAmount || '0'} - {localFilters.maxAmount || '∞'}
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-auto p-0 ml-2 hover:bg-transparent text-green-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-success-text"
                 onClick={() => {
                   handleChange('minAmount', '');
                   handleChange('maxAmount', '');

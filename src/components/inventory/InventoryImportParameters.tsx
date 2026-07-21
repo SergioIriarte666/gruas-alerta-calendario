@@ -142,7 +142,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
                         <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[420px] p-0" align="start">
+                    <PopoverContent className="w-[26.25rem] p-0" align="start">
                       <Command shouldFilter={false}>
                         <CommandInput placeholder="Buscar por folio, cliente, patente, grua, operador o fecha..." value={serviceSearchQuery} onValueChange={onServiceSearchQueryChange} />
                         <CommandList>
@@ -187,7 +187,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
 
                 <div className="space-y-2">
                   <Label>Folio de Servicio</Label>
-                  <Textarea value={selectedServiceFolio} onChange={e => onServiceFolioChange(e.target.value)} rows={2} className="min-h-[56px] resize-none" placeholder="Ej: F-1234" disabled={isImporting} />
+                  <Textarea value={selectedServiceFolio} onChange={e => onServiceFolioChange(e.target.value)} rows={2} className="min-h-[3.5rem] resize-none" placeholder="Ej: F-1234" disabled={isImporting} />
                 </div>
               </CollapsibleContent>
             </div>
@@ -232,7 +232,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
                     ['Pago', isPaid ? 'Compra marcada como pagada' : 'Compra pendiente de pago'],
                   ] as [string, string][]).map(([label, value]) => (
                     <div key={label} className="rounded-lg bg-muted/40 px-3 py-2">
-                      <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
+                      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
                       <span className="font-medium text-foreground">{value}</span>
                     </div>
                   ))}

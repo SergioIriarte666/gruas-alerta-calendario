@@ -174,7 +174,7 @@ const RouteMetricsSection = ({ serviceId, status, isOpen }: RouteMetricsSectionP
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="cursor-help text-amber-700 border-amber-300 bg-amber-50">
+                    <Badge variant="outline" className="cursor-help text-warning-text border-warning bg-warning-soft">
                       Datos parciales
                     </Badge>
                   </TooltipTrigger>
@@ -312,7 +312,7 @@ const ThirdPartyPayerSection = ({
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">Quién paga el excedente</Label>
         {thirdPartyClientId && (
-          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+          <Badge variant="outline" className="text-warning-text border-warning bg-warning-soft">
             Excedente asignado
           </Badge>
         )}
@@ -390,7 +390,7 @@ const ThirdPartyPayerSection = ({
               {toTitleCase(resolvedClient.name)}{resolvedClient.rut ? ` · ${resolvedClient.rut}` : ''}
             </p>
           ) : (
-            <span className="text-sm text-amber-600 flex items-center gap-1">
+            <span className="text-sm text-warning-text flex items-center gap-1">
               <AlertTriangle className="h-3.5 w-3.5" />
               Sin tercero asignado — no se puede generar cierre de excedente
             </span>
@@ -717,7 +717,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   variant="outline"
                   size="sm"
                   onClick={() => setShowResolveDispute(true)}
-                  className="flex items-center gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                  className="flex items-center gap-2 border-success/30 text-success-text hover:bg-success/90"
                 >
                   <CheckCircle2 className="size-4" />
                   Resolver Disputa
@@ -727,7 +727,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   variant="outline"
                   size="sm"
                   onClick={() => setShowMarkDispute(true)}
-                  className="flex items-center gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                  className="flex items-center gap-2 border-warning/30 text-warning-text hover:bg-warning/90"
                 >
                   <AlertTriangle className="size-4" />
                   Marcar en Disputa
@@ -746,7 +746,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               <TabsTrigger value="disputes">
                 Disputas
                 {disputeHistory.length > 0 && (
-                  <Badge variant={currentDispute ? 'destructive' : 'secondary'} className="ml-1.5 h-4 px-1 text-[10px]">
+                  <Badge variant={currentDispute ? 'destructive' : 'secondary'} className="ml-1.5 h-4 px-1 text-xs">
                     {disputeHistory.length}
                   </Badge>
                 )}
@@ -1087,7 +1087,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                     <div
                       key={dispute.id}
                       className={`rounded-lg border p-3 text-sm space-y-1.5 ${
-                        dispute.status === 'open' ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-muted/20'
+                        dispute.status === 'open' ? 'border-warning/40 bg-warning/5' : 'border-border bg-muted/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">

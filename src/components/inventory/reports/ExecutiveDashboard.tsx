@@ -24,7 +24,12 @@ interface ExecutiveDashboardProps {
   filters?: InventoryReportFilters;
 }
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+const COLORS = Array.of(
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))',
+  'hsl(var(--muted))',
+);
 
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters }) => {
   const { data: stockData, isLoading: stockLoading } = useStockReport(filters);
@@ -97,11 +102,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
               </div>
               <div className="flex items-center mt-1">
                 {kpi.trendUp ? (
-                  <TrendingUp className="size-3 text-green-500 mr-1" />
+                  <TrendingUp className="mr-1 size-3 text-success" />
                 ) : (
-                  <TrendingDown className="size-3 text-red-500 mr-1" />
+                  <TrendingDown className="mr-1 size-3 text-danger" />
                 )}
-                <span className={`text-xs ${kpi.trendUp ? 'text-green-500' : 'text-red-500'}`}>
+                <span className={`text-xs ${kpi.trendUp ? 'text-success' : 'text-danger'}`}>
                   {kpi.trend}
                 </span>
               </div>
@@ -158,7 +163,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
                   labelLine={false}
                   label={({ category, value }) => `${category}: ${formatCurrency(value)}`}
                   outerRadius={100}
-                  fill="#8884d8"
+                  fill="hsl(var(--primary))"
                   dataKey="value"
                 >
                   {categoryData.map((entry, index) => (
@@ -219,7 +224,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-orange-500" />
+              <AlertTriangle className="size-5 text-warning" />
               Alertas de Stock Bajo
             </CardTitle>
             <CardDescription>Productos que requieren reposición inmediata</CardDescription>

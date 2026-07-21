@@ -245,10 +245,10 @@ const Auth = () => {
   // Mostrar loading simple mientras se verifica la autenticación
   if (authLoading || profileLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-950 text-white">
+      <div className="flex h-screen items-center justify-center bg-auth-background text-auth-foreground">
         <div className="text-center">
           <div className="mb-4">Cargando acceso...</div>
-          <div className="mx-auto flex size-10 items-center justify-center rounded-full border border-white/15 bg-white/10">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-full border border-auth-border/15 bg-auth-surface/10">
             <Loader2 className="size-5 animate-spin text-primary" />
           </div>
         </div>
@@ -260,7 +260,7 @@ const Auth = () => {
   if (showSetPassword) {
     return (
       <AuthBackground>
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-md">
           <SetPasswordForm onSuccess={handlePasswordSetupSuccess} />
         </div>
       </AuthBackground>
@@ -270,7 +270,7 @@ const Auth = () => {
   if (showForgotPassword) {
     return (
       <AuthBackground>
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-md">
           <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
         </div>
       </AuthBackground>
@@ -283,31 +283,24 @@ const Auth = () => {
         <div className="space-y-2 text-center">
           <Badge
             variant="outline"
-            className="border-white/15 bg-white/10 px-3 py-1"
-            style={{ color: 'rgba(255,255,255,0.9)' }}
+            className="border-auth-border/15 bg-auth-surface/10 px-3 py-1 text-auth-muted"
           >
             <Sparkles className="mr-1 size-3.5" />
             Acceso seguro
           </Badge>
-          <h1
-            className="text-3xl font-semibold tracking-tight drop-shadow-[0_1px_10px_rgba(15,23,42,0.35)]"
-            style={{ color: 'rgba(255,255,255,0.98)' }}
-          >
+          <h1 className="text-3xl font-semibold tracking-tight text-auth-foreground drop-shadow-md">
             Towing Manager Software
           </h1>
-          <p
-            className="text-sm drop-shadow-[0_1px_8px_rgba(15,23,42,0.28)]"
-            style={{ color: 'rgba(255,255,255,0.88)' }}
-          >
+          <p className="text-sm text-auth-muted drop-shadow-sm">
             Accede a la operación, clientes y facturación desde una interfaz unificada.
           </p>
         </div>
 
-      <div className="w-full max-w-[400px] mx-auto">
+      <div className="w-full max-w-md mx-auto">
         {isInvited && !needsPasswordSetup && (
           <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 p-4">
             <h3 className="mb-2 font-semibold text-primary">¡Has sido invitado!</h3>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.94)' }}>
+            <p className="text-sm text-auth-foreground/95">
               Completa tu registro con el email <strong>{emailParam}</strong> para acceder al sistema.
             </p>
           </div>
@@ -315,8 +308,8 @@ const Auth = () => {
 
         {isRegistered && (
           <div className="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4">
-            <h3 className="mb-2 font-semibold text-success">¡Cuenta confirmada!</h3>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.94)' }}>
+            <h3 className="mb-2 font-semibold text-auth-success">¡Cuenta confirmada!</h3>
+            <p className="text-sm text-auth-foreground/95">
               Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.
             </p>
           </div>

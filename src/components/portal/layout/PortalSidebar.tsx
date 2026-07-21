@@ -1,57 +1,67 @@
-
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FileText, FileWarning as FileAlert, History, LayoutDashboard, Plus, Truck, X } from 'lucide-react';
-import { useSettings } from '@/hooks/useSettings';
-import { useUser } from '@/contexts/UserContext';
-import { usePortalOCCount } from '@/hooks/portal/usePortalOCCount';
-import { useClientBranding } from '@/hooks/portal/useClientBranding';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  FileText,
+  FileWarning as FileAlert,
+  History,
+  LayoutDashboard,
+  Plus,
+  Truck,
+  X,
+} from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
+import { useUser } from "@/contexts/UserContext";
+import { usePortalOCCount } from "@/hooks/portal/usePortalOCCount";
+import { useClientBranding } from "@/hooks/portal/useClientBranding";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface PortalSidebarProps {
   onClose?: () => void;
   showCloseButton?: boolean;
 }
 
-const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton = false }) => {
+const PortalSidebar: React.FC<PortalSidebarProps> = ({
+  onClose,
+  showCloseButton = false,
+}) => {
   const { settings } = useSettings();
   const { user } = useUser();
   const { data: branding } = useClientBranding();
   const location = useLocation();
   const ocCount = usePortalOCCount();
-  const companyName = settings?.company?.name || 'Grúas Alerta';
+  const companyName = settings?.company?.name || "Grúas Alerta";
   const displayLogo = branding?.logoUrl || settings?.company?.logo;
   const displayName = branding?.companyName || companyName;
-  const userName = user?.name || user?.email || 'Cliente';
+  const userName = user?.name || user?.email || "Cliente";
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   const navigationItems = [
     {
-      name: 'Dashboard',
-      href: '/portal/dashboard',
+      name: "Dashboard",
+      href: "/portal/dashboard",
       icon: LayoutDashboard,
     },
     {
-      name: 'Mis Servicios',
-      href: '/portal/services',
+      name: "Mis Servicios",
+      href: "/portal/services",
       icon: History,
     },
     {
-      name: 'Sin orden de compra',
-      href: '/portal/purchase-orders',
+      name: "Sin orden de compra",
+      href: "/portal/purchase-orders",
       icon: FileAlert,
       badgeCount: ocCount,
       urgent: ocCount > 0,
     },
     {
-      name: 'Solicitar Servicio',
-      href: '/portal/request-service',
+      name: "Solicitar Servicio",
+      href: "/portal/request-service",
       icon: Plus,
     },
     {
-      name: 'Mis Facturas',
-      href: '/portal/invoices',
+      name: "Mis Facturas",
+      href: "/portal/invoices",
       icon: FileText,
     },
   ];
@@ -63,22 +73,30 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-[#e2e8f0] bg-white p-4">
-      <div className="mb-6 pb-4 border-b border-[#f1f5f9]">
+    <aside className="flex h-full w-64 flex-col border-r border-border bg-card p-4">
+      <div className="mb-6 pb-4 border-b border-border/60">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {displayLogo ? (
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-[#f1f5f9] bg-[#f8fafc] p-1">
-                <img src={displayLogo} alt={displayName} className="max-h-full max-w-full object-contain" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/40 p-1">
+                <img
+                  src={displayLogo}
+                  alt={displayName}
+                  className="max-h-full max-w-full object-contain"
+                />
               </div>
             ) : (
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[8px] bg-gradient-to-br from-violet-600 to-indigo-600">
-                <Truck className="size-4 text-white" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
+                <Truck className="size-4 text-primary-foreground" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium text-[#0f172a]">{displayName}</p>
-              <p className="text-[10px] text-[#94a3b8]">Portal de clientes</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {displayName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Portal de clientes
+              </p>
             </div>
           </div>
           {showCloseButton && (
@@ -86,14 +104,14 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
+              className="text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             >
               <X className="size-5" />
             </Button>
           )}
         </div>
       </div>
-      <p className="mb-1 mt-2 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.7px] text-[#cbd5e1]">
+      <p className="mb-1 mt-2 px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground/50">
         Menú
       </p>
       <nav className="flex flex-col gap-y-1">
@@ -105,16 +123,22 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               to={item.href}
               onClick={handleNavClick}
               className={cn(
-                'flex items-center gap-2 rounded-[7px] px-2.5 py-2 text-[12px] transition-colors',
-                isActive && !item.urgent ? 'bg-violet-50 font-medium text-violet-700' : '',
-                isActive && item.urgent ? 'bg-amber-50 font-medium text-amber-800' : '',
-                !isActive ? 'text-[#64748b] hover:bg-slate-50 hover:text-[#334155]' : ''
+                "flex items-center gap-2 rounded-md px-2.5 py-2 text-xs transition-colors",
+                isActive && !item.urgent
+                  ? "bg-accent font-medium text-primary"
+                  : "",
+                isActive && item.urgent
+                  ? "bg-warning-soft font-medium text-warning-text"
+                  : "",
+                !isActive
+                  ? "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                  : "",
               )}
             >
-              <item.icon className="size-[14px]" />
+              <item.icon className="size-3.5" />
               <span>{item.name}</span>
-              {item.href === '/portal/purchase-orders' && ocCount > 0 && (
-                <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-medium text-white">
+              {item.href === "/portal/purchase-orders" && ocCount > 0 && (
+                <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-warning px-1 text-xs font-medium text-warning-foreground">
                   {ocCount}
                 </span>
               )}
@@ -122,16 +146,23 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
           );
         })}
       </nav>
-      <div className="mt-auto border-t border-[#f1f5f9] pt-3">
-        <div className="flex items-center gap-2 rounded-[8px] border border-[#f1f5f9] bg-[#f8fafc] p-2.5">
-          <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-[11px] font-medium text-white">
+      <div className="mt-auto border-t border-border/60 pt-3">
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 p-2.5">
+          <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground">
             {userInitials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[11px] font-medium text-[#0f172a]">{userName}</p>
-            <p className="truncate text-[10px] text-[#94a3b8]">{branding?.companyName || 'Cliente'}</p>
+            <p className="truncate text-xs font-medium text-foreground">
+              {userName}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {branding?.companyName || "Cliente"}
+            </p>
           </div>
-          <div className="ml-auto size-2 flex-shrink-0 rounded-full bg-green-400" title="Conectado" />
+          <div
+            className="ml-auto size-2 flex-shrink-0 rounded-full bg-success"
+            title="Conectado"
+          />
         </div>
       </div>
     </aside>

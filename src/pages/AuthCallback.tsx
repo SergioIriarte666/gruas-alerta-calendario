@@ -48,8 +48,8 @@ export default function AuthCallback() {
   }, [navigate])
 
   return (
-    <div className="flex items-center justify-center h-screen bg-slate-950">
-      <p className="text-white/60 text-sm">Iniciando sesión...</p>
+    <div className="flex h-screen items-center justify-center bg-auth-background">
+      <p className="text-sm text-auth-muted/70">Iniciando sesión...</p>
     </div>
   )
 }

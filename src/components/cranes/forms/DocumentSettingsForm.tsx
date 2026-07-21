@@ -109,7 +109,7 @@ export const DocumentSettingsForm = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="resources-dialog max-w-4xl border-border/70 bg-card">
         <DialogHeader>
-          <DialogTitle className="text-white">
+          <DialogTitle className="text-foreground">
             Configuración de Alertas de Documentos
           </DialogTitle>
         </DialogHeader>
@@ -117,7 +117,7 @@ export const DocumentSettingsForm = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Lista de Documentos */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Seleccionar Documento</h3>
+            <h3 className="text-lg font-medium text-foreground">Seleccionar Documento</h3>
             {documents.map((doc) => {
               const existingAlert = existingAlerts.find(a => a.documentType === doc.type);
               const isSelected = selectedDocument === doc.type;
@@ -127,31 +127,31 @@ export const DocumentSettingsForm = ({
                   key={doc.type}
                   className={`cursor-pointer transition-colors ${
                     isSelected 
-                      ? 'border-tms-green bg-tms-green/10' 
-                      : 'border-gray-700 hover:border-tms-green/50'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => handleDocumentSelect(doc.type)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <doc.icon className="size-5 text-tms-green" />
+                        <doc.icon className="size-5 text-primary" />
                         <div>
-                          <h4 className="text-white font-medium">{doc.name}</h4>
-                          <p className="text-gray-400 text-sm">
+                          <h4 className="text-foreground font-medium">{doc.name}</h4>
+                          <p className="text-muted-foreground text-sm">
                             Vence: {new Date(doc.expiryDate).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                       {existingAlert ? (
                         <div className="text-right">
-                          <p className="text-tms-green text-sm">✓ Configurado</p>
-                          <p className="text-gray-400 text-xs">
+                          <p className="text-primary text-sm">✓ Configurado</p>
+                          <p className="text-muted-foreground text-xs">
                             {existingAlert.alertDays} días antes
                           </p>
                         </div>
                       ) : (
-                        <p className="text-gray-400 text-sm">Sin configurar</p>
+                        <p className="text-muted-foreground text-sm">Sin configurar</p>
                       )}
                     </div>
                   </CardContent>
@@ -162,14 +162,14 @@ export const DocumentSettingsForm = ({
 
           {/* Formulario de Configuración */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">
+            <h3 className="text-lg font-medium text-foreground">
               {selectedDocument ? 'Configurar Alertas' : 'Selecciona un documento'}
             </h3>
             
             {selectedDocument ? (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <Label htmlFor="alertDays" className="text-white">
+                  <Label htmlFor="alertDays" className="text-foreground">
                     Días de anticipación
                   </Label>
                   <Input
@@ -177,13 +177,13 @@ export const DocumentSettingsForm = ({
                     type="number"
                     min="1"
                     max="365"
-                    className="bg-black border-tms-green/30 text-white"
+                    className="bg-card border-primary/30 text-foreground"
                     placeholder="30"
                   />
                   {errors.alertDays && (
-                    <p className="text-red-400 text-sm mt-1">{errors.alertDays.message}</p>
+                    <p className="text-danger-text text-sm mt-1">{errors.alertDays.message}</p>
                   )}
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p className="text-muted-foreground text-sm mt-1">
                     Se enviará una alerta este número de días antes del vencimiento
                   </p>
                 </div>
@@ -191,8 +191,8 @@ export const DocumentSettingsForm = ({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-white">Notificaciones por Email</Label>
-                      <p className="text-gray-400 text-sm">
+                      <Label className="text-foreground">Notificaciones por Email</Label>
+                      <p className="text-muted-foreground text-sm">
                         Recibir alertas por correo electrónico
                       </p>
                     </div>
@@ -204,8 +204,8 @@ export const DocumentSettingsForm = ({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-white">Notificaciones Push</Label>
-                      <p className="text-gray-400 text-sm">
+                      <Label className="text-foreground">Notificaciones Push</Label>
+                      <p className="text-muted-foreground text-sm">
                         Recibir notificaciones en el navegador
                       </p>
                     </div>
@@ -217,8 +217,8 @@ export const DocumentSettingsForm = ({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-white">Activar Alertas</Label>
-                      <p className="text-gray-400 text-sm">
+                      <Label className="text-foreground">Activar Alertas</Label>
+                      <p className="text-muted-foreground text-sm">
                         Habilitar/deshabilitar las alertas para este documento
                       </p>
                     </div>
@@ -234,13 +234,13 @@ export const DocumentSettingsForm = ({
                     type="button"
                     variant="outline"
                     onClick={() => setSelectedDocument(null)}
-                    className="border-gray-600 text-gray-300"
+                    className="border-border text-muted-foreground"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-tms-green hover:bg-tms-green/80 text-black"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={createAlert.isPending || updateAlert.isPending}
                   >
                     {existingAlerts.find(a => a.documentType === selectedDocument) ? 'Actualizar' : 'Crear'} Alerta
@@ -249,7 +249,7 @@ export const DocumentSettingsForm = ({
               </form>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-400">
+                <p className="text-muted-foreground">
                   Selecciona un documento de la lista para configurar sus alertas
                 </p>
               </div>

@@ -49,7 +49,7 @@ export const RegenerarInspeccionTable = ({ servicios, onPreview }: RegenerarInsp
             Disponible
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-sm text-amber-600">
+          <span className="inline-flex items-center gap-1 text-sm text-warning-text">
             <FileWarning className="size-4" />
             Sin PDF
           </span>

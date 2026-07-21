@@ -123,24 +123,24 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole: _userRol
   const content = getPromptContent();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-overlay/75 p-4 backdrop-blur-sm">
+      <Card className="w-full max-w-md border-border/70 bg-card shadow-2xl">
         <CardHeader className="relative">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleDismiss}
-            className="absolute right-2 top-2 text-gray-400 hover:text-white"
+            className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="size-12 bg-tms-green rounded-lg flex items-center justify-center">
-              <Smartphone className="size-6 text-white" />
+            <div className="flex size-12 items-center justify-center rounded-lg bg-primary">
+              <Smartphone className="size-6 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle className="text-white">{content.title}</CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardTitle>{content.title}</CardTitle>
+              <CardDescription>
                 {content.description}
               </CardDescription>
             </div>
@@ -148,11 +148,11 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole: _userRol
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-white">Beneficios:</h4>
+            <h4 className="text-sm font-medium text-foreground">Beneficios:</h4>
             <ul className="space-y-1">
               {content.benefits.map((benefit, index) => (
-                <li key={index} className="text-sm text-gray-400 flex items-center gap-2">
-                  <div className="size-1.5 bg-tms-green rounded-full" />
+                <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="size-1.5 rounded-full bg-primary" />
                   {benefit}
                 </li>
               ))}
@@ -163,13 +163,13 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole: _userRol
             <Button
               onClick={handleDismiss}
               variant="ghost"
-              className="flex-1 text-gray-400 hover:text-white"
+              className="flex-1 text-muted-foreground hover:text-foreground"
             >
               Ahora no
             </Button>
             <Button
               onClick={handleInstall}
-              className="flex-1 bg-tms-green hover:bg-tms-green/90 text-slate-900 font-medium"
+              className="flex-1 bg-primary font-medium text-primary-foreground hover:bg-primary/90"
             >
               <Download className="size-4 mr-2" />
               Instalar

@@ -230,7 +230,7 @@ export const BatchEditHistoricalInvoicesModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Edición Masiva ({selectedInvoices.length} facturas)</DialogTitle>
           <DialogDescription>
@@ -240,9 +240,9 @@ export const BatchEditHistoricalInvoicesModal = ({
         
         <div className="grid gap-6 py-4">
           {hasSystemInvoices && (
-            <Alert variant="destructive" className="border-amber-300 bg-amber-50">
-              <ShieldAlert className="size-4 !text-amber-600" />
-              <AlertDescription className="text-amber-800 text-xs">
+            <Alert variant="destructive" className="border-warning bg-warning-soft">
+              <ShieldAlert className="size-4 !text-warning-text" />
+              <AlertDescription className="text-warning-text text-xs">
                 {systemInvoiceCount} factura(s) del sistema serán excluidas de los cambios de Estado y Origen, 
                 ya que están vinculadas a cierres y servicios. Solo se aplicarán cambios de notas y metadatos.
               </AlertDescription>
@@ -296,7 +296,7 @@ export const BatchEditHistoricalInvoicesModal = ({
                 value={productServiceDescription}
                 onChange={(e) => setProductServiceDescription(e.target.value)}
                 disabled={!updateProductServiceDescription}
-                className="min-h-[90px] resize-none"
+                className="min-h-24 resize-none"
                 placeholder="Describe el motivo o razón que originó la creación del documento..."
               />
             </div>
@@ -364,7 +364,7 @@ export const BatchEditHistoricalInvoicesModal = ({
                 onChange={(e) => setAppendNote(e.target.value)}
                 disabled={!updateNote}
                 placeholder="Esta nota se agregará a las existentes..."
-                className="min-h-[80px]"
+                className="min-h-20"
               />
             </div>
           </div>

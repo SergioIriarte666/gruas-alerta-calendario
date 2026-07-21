@@ -7,28 +7,28 @@ interface MaintenanceChartsProps {
   data: MaintenanceReportData;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899'];
+const COLORS = [1, 2, 3, 4, 5, 6].map((index) => `hsl(var(--chart-${index}))`);
 
 export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
   const monthlyTrendsConfig: ChartConfig = {
     maintenanceCost: {
       label: "Mantenimiento",
-      color: "#10b981",
+      color: "hsl(var(--chart-1))",
     },
     partsCost: {
       label: "Partes",
-      color: "#f59e0b",
+      color: "hsl(var(--chart-2))",
     },
     interventionCount: {
       label: "Intervenciones",
-      color: "#3b82f6",
+      color: "hsl(var(--chart-4))",
     },
   };
 
   const maintenanceTypeConfig: ChartConfig = {
     cost: {
       label: "Costo",
-      color: "#10b981",
+      color: "hsl(var(--chart-1))",
     },
   };
 
@@ -83,16 +83,16 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
               <Line 
                 type="monotone" 
                 dataKey="maintenanceCost" 
-                stroke="#10b981" 
+                stroke="hsl(var(--chart-1))"
                 strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                dot={{ fill: 'hsl(var(--chart-1))', strokeWidth: 2, r: 4 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="partsCost" 
-                stroke="#f59e0b" 
+                stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
-                dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                dot={{ fill: 'hsl(var(--chart-2))', strokeWidth: 2, r: 4 }}
               />
             </LineChart>
           </ChartContainer>
@@ -126,7 +126,7 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
                   formatter={(value) => [formatCurrency(Number(value)), 'Costo Total']}
                 />} 
               />
-              <Bar dataKey="totalCost" fill="#10b981" />
+              <Bar dataKey="totalCost" fill="hsl(var(--chart-1))" />
             </BarChart>
           </ChartContainer>
         </CardContent>

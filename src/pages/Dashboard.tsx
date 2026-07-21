@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
 
           <Link
             to="/calendar"
-            className="rounded-2xl outline-none transition-transform focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-lime))] focus-visible:ring-offset-2 hover:-translate-y-0.5"
+            className="rounded-2xl outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:-translate-y-0.5"
             aria-label="Ver servicios programados en el calendario"
           >
             <MetricCard
@@ -241,7 +241,7 @@ const Dashboard: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsComplianceDialogOpen(true)}
-            className="rounded-2xl text-left outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-lime))] focus-visible:ring-offset-2"
+            className="rounded-2xl text-left outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <MetricCard
               variant="control"

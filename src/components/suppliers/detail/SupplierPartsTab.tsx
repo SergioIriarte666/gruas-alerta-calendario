@@ -91,7 +91,7 @@ export const SupplierPartsTab: React.FC<SupplierPartsTabProps> = ({ parts, isLoa
               <TableCell className="text-right text-foreground font-medium">
                 {formatCurrency(part.total_value || part.quantity * part.unit_price)}
               </TableCell>
-              <TableCell className="text-foreground text-sm max-w-[150px] truncate">
+              <TableCell className="max-w-36 truncate text-sm text-foreground">
                 {part.notes || '-'}
               </TableCell>
             </TableRow>

@@ -82,7 +82,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
 
               {/* Value + Status + Actions */}
               <div className="flex items-center justify-between pt-2 border-t">
-                <span className="font-bold text-violet-600 text-sm">{formatCurrency(rate.value)}</span>
+                <span className="text-sm font-bold text-primary">{formatCurrency(rate.value)}</span>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={rate.is_active}
@@ -139,17 +139,17 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1 text-sm">
-                  <span className="truncate max-w-[150px]" title={rate.origin}>{rate.origin}</span>
+                  <span className="max-w-36 truncate" title={rate.origin}>{rate.origin}</span>
                   {rate.destination && (
                     <>
                       <ArrowRight className="size-3 text-muted-foreground flex-shrink-0" />
-                      <span className="truncate max-w-[150px]" title={rate.destination}>{rate.destination}</span>
+                      <span className="max-w-36 truncate" title={rate.destination}>{rate.destination}</span>
                     </>
                   )}
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <span className="font-semibold text-violet-600">{formatCurrency(rate.value)}</span>
+                <span className="font-semibold text-primary">{formatCurrency(rate.value)}</span>
               </TableCell>
               <TableCell className="text-center">
                 <Switch checked={rate.is_active} onCheckedChange={(checked) => onToggleActive(rate.id, checked)} />

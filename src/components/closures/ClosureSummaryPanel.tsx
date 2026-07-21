@@ -17,11 +17,11 @@ interface ClosureSummaryPanelProps {
 }
 
 const STATUS_LABELS: Record<ClosureStatus, { label: string; className: string }> = {
-  open: { label: 'Abierto', className: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30' },
-  closed: { label: 'Cerrado', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30' },
-  invoiced: { label: 'Facturado', className: 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30' },
-  quoted: { label: 'Cotizado', className: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30' },
-  purchase_order_pending: { label: 'Esperando OC', className: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30' },
+  open: { label: 'Abierto', className: 'border-warning/30 bg-warning-soft text-warning' },
+  closed: { label: 'Cerrado', className: 'border-info/30 bg-info-soft text-info' },
+  invoiced: { label: 'Facturado', className: 'border-success/30 bg-success-soft text-success' },
+  quoted: { label: 'Cotizado', className: 'border-primary/30 bg-primary-soft text-primary' },
+  purchase_order_pending: { label: 'Esperando OC', className: 'border-warning/30 bg-warning-soft text-warning' },
 };
 
 export const ClosureSummaryPanel = ({
@@ -49,7 +49,7 @@ export const ClosureSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="size-4 text-violet-500" />
+            <Receipt className="size-4 text-primary" />
             Resumen del Cierre
           </span>
           <Badge className={statusConfig.className}>
@@ -83,7 +83,7 @@ export const ClosureSummaryPanel = ({
           <ListChecks className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Servicios:</span>
           <Badge variant={selectedCount > 0 ? "default" : "secondary"} className={cn(
-            selectedCount > 0 && "bg-violet-600 text-white"
+            selectedCount > 0 && "bg-primary text-primary-foreground"
           )}>
             {selectedCount} seleccionados
           </Badge>
@@ -108,7 +108,7 @@ export const ClosureSummaryPanel = ({
           </div>
           <span className={cn(
             "text-lg font-bold",
-            total > 0 ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+            total > 0 ? "text-success" : "text-muted-foreground"
           )}>
             {formatCurrency(total)}
           </span>

@@ -85,7 +85,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-96">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
           <p>Cargando pipeline del cliente...</p>
@@ -105,7 +105,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </div>
 
       {/* Kanban Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-6 gap-4 min-h-[500px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-6 gap-4 min-h-[31rem]">
         {PIPELINE_COLUMNS.map(column => (
           <KanbanColumn
             key={column.id}
@@ -122,7 +122,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {PIPELINE_COLUMNS.map(column => {
           const count = servicesByStatus[column.id]?.length || 0;
           return (
-            <div 
+            <div
               key={`stat-${column.id}`}
               className="p-2 rounded border bg-card text-center"
             >

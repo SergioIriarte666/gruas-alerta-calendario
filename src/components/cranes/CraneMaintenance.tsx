@@ -297,7 +297,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       size="sm"
                       onClick={() => handleEdit(record)}
                       disabled={isLocked}
-                      className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
+                      className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
                     >
                       <Edit className="size-4" />
                     </Button>
@@ -306,7 +306,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       size="sm"
                       onClick={() => handleDelete(record)}
                       disabled={isLocked}
-                      className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15"
+                      className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/20"
                     >
                       <Trash2 className="size-4" />
                     </Button>

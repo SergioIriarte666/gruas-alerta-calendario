@@ -86,7 +86,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
           Nuevo Evento
         </Button>
       </DialogTrigger>
-      <DialogContent className="operations-dialog border-border/70 bg-card p-0 sm:max-w-[600px]">
+      <DialogContent className="operations-dialog border-border/70 bg-card p-0 sm:max-w-2xl">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-foreground">Crear Nuevo Evento</DialogTitle>
         </DialogHeader>

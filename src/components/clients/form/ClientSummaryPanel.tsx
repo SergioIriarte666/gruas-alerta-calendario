@@ -35,13 +35,13 @@ export const ClientSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Building2 className="size-4 text-violet-500" />
+            <Building2 className="size-4 text-primary" />
             Resumen del Cliente
           </span>
           <Badge className={cn(
             isActive 
-              ? "bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30"
-              : "bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30"
+              ? "border-success/30 bg-success-soft text-success"
+              : "border-danger/30 bg-danger-soft text-danger"
           )}>
             {isActive ? 'Activo' : 'Inactivo'}
           </Badge>
@@ -53,7 +53,7 @@ export const ClientSummaryPanel = ({
           <div className="flex items-center gap-2">
             <Building2 className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Razón Social:</span>
-            <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 truncate">
+            <span className="truncate text-sm font-semibold text-primary">
               {name}
             </span>
           </div>
@@ -121,7 +121,7 @@ export const ClientSummaryPanel = ({
                   <Badge 
                     key={index} 
                     variant="secondary" 
-                    className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300"
+                    className="bg-primary-soft text-xs text-primary"
                   >
                     {dept}
                   </Badge>
@@ -133,8 +133,8 @@ export const ClientSummaryPanel = ({
 
         {/* Indicador de modo */}
         {isEditing && (
-          <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-md">
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning-soft p-2">
+            <p className="text-xs text-warning">
               Modo edición - Los cambios actualizarán el cliente existente
             </p>
           </div>

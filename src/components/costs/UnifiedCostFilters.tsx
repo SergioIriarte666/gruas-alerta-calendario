@@ -174,7 +174,7 @@ export const UnifiedCostFilters = ({
                     variant="secondary"
                     className={cn(
                       'ml-1.5 px-1.5 py-0 text-xs',
-                      isActive && 'bg-white/20 text-white'
+                      isActive && 'bg-primary-foreground/20 text-primary-foreground'
                     )}
                   >
                     {todayCount}
@@ -204,7 +204,7 @@ export const UnifiedCostFilters = ({
               value={filters.entity}
               onValueChange={(value) => updateFilter('entity', value as CostFilters['entity'])}
             >
-              <SelectTrigger className="h-11 w-[180px] rounded-xl border-border/70 bg-background/70">
+              <SelectTrigger className="h-11 w-44 rounded-xl border-border/70 bg-background/70">
                 <SelectValue placeholder="Empresa" />
               </SelectTrigger>
               <SelectContent>

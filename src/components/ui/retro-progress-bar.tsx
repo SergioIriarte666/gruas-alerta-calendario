@@ -44,7 +44,7 @@ export const RetroProgressBar = ({
             'h-full rounded-full transition-[width] duration-300 ease-out',
             hasError
               ? 'bg-destructive'
-              : 'bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.28)]'
+              : 'bg-primary shadow-glow-primary'
           )}
           style={{ width: `${clampedValue}%` }}
         />

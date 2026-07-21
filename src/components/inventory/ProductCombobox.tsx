@@ -91,7 +91,7 @@ export const ProductCombobox = ({
   const renderStockBadge = (product: ProductComboboxItem) => (
     <Badge
       variant={product.current_stock === 0 ? 'destructive' : 'success'}
-      className="shrink-0 whitespace-nowrap text-[11px]"
+      className="shrink-0 whitespace-nowrap text-xs"
     >
       {product.current_stock === 0
         ? 'Sin stock'
@@ -122,7 +122,7 @@ export const ProductCombobox = ({
       <PopoverContent
         className={cn(
           'w-[var(--radix-popover-trigger-width)] p-0 bg-popover border-border',
-          isMobile ? 'min-w-[calc(100vw-2rem)]' : 'min-w-[360px]'
+          isMobile ? 'min-w-[calc(100vw-2rem)]' : 'min-w-[22.5rem]'
         )}
         align="start"
       >

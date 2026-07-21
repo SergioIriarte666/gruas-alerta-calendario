@@ -58,7 +58,7 @@ export const OperatorStatusPanel = ({
           >
             <div className="flex items-center justify-between gap-2">
               <p className="truncate text-base font-semibold text-foreground">{location.operator_name}</p>
-              <Badge variant="outline" className={cn('shrink-0 text-[11px] font-semibold', STATUS_BADGE_CLASS[status])}>
+              <Badge variant="outline" className={cn('shrink-0 text-xs font-semibold', STATUS_BADGE_CLASS[status])}>
                 {OPERATOR_STATUS_LABELS[status]}
               </Badge>
             </div>

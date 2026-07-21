@@ -279,7 +279,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
               <Button
                 type="submit"
                 disabled={form.formState.isSubmitting}
-                className="bg-violet-600 hover:bg-violet-700"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 mr-2 animate-spin" />

@@ -91,24 +91,24 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   });
 
   // Servicios activos (no excluidos)
-  const activeServices = useMemo(() => 
+  const activeServices = useMemo(() =>
     selectedServices.filter(s => !excludedServices.has(s.id)),
     [selectedServices, excludedServices]
   );
 
   // Servicios con datos existentes
-  const servicesWithQuote = useMemo(() => 
-    activeServices.filter(s => s.quoteNumber), 
+  const servicesWithQuote = useMemo(() =>
+    activeServices.filter(s => s.quoteNumber),
     [activeServices]
   );
 
-  const servicesWithPO = useMemo(() => 
-    activeServices.filter(s => s.purchaseOrderNumber), 
+  const servicesWithPO = useMemo(() =>
+    activeServices.filter(s => s.purchaseOrderNumber),
     [activeServices]
   );
 
   // Calcular suma total de servicios activos
-  const activeTotalValue = useMemo(() => 
+  const activeTotalValue = useMemo(() =>
     activeServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0),
     [activeServices]
   );
@@ -171,7 +171,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       // Contador para numeración secuencial (solo servicios que recibirán nuevo número)
       let quoteIndex = 0;
       let poIndex = 0;
-      
+
       const services: BatchUpdateData['services'] = activeServices.map((service) => {
         const serviceData: any = { id: service.id };
 
@@ -292,8 +292,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-5xl h-[80vh] bg-card border select-none flex flex-col p-0" 
+      <DialogContent
+        className="max-w-5xl h-[80vh] bg-card border select-none flex flex-col p-0"
         style={{
           position: 'fixed',
           top: '50%',
@@ -301,9 +301,9 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           transform: 'translate(-50%, -50%)',
           userSelect: 'none',
           pointerEvents: 'auto'
-        }} 
-        onMouseDown={e => e.stopPropagation()} 
-        onDragStart={e => e.preventDefault()} 
+        }}
+        onMouseDown={e => e.stopPropagation()}
+        onDragStart={e => e.preventDefault()}
         draggable={false}
       >
         {/* Header */}
@@ -332,31 +332,31 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   {activeServices.length} de {selectedServices.length}
                 </Badge>
               </div>
-              
+
               {/* Suma total de servicios activos */}
-              <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+              <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20">
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="size-3.5 text-violet-500" />
+                  <DollarSign className="size-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Valor Total:</span>
                 </div>
-                <span className="text-sm font-semibold text-violet-600">
+                <span className="text-sm font-semibold text-primary">
                   ${activeTotalValue.toLocaleString('es-CL')}
                 </span>
               </div>
-              
+
               <div className="flex gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 text-xs flex-1"
                   onClick={selectAll}
                 >
                   <CheckSquare className="size-3 mr-1" />
                   Todos
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 text-xs flex-1"
                   onClick={deselectAll}
                 >
@@ -365,23 +365,23 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 </Button>
               </div>
             </div>
-            
+
             <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
                 {selectedServices.map((service, _index) => {
                   const isExcluded = excludedServices.has(service.id);
                   return (
-                    <div 
-                      key={service.id} 
+                    <div
+                      key={service.id}
                       className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                        isExcluded 
-                          ? 'bg-muted/30 border-border/50 opacity-50' 
+                        isExcluded
+                          ? 'bg-muted/30 border-border/50 opacity-50'
                           : 'bg-card border-border hover:border-primary/30'
                       }`}
                       onClick={() => toggleServiceExclusion(service.id)}
                     >
                       <div className="flex items-start gap-3">
-                        <Checkbox 
+                        <Checkbox
                           checked={!isExcluded}
                           className="mt-0.5"
                           onCheckedChange={() => toggleServiceExclusion(service.id)}
@@ -391,12 +391,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                             <span className="font-medium text-sm text-foreground truncate">
                               {service.folio}
                             </span>
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-[10px] px-1.5 py-0 ${
-                                String(service.status) === 'new' ? 'bg-blue-500/20 text-blue-400' :
-                                String(service.status) === 'quoted' ? 'bg-amber-500/20 text-amber-400' :
-                                String(service.status) === 'with_purchase_order' ? 'bg-green-500/20 text-green-400' :
+                            <Badge
+                              variant="secondary"
+                              className={`text-xs px-1.5 py-0 ${
+                                String(service.status) === 'new' ? 'bg-info/20 text-info-text' :
+                                String(service.status) === 'quoted' ? 'bg-warning/20 text-warning-text' :
+                                String(service.status) === 'with_purchase_order' ? 'bg-success/20 text-success-text' :
                                 'bg-muted text-muted-foreground'
                               }`}
                             >
@@ -407,9 +407,9 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                           {(service.quoteNumber || service.purchaseOrderNumber) && (
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               {service.quoteNumber && (
-                                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex items-center gap-1 ${
-                                  enableQuote && !overwriteQuote 
-                                    ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' 
+                                <Badge variant="outline" className={`text-xs px-1.5 py-0 flex items-center gap-1 ${
+                                  enableQuote && !overwriteQuote
+                                    ? 'bg-warning/10 text-warning-text border-warning/30'
                                     : 'bg-muted text-muted-foreground border-border'
                                 }`}>
                                   {enableQuote && !overwriteQuote && <Lock className="size-2.5" />}
@@ -417,9 +417,9 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                                 </Badge>
                               )}
                               {service.purchaseOrderNumber && (
-                                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex items-center gap-1 ${
-                                  enablePurchaseOrder && !overwritePO 
-                                    ? 'bg-green-500/10 text-green-500 border-green-500/30' 
+                                <Badge variant="outline" className={`text-xs px-1.5 py-0 flex items-center gap-1 ${
+                                  enablePurchaseOrder && !overwritePO
+                                    ? 'bg-success/10 text-success-text border-success/30'
                                     : 'bg-muted text-muted-foreground border-border'
                                 }`}>
                                   {enablePurchaseOrder && !overwritePO && <Lock className="size-2.5" />}
@@ -479,22 +479,22 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             <div className="px-4 py-3 border-b bg-background/50">
               <span className="text-sm font-medium text-foreground">Campos a modificar</span>
             </div>
-            
+
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
                 {/* Card Cotizaciones */}
                 <div className={`rounded-xl border-2 transition-all ${
-                  enableQuote 
-                    ? 'border-blue-500/40 bg-blue-500/5' 
+                  enableQuote
+                    ? 'border-info/40 bg-info/5'
                     : 'border-border bg-card'
                 }`}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`size-10 rounded-full flex items-center justify-center ${
-                          enableQuote ? 'bg-blue-500/20' : 'bg-muted'
+                          enableQuote ? 'bg-info/20' : 'bg-muted'
                         }`}>
-                          <FileText className={`size-5 ${enableQuote ? 'text-blue-400' : 'text-muted-foreground'}`} />
+                          <FileText className={`size-5 ${enableQuote ? 'text-info-text' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Cotizaciones</h3>
@@ -503,73 +503,73 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                       </div>
                       <Switch checked={enableQuote} onCheckedChange={setEnableQuote} />
                     </div>
-                    
+
                     {enableQuote && (
                       <div className="grid grid-cols-3 gap-3 mt-4 animate-fade-in">
                         <div>
                           <Label className="text-xs text-muted-foreground">Prefijo</Label>
-                          <Input 
-                            value={batchData.quote.prefix} 
-                            onChange={e => updateData('quote', 'prefix', e.target.value)} 
-                            placeholder="COT-" 
-                            className="h-9 bg-background/50" 
+                          <Input
+                            value={batchData.quote.prefix}
+                            onChange={e => updateData('quote', 'prefix', e.target.value)}
+                            placeholder="COT-"
+                            className="h-9 bg-background/50"
                           />
                         </div>
                         <div>
                           <Label className="text-xs text-muted-foreground">Nº Base (mismo)</Label>
-                          <Input 
-                            value={batchData.quote.baseNumber} 
+                          <Input
+                            value={batchData.quote.baseNumber}
                             onChange={e => {
                               updateData('quote', 'baseNumber', e.target.value);
                               if (e.target.value) updateData('quote', 'startingNumber', '');
-                            }} 
-                            placeholder="2024001" 
-                            className="h-9 bg-background/50" 
+                            }}
+                            placeholder="2024001"
+                            className="h-9 bg-background/50"
                           />
                         </div>
                         <div>
                           <Label className="text-xs text-muted-foreground">Nº Inicial (secuencial)</Label>
-                          <Input 
+                          <Input
                             type="number"
-                            value={batchData.quote.startingNumber} 
+                            value={batchData.quote.startingNumber}
                             onChange={e => {
                               updateData('quote', 'startingNumber', e.target.value);
                               if (e.target.value) updateData('quote', 'baseNumber', '');
-                            }} 
-                            placeholder="1001" 
-                            className="h-9 bg-background/50" 
+                            }}
+                            placeholder="1001"
+                            className="h-9 bg-background/50"
                             disabled={!!batchData.quote.baseNumber}
                           />
                         </div>
                         {batchData.quote.startingNumber && activeServices.length > 0 && (
                           <div className="col-span-3">
-                            <p className="text-xs text-blue-400">
+                            <p className="text-xs text-info-text">
                               Se numerarán: {batchData.quote.prefix}{batchData.quote.startingNumber} → {batchData.quote.prefix}{parseInt(batchData.quote.startingNumber) + (overwriteQuote ? activeServices.length : activeServices.length - servicesWithQuote.length) - 1}
                             </p>
                           </div>
                         )}
-                        
+
                         {/* Alerta de servicios con COT existente */}
                         {servicesWithQuote.length > 0 && (
-                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-warning/10 border border-warning/30">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <AlertTriangle className="size-4 text-amber-500" />
-                                <span className="text-xs text-amber-500">
+                                <AlertTriangle className="size-4 text-warning-text" />
+                                <span className="text-xs text-warning-text">
                                   {servicesWithQuote.length} servicio(s) ya tienen COT asignado
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Label className="text-xs text-muted-foreground">Sobrescribir</Label>
-                                <Switch 
-                                  checked={overwriteQuote} 
+                                <Switch
+                                  checked={overwriteQuote}
                                   onCheckedChange={setOverwriteQuote}
                                   className="scale-75"
                                 />
                               </div>
                             </div>
                             {!overwriteQuote && (
-                              <p className="text-[10px] text-muted-foreground mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 Se mantendrán los números existentes
                               </p>
                             )}
@@ -582,17 +582,17 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
                 {/* Card Órdenes de Compra */}
                 <div className={`rounded-xl border-2 transition-all ${
-                  enablePurchaseOrder 
-                    ? 'border-green-500/40 bg-green-500/5' 
+                  enablePurchaseOrder
+                    ? 'border-success/40 bg-success/5'
                     : 'border-border bg-card'
                 }`}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`size-10 rounded-full flex items-center justify-center ${
-                          enablePurchaseOrder ? 'bg-green-500/20' : 'bg-muted'
+                          enablePurchaseOrder ? 'bg-success/20' : 'bg-muted'
                         }`}>
-                          <ShoppingCart className={`size-5 ${enablePurchaseOrder ? 'text-green-400' : 'text-muted-foreground'}`} />
+                          <ShoppingCart className={`size-5 ${enablePurchaseOrder ? 'text-success-text' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Órdenes de Compra</h3>
@@ -601,73 +601,73 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                       </div>
                       <Switch checked={enablePurchaseOrder} onCheckedChange={setEnablePurchaseOrder} />
                     </div>
-                    
+
                     {enablePurchaseOrder && (
                       <div className="grid grid-cols-3 gap-3 mt-4 animate-fade-in">
                         <div>
                           <Label className="text-xs text-muted-foreground">Prefijo</Label>
-                          <Input 
-                            value={batchData.purchase_order.prefix} 
-                            onChange={e => updateData('purchase_order', 'prefix', e.target.value)} 
-                            placeholder="OC-" 
-                            className="h-9 bg-background/50" 
+                          <Input
+                            value={batchData.purchase_order.prefix}
+                            onChange={e => updateData('purchase_order', 'prefix', e.target.value)}
+                            placeholder="OC-"
+                            className="h-9 bg-background/50"
                           />
                         </div>
                         <div>
                           <Label className="text-xs text-muted-foreground">Nº Base (mismo)</Label>
-                          <Input 
-                            value={batchData.purchase_order.baseNumber} 
+                          <Input
+                            value={batchData.purchase_order.baseNumber}
                             onChange={e => {
                               updateData('purchase_order', 'baseNumber', e.target.value);
                               if (e.target.value) updateData('purchase_order', 'startingNumber', '');
-                            }} 
-                            placeholder="2024001" 
-                            className="h-9 bg-background/50" 
+                            }}
+                            placeholder="2024001"
+                            className="h-9 bg-background/50"
                           />
                         </div>
                         <div>
                           <Label className="text-xs text-muted-foreground">Nº Inicial (secuencial)</Label>
-                          <Input 
+                          <Input
                             type="number"
-                            value={batchData.purchase_order.startingNumber} 
+                            value={batchData.purchase_order.startingNumber}
                             onChange={e => {
                               updateData('purchase_order', 'startingNumber', e.target.value);
                               if (e.target.value) updateData('purchase_order', 'baseNumber', '');
-                            }} 
-                            placeholder="1001" 
-                            className="h-9 bg-background/50" 
+                            }}
+                            placeholder="1001"
+                            className="h-9 bg-background/50"
                             disabled={!!batchData.purchase_order.baseNumber}
                           />
                         </div>
                         {batchData.purchase_order.startingNumber && activeServices.length > 0 && (
                           <div className="col-span-3">
-                            <p className="text-xs text-green-400">
+                            <p className="text-xs text-success-text">
                               Se numerarán: {batchData.purchase_order.prefix}{batchData.purchase_order.startingNumber} → {batchData.purchase_order.prefix}{parseInt(batchData.purchase_order.startingNumber) + (overwritePO ? activeServices.length : activeServices.length - servicesWithPO.length) - 1}
                             </p>
                           </div>
                         )}
-                        
+
                         {/* Alerta de servicios con OC existente */}
                         {servicesWithPO.length > 0 && (
-                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-success/10 border border-success/30">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <AlertTriangle className="size-4 text-green-500" />
-                                <span className="text-xs text-green-500">
+                                <AlertTriangle className="size-4 text-success-text" />
+                                <span className="text-xs text-success-text">
                                   {servicesWithPO.length} servicio(s) ya tienen OC asignado
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Label className="text-xs text-muted-foreground">Sobrescribir</Label>
-                                <Switch 
-                                  checked={overwritePO} 
+                                <Switch
+                                  checked={overwritePO}
                                   onCheckedChange={setOverwritePO}
                                   className="scale-75"
                                 />
                               </div>
                             </div>
                             {!overwritePO && (
-                              <p className="text-[10px] text-muted-foreground mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 Se mantendrán los números existentes
                               </p>
                             )}
@@ -681,16 +681,16 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 {/* Card Gestión de Estado */}
                 <div className={`rounded-xl border-2 transition-all ${
                   autoUpdateStatus && (enableQuote || enablePurchaseOrder)
-                    ? 'border-purple-500/40 bg-purple-500/5' 
+                    ? 'border-primary/40 bg-primary/5'
                     : 'border-border bg-card'
                 }`}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`size-10 rounded-full flex items-center justify-center ${
-                          autoUpdateStatus ? 'bg-purple-500/20' : 'bg-muted'
+                          autoUpdateStatus ? 'bg-primary/20' : 'bg-muted'
                         }`}>
-                          <RefreshCw className={`size-5 ${autoUpdateStatus ? 'text-purple-400' : 'text-muted-foreground'}`} />
+                          <RefreshCw className={`size-5 ${autoUpdateStatus ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Gestión Automática de Estado</h3>
@@ -699,21 +699,21 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                       </div>
                       <Switch checked={autoUpdateStatus} onCheckedChange={setAutoUpdateStatus} />
                     </div>
-                    
+
                     {autoUpdateStatus && (enableQuote || enablePurchaseOrder) && (
-                      <div className="mt-3 p-3 rounded-lg bg-purple-500/10 animate-fade-in">
+                      <div className="mt-3 p-3 rounded-lg bg-primary/10 animate-fade-in">
                       <div className="flex items-center gap-2">
-                          <AlertCircle className="size-4 text-purple-600 dark:text-purple-400" />
-                          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Estado resultante:</span>
+                          <AlertCircle className="size-4 text-primary" />
+                          <span className="text-sm font-medium text-foreground">Estado resultante:</span>
                           <Badge className={`${
-                            enablePurchaseOrder 
-                              ? 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30' 
-                              : 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30'
+                            enablePurchaseOrder
+                              ? 'border-success/30 bg-success/20 text-success-text'
+                              : 'border-info/30 bg-info/20 text-info-text'
                           }`}>
                             {enablePurchaseOrder ? 'Con Orden de Compra' : 'Cotizado'}
                           </Badge>
                           {enablePurchaseOrder && enableQuote && (
-                            <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">(OC prevalece)</span>
+                            <span className="text-xs font-medium text-primary">(OC prevalece)</span>
                           )}
                         </div>
                       </div>
@@ -749,8 +749,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 <X className="size-4 mr-2" />
                 Cancelar
               </Button>
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 disabled={isLoading || activeServices.length === 0 || (!enableQuote && !enablePurchaseOrder)}
               >
                 <Check className="size-4 mr-2" />

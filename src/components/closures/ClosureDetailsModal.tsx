@@ -362,7 +362,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
                             <td className="py-2 px-3 text-foreground font-medium">{inv.folio}</td>
                             <td className="py-2 px-3">
                               {inv.numero_fiscal
-                                ? <span className="text-violet-600 font-medium">{inv.numero_fiscal}</span>
+                                ? <span className="text-primary font-medium">{inv.numero_fiscal}</span>
                                 : <span className="text-muted-foreground italic">Sin asignar</span>
                               }
                             </td>

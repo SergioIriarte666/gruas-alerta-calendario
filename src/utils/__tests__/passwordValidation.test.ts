@@ -70,15 +70,15 @@ describe('getPasswordStrength', () => {
 
 describe('getStrengthColor', () => {
   it('returns red-500 for weak', () => {
-    expect(getStrengthColor('weak')).toBe('bg-red-500');
+    expect(getStrengthColor('weak')).toBe('bg-danger');
   });
 
   it('returns yellow-500 for medium', () => {
-    expect(getStrengthColor('medium')).toBe('bg-yellow-500');
+    expect(getStrengthColor('medium')).toBe('bg-warning');
   });
 
   it('returns green-500 for strong', () => {
-    expect(getStrengthColor('strong')).toBe('bg-green-500');
+    expect(getStrengthColor('strong')).toBe('bg-success');
   });
 });
 

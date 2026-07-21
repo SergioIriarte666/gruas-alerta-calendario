@@ -80,7 +80,7 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
                 <SelectTrigger className="bg-card border-border text-foreground">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
-                <SelectContent className="bg-white text-black">
+                <SelectContent className="bg-card text-foreground">
                   <SelectItem value="all">Todos los tipos</SelectItem>
                   {serviceTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id}>
@@ -146,13 +146,13 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
           <Button
             variant="outline"
             onClick={handleClear}
-            className="border-red-600 text-red-400 hover:bg-red-900/20"
+            className="border-danger text-danger-text hover:bg-danger/90"
           >
             Limpiar Filtros
           </Button>
           <Button
             onClick={handleApply}
-            className="bg-tms-green text-black hover:bg-tms-green/80"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Aplicar Filtros
           </Button>

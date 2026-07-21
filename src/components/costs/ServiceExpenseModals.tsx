@@ -48,8 +48,8 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
 
   const getSectionIcon = (name: string) => {
     const lower = name.toLowerCase();
-    if (lower.includes('combustible')) return <Fuel className="size-5 text-red-500" />;
-    if (lower.includes('peaje')) return <Car className="size-5 text-orange-500" />;
+    if (lower.includes('combustible')) return <Fuel className="size-5 text-danger-text" />;
+    if (lower.includes('peaje')) return <Car className="size-5 text-warning-text" />;
     return <Tag className="size-5 text-primary" />;
   };
 
@@ -143,14 +143,14 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
         </DialogHeader>
 
         {currentTotal > 0 && (
-          <Card className="bg-green-900/20 border-green-600">
+          <Card className="bg-success-soft border-success/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calculator className="size-5 text-green-400" />
-                  <span className="font-medium text-green-200">Total Calculado:</span>
+                  <Calculator className="size-5 text-success-text" />
+                  <span className="font-medium text-success-text">Total Calculado:</span>
                 </div>
-                <span className="text-2xl font-bold text-green-400">${currentTotal.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-success-text">${currentTotal.toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
@@ -205,7 +205,7 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || currentTotal <= 0}
-              className="bg-tms-green hover:bg-tms-green/80"
+              className="bg-success text-success-foreground hover:bg-success/90"
             >
               {isSubmitting ? 'Guardando...' : (onComplete ? 'Confirmar y Usar Total' : 'Guardar Gastos')}
             </Button>

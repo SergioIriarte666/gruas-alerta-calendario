@@ -201,7 +201,7 @@ Si no: queda en stock, se descuenta después con movimiento manual
 
 ### 2. Servicios (`/services`)
 - Tabla con paginación + vista pipeline kanban
-- Estados con colores: pendiente (amarillo), en progreso (azul), completado (verde), facturado (gris), etc.
+- Estados expresados con roles semánticos (`warning`, `info`, `success`, `neutral`) según `docs/design-system.md`, siempre acompañados de texto o icono.
 - Selección múltiple con acciones batch: cerrar, actualizar estado, duplicar, eliminar
 - Filtros avanzados: estado, fecha, cliente, operador, grúa, OC
 - Vista móvil adaptada

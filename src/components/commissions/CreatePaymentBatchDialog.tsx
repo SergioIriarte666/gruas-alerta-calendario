@@ -89,7 +89,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="finance-dialog sm:max-w-[425px]">
+      <DialogContent className="finance-dialog sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Crear Lote de Pago</DialogTitle>
         </DialogHeader>

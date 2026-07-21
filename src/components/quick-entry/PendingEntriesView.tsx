@@ -24,10 +24,10 @@ const TYPE_LABELS = {
 };
 
 const TYPE_COLORS = {
-  service: 'bg-blue-100 text-blue-800',
-  cost: 'bg-red-100 text-red-800',
-  inventory: 'bg-green-100 text-green-800',
-  maintenance: 'bg-yellow-100 text-yellow-800',
+  service: 'border-info/30 bg-info-soft text-info-text',
+  cost: 'border-danger/30 bg-danger-soft text-danger-text',
+  inventory: 'border-success/30 bg-success-soft text-success-text',
+  maintenance: 'border-warning/30 bg-warning-soft text-warning-text',
 };
 
 export function PendingEntriesView() {
@@ -331,7 +331,7 @@ export function PendingEntriesView() {
 
       {/* Service Form Modal */}
       {isServiceFormOpen && selectedEntry && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
           <div className="bg-background rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">

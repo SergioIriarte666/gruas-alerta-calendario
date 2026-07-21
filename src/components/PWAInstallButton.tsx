@@ -21,7 +21,7 @@ const PWAInstallButton: React.FC = () => {
       onClick={handleInstallClick}
       variant="outline"
       size="sm"
-      className="border-tms-green text-tms-green hover:bg-tms-green hover:text-black"
+      className="border-success/50 text-success-text hover:bg-success hover:text-success-foreground"
       title="Instalar aplicación"
     >
       <Download className="size-4 mr-2" />

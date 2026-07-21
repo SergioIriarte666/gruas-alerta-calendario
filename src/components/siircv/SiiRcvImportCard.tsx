@@ -145,13 +145,13 @@ export function SiiRcvImportCard({ entityRut, onEntityRutChange }: SiiRcvImportC
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-emerald-600">{validRows.length} filas válidas</Badge>
+              <Badge variant="success">{validRows.length} filas válidas</Badge>
               {invalidCount > 0 && <Badge variant="destructive">{invalidCount} filas inválidas</Badge>}
             </div>
 
             {validRows.length > 0 && (
               <div className="overflow-x-auto rounded-lg border">
-                <Table className="min-w-[800px]">
+                <Table className="min-w-[50rem]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>

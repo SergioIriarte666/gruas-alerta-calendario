@@ -9,7 +9,12 @@ interface CostAnalysisViewProps {
   filters?: InventoryReportFilters;
 }
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+const COLORS = Array.of(
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))',
+  'hsl(var(--muted))',
+);
 
 export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) => {
   const { data: costData, isLoading } = useCostAnalysisReport(filters);
@@ -194,7 +199,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
                 labelLine={false}
                 label={({ category, total_cost }) => `${category}: ${formatCurrency(total_cost)}`}
                 outerRadius={100}
-                fill="#8884d8"
+                fill="hsl(var(--primary))"
                 dataKey="total_cost"
               >
                 {costData.costByCategory.map((entry, index) => (

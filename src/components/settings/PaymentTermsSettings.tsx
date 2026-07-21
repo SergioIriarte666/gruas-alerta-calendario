@@ -59,8 +59,8 @@ export const PaymentTermsSettings = () => {
                     variant={term.is_active ? 'default' : 'secondary'}
                     className={
                       term.is_active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 text-xs'
+                        ? 'bg-success-soft text-success text-xs'
+                        : 'bg-muted text-muted-foreground text-xs'
                     }
                   >
                     {term.is_active ? 'Activo' : 'Inactivo'}

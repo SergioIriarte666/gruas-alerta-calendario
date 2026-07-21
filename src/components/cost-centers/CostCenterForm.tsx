@@ -128,7 +128,7 @@ export const CostCenterForm = ({ isOpen, onClose, costCenter }: CostCenterFormPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="configuration-dialog sm:max-w-[600px]">
+      <DialogContent className="configuration-dialog sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {costCenter ? 'Editar Centro de Costo' : 'Nuevo Centro de Costo'}
@@ -263,7 +263,7 @@ export const CostCenterForm = ({ isOpen, onClose, costCenter }: CostCenterFormPr
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
                     <FormLabel>Centro Activo</FormLabel>
-                    <div className="text-[0.8rem] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       Permite asignar costos a este centro
                     </div>
                   </div>

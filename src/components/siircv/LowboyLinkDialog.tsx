@@ -106,7 +106,7 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
           />
         </div>
 
-        <ScrollArea className="h-[340px] rounded-md border">
+        <ScrollArea className="h-[21.25rem] rounded-md border">
           {loading ? (
             <div className="flex h-40 items-center justify-center"><Loader2 className="size-6 animate-spin" /></div>
           ) : candidates.length ? (
@@ -144,12 +144,12 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate font-medium">{title}</span>
                         {'status' in candidate && <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">{SALE_STATUS_LABEL[candidate.status as LowboySaleStatus] ?? candidate.status}</span>}
-                        {financedByG5n && <span className="rounded-full border border-sky-600/40 bg-sky-600/5 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:text-sky-300">Financiado por G5N</span>}
+                        {financedByG5n && <span className="rounded-full border border-info/40 bg-info-soft px-2 py-0.5 text-xs font-semibold text-info">Financiado por G5N</span>}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">{detail}</span>
                       <span className="mt-1 flex flex-wrap gap-1">
-                        {rutMatches && <span className="rounded-full border border-emerald-600/40 px-2 py-0.5 text-xs font-semibold text-emerald-700">RUT coincide</span>}
-                        {amountMatches && <span className="rounded-full border border-emerald-600/40 px-2 py-0.5 text-xs font-semibold text-emerald-700">Monto coincide</span>}
+                        {rutMatches && <span className="rounded-full border border-success/40 px-2 py-0.5 text-xs font-semibold text-success">RUT coincide</span>}
+                        {amountMatches && <span className="rounded-full border border-success/40 px-2 py-0.5 text-xs font-semibold text-success">Monto coincide</span>}
                       </span>
                     </span>
                     <span className="whitespace-nowrap font-semibold">{formatCLP(amount)}</span>
@@ -166,7 +166,7 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
         </ScrollArea>
 
         {!isPurchase && selectedSale && ['confirmada', 'ejecutada'].includes(selectedSale.status) && (
-          <label className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+          <label className="flex items-start gap-3 rounded-md border border-warning/40 bg-warning-soft p-3">
             <Checkbox checked={markAsInvoiced} onCheckedChange={(checked) => setMarkAsInvoiced(checked === true)} />
             <span>
               <span className="block text-sm font-medium">Marcar la venta como facturada</span>

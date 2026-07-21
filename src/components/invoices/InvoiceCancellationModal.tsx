@@ -86,7 +86,7 @@ export const InvoiceCancellationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="finance-dialog border-border/70 bg-card p-0 sm:max-w-[500px]">
+      <DialogContent className="finance-dialog border-border/70 bg-card p-0 sm:max-w-lg">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <Ban className="size-5" />

@@ -19,11 +19,11 @@ export const ConnectionStatus = () => {
   }
   if (!isOnline) {
     return <div className="fixed top-4 right-4 z-50 space-y-2">
-        <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1 animate-pulse">
+        <Badge variant="outline" className="flex items-center gap-1 border-danger/30 bg-danger/20 text-danger-text animate-pulse">
           <WifiOff className="size-3" />
           Sin conexión
         </Badge>
-        {pendingActions > 0 && <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 flex items-center gap-1">
+        {pendingActions > 0 && <Badge variant="outline" className="flex items-center gap-1 border-warning/30 bg-warning/20 text-warning-text">
             <RefreshCw className="size-3" />
             {pendingActions} acciones pendientes
           </Badge>}
@@ -31,7 +31,7 @@ export const ConnectionStatus = () => {
   }
   if (isOnline && pendingActions > 0) {
     return <div className="fixed top-4 right-4 z-50">
-        <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+        <Badge variant="outline" className="flex items-center gap-1 border-info/30 bg-info/20 text-info-text">
           <RefreshCw className="size-3 animate-spin" />
           Sincronizando... {pendingActions}
         </Badge>

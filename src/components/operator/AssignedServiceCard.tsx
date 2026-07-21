@@ -23,35 +23,35 @@ const getImminenceDays = (serviceDate: string): number => {
 
 const getUrgencyBorder = (serviceDate: string, status: Service['status']): string => {
   if (status === 'completed')            return 'border-l-muted-foreground/40';
-  if (status === 'in_progress')          return 'border-l-blue-500';
-  if (status === 'inspection_completed') return 'border-l-orange-500';
+  if (status === 'in_progress')          return 'border-l-info';
+  if (status === 'inspection_completed') return 'border-l-warning';
   const days = getImminenceDays(serviceDate);
-  if (days <= 0) return 'border-l-red-500';
+  if (days <= 0) return 'border-l-danger';
   if (days === 1) return 'border-l-primary';
-  if (days <= 3) return 'border-l-amber-500';
+  if (days <= 3) return 'border-l-warning';
   return 'border-l-muted-foreground/40';
 };
 
 const UrgencyBadge = ({ serviceDate, status }: { serviceDate: string; status: Service['status'] }) => {
   if (status === 'completed' || status === 'in_progress' || status === 'inspection_completed') return null;
   const days = getImminenceDays(serviceDate);
-  if (days < 0) return <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-400">Vencido</span>;
-  if (days === 0) return <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-400">Hoy</span>;
-  if (days === 1) return <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Mañana</span>;
-  if (days <= 7)  return <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">en {days}d</span>;
+  if (days < 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text dark:text-danger-text">Vencido</span>;
+  if (days === 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text dark:text-danger-text">Hoy</span>;
+  if (days === 1) return <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">Mañana</span>;
+  if (days <= 7)  return <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">en {days}d</span>;
   return null;
 };
 
 const StatusBadge = ({ status }: { status: Service['status'] }) => {
   const map: Record<string, { label: string; className: string }> = {
     pending:              { label: 'Pendiente',    className: 'bg-muted text-muted-foreground' },
-    in_progress:          { label: 'En curso',     className: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400' },
-    inspection_completed: { label: 'Por entregar', className: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400' },
-    completed:            { label: 'Completado',   className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' },
+    in_progress:          { label: 'En curso',     className: 'bg-info-soft text-info-text dark:text-info-text' },
+    inspection_completed: { label: 'Por entregar', className: 'bg-warning-soft text-warning-text dark:text-warning-text' },
+    completed:            { label: 'Completado',   className: 'bg-success-soft text-success-text dark:text-success-text' },
   };
   const chip = map[status];
   if (!chip) return null;
-  return <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded', chip.className)}>{chip.label}</span>;
+  return <span className={cn('text-xs font-semibold px-1.5 py-0.5 rounded', chip.className)}>{chip.label}</span>;
 };
 
 // ── contenido común ────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ const CardBody = ({ service, showNavigation = false }: { service: Service; showN
         <button
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); openNavigation(service.destination); }}
-          className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary transition-all active:scale-95"
+          className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-medium text-primary transition-all active:scale-95"
         >
           <Navigation className="size-3" />
           Nav
@@ -133,7 +133,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   if (status === 'completed') {
     return (
       <div className={cn(baseCard, 'opacity-60')}>
-        <CardHeader service={service} rightSlot={<CheckCircle className="size-4 text-emerald-500 flex-shrink-0" />} />
+        <CardHeader service={service} rightSlot={<CheckCircle className="size-4 text-success-text flex-shrink-0" />} />
         <CardBody service={service} />
       </div>
     );
@@ -144,9 +144,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
         <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
-          <CardHeader service={service} rightSlot={<Play className="size-4 text-blue-400 flex-shrink-0" />} />
+          <CardHeader service={service} rightSlot={<Play className="size-4 text-info-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-medium text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/50 dark:text-blue-400">
+          <div className="mt-3 rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text dark:text-info-text">
             Toca para continuar con la inspección inicial
           </div>
         </div>
@@ -159,9 +159,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
         <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
-          <CardHeader service={service} rightSlot={<Package className="size-4 text-orange-400 flex-shrink-0" />} />
+          <CardHeader service={service} rightSlot={<Package className="size-4 text-warning-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-center text-xs font-medium text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/50 dark:text-orange-400">
+          <div className="mt-3 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-center text-xs font-medium text-warning-text dark:text-warning-text">
             Toca para completar la entrega
           </div>
         </div>
@@ -179,7 +179,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           type="button"
           onClick={handleStartService}
           disabled={updateServiceStatusMutation.isPending}
-          className="mt-3 w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-medium text-blue-700 transition-transform active:scale-[0.99] disabled:opacity-60 dark:border-blue-900/50 dark:bg-blue-950/50 dark:text-blue-400"
+          className="mt-3 w-full rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text transition-transform active:scale-[0.99] disabled:opacity-60 dark:text-info-text"
         >
           {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
         </button>

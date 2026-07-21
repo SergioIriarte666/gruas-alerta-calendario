@@ -66,7 +66,7 @@ export const ResolveServiceDisputeModal = ({
       <DialogContent className="bg-card border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <CheckCircle2 className="size-5 text-emerald-500" />
+            <CheckCircle2 className="size-5 text-success-text" />
             Resolver disputa {serviceFolio ? `— ${serviceFolio}` : ''}
           </DialogTitle>
         </DialogHeader>

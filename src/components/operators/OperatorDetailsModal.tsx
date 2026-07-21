@@ -64,13 +64,13 @@ const OperatorDetailsModalInner = ({
     switch (status) {
       case 'vigente':
         return (
-          <Badge variant="outline" className="text-green-600 border-green-600">
+          <Badge variant="outline" className="border-success text-success-text">
             Vigente
           </Badge>
         );
       case 'por_vencer':
         return (
-          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+          <Badge variant="outline" className="border-warning text-warning-text">
             Por vencer
           </Badge>
         );
@@ -88,7 +88,7 @@ const OperatorDetailsModalInner = ({
     const days = getDaysUntilExpiry(doc.expiryDate);
     if (status === 'por_vencer' && days !== null) {
       return (
-        <span className="text-xs text-yellow-600">
+        <span className="text-xs text-warning-text">
           {days === 0 ? 'Vence hoy' : `Vence en ${days} días`}
         </span>
       );

@@ -75,10 +75,10 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                 <tr key={line.key} className={cn('border-b last:border-0 align-top transition-opacity', isDiscarded && 'opacity-40')}>
                   <td className="py-2 pr-3">{line.lineNumber}</td>
                   <td className="py-2 pr-3 font-mono text-xs">{line.item.product_code || '-'}</td>
-                  <td className="py-2 pr-3 min-w-[320px]">
+                  <td className="min-w-[20rem] py-2 pr-3">
                     <div className="space-y-1">
                       <Textarea value={line.item.description} onChange={e => onUpdateLineDescription(line.lineNumber, e.target.value)}
-                        disabled={isImporting} rows={2} className="min-h-[72px] resize-y"
+                        disabled={isImporting} rows={2} className="min-h-[4.5rem] resize-y"
                         placeholder="Edita la glosa para mejorar la coincidencia con el catálogo" />
                       <p className="text-xs text-muted-foreground">La validación y la coincidencia se recalculan al editar la glosa.</p>
                     </div>
@@ -86,7 +86,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                   <td className="py-2 pr-3">{line.item.quantity}</td>
                   <td className="py-2 pr-3">{formatCurrency(line.item.unit_price)}</td>
                   <td className="py-2 pr-3">{formatCurrency(computeLineTotal(line.item))}</td>
-                  <td className="py-2 pr-3 min-w-[280px]">
+                  <td className="min-w-[17.5rem] py-2 pr-3">
                     {line.matchedItem ? (
                       <div>
                         <div className="font-medium">{line.matchedItem.name}</div>
@@ -103,7 +103,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                         {line.candidates.length > 0 && (
                           <div className="space-y-1">
                             <span className="block text-xs font-medium text-muted-foreground">{line.candidates.length} sugerencia(s):</span>
-                            <div className="max-h-[120px] space-y-1 overflow-y-auto">
+                            <div className="max-h-[7.5rem] space-y-1 overflow-y-auto">
                               {line.candidates.slice(0, 5).map(candidate => (
                                 <div key={candidate.id} className="flex items-center justify-between gap-1 rounded border bg-muted/50 p-1.5 text-xs">
                                   <div className="min-w-0 flex-1"><div className="truncate font-medium">{candidate.name}</div><div className="text-muted-foreground">{candidate.sku || 'Sin SKU'}</div></div>
@@ -122,7 +122,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                               <span>Buscar en catálogo...</span><ChevronsUpDown className="size-3 opacity-50" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[280px] p-0" align="start">
+                          <PopoverContent className="w-[17.5rem] p-0" align="start">
                             <Command>
                               <CommandInput placeholder="Buscar por nombre o SKU..." />
                               <CommandList>
@@ -158,7 +158,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                         <RotateCcw className="size-3.5" />
                       </Button>
                     ) : (
-                      <Button type="button" size="sm" variant="ghost" className="size-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-700"
+                      <Button type="button" size="sm" variant="ghost" className="size-7 p-0 text-danger hover:bg-danger-soft hover:text-danger"
                         onClick={() => onDiscardLine(line.key)} disabled={isImporting} title="Descartar línea">
                         <X className="size-3.5" />
                       </Button>

@@ -128,7 +128,7 @@ function ComparisonChart({ comparison }: { comparison: IvaF29MonthSummary[] }) {
         <CardDescription>IVA débito fiscal vs. IVA de facturas ya cobradas</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[280px] w-full">
+        <ChartContainer config={chartConfig} className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -192,7 +192,7 @@ function DetailTable({ rows, canEdit, pendingId, onToggle }: DetailProps) {
                 />
               </TableCell>
               <TableCell className="whitespace-nowrap font-medium">{row.numeroFiscal || row.folio}</TableCell>
-              <TableCell className="max-w-[220px] truncate">{row.clientName}</TableCell>
+              <TableCell className="max-w-56 truncate">{row.clientName}</TableCell>
               <TableCell className="whitespace-nowrap">{row.issueDate}</TableCell>
               <TableCell className="whitespace-nowrap text-right">{formatCurrency(row.neto)}</TableCell>
               <TableCell className="whitespace-nowrap text-right font-medium">{formatCurrency(row.iva)}</TableCell>

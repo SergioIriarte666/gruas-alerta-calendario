@@ -176,7 +176,7 @@ export const EditHistoricalInvoiceModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] overflow-clip">
+      <DialogContent className="sm:max-w-xl w-[95vw] overflow-clip">
         <DialogHeader>
           <DialogTitle>Editar Factura Histórica {invoice?.folio}</DialogTitle>
           <DialogDescription>
@@ -186,9 +186,9 @@ export const EditHistoricalInvoiceModal = ({
 
         <div className="space-y-4 py-4">
           {isSystemInvoice && (
-            <Alert variant="destructive" className="border-amber-300 bg-amber-50">
-              <ShieldAlert className="size-4 !text-amber-600" />
-              <AlertDescription className="text-amber-800 text-xs">
+            <Alert variant="destructive" className="border-warning bg-warning-soft">
+              <ShieldAlert className="size-4 !text-warning-text" />
+              <AlertDescription className="text-warning-text text-xs">
                 Esta factura fue generada por el sistema y está vinculada a cierres, servicios y costos. 
                 Solo se permiten cambios en notas y metadatos. Para editar estado u origen, use el módulo de Facturación.
               </AlertDescription>
@@ -257,7 +257,7 @@ export const EditHistoricalInvoiceModal = ({
                 setProductServiceDescription(e.target.value);
                 if (descriptionError) setDescriptionError('');
               }}
-              className="min-h-[100px]"
+              className="min-h-24"
               placeholder="Describe el motivo o razón que originó la creación del documento..."
             />
             {descriptionError && (
@@ -271,7 +271,7 @@ export const EditHistoricalInvoiceModal = ({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-24"
               placeholder="Notas internas..."
             />
           </div>

@@ -564,7 +564,7 @@ const DocumentLibrary = () => {
                     className={cn(getExpiryState(document.expires_at) === 'expired' && 'bg-danger/5')}
                   >
                     <TableCell>
-                      <div className="flex min-w-[220px] items-start gap-3">
+                      <div className="flex min-w-[13.75rem] items-start gap-3">
                         <div className="mt-0.5 rounded-lg border border-border/70 bg-muted/40 p-2">
                           <FileText className="size-4 text-primary" />
                         </div>
@@ -579,7 +579,7 @@ const DocumentLibrary = () => {
                           {document.tags.length > 0 && (
                             <div className="mt-1 flex flex-wrap gap-1">
                               {document.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="px-1.5 py-0 text-[10px]">{tag}</Badge>
+                                <Badge key={tag} variant="outline" className="px-1.5 py-0 text-xs">{tag}</Badge>
                               ))}
                             </div>
                           )}
@@ -597,7 +597,7 @@ const DocumentLibrary = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <p className="max-w-[180px] truncate">{document.file_name}</p>
+                        <p className="max-w-[11.25rem] truncate">{document.file_name}</p>
                         <p className="text-xs text-muted-foreground">{formatBytes(document.file_size)}</p>
                       </div>
                     </TableCell>
@@ -658,7 +658,7 @@ const DocumentLibrary = () => {
                   </div>
                   {document.description && <p className="line-clamp-2 text-sm text-muted-foreground">{document.description}</p>}
                   <div className="flex flex-wrap gap-1">
-                    {document.tags.map((tag) => <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>)}
+                    {document.tags.map((tag) => <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>)}
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                     <span>Fecha: {formatDate(document.document_date)}</span>

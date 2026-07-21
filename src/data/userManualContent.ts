@@ -9,6 +9,7 @@ export interface ManualChapter {
   number: number;
   title: string;
   color: string;
+  softColor: string;
   sections: ManualSection[];
 }
 
@@ -17,7 +18,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap1',
     number: 1,
     title: 'Introducción al sistema',
-    color: '#534AB7',
+    color: 'hsl(var(--primary))',
+    softColor: 'hsl(var(--primary) / 0.1)',
     sections: [
       {
         id: 'cap1-1',
@@ -45,7 +47,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap2',
     number: 2,
     title: 'Operaciones',
-    color: '#1D9E75',
+    color: 'hsl(var(--success-text))',
+    softColor: 'hsl(var(--success-soft))',
     sections: [
       {
         id: 'cap2-1',
@@ -73,7 +76,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap3',
     number: 3,
     title: 'Recursos (Flota y Personal)',
-    color: '#185FA5',
+    color: 'hsl(var(--info-text))',
+    softColor: 'hsl(var(--info-soft))',
     sections: [
       {
         id: 'cap3-1',
@@ -96,7 +100,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap4',
     number: 4,
     title: 'Inventario y Proveedores',
-    color: '#854F0B',
+    color: 'hsl(var(--warning-text))',
+    softColor: 'hsl(var(--warning-soft))',
     sections: [
       {
         id: 'cap4-1',
@@ -114,7 +119,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap5',
     number: 5,
     title: 'Finanzas',
-    color: '#993556',
+    color: 'hsl(var(--danger-text))',
+    softColor: 'hsl(var(--danger-soft))',
     sections: [
       {
         id: 'cap5-1',
@@ -157,7 +163,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap6',
     number: 6,
     title: 'Análisis y Reportes',
-    color: '#3B6D11',
+    color: 'hsl(var(--chart-1))',
+    softColor: 'hsl(var(--success-soft))',
     sections: [
       {
         id: 'cap6-1',
@@ -175,7 +182,8 @@ export const manualChapters: ManualChapter[] = [
     id: 'cap7',
     number: 7,
     title: 'Configuración del Sistema',
-    color: '#5F5E5A',
+    color: 'hsl(var(--muted-foreground))',
+    softColor: 'hsl(var(--muted))',
     sections: [
       {
         id: 'cap7-1',

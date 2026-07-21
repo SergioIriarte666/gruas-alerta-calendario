@@ -56,10 +56,10 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Entradas</CardTitle>
-            <ArrowUpRight className="size-4 text-green-500" />
+            <ArrowUpRight className="size-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{movementData.entriesCount}</div>
+            <div className="text-2xl font-bold text-success">{movementData.entriesCount}</div>
             <p className="text-xs text-muted-foreground">
               Valor: {formatCurrency(movementData.totalEntriesValue)}
             </p>
@@ -69,10 +69,10 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Salidas</CardTitle>
-            <ArrowDownLeft className="size-4 text-red-500" />
+            <ArrowDownLeft className="size-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{movementData.exitsCount}</div>
+            <div className="text-2xl font-bold text-danger">{movementData.exitsCount}</div>
             <p className="text-xs text-muted-foreground">
               Valor: {formatCurrency(movementData.totalExitsValue)}
             </p>
@@ -83,14 +83,14 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Balance Neto</CardTitle>
             {movementData.entriesCount >= movementData.exitsCount ? (
-              <TrendingUp className="size-4 text-green-500" />
+              <TrendingUp className="size-4 text-success" />
             ) : (
-              <TrendingDown className="size-4 text-red-500" />
+              <TrendingDown className="size-4 text-danger" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              movementData.entriesCount >= movementData.exitsCount ? 'text-green-600' : 'text-red-600'
+              movementData.entriesCount >= movementData.exitsCount ? 'text-success' : 'text-danger'
             }`}>
               {movementData.entriesCount - movementData.exitsCount}
             </div>

@@ -32,9 +32,9 @@ const SERVICE_STATUSES: { value: ServiceStatus; label: string }[] = [
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'completed': case 'invoiced': return 'bg-green-100 text-green-800';
-    case 'in_progress': return 'bg-blue-100 text-blue-800';
-    case 'cancelled': case 'failed': return 'bg-red-100 text-red-800';
+    case 'completed': case 'invoiced': return 'border-success/30 bg-success-soft text-success-text';
+    case 'in_progress': return 'border-info/30 bg-info-soft text-info-text';
+    case 'cancelled': case 'failed': return 'border-danger/30 bg-danger-soft text-danger-text';
     default: return 'bg-muted text-muted-foreground';
   }
 };
@@ -124,7 +124,7 @@ export const ForceStatusChangeTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <RefreshCw className="size-5 text-amber-600" />
+            <RefreshCw className="size-5 text-warning-text" />
             Cambio Forzado de Estado
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -151,7 +151,7 @@ export const ForceStatusChangeTool = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                 {service.folio}
-                <Badge className={statusColor(service.status)}>
+                <Badge variant="outline" className={statusColor(service.status)}>
                   {SERVICE_STATUSES.find(s => s.value === service.status)?.label || service.status}
                 </Badge>
               </CardTitle>
@@ -180,7 +180,7 @@ export const ForceStatusChangeTool = () => {
 
             {/* Warnings */}
             {service.hasInvoice && (
-              <div className="p-3 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+              <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning-text">
                 <strong>⚠️ Atención:</strong> Este servicio tiene una factura vinculada. Cambiar el estado no eliminará la relación. Usa "Liberación de Servicios" si necesitas desvincular.
               </div>
             )}
@@ -204,7 +204,7 @@ export const ForceStatusChangeTool = () => {
               <div className="p-3 rounded-md border bg-muted/30 text-sm space-y-1">
                 <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Vista previa del impacto</h4>
                 <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-                  <li>Estado cambiará de <Badge variant="outline" className="text-[10px]">{SERVICE_STATUSES.find(s => s.value === service.status)?.label}</Badge> a <Badge variant="outline" className="text-[10px]">{SERVICE_STATUSES.find(s => s.value === targetStatus)?.label}</Badge></li>
+                  <li>Estado cambiará de <Badge variant="outline" className="text-xs">{SERVICE_STATUSES.find(s => s.value === service.status)?.label}</Badge> a <Badge variant="outline" className="text-xs">{SERVICE_STATUSES.find(s => s.value === targetStatus)?.label}</Badge></li>
                   {['pending', 'in_progress', 'completed', 'with_purchase_order'].includes(targetStatus) && service.invoice_folio && (
                     <li>Se limpiará el campo invoice_folio</li>
                   )}

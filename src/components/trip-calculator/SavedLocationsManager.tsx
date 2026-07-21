@@ -60,7 +60,7 @@ export const SavedLocationsManager = () => {
       <DialogContent className="finance-dialog max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="size-5 text-violet-600" />
+            <MapPin className="size-5 text-primary" />
             Ubicaciones Guardadas
           </DialogTitle>
         </DialogHeader>
@@ -104,7 +104,7 @@ export const SavedLocationsManager = () => {
           <Button
             onClick={handleAdd}
             disabled={addLocation.isPending}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white gap-2"
+            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             size="sm"
           >
             <Plus className="size-4" />

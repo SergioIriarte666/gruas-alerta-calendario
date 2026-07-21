@@ -155,7 +155,7 @@ export const CostSummaryPanel = ({
               <div className="bg-muted/50 rounded-lg p-2 space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Pieza:</span>
-                  <span className="font-medium truncate max-w-[120px]">{partName}</span>
+                  <span className="font-medium truncate max-w-28">{partName}</span>
                 </div>
                 {quantity && (
                   <div className="flex justify-between">

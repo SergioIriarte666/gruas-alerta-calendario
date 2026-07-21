@@ -378,7 +378,7 @@ export const HistoricalResults: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={period} onValueChange={(v) => setPeriod(v as PeriodType)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -392,7 +392,7 @@ export const HistoricalResults: React.FC = () => {
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("w-[130px] text-left text-xs", !customFrom && "text-muted-foreground")}>
+                  <Button variant="outline" size="sm" className={cn("w-32 text-left text-xs", !customFrom && "text-muted-foreground")}>
                     <CalendarIcon className="mr-1 size-3" />
                     {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                   </Button>
@@ -403,7 +403,7 @@ export const HistoricalResults: React.FC = () => {
               </Popover>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("w-[130px] text-left text-xs", !customTo && "text-muted-foreground")}>
+                  <Button variant="outline" size="sm" className={cn("w-32 text-left text-xs", !customTo && "text-muted-foreground")}>
                     <CalendarIcon className="mr-1 size-3" />
                     {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                   </Button>
@@ -416,7 +416,7 @@ export const HistoricalResults: React.FC = () => {
           )}
 
           <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-36">
               <SelectValue placeholder="Origen" />
             </SelectTrigger>
             <SelectContent>
@@ -426,7 +426,7 @@ export const HistoricalResults: React.FC = () => {
             </SelectContent>
           </Select>
 
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge variant="secondary" className="text-xs">
             Período: {format(dateRange.from, 'dd/MM/yy')} - {format(dateRange.to, 'dd/MM/yy')} · Origen: {sourceLabel}
           </Badge>
         </div>
@@ -469,7 +469,7 @@ export const HistoricalResults: React.FC = () => {
           title="Resultado (Ventas − Compras)"
           value={formatCurrency(grossMargin)}
           description={grossMargin >= 0 ? 'Positivo' : 'Negativo'}
-          valueClassName={grossMargin >= 0 ? 'text-green-600' : 'text-destructive'}
+          valueClassName={grossMargin >= 0 ? 'text-success-text' : 'text-destructive'}
           variation={marginVariation}
           tooltip="Diferencia simple entre ventas y compras del período. No es un margen bruto contable (no descuenta costo de ventas/COGS)."
         />
@@ -577,7 +577,7 @@ export const HistoricalResults: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Trophy className="size-4 text-yellow-500" /> Top 5 Clientes
+              <Trophy className="size-4 text-warning-text" /> Top 5 Clientes
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -587,7 +587,7 @@ export const HistoricalResults: React.FC = () => {
               const maxVal = topClients[0]?.total || 1;
               return (
                 <div key={i} className="flex items-center gap-3">
-                  <Badge variant="outline" className="size-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
+                  <Badge variant="outline" className="size-6 flex items-center justify-center text-xs shrink-0">{i + 1}</Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{c.name}</p>
                     <div className="w-full bg-muted rounded-full h-1.5 mt-1">
@@ -604,7 +604,7 @@ export const HistoricalResults: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Building2 className="size-4 text-blue-500" /> Top 5 Proveedores
+              <Building2 className="size-4 text-info-text" /> Top 5 Proveedores
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -614,7 +614,7 @@ export const HistoricalResults: React.FC = () => {
               const maxVal = topSuppliers[0]?.total || 1;
               return (
                 <div key={i} className="flex items-center gap-3">
-                  <Badge variant="outline" className="size-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
+                  <Badge variant="outline" className="size-6 flex items-center justify-center text-xs shrink-0">{i + 1}</Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{s.name}</p>
                     <div className="w-full bg-muted rounded-full h-1.5 mt-1">
@@ -637,7 +637,7 @@ export const HistoricalResults: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-          <Table className="min-w-[640px]">
+          <Table className="min-w-[40rem]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Mes</TableHead>
@@ -649,26 +649,26 @@ export const HistoricalResults: React.FC = () => {
             </TableHeader>
             <TableBody>
               {monthlySummary.map((m, i) => (
-                <TableRow key={i} className={cn(m.isNegative && 'bg-destructive/5', m.isMissingData && 'bg-amber-50/50 dark:bg-amber-950/20')}>
+                <TableRow key={i} className={cn(m.isNegative && 'bg-destructive/5', m.isMissingData && 'bg-warning-soft/50')}>
                   <TableCell className="text-xs font-medium capitalize">
                     {m.isNegative && <AlertTriangle className="size-3 text-destructive inline mr-1" />}
-                    {m.isMissingData && <AlertTriangle className="size-3 text-amber-500 inline mr-1" />}
+                    {m.isMissingData && <AlertTriangle className="size-3 text-warning-text inline mr-1" />}
                     {m.month}
                   </TableCell>
                   <TableCell className="text-xs text-right">
                     {m.isMissingData ? (
-                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-300 text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400">
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 border-warning text-warning-text bg-warning-soft">
                         Sin datos - ¿Falta importación?
                       </Badge>
                     ) : formatCurrency(m.ventas)}
                   </TableCell>
                   <TableCell className="text-xs text-right">{formatCurrency(m.compras)}</TableCell>
-                  <TableCell className={cn("text-xs text-right font-semibold", m.isNegative ? 'text-destructive' : 'text-green-600')}>
+                  <TableCell className={cn("text-xs text-right font-semibold", m.isNegative ? 'text-destructive' : 'text-success-text')}>
                     {formatCurrency(m.margen)}
                   </TableCell>
                   <TableCell className="text-xs text-right">
                     {m.variation !== null ? (
-                      <Badge variant={m.variation >= 0 ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0">
+                      <Badge variant={m.variation >= 0 ? 'default' : 'destructive'} className="text-xs px-1.5 py-0">
                         {m.variation >= 0 ? '+' : ''}{m.variation.toFixed(1)}%
                       </Badge>
                     ) : (
@@ -682,7 +682,7 @@ export const HistoricalResults: React.FC = () => {
                 <TableCell className="text-xs font-bold">TOTAL</TableCell>
                 <TableCell className="text-xs text-right font-bold">{formatCurrency(totalSales)}</TableCell>
                 <TableCell className="text-xs text-right font-bold">{formatCurrency(totalPurchases)}</TableCell>
-                <TableCell className={cn("text-xs text-right font-bold", grossMargin >= 0 ? 'text-green-600' : 'text-destructive')}>
+                <TableCell className={cn("text-xs text-right font-bold", grossMargin >= 0 ? 'text-success-text' : 'text-destructive')}>
                   {formatCurrency(grossMargin)}
                 </TableCell>
                 <TableCell />
@@ -711,7 +711,7 @@ const KPICard: React.FC<{
   <Card className="bg-card border overflow-hidden">
     <CardContent className="p-3 sm:p-4">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+        <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
           {title}
           {tooltip && (
             <TooltipProvider>
@@ -719,7 +719,7 @@ const KPICard: React.FC<{
                 <TooltipTrigger asChild>
                   <Info className="size-3 text-muted-foreground/70" aria-label={`Aclaración sobre ${title}`} />
                 </TooltipTrigger>
-                <UiTooltipContent className="max-w-[220px] text-xs">{tooltip}</UiTooltipContent>
+                <UiTooltipContent className="max-w-56 text-xs">{tooltip}</UiTooltipContent>
               </UiTooltip>
             </TooltipProvider>
           )}
@@ -728,12 +728,12 @@ const KPICard: React.FC<{
       </div>
       <div className={cn("text-lg sm:text-2xl font-bold truncate", valueClassName || 'text-foreground')}>{value}</div>
       <div className="flex items-center gap-1.5 mt-0.5">
-        <p className="text-[10px] sm:text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs sm:text-xs text-muted-foreground">{description}</p>
         {variation !== undefined && variation !== null && (
           <span
             className={cn(
-              "text-[10px] font-medium px-1 rounded",
-              variation >= 0 ? 'text-green-700 bg-green-50' : 'text-destructive bg-destructive/10'
+              "text-xs font-medium px-1 rounded",
+              variation >= 0 ? 'text-success-text bg-success-soft' : 'text-destructive bg-destructive/10'
             )}
             title="Variación vs. período anterior equivalente"
           >

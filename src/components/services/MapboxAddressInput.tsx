@@ -115,7 +115,7 @@ export function MapboxAddressInput({
                       setOpen(false);
                     }}
                   >
-                    <Star className="size-4 shrink-0 text-amber-500" />
+                    <Star className="size-4 shrink-0 text-warning-text" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
                         {suggestion.label}
@@ -148,7 +148,7 @@ export function MapboxAddressInput({
                       setOpen(false);
                     }}
                   >
-                    <MapPin className="size-4 shrink-0 text-emerald-600" />
+                    <MapPin className="size-4 shrink-0 text-success-text" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{result.name}</p>
                     </div>

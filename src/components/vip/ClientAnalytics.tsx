@@ -5,27 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
-import { 
-  Activity, 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
+import {
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  Clock,
   Target,
   AlertCircle,
   CheckCircle2,
@@ -74,39 +74,39 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
     switch (timeRange) {
       case '7d':
-        intervals = eachDayOfInterval({ 
-          start: subDays(now, 6), 
-          end: now 
+        intervals = eachDayOfInterval({
+          start: subDays(now, 6),
+          end: now
         });
         formatString = 'EEE dd/MM';
         break;
       case '30d':
-        intervals = eachWeekOfInterval({ 
-          start: subDays(now, 29), 
-          end: now 
+        intervals = eachWeekOfInterval({
+          start: subDays(now, 29),
+          end: now
         });
         formatString = 'dd/MM';
         break;
       case '90d':
-        intervals = eachWeekOfInterval({ 
-          start: subDays(now, 89), 
-          end: now 
+        intervals = eachWeekOfInterval({
+          start: subDays(now, 89),
+          end: now
         });
         formatString = 'dd/MM';
         break;
       case '1y':
-        intervals = eachMonthOfInterval({ 
-          start: subMonths(now, 11), 
-          end: now 
+        intervals = eachMonthOfInterval({
+          start: subMonths(now, 11),
+          end: now
         });
         formatString = 'MMM yyyy';
         break;
     }
 
     return intervals.map(date => {
-      const periodStart = timeRange === '1y' ? startOfMonth(date) : 
+      const periodStart = timeRange === '1y' ? startOfMonth(date) :
                          timeRange === '7d' ? date : startOfWeek(date);
-      const periodEnd = timeRange === '1y' ? endOfMonth(date) : 
+      const periodEnd = timeRange === '1y' ? endOfMonth(date) :
                        timeRange === '7d' ? date : endOfWeek(date);
 
       const periodServices = services.filter(service => {
@@ -114,17 +114,17 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
         return serviceDate >= periodStart && serviceDate <= periodEnd;
       });
 
-      const completedServices = periodServices.filter(s => 
+      const completedServices = periodServices.filter(s =>
         ['completed', 'invoiced'].includes(s.status)
       );
 
       const revenue = completedServices.reduce((sum, s) => sum + s.value, 0);
-      const pending = periodServices.filter(s => 
+      const pending = periodServices.filter(s =>
         ['pending', 'in_progress'].includes(s.status)
       ).length;
 
       // Simulate response time (hours from creation to first action)
-      const avgResponseTime = periodServices.length > 0 ? 
+      const avgResponseTime = periodServices.length > 0 ?
         Math.random() * 24 + 12 : 0; // 12-36 hours
 
       return {
@@ -191,17 +191,17 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
   const currentTotal = currentPeriodData.reduce((sum, d) => sum + d[metric === 'revenue' ? 'revenue' : 'services'], 0);
   const previousTotal = previousPeriodData.reduce((sum, d) => sum + d[metric === 'revenue' ? 'revenue' : 'services'], 0);
-  
-  const percentageChange = previousTotal > 0 ? 
+
+  const percentageChange = previousTotal > 0 ?
     ((currentTotal - previousTotal) / previousTotal) * 100 : 0;
 
   // Status distribution for pie chart
   const statusDistribution = [
-    { name: 'Completados', value: services.filter(s => s.status === 'completed').length, color: '#10B981' },
-    { name: 'En Progreso', value: services.filter(s => s.status === 'in_progress').length, color: '#8B5CF6' },
-    { name: 'Pendientes', value: services.filter(s => s.status === 'pending').length, color: '#3B82F6' },
-    { name: 'Cotizados', value: services.filter(s => s.status === 'quoted').length, color: '#F59E0B' },
-    { name: 'Facturados', value: services.filter(s => s.status === 'invoiced').length, color: '#6B7280' }
+    { name: 'Completados', value: services.filter(s => s.status === 'completed').length, color: 'hsl(var(--chart-1))' },
+    { name: 'En Progreso', value: services.filter(s => s.status === 'in_progress').length, color: 'hsl(var(--chart-5))' },
+    { name: 'Pendientes', value: services.filter(s => s.status === 'pending').length, color: 'hsl(var(--chart-4))' },
+    { name: 'Cotizados', value: services.filter(s => s.status === 'quoted').length, color: 'hsl(var(--chart-2))' },
+    { name: 'Facturados', value: services.filter(s => s.status === 'invoiced').length, color: 'hsl(var(--text-muted))' }
   ].filter(item => item.value > 0);
 
   const renderChart = () => {
@@ -210,34 +210,34 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     };
 
-    const dataKey = metric === 'revenue' ? 'revenue' : 
+    const dataKey = metric === 'revenue' ? 'revenue' :
                    metric === 'efficiency' ? 'completed' : 'services';
 
     switch (chartType) {
       case 'line':
         return (
           <LineChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="period" stroke="hsl(var(--text-muted))" fontSize={12} />
+            <YAxis stroke="hsl(var(--text-muted))" fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1F2937',
-                border: '1px solid #374151',
+                backgroundColor: 'hsl(var(--surface-elevated))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
               formatter={(value) => [
                 metric === 'revenue' ? `$${Number(value).toLocaleString()}` : value,
-                metric === 'revenue' ? 'Ingresos' : 
+                metric === 'revenue' ? 'Ingresos' :
                 metric === 'efficiency' ? 'Completados' : 'Servicios'
               ]}
             />
-            <Line 
-              type="monotone" 
-              dataKey={dataKey} 
-              stroke="#3B82F6" 
+            <Line
+              type="monotone"
+              dataKey={dataKey}
+              stroke="hsl(var(--chart-4))"
               strokeWidth={3}
-              dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+              dot={{ fill: 'hsl(var(--chart-4))', strokeWidth: 2, r: 4 }}
             />
           </LineChart>
         );
@@ -245,32 +245,32 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
       case 'area':
         return (
           <AreaChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="period" stroke="hsl(var(--text-muted))" fontSize={12} />
+            <YAxis stroke="hsl(var(--text-muted))" fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1F2937',
-                border: '1px solid #374151',
+                backgroundColor: 'hsl(var(--surface-elevated))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
               formatter={(value) => [
                 metric === 'revenue' ? `$${Number(value).toLocaleString()}` : value,
-                metric === 'revenue' ? 'Ingresos' : 
+                metric === 'revenue' ? 'Ingresos' :
                 metric === 'efficiency' ? 'Completados' : 'Servicios'
               ]}
             />
-            <Area 
-              type="monotone" 
-              dataKey={dataKey} 
-              stroke="#10B981" 
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke="hsl(var(--chart-1))"
               fill="url(#colorGradient)"
               strokeWidth={2}
             />
             <defs>
               <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
+                <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/>
               </linearGradient>
             </defs>
           </AreaChart>
@@ -279,22 +279,22 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
       case 'bar':
         return (
           <BarChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="period" stroke="hsl(var(--text-muted))" fontSize={12} />
+            <YAxis stroke="hsl(var(--text-muted))" fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1F2937',
-                border: '1px solid #374151',
+                backgroundColor: 'hsl(var(--surface-elevated))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
               formatter={(value) => [
                 metric === 'revenue' ? `$${Number(value).toLocaleString()}` : value,
-                metric === 'revenue' ? 'Ingresos' : 
+                metric === 'revenue' ? 'Ingresos' :
                 metric === 'efficiency' ? 'Completados' : 'Servicios'
               ]}
             />
-            <Bar dataKey={dataKey} fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey={dataKey} fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
           </BarChart>
         );
 
@@ -309,7 +309,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Activity className="size-5 text-blue-400" />
+            <Activity className="size-5 text-info-text" />
             Analytics Avanzados - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -372,22 +372,22 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
       {/* Key Performance Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border-blue-500/20">
+        <Card className="bg-card border-info/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-foreground">{services.length}</p>
-                <p className="text-xs text-blue-400">Total Servicios</p>
+                <p className="text-xs text-info-text">Total Servicios</p>
               </div>
-              <Target className="size-5 text-blue-400" />
+              <Target className="size-5 text-info-text" />
             </div>
             <div className="flex items-center gap-1 mt-2">
               {percentageChange >= 0 ? (
-                <TrendingUp className="size-3 text-green-400" />
+                <TrendingUp className="size-3 text-success-text" />
               ) : (
-                <TrendingDown className="size-3 text-red-400" />
+                <TrendingDown className="size-3 text-danger-text" />
               )}
-              <span className={`text-xs ${percentageChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`text-xs ${percentageChange >= 0 ? 'text-success-text' : 'text-danger-text'}`}>
                 {Math.abs(percentageChange).toFixed(1)}%
               </span>
               <span className="text-xs text-muted-foreground">vs período anterior</span>
@@ -395,16 +395,16 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-green-500/20">
+        <Card className="bg-card border-success/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-foreground">
                   {Math.round((services.filter(s => ['completed', 'invoiced'].includes(s.status)).length / services.length) * 100)}%
                 </p>
-                <p className="text-xs text-green-400">Tasa Completación</p>
+                <p className="text-xs text-success-text">Tasa Completación</p>
               </div>
-              <CheckCircle2 className="size-5 text-green-400" />
+              <CheckCircle2 className="size-5 text-success-text" />
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               {services.filter(s => ['completed', 'invoiced'].includes(s.status)).length} de {services.length} servicios
@@ -412,32 +412,32 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-purple-500/20">
+        <Card className="bg-card border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-foreground">18.5h</p>
-                <p className="text-xs text-purple-400">Tiempo Respuesta</p>
+                <p className="text-xs text-primary">Tiempo Respuesta</p>
               </div>
-              <Clock className="size-5 text-purple-400" />
+              <Clock className="size-5 text-primary" />
             </div>
             <div className="flex items-center gap-1 mt-2">
-              <TrendingDown className="size-3 text-green-400" />
-              <span className="text-xs text-green-400">12% mejor</span>
+              <TrendingDown className="size-3 text-success-text" />
+              <span className="text-xs text-success-text">12% mejor</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-amber-500/20">
+        <Card className="bg-card border-warning/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-foreground">
                   ${services.reduce((sum, s) => sum + s.value, 0).toLocaleString()}
                 </p>
-                <p className="text-xs text-amber-400">Valor Total</p>
+                <p className="text-xs text-warning-text">Valor Total</p>
               </div>
-              <DollarSign className="size-5 text-amber-400" />
+              <DollarSign className="size-5 text-warning-text" />
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               Promedio: ${Math.round(services.reduce((sum, s) => sum + s.value, 0) / services.length).toLocaleString()}
@@ -466,7 +466,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
         <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <PieChartIcon className="size-5 text-blue-400" />
+              <PieChartIcon className="size-5 text-info-text" />
               Distribución por Estado
             </CardTitle>
           </CardHeader>
@@ -488,8 +488,8 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
+                    backgroundColor: 'hsl(var(--surface-elevated))',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
                 />
@@ -519,7 +519,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               <h4 className="text-sm font-medium text-foreground mb-2">Días más Activos</h4>
               <div className="flex gap-2">
                 {patterns.busyDays.map((day, index) => (
-                  <Badge key={index} variant="outline" className="text-blue-300 border-blue-500/30">
+                  <Badge key={index} variant="outline" className="text-info-text border-info/30">
                     {day}
                   </Badge>
                 ))}
@@ -548,7 +548,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               <div className="space-y-2">
                 {patterns.seasonalTrends.map((trend, index) => (
                   <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <AlertCircle className="size-4 text-blue-400 flex-shrink-0" />
+                    <AlertCircle className="size-4 text-info-text flex-shrink-0" />
                     <span>{trend}</span>
                   </div>
                 ))}

@@ -10,13 +10,21 @@ import { businessClock } from '@/utils/businessClock';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
+import { resolveThemeColor } from '@/lib/themeColors';
 
 const logger = createLogger('RouteHistoryPanel');
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
 const COPIAPO_CENTER: [number, number] = [-70.33, -27.37];
 
-const ROUTE_COLORS = ['#22d3ee', '#a78bfa', '#f59e0b', '#34d399', '#f472b6', '#60a5fa'];
+const ROUTE_COLOR_TOKENS: Array<`--${string}`> = [
+  '--chart-1',
+  '--chart-2',
+  '--chart-3',
+  '--chart-4',
+  '--chart-5',
+  '--chart-6',
+];
 
 const STARTED_REASON_LABELS: Record<string, string> = {
   manual: 'Manual',
@@ -113,7 +121,7 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
     for (const [sessionId, sessionPoints] of bySession.entries()) {
       const coordinates = sessionPoints.map((p) => [p.longitude, p.latitude] as [number, number]);
-      const color = ROUTE_COLORS[colorIndex % ROUTE_COLORS.length];
+      const color = resolveThemeColor(containerRef.current, ROUTE_COLOR_TOKENS[colorIndex % ROUTE_COLOR_TOKENS.length]);
       colorIndex += 1;
       const sourceId = `route-${sessionId}`;
 
@@ -137,12 +145,22 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
       coordinates.forEach((coord) => bounds.extend(coord));
 
       const startEl = document.createElement('div');
-      startEl.style.cssText = `width:14px;height:14px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
+      startEl.style.width = '0.875rem';
+      startEl.style.height = '0.875rem';
+      startEl.style.borderRadius = '9999px';
+      startEl.style.background = color;
+      startEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
+      startEl.style.boxShadow = 'var(--shadow-sm)';
       markersRef.current.push(new mapboxgl.default.Marker({ element: startEl }).setLngLat(coordinates[0]).addTo(map));
 
       if (coordinates.length > 1) {
         const endEl = document.createElement('div');
-        endEl.style.cssText = `width:14px;height:14px;border-radius:2px;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
+        endEl.style.width = '0.875rem';
+        endEl.style.height = '0.875rem';
+        endEl.style.borderRadius = '0.125rem';
+        endEl.style.background = color;
+        endEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
+        endEl.style.boxShadow = 'var(--shadow-sm)';
         markersRef.current.push(
           new mapboxgl.default.Marker({ element: endEl }).setLngLat(coordinates[coordinates.length - 1]).addTo(map),
         );
@@ -172,7 +190,7 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 p-6 text-center text-sm text-warning">
+      <div className="flex h-full min-h-80 flex-col items-center justify-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 p-6 text-center text-sm text-warning-text">
         <TriangleAlert className="size-6" />
         <p>Configura VITE_MAPBOX_PUBLIC_TOKEN para ver el mapa de ruta.</p>
       </div>
@@ -180,10 +198,10 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
   }
 
   return (
-    <div className="relative h-full min-h-[320px] w-full">
-      <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />
+    <div className="relative h-full min-h-80 w-full">
+      <div ref={containerRef} className="h-full min-h-80 w-full rounded-2xl" />
       {!mapboxReady && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/5 bg-zinc-950/35 text-sm text-zinc-500">
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-border/20 bg-overlay/35 text-sm text-muted-foreground">
           Cargando mapa de ruta...
         </div>
       )}
@@ -283,9 +301,9 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
 
       {operatorId && !error && (
         <>
-          <div className="resources-panel h-[380px] overflow-hidden">
+          <div className="resources-panel h-96 overflow-hidden">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center text-sm text-zinc-500">Cargando ruta...</div>
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Cargando ruta...</div>
             ) : (
               <RouteMap points={points} autoFollow={autoFollow} />
             )}
@@ -305,7 +323,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
               <TableBody>
                 {sessions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-zinc-500">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Sin sesiones ese día
                     </TableCell>
                   </TableRow>

@@ -463,11 +463,11 @@ export const ServiceCostDetailsSection = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {costDetails.map((cost, index) => (
-          <div key={cost.id} className="border rounded-lg p-4 space-y-4 bg-gray-50">
+          <div key={cost.id} className="border rounded-lg p-4 space-y-4 bg-muted">
             <div className="flex justify-between items-center">
               <h4 className="font-medium">
                 Costo {index + 1} 
-                {cost.isExisting && <span className="text-xs text-green-600 ml-2">(Guardado)</span>}
+                {cost.isExisting && <span className="text-xs text-success-text ml-2">(Guardado)</span>}
               </h4>
               <div className="flex gap-2">
                 {serviceId && !disabled && (
@@ -477,7 +477,7 @@ export const ServiceCostDetailsSection = ({
                     size="sm"
                     onClick={() => saveCostDetail(cost)}
                     disabled={!cost.category_id || !cost.description.trim() || cost.amount <= 0}
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-info-text hover:text-info-text/80"
                   >
                     {cost.isExisting ? 'Actualizar' : 'Guardar'}
                   </Button>
@@ -488,7 +488,7 @@ export const ServiceCostDetailsSection = ({
                   size="sm"
                   onClick={() => removeCostDetail(cost.id)}
                   disabled={disabled}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-danger-text hover:text-danger-text/80"
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -763,7 +763,7 @@ export const ServiceCostDetailsSection = ({
             variant="outline"
             onClick={addCostDetail}
             disabled={disabled || isAddingCost || serviceCostCategoryLoading || serviceCostCategoryError}
-            className="flex items-center gap-2 bg-green-100 hover:bg-green-200"
+            className="flex items-center gap-2 bg-success-soft text-success-text hover:bg-success-soft/80"
           >
             <Plus className="size-4" />
             {isAddingCost ? 'Agregando...' : 'Agregar Costo'}
@@ -775,7 +775,7 @@ export const ServiceCostDetailsSection = ({
               <Calculator className="size-4" />
               <Label className="text-sm text-muted-foreground">Total Costos:</Label>
             </div>
-            <div className="text-lg font-semibold text-blue-600">
+            <div className="text-lg font-semibold text-info-text">
               ${getTotalCosts().toLocaleString('es-CL')} CLP
             </div>
           </div>

@@ -116,7 +116,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
           <TableBody>
             {filtered.map((payment) => (
               <TableRow key={payment.id} className="border-border">
-                <TableCell className="font-medium text-foreground text-sm max-w-[200px] truncate">
+                <TableCell className="max-w-48 truncate text-sm font-medium text-foreground">
                   {payment.description || '-'}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">{payment.reference_number || '-'}</TableCell>

@@ -37,9 +37,9 @@ const formatCurrency = (amount: number) => {
 
 const getStatusBadge = (status: ServiceClosure['status']) => {
   const statusConfig = {
-    open: { label: 'Abierto', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-    closed: { label: 'Cerrado', className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-    invoiced: { label: 'Facturado', className: 'bg-tms-green/20 text-tms-green border-tms-green/30' },
+    open: { label: 'Abierto', className: 'border-info/30 bg-info-soft text-info' },
+    closed: { label: 'Cerrado', className: 'border-warning/30 bg-warning-soft text-warning' },
+    invoiced: { label: 'Facturado', className: 'border-success/30 bg-success-soft text-success' },
   };
 
   const config = statusConfig[status];
@@ -53,10 +53,10 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-300 rounded w-1/4 mb-4"></div>
+          <div className="mb-4 h-4 w-1/4 rounded bg-muted"></div>
           <div className="space-y-2">
-            <div className="h-4 bg-gray-300 rounded"></div>
-            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+            <div className="h-4 rounded bg-muted"></div>
+            <div className="h-4 w-3/4 rounded bg-muted"></div>
           </div>
         </div>
       </div>

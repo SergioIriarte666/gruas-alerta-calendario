@@ -57,7 +57,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
       newSelected.delete(status);
     }
     setSelectedStatuses(newSelected);
-    
+
     // Si no hay ningún estado seleccionado, cambiar a "exportar todo"
     if (newSelected.size === 0) {
       setExportAllStatuses(true);
@@ -86,20 +86,20 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
       includeAllStatuses: exportAllStatuses,
       includeStatuses: exportAllStatuses ? undefined : Array.from(selectedStatuses),
     };
-    
+
     onExport(format, options);
     onClose();
   };
 
-  const selectedCount = exportAllStatuses 
-    ? totalServices 
+  const selectedCount = exportAllStatuses
+    ? totalServices
     : availableStatuses
         .filter(s => selectedStatuses.has(s.status))
         .reduce((sum, s) => sum + s.count, 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] overflow-clip">
+      <DialogContent className="sm:max-w-lg overflow-clip">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="size-5" />
@@ -180,7 +180,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
               Servicios a exportar: {selectedCount}
             </div>
             <div className="text-xs text-muted-foreground">
-              {exportAllStatuses 
+              {exportAllStatuses
                 ? 'Todos los estados incluidos'
                 : selectedStatuses.size === 0
                   ? 'Selecciona al menos un estado'

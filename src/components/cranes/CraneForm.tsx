@@ -82,7 +82,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   };
 
   return (
-    <DialogContent className="cranes-modal cranes-modal--form resources-dialog border-border/70 bg-card sm:max-w-[600px]">
+    <DialogContent className="cranes-modal cranes-modal--form resources-dialog border-border/70 bg-card sm:max-w-xl">
       <DialogHeader className="cranes-modal__header -mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 py-4">
         <DialogTitle className="text-foreground">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}
@@ -233,7 +233,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             </SelectContent>
           </Select>
           {formData.status === 'inactive' && (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
+            <p className="text-sm text-warning-text">
               Este equipo no aparecerá en nuevos servicios.
             </p>
           )}

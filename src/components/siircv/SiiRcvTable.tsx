@@ -55,7 +55,7 @@ const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', {
 
 const docTypeBadge = (docType: number) => {
   if (docType === DOC_TYPE_NOTA_CREDITO) return <Badge variant="destructive">NC {docType}</Badge>;
-  if (docType === DOC_TYPE_NOTA_DEBITO) return <Badge className="bg-amber-600">ND {docType}</Badge>;
+  if (docType === DOC_TYPE_NOTA_DEBITO) return <Badge variant="warning">ND {docType}</Badge>;
   return <Badge variant="secondary">{docType}</Badge>;
 };
 
@@ -81,7 +81,7 @@ function LinkBadge({ row, onView }: { row: SiiRcvRecordRow; onView?: (record: Si
     <Tooltip>
       <TooltipTrigger asChild>
         <Badge
-          className="cursor-pointer whitespace-nowrap bg-emerald-600 hover:bg-emerald-700"
+          className="cursor-pointer whitespace-nowrap bg-success text-success-foreground hover:bg-success/90"
           role="button"
           tabIndex={0}
           onClick={() => onView?.(row)}
@@ -98,7 +98,7 @@ function LinkBadge({ row, onView }: { row: SiiRcvRecordRow; onView?: (record: Si
 function ContainerBadge({ row }: { row: SiiRcvRecordRow }) {
   const linked = (row.container_purchase_links?.length ?? 0) > 0 || (row.container_cost_links?.length ?? 0) > 0;
   if (!linked) return null;
-  return <Badge variant="outline" className="whitespace-nowrap border-teal-600/40 bg-teal-600/5 font-normal text-teal-700">Contenedor</Badge>;
+  return <Badge variant="outline" className="whitespace-nowrap border-primary/40 bg-primary-soft font-normal text-primary">Contenedor</Badge>;
 }
 
 interface SiiRcvTableProps {
@@ -204,7 +204,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
         cell: ({ row }) => (
           <div className="max-w-56">
             <p className="truncate" title={row.original.counterpart_name ?? undefined}>{row.original.counterpart_name || '—'}</p>
-            {row.original.source === 'manual' && <span className="text-[11px] font-medium text-sky-600">Registro manual</span>}
+            {row.original.source === 'manual' && <span className="text-xs font-medium text-info">Registro manual</span>}
           </div>
         ),
       },
@@ -307,7 +307,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="min-w-[1180px]">
+              <Table className="min-w-[73.75rem]">
                 <TableHeader>{table.getHeaderGroups().map((headerGroup) => <TableRow key={headerGroup.id}>{headerGroup.headers.map((header) => <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}</TableRow>)}</TableHeader>
                 <TableBody>
                   {table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => <TableRow key={row.id}>{row.getVisibleCells().map((cell) => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}</TableRow>) : <TableRow><TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground">No hay registros para este filtro.</TableCell></TableRow>}

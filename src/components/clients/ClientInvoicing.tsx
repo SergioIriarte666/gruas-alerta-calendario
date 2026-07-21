@@ -41,13 +41,13 @@ const formatCurrency = (amount: number) => {
 
 const getStatusBadge = (status: InvoiceType['status']) => {
   const statusConfig = {
-    draft: { label: 'Borrador', className: 'bg-gray-500/80 text-white' },
-    sent: { label: 'Enviada', className: 'bg-blue-500/80 text-white' },
-    paid: { label: 'Pagada', className: 'bg-green-500/80 text-white' },
-    overdue: { label: 'Vencida', className: 'bg-orange-500/80 text-white' },
-    cancelled: { label: 'Anulada', className: 'bg-red-500/80 text-white' }
+    draft: { label: 'Borrador', className: 'bg-muted text-muted-foreground' },
+    sent: { label: 'Enviada', className: 'bg-info text-info-foreground' },
+    paid: { label: 'Pagada', className: 'bg-success text-success-foreground' },
+    overdue: { label: 'Vencida', className: 'bg-warning text-warning-foreground' },
+    cancelled: { label: 'Anulada', className: 'bg-danger text-danger-foreground' }
   };
-  const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-gray-500 text-white' };
+  const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-muted text-muted-foreground' };
   return <Badge className={`${config.className} border-none`}>{config.label}</Badge>;
 };
 

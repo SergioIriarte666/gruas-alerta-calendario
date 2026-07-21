@@ -35,9 +35,9 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
             {trend && (
               <TrendingUp 
                 className={`size-3 ${
-                  trend === 'up' ? 'text-green-500' : 
-                  trend === 'down' ? 'text-red-500 rotate-180' : 
-                  'text-gray-500'
+                  trend === 'up' ? 'text-success' :
+                  trend === 'down' ? 'text-danger rotate-180' :
+                  'text-muted-foreground'
                 }`} 
               />
             )}
@@ -69,7 +69,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-20 bg-gray-300 rounded"></div>
+              <div className="h-20 rounded bg-muted"></div>
             </div>
           ))}
         </div>
@@ -143,11 +143,11 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground">Pendiente de Pago</p>
                 {metrics.pendingAmount > 0 && (
-                  <AlertTriangle className="size-4 text-yellow-500" />
+                  <AlertTriangle className="size-4 text-warning" />
                 )}
               </div>
               <p className={`text-2xl font-bold ${
-                metrics.pendingAmount > 0 ? 'text-yellow-600' : 'text-muted-foreground'
+                metrics.pendingAmount > 0 ? 'text-warning' : 'text-muted-foreground'
               }`}>
                 {formatCurrency(metrics.pendingAmount)}
               </p>

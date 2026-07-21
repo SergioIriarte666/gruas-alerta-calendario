@@ -51,10 +51,10 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Riesgo Crítico</CardTitle>
-            <AlertTriangle className="size-4 text-red-500" />
+            <AlertTriangle className="size-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{criticalItems.length}</div>
+            <div className="text-2xl font-bold text-danger">{criticalItems.length}</div>
             <p className="text-xs text-muted-foreground">Quiebre en &lt; 30 días</p>
           </CardContent>
         </Card>
@@ -86,7 +86,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-red-500" />
+            <AlertTriangle className="size-5 text-danger" />
             Alertas Críticas de Stock
           </CardTitle>
           <CardDescription>
@@ -103,7 +103,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
           ) : (
             <div className="space-y-4">
               {criticalItems.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                <div key={index} className="flex items-center justify-between rounded-lg border border-danger/30 bg-danger-soft p-4">
                   <div className="flex-1">
                     <div className="font-medium">{item.item_name}</div>
                     <div className="text-sm text-muted-foreground">

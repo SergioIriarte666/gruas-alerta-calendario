@@ -21,34 +21,34 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
   return (
     <div className="mt-2">
       <div className="flex justify-between items-center mb-1">
-        <span className="text-xs text-white/70">Fortaleza de contraseña</span>
+        <span className="text-xs text-auth-foreground/70">Fortaleza de contraseña</span>
         <span className={`text-xs font-medium ${
-          strength === 'weak' ? 'text-red-400' : 
-          strength === 'medium' ? 'text-yellow-400' : 
-          'text-green-400'
+          strength === 'weak' ? 'text-auth-danger' :
+          strength === 'medium' ? 'text-auth-warning' :
+          'text-auth-success'
         }`}>
           {strengthText}
         </span>
       </div>
-      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-auth-surface/10 rounded-full overflow-hidden">
         <div 
           className={`h-full ${strengthColor} transition-all duration-300`}
           style={{ width: widthPercentage }}
         />
       </div>
-      <div className="mt-2 text-xs text-white/60">
+      <div className="mt-2 text-xs text-auth-foreground/60">
         <p>La contraseña debe contener al menos:</p>
         <ul className="list-disc list-inside ml-2 mt-1 space-y-1">
-          <li className={password.length >= 12 ? 'text-green-400' : ''}>
+          <li className={password.length >= 12 ? 'text-auth-success' : ''}>
             12 caracteres
           </li>
-          <li className={/[A-Z]/.test(password) && /[a-z]/.test(password) ? 'text-green-400' : ''}>
+          <li className={/[A-Z]/.test(password) && /[a-z]/.test(password) ? 'text-auth-success' : ''}>
             Mayúsculas y minúsculas
           </li>
-          <li className={/\d/.test(password) ? 'text-green-400' : ''}>
+          <li className={/\d/.test(password) ? 'text-auth-success' : ''}>
             Números
           </li>
-          <li className={/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-green-400' : ''}>
+          <li className={/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-auth-success' : ''}>
             Símbolos especiales
           </li>
         </ul>

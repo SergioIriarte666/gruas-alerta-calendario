@@ -130,7 +130,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
         <Button 
           onClick={onSave}
           disabled={saving}
-          className="bg-tms-green hover:bg-tms-green/80 text-black"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="size-4 mr-2" />
           {saving ? 'Guardando...' : 'Guardar Preferencias'}

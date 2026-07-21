@@ -20,7 +20,7 @@ export const OperatorBottomNav = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-card/95 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.65)] backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-card/95 shadow-nav backdrop-blur-xl"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex">
@@ -36,7 +36,7 @@ export const OperatorBottomNav = () => {
               )}
             >
               <Icon className="size-5" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-xs font-medium">{label}</span>
               {active && (
                 <span className="absolute bottom-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-t-full bg-primary" />
               )}

@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import {
-  OPERATOR_STATUS_COLORS,
+  OPERATOR_STATUS_COLOR_TOKENS,
   OPERATOR_STATUS_LABELS,
   deriveOperatorStatus,
   formatMinutesAgo,
@@ -9,6 +9,7 @@ import {
 } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
+import { resolveThemeColor } from '@/lib/themeColors';
 
 const logger = createLogger('LiveOperatorsMap');
 
@@ -37,16 +38,16 @@ const escapeHtml = (value: string): string =>
 const buildPopupHtml = (location: OperatorLiveLocation): string => {
   const status = deriveOperatorStatus(location);
   const parts = [
-    `<div style="font-size:15px;font-weight:700;color:#0f172a">${escapeHtml(location.operator_name)}</div>`,
-    `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#334155">${OPERATOR_STATUS_LABELS[status]} · ${formatMinutesAgo(location.recorded_at)}</div>`,
+    `<div style="font-size:0.9375rem;font-weight:700;color:hsl(var(--text-strong))">${escapeHtml(location.operator_name)}</div>`,
+    `<div style="margin-top:0.25rem;font-size:0.8125rem;font-weight:600;color:hsl(var(--text))">${OPERATOR_STATUS_LABELS[status]} · ${formatMinutesAgo(location.recorded_at)}</div>`,
   ];
   if (location.service_folio) {
-    parts.push(`<div style="margin-top:3px;font-size:13px;font-weight:600;color:#475569">Folio ${escapeHtml(location.service_folio)}</div>`);
+    parts.push(`<div style="margin-top:0.1875rem;font-size:0.8125rem;font-weight:600;color:hsl(var(--text-muted))">Folio ${escapeHtml(location.service_folio)}</div>`);
   }
   if (typeof location.speed_mps === 'number') {
-    parts.push(`<div style="margin-top:3px;font-size:12px;font-weight:600;color:#64748b">${Math.round(location.speed_mps * 3.6)} km/h</div>`);
+    parts.push(`<div style="margin-top:0.1875rem;font-size:0.75rem;font-weight:600;color:hsl(var(--text-muted))">${Math.round(location.speed_mps * 3.6)} km/h</div>`);
   }
-  return `<div style="min-width:180px;padding:2px 4px;font-size:12px;line-height:1.45;color:#0f172a">${parts.join('')}</div>`;
+  return `<div style="min-width:11.25rem;padding:0.125rem 0.25rem;font-size:0.75rem;line-height:1.45;color:hsl(var(--text))">${parts.join('')}</div>`;
 };
 
 export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperatorsMapProps>(
@@ -125,7 +126,7 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
         hasCoords = true;
 
         const status = deriveOperatorStatus(location);
-        const color = OPERATOR_STATUS_COLORS[status];
+        const color = resolveThemeColor(containerRef.current, OPERATOR_STATUS_COLOR_TOKENS[status]);
         const popupHtml = buildPopupHtml(location);
 
         let marker = markersRef.current.get(location.operator_id);
@@ -136,11 +137,11 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
           marker.getPopup()?.setHTML(popupHtml);
         } else {
           const el = document.createElement('div');
-          el.style.width = '18px';
-          el.style.height = '18px';
+          el.style.width = '1.125rem';
+          el.style.height = '1.125rem';
           el.style.borderRadius = '9999px';
-          el.style.border = '3px solid rgba(255,255,255,0.9)';
-          el.style.boxShadow = '0 4px 10px rgba(15,23,42,0.35)';
+          el.style.border = '0.1875rem solid hsl(var(--effect-highlight) / 0.9)';
+          el.style.boxShadow = 'var(--shadow-md)';
           el.style.cursor = 'pointer';
           el.style.backgroundColor = color;
 
@@ -176,7 +177,7 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
 
     if (!MAPBOX_TOKEN) {
       return (
-        <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6 text-center text-sm text-amber-200">
+        <div className="flex h-full min-h-80 flex-col items-center justify-center gap-2 rounded-2xl border border-warning/20 bg-warning/10 p-6 text-center text-sm text-warning-text">
           <TriangleAlert className="size-6" />
           <p>Configura VITE_MAPBOX_PUBLIC_TOKEN para ver el mapa en vivo.</p>
         </div>
@@ -184,10 +185,10 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
     }
 
     return (
-      <div className="relative h-full min-h-[320px] w-full">
-        <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />
+      <div className="relative h-full min-h-80 w-full">
+        <div ref={containerRef} className="h-full min-h-80 w-full rounded-2xl" />
         {!mapboxReady && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/5 bg-zinc-950/35 text-sm text-zinc-500">
+          <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-border/20 bg-overlay/35 text-sm text-muted-foreground">
             Cargando mapa en vivo...
           </div>
         )}

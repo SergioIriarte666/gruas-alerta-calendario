@@ -59,7 +59,7 @@ const CommissionFolio: React.FC<CommissionFolioProps> = ({ commission, onOpenSer
     <button
       type="button"
       onClick={() => onOpenService(commission)}
-      className="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 underline cursor-pointer text-left"
+      className="cursor-pointer text-left text-primary underline hover:text-primary/80"
     >
       {folio}
     </button>
@@ -106,8 +106,8 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   };
 
   const getStatusBadge = (status: 'pending' | 'paid') => {
-    if (status === 'paid') return <Badge variant="secondary" className="bg-green-100 text-green-800">Pagada</Badge>;
-    return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+    if (status === 'paid') return <Badge variant="success">Pagada</Badge>;
+    return <Badge variant="warning">Pendiente</Badge>;
   };
 
   if (isMobile) {
@@ -160,7 +160,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
 
               {commission.payment_date && (
                 <div className="flex items-center justify-between pt-1 border-t text-xs">
-                  <span className="text-green-700 font-medium">Pagado: {formatDate(commission.payment_date)}</span>
+                  <span className="font-medium text-success-text">Pagado: {formatDate(commission.payment_date)}</span>
                   <div className="flex items-center gap-1">
                     {commission.status === 'paid' && (
                       <EditPaymentDateDialog commissions={[commission]} onSuccess={onPaymentDateUpdated} />
@@ -230,7 +230,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
               <TableCell>{formatDate(commission.created_at)}</TableCell>
               <TableCell>
                 {commission.payment_date ? (
-                  <span className="text-green-700 font-medium">{formatDate(commission.payment_date)}</span>
+                  <span className="font-medium text-success-text">{formatDate(commission.payment_date)}</span>
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}

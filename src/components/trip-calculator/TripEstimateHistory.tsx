@@ -73,7 +73,7 @@ export const TripEstimateHistory = () => {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <p className="text-lg font-bold text-green-700 dark:text-green-400">
+                <p className="text-lg font-bold text-success-text">
                   {formatCurrency(est.total_estimate || 0)}
                 </p>
                 <AlertDialog>

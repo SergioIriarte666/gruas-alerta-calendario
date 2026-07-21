@@ -17,9 +17,9 @@ const fmtDate = (d?: string | null) => {
   try { return format(parseFromDatabase(d), 'dd/MM/yyyy', { locale: es }); } catch { return '—'; }
 };
 
-// Violet brand color (hsl 262 83% 58% ≈ #8b5cf6)
-const VIOLET: [number, number, number] = [139, 92, 246];
-const MUTED: [number, number, number] = [100, 100, 100];
+// Paleta de impresión: equivalente estático de los roles primary y muted.
+const DOCUMENT_PRIMARY_RGB: [number, number, number] = [139, 92, 246];
+const DOCUMENT_MUTED_RGB: [number, number, number] = [100, 100, 100];
 
 export interface GenerateCostDetailPdfArgs {
   cost: Cost;
@@ -43,7 +43,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
 
   // Amount badge right-aligned
   doc.setFontSize(14);
-  doc.setTextColor(...VIOLET);
+  doc.setTextColor(...DOCUMENT_PRIMARY_RGB);
   doc.text(formatCLP(Number(cost.amount)), pageWidth - marginX, y, { align: 'right' });
   doc.setTextColor(0, 0, 0);
   y += 6;
@@ -51,7 +51,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
   // Description subtitle
   doc.setFontSize(11);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(...MUTED);
+  doc.setTextColor(...DOCUMENT_MUTED_RGB);
   const descLines = doc.splitTextToSize(cost.description || '', contentWidth);
   doc.text(descLines, marginX, y);
   y += descLines.length * 5 + 2;
@@ -91,7 +91,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
     head: [['Información Básica', '']],
     body: basicRows,
     theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+    headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 }, 1: { cellWidth: contentWidth - 50 } },
     margin: { left: marginX, right: marginX },
@@ -139,7 +139,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Asociaciones', '']],
       body: assocRows,
       theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
       styles: { fontSize: 9, cellPadding: 2 },
       columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 }, 1: { cellWidth: contentWidth - 50 } },
       margin: { left: marginX, right: marginX },
@@ -162,7 +162,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
         p.kilometraje != null ? String(p.kilometraje) : '—',
       ]),
       theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontSize: 9 },
+      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontSize: 9 },
       styles: { fontSize: 8, cellPadding: 1.5 },
       margin: { left: marginX, right: marginX },
     });
@@ -200,7 +200,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       body: itemRows,
       theme: 'grid',
       headStyles: {
-        fillColor: VIOLET,
+        fillColor: DOCUMENT_PRIMARY_RGB,
         textColor: 255,
         fontStyle: 'bold',
         fontSize: 9,
@@ -228,7 +228,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Notas']],
       body: [[cost.notes]],
       theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
       styles: { fontSize: 9, cellPadding: 3 },
       margin: { left: marginX, right: marginX },
     });
@@ -242,7 +242,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Observaciones del Servicio']],
       body: [[(cost.services as any).observations]],
       theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
       styles: { fontSize: 9, cellPadding: 3 },
       margin: { left: marginX, right: marginX },
     });
@@ -257,7 +257,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
     doc.setDrawColor(220);
     doc.line(marginX, ph - 16, pageWidth - marginX, ph - 16);
     doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
+    doc.setTextColor(...DOCUMENT_MUTED_RGB);
     const created = `Creado: ${formatForDisplayWithTime(cost.created_at)}${cost.creator ? ` por ${getCreatorDisplayName(cost.creator)}` : ''}`;
     const updated = `Actualizado: ${formatForDisplayWithTime(cost.updated_at)}`;
     doc.text(created, marginX, ph - 11);

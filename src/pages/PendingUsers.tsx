@@ -35,14 +35,14 @@ const ROLE_OPTIONS: { value: PendingApprovalRole; label: string }[] = [
 ];
 
 const AVATAR_COLORS = [
-  'bg-emerald-600',
-  'bg-sky-600',
-  'bg-violet-600',
-  'bg-amber-600',
-  'bg-rose-600',
-  'bg-teal-600',
-  'bg-indigo-600',
-  'bg-orange-600',
+  'bg-success text-success-foreground',
+  'bg-info text-info-foreground',
+  'bg-primary text-primary-foreground',
+  'bg-warning text-warning-foreground',
+  'bg-danger text-danger-foreground',
+  'bg-info text-info-foreground',
+  'bg-primary text-primary-foreground',
+  'bg-warning text-warning-foreground',
 ];
 
 function getAvatarColor(email: string) {
@@ -151,7 +151,7 @@ export default function PendingUsers() {
       {users.length === 0 && (
         <Card className="configuration-panel">
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
-            <UserCheck className="size-12 text-emerald-500 opacity-60" />
+            <UserCheck className="size-12 text-success-text opacity-60" />
             <p className="font-medium text-foreground">No hay solicitudes pendientes</p>
             <p className="text-sm text-muted-foreground">
               Los nuevos usuarios aparecerán aquí cuando se registren
@@ -182,7 +182,7 @@ export default function PendingUsers() {
                   <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-start gap-4'}`}>
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div
-                        className={`size-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white ${getAvatarColor(user.email)}`}
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${getAvatarColor(user.email)}`}
                         aria-hidden="true"
                       >
                         {getInitials(user.email)}
@@ -276,7 +276,7 @@ export default function PendingUsers() {
                         </div>
 
                         {requiresClient && (
-                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                          <p className="text-xs text-warning-text">
                             Para aprobar como cliente debes vincular un cliente activo.
                           </p>
                         )}
@@ -287,7 +287,7 @@ export default function PendingUsers() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`border-red-500/40 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 ${isMobile ? 'flex-1' : ''}`}
+                        className={`border-danger/40 text-danger-text hover:bg-danger-soft ${isMobile ? 'flex-1' : ''}`}
                         disabled={rejectUser.isPending}
                         onClick={() => setUserToReject(user)}
                       >
@@ -300,7 +300,7 @@ export default function PendingUsers() {
                       </Button>
                       <Button
                         size="sm"
-                        className={`bg-emerald-600 hover:bg-emerald-700 text-white ${isMobile ? 'flex-1' : ''}`}
+                        className={`bg-success text-success-foreground hover:bg-success/90 ${isMobile ? 'flex-1' : ''}`}
                         disabled={!canApprove}
                         onClick={() => handleApprove(user.id)}
                       >
@@ -332,7 +332,7 @@ export default function PendingUsers() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
               onClick={handleConfirmReject}
             >
               Rechazar solicitud

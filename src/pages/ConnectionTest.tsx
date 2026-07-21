@@ -10,8 +10,8 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("ConnectionTest");
 const StatusIcon = ({ success }: { success?: boolean }) => {
-  if (success === undefined) return <Loader2 className="size-5 animate-spin text-gray-400" />;
-  return success ? <CheckCircle2 className="size-5 text-green-500" /> : <XCircle className="size-5 text-red-500" />;
+  if (success === undefined) return <Loader2 className="size-5 animate-spin text-muted-foreground" />;
+  return success ? <CheckCircle2 className="size-5 text-success" /> : <XCircle className="size-5 text-danger" />;
 };
 
 export default function ConnectionTest() {

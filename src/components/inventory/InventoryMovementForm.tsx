@@ -296,7 +296,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               </SelectContent>
             </Select>
             {form.formState.errors.movement_type && (
-              <p className="text-sm text-red-600">{form.formState.errors.movement_type.message}</p>
+              <p className="text-sm text-destructive">{form.formState.errors.movement_type.message}</p>
             )}
           </div>
 
@@ -322,7 +322,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               </SelectContent>
             </Select>
             {form.formState.errors.item_id && (
-              <p className="text-sm text-red-600">{form.formState.errors.item_id.message}</p>
+              <p className="text-sm text-destructive">{form.formState.errors.item_id.message}</p>
             )}
           </div>
 
@@ -351,7 +351,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               </SelectContent>
             </Select>
             {form.formState.errors.location_id && (
-              <p className="text-sm text-red-600">{form.formState.errors.location_id.message}</p>
+              <p className="text-sm text-destructive">{form.formState.errors.location_id.message}</p>
             )}
             
             {/* Current Stock Information */}
@@ -402,7 +402,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                 </SelectContent>
               </Select>
               {form.formState.errors.destination_location_id && (
-                <p className="text-sm text-red-600">{form.formState.errors.destination_location_id.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.destination_location_id.message}</p>
               )}
             </div>
           )}
@@ -420,7 +420,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                   (watchedMovementType === 'exit' || watchedMovementType === 'transfer') && 
                   watchedQuantity > currentStock && 
                   watchedItemId && watchedLocationId && 
-                  "border-red-500 focus:border-red-500"
+                  "border-destructive focus:border-destructive"
                 )}
               />
               {selectedItem && (
@@ -432,13 +432,13 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               {(watchedMovementType === 'exit' || watchedMovementType === 'transfer') && 
                watchedQuantity > currentStock && 
                watchedItemId && watchedLocationId && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm text-destructive">
                   <AlertTriangle className="size-3" />
                   Stock insuficiente (disponible: {currentStock})
                 </p>
               )}
               {form.formState.errors.quantity && (
-                <p className="text-sm text-red-600">{form.formState.errors.quantity.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.quantity.message}</p>
               )}
             </div>
 
@@ -453,7 +453,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                   placeholder="0.00"
                 />
                 {form.formState.errors.unit_cost && (
-                  <p className="text-sm text-red-600">{form.formState.errors.unit_cost.message}</p>
+                  <p className="text-sm text-destructive">{form.formState.errors.unit_cost.message}</p>
                 )}
               </div>
             )}
@@ -606,14 +606,14 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
           {/* Reason */}
           <div className="space-y-2">
             <Label htmlFor="reason">
-              Motivo {watchedMovementType === 'exit' && <span className="text-red-500">*</span>}
+              Motivo {watchedMovementType === 'exit' && <span className="text-destructive">*</span>}
             </Label>
             <Input
               {...form.register('reason')}
               placeholder="Motivo del movimiento"
             />
             {form.formState.errors.reason && (
-              <p className="text-sm text-red-600">{form.formState.errors.reason.message}</p>
+              <p className="text-sm text-destructive">{form.formState.errors.reason.message}</p>
             )}
           </div>
 

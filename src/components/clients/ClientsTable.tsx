@@ -203,7 +203,7 @@ export const ClientsTable = ({
                           {toTitleCase(client.name)}
                         </button>
                         {client.billingType === 'monthly' && (
-                          <Badge variant="outline" className="border-info/20 px-1.5 py-0 text-[10px] text-info">
+                          <Badge variant="outline" className="border-info/20 px-1.5 py-0 text-xs text-info">
                             Mensual
                           </Badge>
                         )}
@@ -251,9 +251,9 @@ export const ClientsTable = ({
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => onToggleStatus(client)}>
                               {client.isActive ? (
-                                <><UserX className="size-4 mr-2 text-red-500" />Desactivar</>
+                                <><UserX className="mr-2 size-4 text-danger" />Desactivar</>
                               ) : (
-                                <><UserCheck className="size-4 mr-2 text-green-500" />Activar</>
+                                <><UserCheck className="mr-2 size-4 text-success" />Activar</>
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onDelete(client)} className="text-destructive">

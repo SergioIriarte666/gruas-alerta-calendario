@@ -244,10 +244,10 @@ export const BulkStatusRepairTool = () => {
   };
 
   const typeLabels: Record<string, { label: string; color: string }> = {
-    invoiced_no_invoice: { label: 'Sin factura', color: 'bg-red-100 text-red-800' },
-    closed_no_closure: { label: 'Sin cierre', color: 'bg-amber-100 text-amber-800' },
-    negative_remaining: { label: 'Saldo negativo', color: 'bg-red-100 text-red-800' },
-    overpaid: { label: 'Sobre-pagada', color: 'bg-amber-100 text-amber-800' },
+    invoiced_no_invoice: { label: 'Sin factura', color: 'border-danger/30 bg-danger-soft text-danger-text' },
+    closed_no_closure: { label: 'Sin cierre', color: 'border-warning/30 bg-warning-soft text-warning-text' },
+    negative_remaining: { label: 'Saldo negativo', color: 'border-danger/30 bg-danger-soft text-danger-text' },
+    overpaid: { label: 'Sobre-pagada', color: 'border-warning/30 bg-warning-soft text-warning-text' },
   };
 
   return (
@@ -255,7 +255,7 @@ export const BulkStatusRepairTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <ScanSearch className="size-5 text-amber-600" />
+            <ScanSearch className="size-5 text-warning-text" />
             Reparación Masiva de Estados
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ export const BulkStatusRepairTool = () => {
           </Button>
 
           {scanned && issues.length === 0 && repairLog.length === 0 && (
-            <div className="p-4 rounded-md bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-success/30 bg-success-soft p-4 text-sm text-success-text">
               <CheckCircle className="size-5" />
               No se encontraron inconsistencias. Todo está en orden.
             </div>
@@ -292,7 +292,7 @@ export const BulkStatusRepairTool = () => {
                   <div key={issue.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 text-sm">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="font-mono text-xs font-medium">{issue.folio}</span>
-                      <Badge className={`text-[10px] ${typeLabels[issue.type]?.color}`}>
+                      <Badge variant="outline" className={`text-xs ${typeLabels[issue.type]?.color}`}>
                         {typeLabels[issue.type]?.label}
                       </Badge>
                       <span className="text-muted-foreground truncate">{issue.description}</span>

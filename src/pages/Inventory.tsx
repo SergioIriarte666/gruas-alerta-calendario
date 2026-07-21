@@ -203,7 +203,7 @@ const Inventory = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="overflow-x-auto">
-            <TabsList className="inventory-tabs grid h-auto w-full min-w-[420px] grid-cols-3 p-1">
+            <TabsList className="inventory-tabs grid h-auto w-full min-w-[26.25rem] grid-cols-3 p-1">
               <TabsTrigger
                 value="stock"
                 className="gap-2 rounded-lg text-muted-foreground"

@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  FileText, 
-  Search, 
-  Calendar, 
-  DollarSign, 
+import {
+  FileText,
+  Search,
+  Calendar,
+  DollarSign,
   MapPin,
   Clock,
   CheckCircle,
@@ -45,12 +45,12 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
 
   // Aplicar filtros
   const filteredServices = relevantServices.filter(service => {
-    const matchesSearch = 
+    const matchesSearch =
       service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.serviceType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (service.purchaseOrderNumber && service.purchaseOrderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (service.purchaseOrder && service.purchaseOrder.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     let matchesStatus = false;
     if (statusFilter === 'all') {
       matchesStatus = true;
@@ -59,7 +59,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     } else {
       matchesStatus = getVipPipelineDisplayStatus(service) === statusFilter;
     }
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -195,7 +195,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <Button
                 variant={statusFilter === 'all' ? 'default' : 'outline'}
@@ -235,9 +235,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
         {filteredServices.length === 0 ? (
           <Card className="glass-card">
             <CardContent className="p-8 text-center">
-              <FileText className="size-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No hay servicios</h3>
-              <p className="text-gray-400">
+              <FileText className="size-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No hay servicios</h3>
+              <p className="text-muted-foreground">
                 {searchTerm ? 'No se encontraron servicios con los filtros aplicados' : 'No hay servicios pendientes de orden de compra'}
               </p>
             </CardContent>
@@ -247,28 +247,28 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
             const displayStatus = getVipPipelineDisplayStatus(service);
             const statusInfo = getStatusInfo(displayStatus);
             const StatusIcon = statusInfo.icon;
-            
+
             return (
-              <Card 
-                key={service.id} 
-                className="glass-card hover:bg-gray-800/50 transition-colors cursor-pointer"
+              <Card
+                key={service.id}
+                className="glass-card hover:bg-muted/50 transition-colors cursor-pointer"
                 onClick={() => onServiceSelect(service)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 gap-y-2">
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-blue-300 border-blue-500/30">
+                        <Badge variant="outline" className="text-info-text border-info/30">
                           {service.folio}
                         </Badge>
-                        
+
                         <Badge variant="outline" className={statusInfo.color}>
                           <StatusIcon className="size-3 mr-1" />
                           {statusInfo.label}
                         </Badge>
 
                         {(service.purchaseOrderNumber || service.purchaseOrder) && (
-                          <Badge variant="secondary" className="bg-green-500/20 text-black border-green-500/30">
+                          <Badge variant="secondary" className="border-success/30 bg-success/20 text-success-text">
                             <CheckCircle className="size-3 mr-1" />
                             Con O.C: {service.purchaseOrderNumber || service.purchaseOrder}
                           </Badge>
@@ -355,7 +355,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-info-text hover:text-info-text"
                       >
                         {displayStatus === 'purchase_order_pending' ? 'Registrar O.C.' : 'Ver Detalles'}
                       </Button>

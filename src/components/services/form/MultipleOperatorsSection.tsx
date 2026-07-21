@@ -75,14 +75,14 @@ export const MultipleOperatorsSection = ({
   const getOperatorComplianceTone = (issues: ComplianceIssue[]) => {
     return issues.some((issue) => issue.level === 'error')
       ? 'text-destructive'
-      : 'text-amber-600';
+      : 'text-warning-text';
   };
   return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-border/70 bg-card/80 shadow-sm'}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className={`size-5 ${hasValidationError ? 'text-destructive' : 'text-primary'}`} />
           Operadores y Comisiones del Servicio
-          {operatorRequired && <span className="text-red-500">*</span>}
+          {operatorRequired && <span className="text-danger-text">*</span>}
           {hasValidationError && (
             <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded flex items-center gap-1">
               <AlertTriangle className="size-3" />
@@ -113,7 +113,7 @@ export const MultipleOperatorsSection = ({
                 </span>
                 {operator.role && <span className="text-sm text-muted-foreground">({operator.role})</span>}
               </h4>
-              {operators.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeOperator(operator.id)} disabled={disabled} className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15 hover:text-danger">
+              {operators.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeOperator(operator.id)} disabled={disabled} className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 hover:text-danger">
                   <Trash2 className="size-4" />
                 </Button>}
             </div>
@@ -131,7 +131,7 @@ export const MultipleOperatorsSection = ({
                         <span className="flex items-center gap-2">
                           {op.name}
                           {op.commissionExempt && (
-                            <span className="rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary" title="Exento de comisiones">
+                            <span className="rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary" title="Exento de comisiones">
                               E
                             </span>
                           )}

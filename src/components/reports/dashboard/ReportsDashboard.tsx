@@ -86,7 +86,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
-                      <div className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                      <div className="text-sm font-bold text-primary">
                         ${client.revenue.toLocaleString()}
                       </div>
                       <div className="text-xs text-muted-foreground">{client.services} servicios</div>
@@ -110,10 +110,10 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
             <div className="space-y-4">
               {metrics.craneUtilization.slice(0, 5).map((crane) => {
                 const utilizationColor = crane.utilization >= 50 
-                  ? 'text-green-600 dark:text-green-400' 
+                  ? 'text-success-text'
                   : crane.utilization >= 20 
-                    ? 'text-yellow-600 dark:text-yellow-400' 
-                    : 'text-red-600 dark:text-red-400';
+                    ? 'text-warning-text'
+                    : 'text-danger-text';
                 
                 return (
                   <div key={crane.craneId} className="space-y-2">

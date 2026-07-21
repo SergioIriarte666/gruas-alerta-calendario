@@ -31,10 +31,10 @@ export const CostTable = ({ metrics }: CostTableProps) => {
               {metrics.costsByCategory.map((category) => (
                 <tr key={category.categoryId} className="border-b border-muted hover:bg-muted/50">
                   <td className="text-foreground p-3">{category.categoryName}</td>
-                  <td className="text-right text-green-700 p-3 font-medium">
+                  <td className="text-right text-success-text p-3 font-medium">
                     ${category.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="text-right text-violet-600 p-3">
+                  <td className="text-right text-primary p-3">
                     {category.percentage.toFixed(1)}%
                   </td>
                   <td className="text-right text-foreground p-3">

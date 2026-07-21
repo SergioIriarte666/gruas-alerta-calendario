@@ -27,7 +27,7 @@ export const CostFormStep4 = ({ form, receiptUrls = [] }: CostFormStep4Props) =>
               <Textarea 
                 {...field} 
                 value={field.value ?? ''} 
-                className="min-h-[120px]" 
+                className="min-h-32"
                 placeholder="Agrega notas adicionales, observaciones o detalles importantes..."
               />
             </FormControl>
@@ -53,7 +53,7 @@ export const CostFormStep4 = ({ form, receiptUrls = [] }: CostFormStep4Props) =>
                 <img
                   src={url}
                   alt={`Comprobante ${idx + 1}`}
-                  className="w-full h-64 object-contain bg-black/5"
+                  className="w-full h-64 object-contain bg-overlay/5"
                   loading="eager"
                 />
               </a>

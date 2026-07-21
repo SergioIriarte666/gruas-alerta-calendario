@@ -47,7 +47,7 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
               icon={client.isActive ? CheckCircle : XCircle} 
               label="Estado" 
               value={
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${client.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${client.isActive ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                   {client.isActive ? 'Activo' : 'Inactivo'}
                 </span>
               }
@@ -56,7 +56,7 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
               icon={Receipt} 
               label="Tipo de Facturación" 
               value={
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${client.billingType === 'monthly' ? 'bg-blue-500/20 text-blue-400' : 'bg-muted text-muted-foreground'}`}>
+                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${client.billingType === 'monthly' ? 'bg-info-soft text-info' : 'bg-muted text-muted-foreground'}`}>
                   {client.billingType === 'monthly' ? 'Mensual (Mes Vencido)' : 'Estándar'}
                 </span>
               }

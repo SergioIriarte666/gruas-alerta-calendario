@@ -80,7 +80,7 @@ export const ListView: React.FC<ListViewProps> = ({
             size="sm"
             variant="outline"
             onClick={() => onConvertToService(event)}
-            className="h-7 border-green-500/30 px-2 text-xs text-green-600 hover:bg-green-50"
+            className="h-7 border-success/30 px-2 text-xs text-success hover:bg-success-soft"
           >
             <ArrowRight className="mr-1 size-3" />
             Servicio
@@ -90,7 +90,7 @@ export const ListView: React.FC<ListViewProps> = ({
           size="sm"
           variant="ghost"
           onClick={() => onDeleteEvent(event.id)}
-          className="size-7 p-0 text-red-400 hover:bg-red-50 hover:text-red-600"
+          className="size-7 p-0 text-danger hover:bg-danger-soft hover:text-danger-text"
           aria-label={`Eliminar ${event.title}`}
         >
           <Trash2 className="size-3" />

@@ -262,7 +262,7 @@ export const DisputesReportView = () => {
           <div>
             <p className="text-xs text-muted-foreground mb-1">Cliente</p>
             <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger className="w-[200px] h-9">
+              <SelectTrigger className="w-48 h-9">
                 <SelectValue placeholder="Todos los clientes" />
               </SelectTrigger>
               <SelectContent>
@@ -276,7 +276,7 @@ export const DisputesReportView = () => {
           <div>
             <p className="text-xs text-muted-foreground mb-1">Estado</p>
             <Select value={status} onValueChange={(v) => setStatus(v as DisputesReportFilters['status'])}>
-              <SelectTrigger className="w-[160px] h-9">
+              <SelectTrigger className="w-40 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -289,7 +289,7 @@ export const DisputesReportView = () => {
           <div>
             <p className="text-xs text-muted-foreground mb-1">Tipo de disputa</p>
             <Select value={disputeType} onValueChange={(v) => setDisputeType(v as DisputesReportFilters['disputeType'])}>
-              <SelectTrigger className="w-[200px] h-9">
+              <SelectTrigger className="w-48 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -313,30 +313,30 @@ export const DisputesReportView = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Disputas Abiertas</p>
-            <div className="text-lg sm:text-2xl font-bold mt-1 text-amber-600">{summary.openCount}</div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">${summary.openSum.toLocaleString('es-CL')}</p>
+            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Disputas Abiertas</p>
+            <div className="text-lg sm:text-2xl font-bold mt-1 text-warning-text">{summary.openCount}</div>
+            <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">${summary.openSum.toLocaleString('es-CL')}</p>
           </CardContent>
         </Card>
         <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Antigüedad Promedio (abiertas)</p>
+            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Antigüedad Promedio (abiertas)</p>
             <div className="text-lg sm:text-2xl font-bold mt-1 text-foreground">{summary.avgAgeOpen} días</div>
           </CardContent>
         </Card>
         <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Resueltas en el Período</p>
-            <div className="text-lg sm:text-2xl font-bold mt-1 text-emerald-600">{summary.resolvedCount}</div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Promedio {summary.avgResolutionDays} días</p>
+            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Resueltas en el Período</p>
+            <div className="text-lg sm:text-2xl font-bold mt-1 text-success-text">{summary.resolvedCount}</div>
+            <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Promedio {summary.avgResolutionDays} días</p>
           </CardContent>
         </Card>
         <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-3 sm:p-4">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Cliente con Más Disputas</p>
+            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Cliente con Más Disputas</p>
             <div className="text-sm sm:text-lg font-bold mt-1 text-foreground truncate">{summary.topClient}</div>
             {summary.topClientCount > 0 && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{summary.topClientCount} disputa(s)</p>
+              <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">{summary.topClientCount} disputa(s)</p>
             )}
           </CardContent>
         </Card>
@@ -356,8 +356,8 @@ export const DisputesReportView = () => {
                 <YAxis allowDecimals={false} />
                 <RechartsTooltip />
                 <Legend />
-                <Bar dataKey="Abiertas" stackId="disputas" fill="#d97706" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Resueltas" stackId="disputas" fill="#059669" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Abiertas" stackId="disputas" fill="hsl(var(--warning))" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Resueltas" stackId="disputas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -428,7 +428,7 @@ export const DisputesReportView = () => {
                         <TableCell>
                           <Badge variant="outline">{DISPUTE_TYPE_LABELS[row.disputeType]}</Badge>
                         </TableCell>
-                        <TableCell className="max-w-[220px]">
+                        <TableCell className="max-w-56">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <span className="block truncate text-muted-foreground cursor-help">{row.description}</span>
@@ -442,8 +442,8 @@ export const DisputesReportView = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={row.status === 'open'
-                            ? 'bg-amber-500/15 text-amber-700 border border-amber-500/30 hover:bg-amber-500/15'
-                            : 'bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 hover:bg-emerald-500/15'}
+                            ? 'border border-warning/30 bg-warning-soft text-warning-text hover:bg-warning-soft'
+                            : 'border border-success/30 bg-success-soft text-success-text hover:bg-success-soft'}
                           >
                             {row.status === 'open' ? 'Abierta' : 'Resuelta'}
                           </Badge>

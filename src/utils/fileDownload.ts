@@ -20,7 +20,7 @@ export const openDownloadTarget = (): Window | null => {
         <meta charset="utf-8" />
         <title>Generando PDF</title>
         <style>
-          body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f8fafc; }
+          body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: CanvasText; background: Canvas; }
           main { text-align: center; padding: 32px; }
         </style>
       </head>

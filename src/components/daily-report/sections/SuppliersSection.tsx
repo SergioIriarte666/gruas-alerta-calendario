@@ -55,21 +55,21 @@ const PaymentCard: React.FC<{
 }> = ({ payment, priority, onView }) => {
   const priorityConfig = {
     high: { 
-      borderColor: 'border-red-200', 
-      bgColor: 'bg-red-50', 
-      textColor: 'text-red-600',
+      borderColor: 'border-danger/30',
+      bgColor: 'bg-danger-soft',
+      textColor: 'text-danger',
       badgeVariant: 'destructive' as const
     },
     medium: { 
-      borderColor: 'border-orange-200', 
-      bgColor: 'bg-orange-50', 
-      textColor: 'text-orange-600',
+      borderColor: 'border-warning/30',
+      bgColor: 'bg-warning-soft',
+      textColor: 'text-warning',
       badgeVariant: 'secondary' as const
     },
     low: { 
-      borderColor: 'border-blue-200', 
-      bgColor: 'bg-blue-50', 
-      textColor: 'text-blue-600',
+      borderColor: 'border-info/30',
+      bgColor: 'bg-info-soft',
+      textColor: 'text-info',
       badgeVariant: 'outline' as const
     }
   };
@@ -174,53 +174,53 @@ const SuppliersSection: React.FC<SuppliersSectionProps> = ({ data, onViewPayment
     <div className="space-y-6">
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-red-200">
+        <Card className="border-danger/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pagos Vencidos</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-danger">
                   {data.overdue?.length || 0}
                 </p>
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-danger">
                   {formatCurrency(data.totalOverdue || 0)}
                 </p>
               </div>
-              <AlertTriangle className="size-8 text-red-500" />
+              <AlertTriangle className="size-8 text-danger" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200">
+        <Card className="border-warning/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Vencen Hoy</p>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-2xl font-bold text-warning">
                   {data.dueToday?.length || 0}
                 </p>
-                <p className="text-sm text-orange-600">
+                <p className="text-sm text-warning">
                   {formatCurrency(data.totalDueToday || 0)}
                 </p>
               </div>
-              <Clock className="size-8 text-orange-500" />
+              <Clock className="size-8 text-warning" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="border-info/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Esta Semana</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-info">
                   {data.dueThisWeek?.length || 0}
                 </p>
-                <p className="text-sm text-blue-600">
+                <p className="text-sm text-info">
                   {formatCurrency(data.totalDueWeek || 0)}
                 </p>
               </div>
-              <Calendar className="size-8 text-blue-500" />
+              <Calendar className="size-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -241,7 +241,7 @@ const SuppliersSection: React.FC<SuppliersSectionProps> = ({ data, onViewPayment
           {/* Pagos Vencidos */}
           {data.overdue && data.overdue.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-danger">
                 <AlertTriangle className="size-5" />
                 Pagos Vencidos ({data.overdue.length})
                 <Badge variant="destructive" className="ml-2">
@@ -264,7 +264,7 @@ const SuppliersSection: React.FC<SuppliersSectionProps> = ({ data, onViewPayment
           {/* Pagos que Vencen Hoy */}
           {data.dueToday && data.dueToday.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-orange-600 mb-4 flex items-center gap-2">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-warning">
                 <Clock className="size-5" />
                 Vencen Hoy ({data.dueToday.length})
                 <Badge variant="secondary" className="ml-2">
@@ -287,7 +287,7 @@ const SuppliersSection: React.FC<SuppliersSectionProps> = ({ data, onViewPayment
           {/* Pagos que Vencen Esta Semana */}
           {data.dueThisWeek && data.dueThisWeek.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-info">
                 <Calendar className="size-5" />
                 Vencen Esta Semana ({data.dueThisWeek.length})
                 <Badge variant="outline" className="ml-2">

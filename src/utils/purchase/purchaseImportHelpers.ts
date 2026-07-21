@@ -32,12 +32,12 @@ export const rutMatches = (a: string, b: string): boolean => {
 
 export const getInvoiceStatusBadgeClass = (status: 'paid' | 'pending' | 'overdue') => {
   if (status === 'paid') {
-    return 'border border-green-200 bg-green-50 text-green-700';
+    return 'border border-success/30 bg-success-soft text-success-text';
   }
 
   if (status === 'overdue') {
-    return 'border border-red-200 bg-red-50 text-red-700';
+    return 'border border-danger/30 bg-danger-soft text-danger-text';
   }
 
-  return 'border border-slate-200 bg-slate-100 text-slate-700';
+  return 'border border-border bg-muted text-muted-foreground';
 };

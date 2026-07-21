@@ -462,7 +462,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               {invoice.notes && (
               <DetailSection title="Notas" icon={FileText} color="info">
                   <div className="col-span-1 md:col-span-2">
-                    <p className="text-muted-foreground whitespace-pre-wrap min-h-[40px]">
+                    <p className="min-h-10 whitespace-pre-wrap text-muted-foreground">
                       {invoice.notes}
                     </p>
                   </div>
@@ -674,23 +674,23 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                         const totalServicios = services.reduce((sum, s) => sum + getServiceDisplayAmount(s), 0);
                         const rows = services.map(s => `
                            <tr>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.folio || 'N/A')}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(formatSafeDate(s.service_date))}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.vehicle_brand && s.vehicle_model ? `${esc(s.vehicle_brand)} ${esc(s.vehicle_model)}` : 'N/A'}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.license_plate || 'N/A')}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${esc(formatCurrency(getServiceDisplayAmount(s)))}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.status || 'N/A')}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder">${esc(s.folio || 'N/A')}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder">${esc(formatSafeDate(s.service_date))}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder">${s.vehicle_brand && s.vehicle_model ? `${esc(s.vehicle_brand)} ${esc(s.vehicle_model)}` : 'N/A'}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder">${esc(s.license_plate || 'N/A')}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder;text-align:right">${esc(formatCurrency(getServiceDisplayAmount(s)))}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid ButtonBorder">${esc(s.status || 'N/A')}</td>
                            </tr>
                          `).join('');
                          printWindow.document.write(`
                            <html><head><title>Servicios - Factura ${esc(invoice.folio)}</title>
                            <style>
-                             body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}
+                             body{font-family:Arial,sans-serif;margin:30px;color:CanvasText}
                              h2{margin:0 0 4px}
-                             .meta{color:#666;font-size:13px;margin-bottom:16px}
+                             .meta{color:GrayText;font-size:13px;margin-bottom:16px}
                              table{width:100%;border-collapse:collapse;font-size:13px}
-                             th{text-align:left;padding:8px 10px;border-bottom:2px solid #333;font-weight:600}
-                             .total-row td{font-weight:700;border-top:2px solid #333;padding-top:10px}
+                             th{text-align:left;padding:8px 10px;border-bottom:2px solid CanvasText;font-weight:600}
+                             .total-row td{font-weight:700;border-top:2px solid CanvasText;padding-top:10px}
                              @media print{body{margin:15px}}
                            </style></head><body>
                            <h2>Factura ${esc(invoice.folio)}${invoice.numeroFiscal ? ` | N° Fiscal: ${esc(invoice.numeroFiscal)}` : ''}</h2>

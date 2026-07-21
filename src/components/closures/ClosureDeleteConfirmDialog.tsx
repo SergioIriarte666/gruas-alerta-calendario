@@ -95,7 +95,7 @@ export const ClosureDeleteConfirmDialog = ({
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <div className="flex items-center gap-2 text-warning">
                   <ShieldAlert className="size-4" />
                   <span className="text-sm font-medium">Este cierre tiene dependencias:</span>
                 </div>

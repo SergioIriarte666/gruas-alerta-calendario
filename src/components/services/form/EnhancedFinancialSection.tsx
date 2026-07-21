@@ -108,7 +108,7 @@ export const EnhancedFinancialSection = ({
             {/* Valor base del servicio */}
             <div className="space-y-2">
               <Label htmlFor="value">
-                Valor Base del Servicio (CLP) <span className="text-red-500">*</span>
+                Valor Base del Servicio (CLP) <span className="text-danger-text">*</span>
               </Label>
               <Input
                 id="value"
@@ -156,7 +156,7 @@ export const EnhancedFinancialSection = ({
             <div className="flex items-center justify-between">
               <Label htmlFor="value" className="text-base font-semibold">
                 Valor del Servicio (CLP) 
-                {!isCustodyService && <span className="text-red-500"> *</span>}
+                {!isCustodyService && <span className="text-danger-text"> *</span>}
                 {isCustodyService && (
                   <span className="text-muted-foreground text-sm"> (Opcional para custodia)</span>
                 )}
@@ -313,7 +313,7 @@ export const EnhancedFinancialSection = ({
             <div className="space-y-2 md:col-span-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="thirdPartyClient">
-                  Quién paga el excedente <span className="text-red-500">*</span>
+                  Quién paga el excedente <span className="text-danger-text">*</span>
                 </Label>
                 <Button
                   type="button"

@@ -31,7 +31,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       range: "recent",
       amount: 0,
       count: 0,
-      color: "text-yellow-600",
+      color: "text-warning",
       icon: <Clock className="size-5" />,
     },
     {
@@ -39,7 +39,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       range: "moderate",
       amount: 0,
       count: 0,
-      color: "text-orange-600",
+      color: "text-warning-text",
       icon: <AlertCircle className="size-5" />,
     },
     {
@@ -47,7 +47,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       range: "serious",
       amount: 0,
       count: 0,
-      color: "text-red-600",
+      color: "text-danger",
       icon: <AlertTriangle className="size-5" />,
     },
     {

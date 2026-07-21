@@ -36,24 +36,24 @@ export const AnimatedStatCard: React.FC<AnimatedStatCardProps> = ({
 
   const variantStyles = {
     total: {
-      bg: 'bg-blue-500/20',
-      text: 'text-blue-600',
-      glow: 'shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+      bg: 'bg-info/20',
+      text: 'text-info-text',
+      glow: 'shadow-glow-info'
     },
     valid: {
-      bg: 'bg-green-500/20',
-      text: 'text-green-600',
-      glow: 'shadow-[0_0_20px_rgba(34,197,94,0.3)]'
+      bg: 'bg-success/20',
+      text: 'text-success-text',
+      glow: 'shadow-glow-success'
     },
     error: {
-      bg: 'bg-red-500/20',
-      text: 'text-red-600',
-      glow: 'shadow-[0_0_20px_rgba(239,68,68,0.3)]'
+      bg: 'bg-danger/20',
+      text: 'text-danger-text',
+      glow: 'shadow-glow-danger'
     },
     warning: {
-      bg: 'bg-yellow-500/20',
-      text: 'text-yellow-600',
-      glow: 'shadow-[0_0_20px_rgba(234,179,8,0.3)]'
+      bg: 'bg-warning/20',
+      text: 'text-warning-text',
+      glow: 'shadow-glow-warning'
     }
   };
 

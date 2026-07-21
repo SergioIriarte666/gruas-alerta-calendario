@@ -95,7 +95,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
           <Link2 className="size-3.5 flex-shrink-0" />
           <span className="font-medium">🔗 Costo encontrado:</span>
           <Select value={currentDecision} onValueChange={onDecisionChange}>
-            <SelectTrigger className="h-7 text-xs flex-1 min-w-[200px] bg-background"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-7 text-xs flex-1 min-w-52 bg-background"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="new">➕ Crear nuevo gasto</SelectItem>
               {costsForDoc.map((cost: any) => <SelectItem key={cost.id} value={cost.id}>🔗 {cost.description} — ${Number(cost.amount).toLocaleString('es-CL')} — {cost.date}</SelectItem>)}
@@ -147,7 +147,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                     <div className="flex items-center gap-2 text-primary">
                       <Sparkles className="mt-0.5 size-4 flex-shrink-0" />
                       <span className="font-medium">Glosa sugerida por historial</span>
-                      <Badge variant="secondary" className="text-[11px]">{historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}</Badge>
+                      <Badge variant="secondary" className="text-xs">{historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}</Badge>
                     </div>
                     <p className="mt-1 whitespace-pre-wrap break-words text-foreground">{appliedHistoricalDesc}</p>
                     <p className="mt-1 text-xs text-muted-foreground">Coincidencia estimada: {Math.round(historicalSuggestion.confidence * 100)}%</p>
@@ -159,7 +159,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
           </div>
 
           <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[180px] max-w-[220px]">
+            <div className="flex-1 min-w-44 max-w-56">
               <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago</Label>
               <Select value={paymentCondition} onValueChange={val => { onPaymentConditionChange(val); applyCondition(document.supplier_rut, val === 'credit' ? 'credit' : val); }} disabled={loadingTerms}>
                 <SelectTrigger className="w-full"><SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición'} /></SelectTrigger>
@@ -171,12 +171,12 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
               </Select>
               <p className="mt-1 text-xs text-muted-foreground">Define si el gasto queda con vencimiento o se manejará manualmente.</p>
             </div>
-            <div className="flex-1 min-w-[180px] max-w-[220px]">
+            <div className="flex-1 min-w-44 max-w-56">
               <Label className="text-xs text-muted-foreground mb-1.5 block">Vencimiento</Label>
               <DatePickerInput value={defaultDueDate || ''} onChange={onDueDateChange} className="w-full" />
               <p className="mt-1 text-xs text-muted-foreground">Puedes ajustarlo si el XML no trae una fecha correcta.</p>
             </div>
-            <div className="flex-1 min-w-[200px] max-w-[260px]">
+            <div className="flex-1 min-w-52 max-w-64">
               <Label className="text-xs text-muted-foreground mb-1.5 block">Estado de pago</Label>
               <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
                 <Switch id={`paid-${documentKey}`} checked={isPaid} onCheckedChange={checked => { onPaidChange(checked); if (checked && !paidDate) onPaidDateChange(format(new Date(), 'yyyy-MM-dd')); }} />
@@ -189,7 +189,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
 
           {isLowboy && (
             <div className="flex flex-wrap items-end gap-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
-              <div className="flex-1 min-w-[180px] max-w-[260px]">
+              <div className="flex-1 min-w-44 max-w-64">
                 <Label className="text-xs text-muted-foreground mb-1.5 block">Equipo LowBoy</Label>
                 <Select value={craneId ?? '__none__'} onValueChange={val => onCraneIdChange?.(val === '__none__' ? null : val)}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Selecciona equipo" /></SelectTrigger>
@@ -200,7 +200,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                 </Select>
                 {!craneId && <p className="mt-1 text-xs text-warning">⚠️ Sin equipo asignado. El gasto igual quedará registrado como LowBoy.</p>}
               </div>
-              <div className="flex-1 min-w-[180px] max-w-[260px]">
+              <div className="flex-1 min-w-44 max-w-64">
                 <Label className="text-xs text-muted-foreground mb-1.5 block">Financiado por</Label>
                 <Select value={paidBy} onValueChange={val => onPaidByChange?.(val as 'gruas_5_norte' | 'lowboy')}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>

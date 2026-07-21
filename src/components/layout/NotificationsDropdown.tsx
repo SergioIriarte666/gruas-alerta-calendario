@@ -133,7 +133,7 @@ export const NotificationsDropdown = () => {
           size="icon" 
           className="text-foreground hover:text-primary-foreground hover:bg-primary relative bg-primary/20 border border-primary/30"
         >
-          <Bell className="size-5 text-black" />
+          <Bell className="size-5" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 size-5 bg-destructive rounded-full text-xs flex items-center justify-center text-destructive-foreground font-bold">
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -143,7 +143,7 @@ export const NotificationsDropdown = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="bg-popover border-border min-w-[380px] max-w-[420px] z-[99999] max-h-[450px] overflow-hidden"
+        className="z-[99999] max-h-[min(28rem,calc(100vh-2rem))] w-96 max-w-[calc(100vw-2rem)] overflow-hidden border-border bg-popover"
       >
         <div className="p-4">
           <div className="flex justify-between items-center mb-3">
@@ -188,7 +188,7 @@ export const NotificationsDropdown = () => {
               No hay notificaciones
             </div>
           ) : (
-            <div className="space-y-2 max-h-[320px] overflow-y-auto">
+            <div className="max-h-80 space-y-2 overflow-y-auto">
               {notifications.slice(0, 15).map((notification) => (
                 <div 
                   key={notification.id}

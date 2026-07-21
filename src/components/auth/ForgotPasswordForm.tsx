@@ -70,10 +70,10 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
   };
 
   return (
-    <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
+    <Card className="border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
       <CardHeader>
-        <CardTitle className="text-center text-2xl text-white">Recuperar Contraseña</CardTitle>
-        <CardDescription className="text-center text-white/70">
+        <CardTitle className="text-center text-2xl text-auth-foreground">Recuperar Contraseña</CardTitle>
+        <CardDescription className="text-center text-auth-foreground/70">
           {sent
             ? 'Te hemos enviado un enlace de recuperación.'
             : 'Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.'}
@@ -85,14 +85,14 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/20">
               <Mail className="size-8 text-primary" />
             </div>
-            <p className="text-sm text-white/80">
-              Revisa tu correo <strong className="text-white">{email}</strong> y sigue las instrucciones para restablecer tu contraseña.
+            <p className="text-sm text-auth-foreground/80">
+              Revisa tu correo <strong className="text-auth-foreground">{email}</strong> y sigue las instrucciones para restablecer tu contraseña.
             </p>
             <Button
               type="button"
               variant="ghost"
               onClick={onBack}
-              className="text-white/80 hover:text-white hover:bg-white/10"
+              className="text-auth-foreground/80 hover:text-auth-foreground hover:bg-auth-surface/10"
             >
               <ArrowLeft className="size-4 mr-2" />
               Volver al inicio de sesión
@@ -101,7 +101,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email-reset" className="text-white/85">Email</Label>
+              <Label htmlFor="email-reset" className="text-auth-foreground/85">Email</Label>
               <Input
                 id="email-reset"
                 type="email"
@@ -109,12 +109,12 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                 required
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400"
+                className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border"
               />
             </div>
             {isTurnstileEnabled ? (
               <div className="space-y-2">
-                <Label className="text-white/85">Verificación anti-bot</Label>
+                <Label className="text-auth-foreground/85">Verificación anti-bot</Label>
                 <TurnstileWidget
                   siteKey={turnstileSiteKey}
                   resetKey={captchaResetKey}
@@ -135,7 +135,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
               type="button"
               variant="ghost"
               onClick={onBack}
-              className="w-full text-white/80 hover:text-white hover:bg-white/10"
+              className="w-full text-auth-foreground/80 hover:text-auth-foreground hover:bg-auth-surface/10"
             >
               <ArrowLeft className="size-4 mr-2" />
               Volver al inicio de sesión

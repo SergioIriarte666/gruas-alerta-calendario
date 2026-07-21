@@ -214,13 +214,13 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className={`flex flex-col items-center gap-1 p-2 text-xs h-auto min-h-[60px] ${
-                    hasPhoto ? 'bg-green-600 text-white' : 'text-muted-foreground'
+                  className={`flex flex-col items-center gap-1 p-2 text-xs h-auto min-h-16 ${
+                    hasPhoto ? 'bg-success text-success-foreground' : 'text-muted-foreground'
                   }`}
                 >
                   <span className="text-base">{category.icon}</span>
                   <span className="hidden sm:inline">{category.shortLabel}</span>
-                  <span className="sm:hidden text-[10px] leading-tight text-center">
+                  <span className="sm:hidden text-xs leading-tight text-center">
                     {category.shortLabel}
                   </span>
                 </TabsTrigger>
@@ -260,13 +260,13 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                       <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
                         <span>{photo!.fileName}</span>
                         {photo!.storageUrl && (
-                          <span className="text-emerald-600 dark:text-emerald-400">✓ guardada</span>
+                          <span className="text-success-text dark:text-success-text">✓ guardada</span>
                         )}
                       </div>
                     </div>
                   ) : photo ? (
-                    <div className="border border-red-500 rounded-lg p-4 bg-red-50">
-                      <p className="text-red-600 text-sm mb-2">
+                    <div className="border border-danger/30 rounded-lg p-4 bg-danger-soft">
+                      <p className="text-danger-text text-sm mb-2">
                         ⚠️ Foto registrada pero no disponible: {photo.fileName}
                       </p>
                       <div className="flex gap-2">
@@ -312,8 +312,8 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
         </Tabs>
 
         {photos.length === 0 && !isOptional && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">
+          <div className="mt-4 p-4 bg-danger-soft border border-danger/30 rounded-lg">
+            <p className="text-danger-text text-sm">
               ⚠️ Debes tomar al menos 1 fotografía para completar el set fotográfico
             </p>
           </div>

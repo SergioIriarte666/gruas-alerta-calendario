@@ -20,21 +20,21 @@ export const MainMetrics = ({ metrics }: MainMetricsProps) => (
       title="Ingresos Totales"
       value={`$${metrics.totalRevenue.toLocaleString()}`}
       description="Ingresos generados en el período"
-      valueClassName="text-green-400"
+      valueClassName="text-success-text"
     />
     <ReportMetricCard
       icon={TrendingUp}
       title="Valor Promedio"
       value={`$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       description="Promedio por servicio"
-      valueClassName="text-blue-400"
+      valueClassName="text-info-text"
     />
     <ReportMetricCard
       icon={Clock}
       title="Facturas Pendientes"
       value={metrics.pendingInvoices}
       description={`${metrics.overdueInvoices} vencidas`}
-      valueClassName="text-yellow-400"
+      valueClassName="text-warning-text"
     />
   </div>
 );

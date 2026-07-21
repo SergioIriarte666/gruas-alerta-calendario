@@ -95,7 +95,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       <div className="rounded-lg border border-danger/20 bg-danger/10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-2">
-            <div className="p-1.5 rounded-lg bg-destructive/15">
+            <div className="p-1.5 rounded-lg bg-destructive/20">
               <Calculator className="size-5 text-destructive" />
             </div>
             <span className="font-semibold text-foreground">Total de Costos</span>
@@ -152,7 +152,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
             Comisión Operador ({operatorsData.length} costo{operatorsData.length !== 1 ? 's' : ''})
           </h4>
           
-          <div className="flex items-start gap-2 rounded-lg bg-violet-500/5 border border-violet-500/20 px-3 py-2 text-xs text-violet-700 dark:text-violet-400">
+          <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary">
             <Info className="size-3.5 mt-0.5 shrink-0" />
             <span>Esta comisión también aparece en el módulo de <strong>Costos</strong> como categoría "Comisión Operador".</span>
           </div>

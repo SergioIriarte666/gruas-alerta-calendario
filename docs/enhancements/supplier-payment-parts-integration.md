@@ -21,7 +21,7 @@ Los pagos de proveedores categorizados como "Mantenimiento" no se registraban au
 2. **Detección Inteligente**: Si todos los campos de piezas se completan, el sistema:
    - Mantiene la categoría como "Mantenimiento"
    - El trigger existente `create_cost_from_supplier_payment()` detecta automáticamente que debe crear una entrada en `crane_parts`
-3. **Indicador Visual**: Mensaje de confirmación verde cuando todos los campos están completos
+3. **Indicador visual**: Mensaje semántico de éxito cuando todos los campos están completos
 
 #### Integración con Sistema Existente
 - **Trigger Backend**: Usa el trigger existente `create_cost_from_supplier_payment()` 

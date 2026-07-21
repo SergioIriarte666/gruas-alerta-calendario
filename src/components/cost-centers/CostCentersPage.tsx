@@ -97,7 +97,7 @@ function CenterRow({ node, level, onEdit, onDrillDown }: CenterRowProps) {
         </button>
 
         {/* Code badge */}
-        <span className="font-mono text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded flex-shrink-0 min-w-[44px] text-center">
+        <span className="min-w-11 flex-shrink-0 rounded bg-muted px-2 py-0.5 text-center font-mono text-xs font-medium text-muted-foreground">
           {node.code}
         </span>
 

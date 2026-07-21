@@ -78,7 +78,7 @@ export const MarkServiceDisputeModal = ({
       <DialogContent className="bg-card border max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <AlertTriangle className="size-5 text-amber-500" />
+            <AlertTriangle className="size-5 text-warning-text" />
             Marcar en disputa {serviceFolio ? `— ${serviceFolio}` : ''}
           </DialogTitle>
         </DialogHeader>
@@ -123,7 +123,7 @@ export const MarkServiceDisputeModal = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting} className="gap-2 bg-amber-600 hover:bg-amber-700 text-white">
+            <Button type="submit" disabled={submitting} className="gap-2 bg-warning text-warning-foreground hover:bg-warning/90">
               {submitting && <Loader2 className="size-4 animate-spin" />}
               Marcar en disputa
             </Button>

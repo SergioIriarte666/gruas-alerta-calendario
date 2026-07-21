@@ -176,7 +176,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
     <div className="space-y-4">
       <div className="bg-card border rounded-lg p-4">
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por proveedor, N° factura o descripción..."

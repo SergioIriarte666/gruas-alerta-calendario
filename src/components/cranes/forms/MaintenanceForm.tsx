@@ -208,7 +208,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
               rows={3}
             />
             {errors.description && (
-              <span className="text-red-400 text-sm">{errors.description.message}</span>
+              <span className="text-danger-text text-sm">{errors.description.message}</span>
             )}
           </div>
 
@@ -265,7 +265,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                 placeholder="0.00"
               />
               {errors.cost && (
-                <span className="text-red-400 text-sm">{errors.cost.message}</span>
+                <span className="text-danger-text text-sm">{errors.cost.message}</span>
               )}
               {watch('status') === 'completed' && watch('cost') > 0 && (
                 <div className="flex items-center gap-2 mt-2">
@@ -298,7 +298,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                 placeholder="Ej: 50000"
               />
               {errors.kilometraje && (
-                <span className="text-red-400 text-sm">{errors.kilometraje.message}</span>
+                <span className="text-danger-text text-sm">{errors.kilometraje.message}</span>
               )}
             </div>
 

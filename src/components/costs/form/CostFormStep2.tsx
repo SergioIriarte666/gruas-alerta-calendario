@@ -342,7 +342,7 @@ export const CostFormStep2 = ({
                 {shouldOfferAutofill && (
                   <div
                     role="status"
-                    className="mt-2 flex flex-col gap-2 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                    className="mt-2 flex flex-col gap-2 rounded-md border border-success/30 bg-success-soft px-3 py-2 text-xs text-success-text sm:flex-row sm:items-center sm:justify-between"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <Sparkles className="size-3.5 shrink-0" aria-hidden="true" />
@@ -354,7 +354,7 @@ export const CostFormStep2 = ({
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="h-7 self-start px-2 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 sm:self-auto dark:text-emerald-300 dark:hover:bg-emerald-900 dark:hover:text-emerald-100"
+                      className="h-7 self-start px-2 text-xs text-success-text hover:bg-success-soft hover:text-success-text sm:self-auto"
                       onClick={handleApplyDetectedFolio}
                     >
                       Usar folio

@@ -117,13 +117,13 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                 size="icon"
                 onClick={handleSearch}
                 disabled={isSearching || !rut.trim()}
-                className="shrink-0 border-violet-300 hover:bg-violet-50 hover:border-violet-400 dark:hover:bg-violet-950"
+                className="shrink-0 border-primary/30 hover:border-primary/50 hover:bg-primary-soft"
                 title="Buscar en SRE"
               >
                 {isSearching ? (
-                  <Loader2 className="size-4 animate-spin text-violet-600" />
+                  <Loader2 className="size-4 animate-spin text-primary" />
                 ) : (
-                  <Search className="size-4 text-violet-600" />
+                  <Search className="size-4 text-primary" />
                 )}
               </Button>
             </div>
@@ -133,11 +133,11 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
           </div>
 
           {sreResult && (
-            <div className="rounded-lg border border-emerald-200 border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4 space-y-3 animate-fade-in">
+            <div className="animate-fade-in space-y-3 rounded-lg border border-success/30 border-l-4 border-l-success bg-success-soft p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-600" />
-                  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="size-4 text-success" />
+                  <span className="text-sm font-semibold text-success">
                     Datos encontrados en SRE
                   </span>
                 </div>
@@ -221,7 +221,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                 )}
               </div>
 
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+              <p className="text-xs font-medium text-success">
                 ✓ Datos aplicados automáticamente al formulario
               </p>
             </div>

@@ -111,7 +111,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Users className="size-4 text-blue-500" />
+                <Users className="size-4 text-info" />
                 <span className="font-medium">{operator.name}</span>
                 <Badge variant="default">Asignado</Badge>
               </div>
@@ -153,9 +153,9 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Grúas Activas</p>
-                <p className="text-2xl font-bold text-green-600">{data.cranes.active}</p>
+                <p className="text-2xl font-bold text-success">{data.cranes.active}</p>
               </div>
-              <Truck className="size-8 text-green-500" />
+              <Truck className="size-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -165,9 +165,9 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">En Mantención</p>
-                <p className="text-2xl font-bold text-orange-600">{data.cranes.maintenance}</p>
+                <p className="text-2xl font-bold text-warning">{data.cranes.maintenance}</p>
               </div>
-              <Clock className="size-8 text-orange-500" />
+              <Clock className="size-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -177,9 +177,9 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Operadores Asignados</p>
-                <p className="text-2xl font-bold text-blue-600">{data.operators.assigned}</p>
+                <p className="text-2xl font-bold text-info">{data.operators.assigned}</p>
               </div>
-              <Users className="size-8 text-blue-500" />
+              <Users className="size-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -189,9 +189,9 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Disponibles</p>
-                <p className="text-2xl font-bold text-gray-600">{data.operators.available}</p>
+                <p className="text-2xl font-bold text-foreground">{data.operators.available}</p>
               </div>
-              <CheckCircle className="size-8 text-gray-500" />
+              <CheckCircle className="size-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -199,9 +199,9 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
 
       {/* Alertas de Documentos */}
       {data.documentAlerts.length > 0 && (
-        <Card className="border-red-200">
+        <Card className="border-danger/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-danger">
               <AlertTriangle className="size-5" />
               Alertas de Documentos
               <Badge variant="destructive">{data.documentAlerts.length}</Badge>
@@ -222,7 +222,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="size-5 text-blue-500" />
+              <Users className="size-5 text-info" />
               Asignaciones de Operadores
               <Badge variant="outline">{data.operators.assignments.length}</Badge>
             </CardTitle>
@@ -243,7 +243,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-2">
-              <CheckCircle className="size-12 text-green-500 mx-auto" />
+              <CheckCircle className="mx-auto size-12 text-success" />
               <p className="text-muted-foreground">
                 No hay alertas operacionales para este día
               </p>

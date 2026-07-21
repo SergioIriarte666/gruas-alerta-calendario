@@ -402,8 +402,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
             </div>
 
             {detectedPaymentFolio && (
-              <Alert className="border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/40">
-                <AlertTriangle className="size-4 text-amber-600" />
+              <Alert className="border-warning/30 bg-warning-soft">
+                <AlertTriangle className="size-4 text-warning-text" />
                 <AlertDescription className="text-xs">
                   Folio <strong>{detectedPaymentFolio}</strong> detectado en{' '}
                   {detectedFolioInNotes ? 'las notas' : 'la referencia bancaria'}.

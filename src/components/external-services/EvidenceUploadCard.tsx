@@ -92,7 +92,7 @@ export const EvidenceUploadCard = ({ serviceId, readOnly = false }: Props) => {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Información adicional sobre este archivo..."
-                className="mt-1 min-h-[60px]"
+                className="mt-1 min-h-16"
               />
             </div>
             <Button

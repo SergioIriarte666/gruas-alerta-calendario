@@ -3,12 +3,12 @@ import React from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowRight, 
-  FileText, 
-  ShoppingCart, 
-  Clock, 
-  PlayCircle, 
+import {
+  ArrowRight,
+  FileText,
+  ShoppingCart,
+  Clock,
+  PlayCircle,
   CheckCircle,
   Receipt,
   X
@@ -34,42 +34,42 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
     const configs = {
       'pending': {
         label: 'Programado',
-        color: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+        color: 'bg-info/20 text-info-text border-info/30',
         icon: Clock
       },
       'in_progress': {
         label: 'En Progreso',
-        color: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        color: 'bg-primary/20 text-primary border-primary/30',
         icon: PlayCircle
       },
       'completed': {
         label: 'Completado',
-        color: 'bg-green-500/20 text-green-300 border-green-500/30',
+        color: 'bg-success/20 text-success-text border-success/30',
         icon: CheckCircle
       },
       'quoted': {
         label: 'Cotizado',
-        color: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        color: 'bg-warning/20 text-warning-text border-warning/30',
         icon: FileText
       },
       'purchase_order_pending': {
         label: 'Esperando O.C.',
-        color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+        color: 'bg-warning/20 text-warning-text border-warning/30',
         icon: ShoppingCart
       },
       'with_purchase_order': {
         label: 'Con O.C.',
-        color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+        color: 'bg-info/20 text-info-text border-info/30',
         icon: ShoppingCart
       },
       'invoiced': {
         label: 'Facturado',
-        color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+        color: 'bg-muted/20 text-muted-foreground border-border/30',
         icon: Receipt
       },
       'failed': {
         label: 'Fallido',
-        color: 'bg-orange-600/20 text-orange-300 border-orange-600/30',
+        color: 'bg-warning/20 text-warning-text border-warning/30',
         icon: X
       }
     };
@@ -127,14 +127,14 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
     try {
       const { error } = await supabase
         .from('services')
-        .update({ 
+        .update({
           status: nextStatus,
           updated_at: businessClock.nowISO()
         })
         .eq('id', service.id);
 
       if (error) throw error;
-      
+
       toast.success(`Servicio actualizado a: ${getStatusConfig(nextStatus).label}`);
 
       if (service.status === 'in_progress' && nextStatus === 'completed') {
@@ -169,7 +169,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
   const NextIcon = nextConfig?.icon;
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gray-800/30 rounded-lg">
+    <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
       {/* Current Status */}
       <div className="flex items-center gap-2">
         <Badge variant="outline" className={currentConfig.color}>
@@ -177,7 +177,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
           {currentConfig.label}
         </Badge>
         {service.purchaseOrderNumber && (
-          <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 text-xs">
+          <Badge variant="secondary" className="bg-primary/20 text-primary text-xs">
             O.C: {service.purchaseOrderNumber}
           </Badge>
         )}
@@ -186,8 +186,8 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       {/* Transition Arrow & Button */}
       {nextConfig && (
         <>
-          <ArrowRight className="size-4 text-gray-400" />
-          
+          <ArrowRight className="size-4 text-muted-foreground" />
+
           <div className="flex items-center gap-3">
             <Badge variant="outline" className={`${nextConfig.color} opacity-50`}>
               <NextIcon className="size-3 mr-1" />
@@ -200,8 +200,8 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
               disabled={!canTransition(service.status)}
               className={
                 service.status === 'purchase_order_pending' && !service.purchaseOrderNumber
-                  ? 'bg-orange-600 hover:bg-orange-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  ? 'bg-warning text-warning-foreground hover:bg-warning/90'
+                  : 'bg-info text-info-foreground hover:bg-info/90'
               }
             >
               {service.status === 'purchase_order_pending' && !service.purchaseOrderNumber
@@ -215,7 +215,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       {/* Special message for purchase order pending */}
       {service.status === 'purchase_order_pending' && !service.purchaseOrderNumber && (
         <div className="flex-1 text-right">
-          <p className="text-xs text-orange-400">
+          <p className="text-xs text-warning-text">
             ⚠️ Necesita orden de compra para continuar
           </p>
         </div>

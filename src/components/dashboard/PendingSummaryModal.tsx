@@ -59,10 +59,10 @@ export const PendingSummaryModal: React.FC = () => {
       <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+          <DialogHeader className="border-b bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-4">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold text-foreground">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10">
-                <Bell className="size-5 text-violet-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                <Bell className="size-5 text-primary" />
               </div>
               Resumen de Pendientes
             </DialogTitle>
@@ -181,7 +181,7 @@ export const PendingSummaryModal: React.FC = () => {
               />
               <span className="text-xs text-muted-foreground">No mostrar de nuevo hoy</span>
             </label>
-            <Button onClick={handleClose} className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Button onClick={handleClose} className="bg-primary text-primary-foreground hover:bg-primary/90">
               Entendido
             </Button>
           </DialogFooter>

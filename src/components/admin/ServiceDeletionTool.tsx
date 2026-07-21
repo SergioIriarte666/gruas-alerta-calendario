@@ -211,7 +211,7 @@ export const ServiceDeletionTool = () => {
 const DepRow = ({ label, count }: { label: string; count: number }) => (
   <div className="flex items-center justify-between py-1 px-2 rounded bg-muted/50 text-sm">
     <span className="text-muted-foreground">{label}</span>
-    <Badge variant={count > 0 ? 'destructive' : 'outline'} className="text-[10px]">
+    <Badge variant={count > 0 ? 'destructive' : 'outline'} className="text-xs">
       {count}
     </Badge>
   </div>

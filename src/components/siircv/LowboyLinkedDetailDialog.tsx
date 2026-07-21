@@ -66,7 +66,7 @@ function Field({ label, value, className }: { label: string; value: React.ReactN
 function ConsistencyAlert({ costo, documento, documentLabel = 'total del documento' }: { costo: number; documento: number; documentLabel?: string }) {
   if (Math.round(costo) === Math.round(documento)) return null;
   return (
-    <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+    <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning">
       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
       <span>El monto del vínculo ({formatCLP(costo)}) difiere del {documentLabel} ({formatCLP(documento)}).</span>
     </div>

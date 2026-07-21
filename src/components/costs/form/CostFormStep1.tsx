@@ -138,7 +138,7 @@ export const CostFormStep1 = ({
                       value={field.value || ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       placeholder="Describe el costo o gasto..."
-                      className="min-h-[60px] resize-y"
+                      className="min-h-16 resize-y"
                     />
                   ) : (
                     <CostCombobox

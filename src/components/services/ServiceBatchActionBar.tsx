@@ -44,7 +44,7 @@ export const ServiceBatchActionBar = ({
               size="sm"
               onClick={onBatchClose}
               disabled={isProcessing}
-              className="border-success/20 bg-success/10 text-success hover:bg-success/15"
+              className="border-success/20 bg-success/10 text-success hover:bg-success/20"
             >
               <Check className="size-4 mr-2" />
               Cerrar

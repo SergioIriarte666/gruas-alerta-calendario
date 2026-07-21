@@ -27,13 +27,13 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-500/20 text-green-400">Completado</Badge>;
+        return <Badge className="bg-success/20 text-success-text">Completado</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-500/20 text-yellow-400">Pendiente</Badge>;
+        return <Badge className="bg-warning/20 text-warning-text">Pendiente</Badge>;
       case 'in_progress':
-        return <Badge className="bg-blue-500/20 text-blue-400">En Proceso</Badge>;
+        return <Badge className="bg-info/20 text-info-text">En Proceso</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-500/20 text-red-400">Cancelado</Badge>;
+        return <Badge className="bg-danger/20 text-danger-text">Cancelado</Badge>;
       default:
         return <Badge variant="secondary">Desconocido</Badge>;
     }
@@ -84,7 +84,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                   {services.filter(s => s.status === 'completed').length}
                 </p>
               </div>
-              <Calendar className="size-8 text-green-400" />
+              <Calendar className="size-8 text-success-text" />
             </div>
           </CardContent>
         </Card>

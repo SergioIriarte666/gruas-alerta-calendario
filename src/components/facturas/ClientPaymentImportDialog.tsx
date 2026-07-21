@@ -44,10 +44,10 @@ const STATUS_BADGE: Record<ClientPaymentMatchStatus, { label: string; variant: '
 
 const ROW_BG: Record<ClientPaymentMatchStatus, string> = {
   found: '',
-  not_found: 'bg-amber-50',
-  already_paid: 'bg-gray-50',
+  not_found: 'bg-danger-soft',
+  already_paid: 'bg-muted/50',
   partial_mismatch: '',
-  duplicate: 'bg-orange-50',
+  duplicate: 'bg-warning-soft',
 };
 
 type SortColumn = 'referencia' | 'numeroFiscal' | 'monto' | 'saldo' | 'estado';

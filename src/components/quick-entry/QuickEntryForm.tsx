@@ -24,10 +24,10 @@ interface QuickEntryFormProps {
 }
 
 const ENTRY_TYPES = [
-  { value: 'service', label: 'Servicio', Icon: Truck, color: '#378ADD' },
-  { value: 'cost', label: 'Costo/Gasto', Icon: Receipt, color: '#E24B4A' },
-  { value: 'inventory', label: 'Bodega', Icon: Package, color: '#639922' },
-  { value: 'maintenance', label: 'Mantenimiento', Icon: Wrench, color: '#BA7517' },
+  { value: 'service', label: 'Servicio', Icon: Truck, iconClass: 'text-info' },
+  { value: 'cost', label: 'Costo/Gasto', Icon: Receipt, iconClass: 'text-danger' },
+  { value: 'inventory', label: 'Bodega', Icon: Package, iconClass: 'text-success' },
+  { value: 'maintenance', label: 'Mantenimiento', Icon: Wrench, iconClass: 'text-warning-text' },
 ] as const;
 
 export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
@@ -128,7 +128,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end md:items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/50 p-4 md:items-center">
       <div className={`
         bg-background rounded-t-lg md:rounded-lg shadow-lg w-full max-w-md
         ${isMobile ? 'max-h-[90vh]' : 'max-h-[80vh]'}
@@ -155,7 +155,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           <div className="p-4 space-y-4">
             <p className="text-sm text-muted-foreground">Selecciona el tipo de registro</p>
             <div className="grid grid-cols-2 gap-3">
-              {ENTRY_TYPES.map(({ value, label, Icon, color }) => (
+              {ENTRY_TYPES.map(({ value, label, Icon, iconClass }) => (
                 <button
                   key={value}
                   type="button"
@@ -167,7 +167,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
                       : 'hover:bg-muted/50'
                   )}
                 >
-                  <Icon size={24} style={{ color }} />
+                  <Icon className={cn('size-6', iconClass)} />
                   {label}
                 </button>
               ))}

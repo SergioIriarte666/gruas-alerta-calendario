@@ -25,9 +25,9 @@ import {
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
 const STATUS_CLASS = {
-  disponible: 'bg-emerald-600 lowboy-on-color',
-  reservado: 'bg-amber-500 lowboy-on-color',
-  vendido: 'bg-sky-700 lowboy-on-color',
+  disponible: 'bg-success text-success-foreground',
+  reservado: 'bg-warning text-warning-foreground',
+  vendido: 'bg-info text-info-foreground',
 } as const;
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -74,7 +74,7 @@ export function LowboyContainerDetailSheet({ container, open, onOpenChange, isAd
           <SheetHeader className="pr-8 text-left">
             <div className="flex flex-wrap items-center gap-2">
               <SheetTitle className="font-mono text-base sm:text-lg">{container.serial_number || 'CONTENEDOR SIN SERIE'}</SheetTitle>
-              {!container.serial_number && <Badge className="bg-amber-500 lowboy-on-color">Sin serie</Badge>}
+              {!container.serial_number && <Badge variant="warning">Sin serie</Badge>}
               <Badge className={STATUS_CLASS[status]}>{CONTAINER_STATUS_LABEL[status]}</Badge>
             </div>
             <SheetDescription>{CONTAINER_SIZE_LABEL[container.size as keyof typeof CONTAINER_SIZE_LABEL]} · {CONTAINER_TYPE_LABEL[container.container_type as keyof typeof CONTAINER_TYPE_LABEL]}</SheetDescription>
@@ -146,12 +146,12 @@ export function LowboyContainerDetailSheet({ container, open, onOpenChange, isAd
           </section>
 
           {container.status === 'vendido' && (
-            <section className="mt-6 rounded-md border border-sky-700/25 bg-sky-700/5 p-4">
+            <section className="mt-6 rounded-md border border-info/30 bg-info-soft p-4">
               <h3 className="text-sm font-semibold">Venta asociada</h3>
               <p className="mt-1 text-sm">{container.sale?.client_name} · {container.sale?.description}</p>
               <div className="mt-3 grid grid-cols-2 gap-4">
                 <Field label="Precio neto" value={formatCLP(Number(container.sale_net_price))} />
-                <Field label="Margen neto" value={<span className={cn(margin >= 0 ? 'text-emerald-600' : 'text-destructive')}>{formatCLP(margin)}</span>} />
+                <Field label="Margen neto" value={<span className={cn(margin >= 0 ? 'text-success' : 'text-destructive')}>{formatCLP(margin)}</span>} />
               </div>
             </section>
           )}

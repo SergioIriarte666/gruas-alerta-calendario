@@ -64,7 +64,7 @@ export const SessionTimeoutModal = ({
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <div className={cn('h-1 w-full', isLowTime ? 'bg-destructive' : 'bg-amber-500')} />
+        <div className={cn('h-1 w-full', isLowTime ? 'bg-destructive' : 'bg-warning')} />
 
         <div className="p-6 sm:p-7">
           <div className="flex items-start gap-3.5">
@@ -72,7 +72,7 @@ export const SessionTimeoutModal = ({
               'flex size-11 shrink-0 items-center justify-center rounded-xl border',
               isLowTime
                 ? 'border-destructive/20 bg-destructive/10 text-destructive'
-                : 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                : 'border-warning/20 bg-warning-soft text-warning-text dark:text-warning-text'
             )}>
               <Timer className="size-5" />
             </div>
@@ -83,7 +83,7 @@ export const SessionTimeoutModal = ({
           </div>
 
           <div className="my-7 rounded-xl border border-border/70 bg-muted/45 px-5 py-5 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Tiempo restante</p>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Tiempo restante</p>
             <span className={cn(
               'mt-1 block text-5xl font-semibold tabular-nums tracking-tight',
               isLowTime ? 'text-destructive' : 'text-foreground'

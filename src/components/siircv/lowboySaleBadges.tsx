@@ -9,10 +9,10 @@ import {
 
 // Colores del pipeline compartidos por la tabla y el modal de detalle (fuente única).
 export const STATUS_BADGE: Record<LowboySaleStatus, string> = {
-  confirmada: 'bg-sky-600 hover:bg-sky-700 lowboy-on-color',
-  ejecutada: 'bg-amber-500 hover:bg-amber-600 lowboy-on-color',
-  facturada: 'bg-cyan-800 hover:bg-cyan-900 lowboy-on-color',
-  pagada: 'bg-emerald-600 hover:bg-emerald-700 lowboy-on-color',
+  confirmada: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  ejecutada: 'bg-warning text-warning-foreground hover:bg-warning/90',
+  facturada: 'bg-info text-info-foreground hover:bg-info/90',
+  pagada: 'bg-success text-success-foreground hover:bg-success/90',
   cancelada: 'bg-muted text-muted-foreground line-through',
 };
 
@@ -32,7 +32,7 @@ export function TypeBadge({ type }: { type: string }) {
       variant="outline"
       className={cn(
         'whitespace-nowrap font-normal',
-        key === 'flete' ? 'border-indigo-400 text-indigo-600' : 'border-teal-400 text-teal-600',
+        key === 'flete' ? 'border-info/40 text-info' : 'border-primary/40 text-primary',
       )}
     >
       {SALE_TYPE_LABEL[key] ?? type}

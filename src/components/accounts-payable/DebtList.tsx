@@ -29,8 +29,8 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
     if (debt.overdue_count > 0)
       return <Badge variant="destructive" className="text-xs">Vencida</Badge>;
     if (debt.status === 'completed')
-      return <Badge className="bg-green-100 text-green-800 text-xs">Completada</Badge>;
-    return <Badge className="bg-blue-100 text-blue-800 text-xs">Activa</Badge>;
+      return <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text">Completada</Badge>;
+    return <Badge variant="outline" className="border-info/30 bg-info-soft text-xs text-info-text">Activa</Badge>;
   };
 
   const getFrequencyLabel = (freq: string) => {
@@ -62,7 +62,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-        <Table className="min-w-[700px]">
+        <Table className="min-w-max">
           <TableHeader>
             <TableRow>
               <TableHead>Acreedor</TableHead>
@@ -71,7 +71,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
               <TableHead>Frecuencia</TableHead>
               <TableHead>Progreso</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead className="w-[60px]">Acciones</TableHead>
+              <TableHead className="w-16">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

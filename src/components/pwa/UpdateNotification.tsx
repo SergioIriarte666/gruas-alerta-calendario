@@ -45,29 +45,29 @@ export const UpdateNotification: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-lg max-w-sm z-50">
+    <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-lg border border-border/70 bg-popover p-4 text-popover-foreground shadow-2xl">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Download className="size-5 text-tms-green" />
-          <h3 className="font-semibold text-white">Actualización Disponible</h3>
+          <Download className="size-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Actualización Disponible</h3>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleDismiss}
-          className="text-slate-400 hover:text-white p-1 h-auto"
+          className="h-auto p-1 text-muted-foreground hover:text-foreground"
         >
           <X className="size-4" />
         </Button>
       </div>
-      <p className="text-slate-300 text-sm mb-3">
+      <p className="mb-3 text-sm text-muted-foreground">
         Una nueva versión está disponible. Actualiza para obtener las últimas mejoras.
       </p>
       <div className="flex gap-2">
         <Button
           onClick={handleUpdate}
           size="sm"
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           Actualizar
         </Button>
@@ -75,7 +75,7 @@ export const UpdateNotification: React.FC = () => {
           onClick={handleDismiss}
           variant="outline"
           size="sm"
-          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          className="border-border text-foreground hover:bg-accent"
         >
           Después
         </Button>

@@ -70,7 +70,7 @@ const UserManual: React.FC = () => {
                     className={cn(
                       'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
                       activeChapterId === chapter.id
-                        ? 'text-white'
+                        ? 'text-primary-foreground'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                     style={activeChapterId === chapter.id ? { backgroundColor: chapter.color } : {}}
@@ -92,7 +92,7 @@ const UserManual: React.FC = () => {
                               ? 'font-medium'
                               : 'text-muted-foreground hover:bg-muted'
                           )}
-                          style={activeSectionId === section.id ? { color: chapter.color, backgroundColor: `${chapter.color}15` } : {}}
+                          style={activeSectionId === section.id ? { color: chapter.color, backgroundColor: chapter.softColor } : {}}
                         >
                           {section.title}
                         </button>
@@ -111,7 +111,7 @@ const UserManual: React.FC = () => {
             <div className="p-8 max-w-3xl">
               <div
                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4"
-                style={{ backgroundColor: `${activeChapter.color}20`, color: activeChapter.color }}
+                style={{ backgroundColor: activeChapter.softColor, color: activeChapter.color }}
               >
                 <BookOpen className="size-3" />
                 Capítulo {activeChapter.number} — {activeChapter.title}

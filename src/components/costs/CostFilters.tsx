@@ -58,14 +58,14 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
           <Filter className="size-4 mr-2" />
           Filtros
           {hasActiveFilters && (
-            <span className="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full" />
+            <span className="absolute -right-1 -top-1 size-2 rounded-full bg-danger" />
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-w-[90vw] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 max-h-[80vh] overflow-y-auto" align="end" side="bottom" sideOffset={8}>
+      <PopoverContent className="max-h-[80vh] w-80 max-w-[90vw] overflow-y-auto border-border bg-card" align="end" side="bottom" sideOffset={8}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100">Filtros Avanzados</h3>
+            <h3 className="font-medium text-foreground">Filtros Avanzados</h3>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={onClearFilters}>
                 <X className="size-4 mr-1" />

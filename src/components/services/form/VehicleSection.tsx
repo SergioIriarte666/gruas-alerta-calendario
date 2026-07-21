@@ -522,7 +522,7 @@ export const VehicleSection = ({
         {/* Marca del Vehículo */}
         <div className="space-y-2">
           <Label htmlFor="vehicleBrand" className={vehicleBrandError ? 'text-destructive' : ''}>
-            Marca del Vehículo {vehicleBrandRequired && <span className="text-red-500">*</span>}
+            Marca del Vehículo {vehicleBrandRequired && <span className="text-danger-text">*</span>}
             {vehicleBrandError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
                 <AlertTriangle className="size-3" />
@@ -565,7 +565,7 @@ export const VehicleSection = ({
         {/* Modelo del Vehículo */}
         <div className="space-y-2">
           <Label htmlFor="vehicleModel" className={vehicleModelError ? 'text-destructive' : ''}>
-            Modelo del Vehículo {vehicleModelRequired && <span className="text-red-500">*</span>}
+            Modelo del Vehículo {vehicleModelRequired && <span className="text-danger-text">*</span>}
             {vehicleModelError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
                 <AlertTriangle className="size-3" />
@@ -614,7 +614,7 @@ export const VehicleSection = ({
         {/* Patente */}
         <div className="space-y-2">
           <Label htmlFor="licensePlate" className={licensePlateError ? 'text-destructive' : ''}>
-            Patente {licensePlateRequired && <span className="text-red-500">*</span>}
+            Patente {licensePlateRequired && <span className="text-danger-text">*</span>}
             {licensePlateError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
                 <AlertTriangle className="size-3" />
@@ -863,7 +863,7 @@ export const VehicleSection = ({
                     <Clock className="size-5" aria-hidden="true" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-warning">Aviso reciente · últimos 30 días</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-warning">Aviso reciente · últimos 30 días</p>
                     <p className="mt-0.5 text-lg font-bold text-foreground">{recentServiceHeadline}</p>
                   </div>
                 </div>
@@ -884,12 +884,12 @@ export const VehicleSection = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="size-4 text-green-600" />
+                  <MapPin className="size-4 text-success-text" />
                   <span className="text-muted-foreground">Origen:</span>
                   <span>{latestRecentService.origin || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="size-4 text-red-600" />
+                  <MapPin className="size-4 text-danger-text" />
                   <span className="text-muted-foreground">Destino:</span>
                   <span>{latestRecentService.destination || 'No especificado'}</span>
                 </div>

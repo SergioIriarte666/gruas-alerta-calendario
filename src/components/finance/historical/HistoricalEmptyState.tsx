@@ -28,7 +28,7 @@ export const HistoricalEmptyState = ({ variant, detail, className }: HistoricalE
   const { icon: Icon, title } = CONFIG[variant];
   return (
     <div className={`flex flex-col items-center justify-center gap-2 py-8 text-center ${className || ''}`}>
-      <Icon className={`size-8 ${variant === 'missing-import' ? 'text-amber-500' : 'text-muted-foreground/40'}`} />
+      <Icon className={`size-8 ${variant === 'missing-import' ? 'text-warning-text' : 'text-muted-foreground/40'}`} />
       <p className="text-sm text-muted-foreground max-w-sm">{title}</p>
       {detail && <p className="text-xs text-muted-foreground/70">{detail}</p>}
     </div>

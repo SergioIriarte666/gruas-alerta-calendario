@@ -152,11 +152,11 @@ export const PatentLookup: React.FC = () => {
                   <div className="text-sm text-muted-foreground">Revisión Técnica</div>
                   <div className="font-semibold flex items-center gap-2">
                     {data.rtResultado === 'A' ? (
-                      <Badge className="bg-green-100 text-green-800 border-0 text-xs hover:bg-green-100 dark:bg-green-500/20 dark:text-green-200">
+                      <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text hover:bg-success-soft">
                         ✓ Aprobada · Vence {data.mesRT}
                       </Badge>
                     ) : (
-                      <Badge className="bg-red-100 text-red-800 border-0 text-xs hover:bg-red-100 dark:bg-red-500/20 dark:text-red-200">
+                      <Badge variant="outline" className="border-danger/30 bg-danger-soft text-xs text-danger-text hover:bg-danger-soft">
                         ✗ Vencida · {data.mesRT}
                       </Badge>
                     )}
@@ -166,7 +166,7 @@ export const PatentLookup: React.FC = () => {
             </div>
 
             <div className="mt-4 pt-4 border-t">
-              <Badge className="border-0 bg-emerald-100 text-xs text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-200">
+              <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text hover:bg-success-soft">
                 Pro Light · 100 consultas/día
               </Badge>
             </div>
@@ -220,7 +220,7 @@ export const PatentLookup: React.FC = () => {
             </div>
 
             <div className="mt-4 pt-4 border-t">
-              <Badge className="border-0 bg-blue-100 text-xs text-blue-800 hover:bg-blue-100 dark:bg-blue-500/20 dark:text-blue-200">
+              <Badge variant="outline" className="border-info/30 bg-info-soft text-xs text-info-text hover:bg-info-soft">
                 Pro Light · VIN Decode
               </Badge>
             </div>

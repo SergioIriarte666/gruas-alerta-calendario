@@ -65,7 +65,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
     // ve a través del canvas y el trazo negro queda invisible al firmar. Se
     // fuerza fondo BLANCO, idéntico al PDF, antes de re-aplicar la firma.
     if (ctx) {
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, width, height);
     }
 
@@ -136,7 +136,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
             </p>}
         </div>
 
-        <div className="border-2 border-border rounded-lg bg-white relative">
+        <div className="relative rounded-lg border-2 border-border bg-signature-surface">
           <SignatureCanvas ref={sigCanvasRef} canvasProps={{
         className: 'signature-canvas w-full h-32',
         style: {
@@ -146,10 +146,10 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
       }} backgroundColor="white" penColor="black" onEnd={handleEnd} />
 
           {signature && <div className="absolute top-2 right-2">
-              <Check className="size-5 text-emerald-500" />
+              <Check className="size-5 text-success-text" />
             </div>}
 
-          <div className="absolute bottom-2 left-2 text-xs text-gray-500">
+          <div className="absolute bottom-2 left-2 text-xs text-muted-foreground">
             Firme aquí con su dedo o stylus
           </div>
         </div>

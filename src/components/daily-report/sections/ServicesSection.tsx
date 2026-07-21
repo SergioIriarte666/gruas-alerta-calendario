@@ -44,7 +44,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       case 'in_progress':
         return <Badge variant="outline">En Progreso</Badge>;
       case 'completed':
-        return <Badge variant="default" className="bg-green-500">Completado</Badge>;
+        return <Badge variant="default" className="bg-success text-success-foreground">Completado</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Cancelado</Badge>;
       default:
@@ -89,7 +89,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5 text-blue-500" />
+            <Calendar className="size-5 text-info" />
             Servicios Programados Hoy
             <Badge variant="outline">{data.scheduled.length}</Badge>
           </CardTitle>
@@ -111,31 +111,31 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
 
       {/* Servicios Completados SIN Orden de Compra (CRÍTICO) */}
       {data.overdueWithoutPO && data.overdueWithoutPO.length > 0 && (
-        <Card className="border-amber-500 bg-amber-50">
+        <Card className="border-warning/30 bg-warning-soft">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-700">
+            <CardTitle className="flex items-center gap-2 text-warning">
               <AlertTriangle className="size-5" />
               ⚠️ Servicios Completados SIN Orden de Compra
-              <Badge variant="destructive" className="bg-amber-500">
+              <Badge className="bg-warning text-warning-foreground">
                 {data.overdueWithoutPO.length}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <div className="px-6 pb-2 text-sm text-amber-700 font-medium">
+          <div className="px-6 pb-2 text-sm font-medium text-warning">
             ⚠️ Estos servicios NO pueden facturarse hasta obtener la Orden de Compra del cliente
           </div>
           <CardContent>
             <div className="space-y-3">
               {data.overdueWithoutPO.map((service) => (
-                <Card key={service.id} className="border-amber-300 bg-white">
+                <Card key={service.id} className="border-warning/30 bg-card">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Truck className="size-4 text-amber-600" />
+                          <Truck className="size-4 text-warning" />
                           <span className="font-medium">{service.folio}</span>
                           {getStatusBadge(service.status)}
-                          <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                          <Badge variant="outline" className="border-warning/30 bg-warning-soft text-warning">
                             Sin O.C.
                           </Badge>
                         </div>
@@ -147,8 +147,8 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
                           {service.crane && <p><strong>Grúa:</strong> {service.crane.brand} {service.crane.model}</p>}
                           {service.service_type && <p><strong>Tipo:</strong> {service.service_type.name}</p>}
                           <p><strong>Valor:</strong> {formatCurrency(service.value)}</p>
-                          <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
-                            <p className="text-xs text-amber-700 font-medium">
+                          <div className="mt-2 rounded border border-warning/30 bg-warning-soft p-2">
+                            <p className="text-xs font-medium text-warning">
                               ⚠️ Acción requerida: Solicitar O.C. al cliente
                             </p>
                           </div>
@@ -169,15 +169,15 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
 
       {/* Servicios Listos para Facturar (Con O.C.) */}
       {data.overdue && data.overdue.length > 0 && (
-        <Card className="border-green-200">
+        <Card className="border-success/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-600">
+            <CardTitle className="flex items-center gap-2 text-success">
               <CheckCircle className="size-5" />
               ✅ Servicios Listos para Facturar (Con O.C.)
-              <Badge variant="default" className="bg-green-500">{data.overdue.length}</Badge>
+              <Badge className="bg-success text-success-foreground">{data.overdue.length}</Badge>
             </CardTitle>
           </CardHeader>
-          <div className="px-6 pb-2 text-sm text-green-700">
+          <div className="px-6 pb-2 text-sm text-success">
             ✅ Servicios completados con Orden de Compra, listos para incluir en factura
           </div>
           <CardContent>
@@ -194,7 +194,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="size-5 text-orange-500" />
+            <Clock className="size-5 text-warning" />
             Servicios Pendientes
             <Badge variant="secondary">{data.pending.length}</Badge>
           </CardTitle>
@@ -223,7 +223,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5 text-green-500" />
+            <Calendar className="size-5 text-info" />
             Próximos 7 Días
             <Badge variant="outline">{data.nextWeek.length}</Badge>
           </CardTitle>
@@ -232,7 +232,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
           {data.nextWeek.length > 0 ? (
             <div className="space-y-3">
               {data.nextWeek.slice(0, 5).map((service) => (
-                <Card key={service.id} className="border-green-200">
+                <Card key={service.id} className="border-info/30">
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">

@@ -106,7 +106,7 @@ export const PaymentReassignmentTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <ArrowRightLeft className="size-5 text-amber-600" />
+            <ArrowRightLeft className="size-5 text-warning-text" />
             Reconexión de Pagos
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -195,7 +195,7 @@ export const PaymentReassignmentTool = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="size-5 text-amber-600" />
+              <AlertTriangle className="size-5 text-warning-text" />
               {actionType === 'reassign' ? 'Reasignar Pago' : 'Eliminar Aplicación'}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>

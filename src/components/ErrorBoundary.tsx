@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <AlertDescription className="mt-2 space-y-4">
             <p>Se ha producido un error inesperado.</p>
             {isDev && this.state.error && (
-              <pre className="text-xs bg-black/10 p-2 rounded overflow-auto max-h-[200px]">
+              <pre className="max-h-48 overflow-auto rounded bg-overlay/10 p-2 text-xs">
                 {this.state.error.toString()}
                 {this.state.errorInfo?.componentStack}
               </pre>

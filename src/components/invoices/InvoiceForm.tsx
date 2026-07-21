@@ -181,7 +181,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </div>
 
-          <div className="sticky bottom-0 flex-shrink-0 border-t border-border/70 bg-card p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <div className="sticky bottom-0 flex-shrink-0 border-t border-border/70 bg-card p-4 shadow-md">
             <div className="flex items-center justify-between">
               <Button type="button" variant="outline" onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)} disabled={currentStep === 1} className="gap-2 border-border/70 bg-background/60">
                 <ChevronLeft className="size-4" /> Anterior
@@ -193,7 +193,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     Siguiente <ChevronRight className="size-4" />
                   </Button>
                 ) : (
-                  <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="min-w-[140px] gap-2">
+                  <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="min-w-36 gap-2">
                     <Save className="size-4" />
                     {isSubmitting || isLoading ? 'Guardando...' : `${isEditing ? 'Actualizar' : 'Crear'} Factura`}
                   </Button>

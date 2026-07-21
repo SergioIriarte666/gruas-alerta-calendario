@@ -38,6 +38,7 @@ Los componentes en `src/components/ui` encapsulan Radix primitives y patrones de
 - accesibilidad (focus management, ARIA),
 - composición por props,
 - estilos con Tailwind + `class-variance-authority` y `tailwind-merge`.
+- contrato visual definido en [la guía visual](../design-system.md).
 
 ## API expuesta
 
@@ -95,7 +96,7 @@ import { Layout } from '@/components/layout/Layout'
 
 ## Configuración requerida
 - Tailwind/shadcn:
-  - `components.json`, `tailwind.config` y estilos base (`src/index.css`) deben estar activos para el look & feel.
+  - `components.json`, `tailwind.config` y `src/index.css` implementan el contrato de `docs/design-system.md`.
 - Hosting SPA:
   - rewrites a `index.html` para rutas profundas (`/dashboard`, `/invoices`, etc.).
 

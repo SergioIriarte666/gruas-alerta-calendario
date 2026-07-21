@@ -51,8 +51,8 @@ const JsonDiff = ({ oldData, newData }: JsonDiffProps) => {
         <thead>
           <tr className="border-b border-border/50 bg-muted/30">
             <th className="px-3 py-2 text-left font-medium text-muted-foreground">Campo</th>
-            <th className="px-3 py-2 text-left font-medium text-red-600 dark:text-red-400">Antes</th>
-            <th className="px-3 py-2 text-left font-medium text-green-600 dark:text-green-400">Después</th>
+            <th className="px-3 py-2 text-left font-medium text-danger">Antes</th>
+            <th className="px-3 py-2 text-left font-medium text-success">Después</th>
           </tr>
         </thead>
         <tbody>
@@ -61,7 +61,7 @@ const JsonDiff = ({ oldData, newData }: JsonDiffProps) => {
               <td className="px-3 py-2 text-muted-foreground">{formatFieldLabel(key)}</td>
               <td className="px-3 py-2 font-mono">
                 {oldDisplay !== undefined ? (
-                  <span className="rounded bg-red-50 px-1 text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                  <span className="rounded bg-danger-soft px-1 text-danger">
                     {oldDisplay}
                   </span>
                 ) : (
@@ -70,7 +70,7 @@ const JsonDiff = ({ oldData, newData }: JsonDiffProps) => {
               </td>
               <td className="px-3 py-2 font-mono">
                 {newDisplay !== undefined ? (
-                  <span className="rounded bg-green-50 px-1 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                  <span className="rounded bg-success-soft px-1 text-success">
                     {newDisplay}
                   </span>
                 ) : (
@@ -116,11 +116,11 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
                 {formatFieldLabel(change.fieldName)}
               </p>
               <div className="flex items-center gap-2 text-sm">
-                <span className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                <span className="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs text-danger">
                   {formatFieldValue(change.fieldName, change.oldValue)}
                 </span>
                 <span className="text-muted-foreground">→</span>
-                <span className="rounded bg-green-50 px-1.5 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                <span className="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs text-success">
                   {formatFieldValue(change.fieldName, change.newValue)}
                 </span>
               </div>
@@ -164,7 +164,7 @@ export const AuditEntityDrawer = ({ entry, open, onClose }: AuditEntityDrawerPro
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-[520px]">
+      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-[32.5rem]">
         <SheetHeader className="shrink-0">
           <SheetTitle className="flex flex-wrap items-center gap-2 text-base">
             {title}

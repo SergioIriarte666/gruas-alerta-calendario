@@ -23,9 +23,9 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
     if (days <= 0) {
       return <Badge variant="destructive">Vencido</Badge>;
     } else if (days <= 30) {
-      return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">Por vencer</Badge>;
+      return <Badge variant="secondary" className="bg-warning/20 text-warning-text">Por vencer</Badge>;
     } else {
-      return <Badge variant="default" className="bg-green-500/20 text-green-400">Vigente</Badge>;
+      return <Badge variant="default" className="bg-success/20 text-success-text">Vigente</Badge>;
     }
   };
 
@@ -36,10 +36,10 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
   return (
     <div className="space-y-6">
       {/* Información Básica */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card/5 border-primary/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Truck className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Truck className="size-5 text-primary" />
             Información Básica
           </CardTitle>
         </CardHeader>
@@ -47,37 +47,37 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div>
-                <label className="text-gray-300 text-sm">Patente</label>
-                <p className="text-white font-medium">{crane.licensePlate}</p>
+                <label className="text-muted-foreground text-sm">Patente</label>
+                <p className="text-foreground font-medium">{crane.licensePlate}</p>
               </div>
               <div>
-                <label className="text-gray-300 text-sm">Empresa</label>
-                <p className="text-white">
+                <label className="text-muted-foreground text-sm">Empresa</label>
+                <p className="text-foreground">
                   {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
                 </p>
               </div>
               <div>
-                <label className="text-gray-300 text-sm">Marca</label>
-                <p className="text-white">{crane.brand}</p>
+                <label className="text-muted-foreground text-sm">Marca</label>
+                <p className="text-foreground">{crane.brand}</p>
               </div>
               <div>
-                <label className="text-gray-300 text-sm">Modelo</label>
-                <p className="text-white">{crane.model}</p>
+                <label className="text-muted-foreground text-sm">Modelo</label>
+                <p className="text-foreground">{crane.model}</p>
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-gray-300 text-sm">Tipo</label>
-                <p className="text-white">{getCraneTypeLabel(crane.type)}</p>
+                <label className="text-muted-foreground text-sm">Tipo</label>
+                <p className="text-foreground">{getCraneTypeLabel(crane.type)}</p>
               </div>
               <div>
-                <label className="text-gray-300 text-sm">Estado</label>
+                <label className="text-muted-foreground text-sm">Estado</label>
                 <div>
                   <Badge 
                     variant={crane.status === 'active' ? "default" : "secondary"}
                     className={crane.status === 'active'
-                      ? "bg-tms-green/20 text-tms-green border-tms-green/50" 
-                      : "bg-gray-600/20 text-gray-400 border-gray-600/50"
+                      ? "bg-primary/20 text-primary border-primary/50"
+                      : "bg-muted/20 text-muted-foreground border-border/50"
                     }
                   >
                     {getCraneStatusLabel(crane.status)}
@@ -85,8 +85,8 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
                 </div>
               </div>
               <div>
-                <label className="text-gray-300 text-sm">Fecha de Registro</label>
-                <p className="text-white">{formatForDisplay(crane.createdAt)}</p>
+                <label className="text-muted-foreground text-sm">Fecha de Registro</label>
+                <p className="text-foreground">{formatForDisplay(crane.createdAt)}</p>
               </div>
             </div>
           </div>
@@ -94,10 +94,10 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
       </Card>
 
       {/* Documentación Legal */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card/5 border-primary/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <FileText className="size-5 text-primary" />
             Documentación Legal
           </CardTitle>
         </CardHeader>
@@ -105,11 +105,11 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-gray-300 text-sm">Revisión Técnica</label>
+                <label className="text-muted-foreground text-sm">Revisión Técnica</label>
                 {getExpiryBadge(technicalReviewDays)}
               </div>
-              <p className="text-white">{formatForDisplay(crane.technicalReviewExpiry)}</p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-foreground">{formatForDisplay(crane.technicalReviewExpiry)}</p>
+              <p className="text-muted-foreground text-xs">
                 {technicalReviewDays <= 0 
                   ? `Vencido hace ${Math.abs(technicalReviewDays)} días`
                   : `Vence en ${technicalReviewDays} días`
@@ -119,11 +119,11 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-gray-300 text-sm">Seguro</label>
+                <label className="text-muted-foreground text-sm">Seguro</label>
                 {getExpiryBadge(insuranceDays)}
               </div>
-              <p className="text-white">{formatForDisplay(crane.insuranceExpiry)}</p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-foreground">{formatForDisplay(crane.insuranceExpiry)}</p>
+              <p className="text-muted-foreground text-xs">
                 {insuranceDays <= 0 
                   ? `Vencido hace ${Math.abs(insuranceDays)} días`
                   : `Vence en ${insuranceDays} días`
@@ -133,11 +133,11 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-gray-300 text-sm">Permiso Circulación</label>
+                <label className="text-muted-foreground text-sm">Permiso Circulación</label>
                 {getExpiryBadge(permitDays)}
               </div>
-              <p className="text-white">{formatForDisplay(crane.circulationPermitExpiry)}</p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-foreground">{formatForDisplay(crane.circulationPermitExpiry)}</p>
+              <p className="text-muted-foreground text-xs">
                 {permitDays <= 0 
                   ? `Vencido hace ${Math.abs(permitDays)} días`
                   : `Vence en ${permitDays} días`
@@ -149,22 +149,22 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
       </Card>
 
       {/* Historial de Cambios */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card/5 border-primary/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Calendar className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Calendar className="size-5 text-primary" />
             Historial de Registro
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-gray-300 text-sm">Fecha de Creación</label>
-              <p className="text-white">{formatForDisplay(crane.createdAt)}</p>
+              <label className="text-muted-foreground text-sm">Fecha de Creación</label>
+              <p className="text-foreground">{formatForDisplay(crane.createdAt)}</p>
             </div>
             <div>
-              <label className="text-gray-300 text-sm">Última Actualización</label>
-              <p className="text-white">{formatForDisplay(crane.updatedAt)}</p>
+              <label className="text-muted-foreground text-sm">Última Actualización</label>
+              <p className="text-foreground">{formatForDisplay(crane.updatedAt)}</p>
             </div>
           </div>
         </CardContent>

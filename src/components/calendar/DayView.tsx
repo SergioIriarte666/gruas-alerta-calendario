@@ -87,7 +87,7 @@ export const DayView = ({
                       variant="outline"
                       size="default"
                       onClick={() => setConvertingEvent(event)}
-                      className="h-9 px-3 text-green-400 hover:text-green-300 border-green-500/30 hover:bg-green-500/10 transition-all duration-200"
+                      className="h-9 border-success/30 px-3 text-success transition-all duration-200 hover:bg-success/10 hover:text-success-text"
                       title="Convertir este evento a un servicio"
                     >
                       <ArrowRight className="size-4 mr-2" />

@@ -16,10 +16,10 @@ const TYPE_LABELS = {
 };
 
 const TYPE_COLORS = {
-  service: 'bg-blue-100 text-blue-800',
-  cost: 'bg-red-100 text-red-800',
-  inventory: 'bg-green-100 text-green-800',
-  maintenance: 'bg-yellow-100 text-yellow-800',
+  service: 'border-info/30 bg-info-soft text-info-text',
+  cost: 'border-danger/30 bg-danger-soft text-danger-text',
+  inventory: 'border-success/30 bg-success-soft text-success-text',
+  maintenance: 'border-warning/30 bg-warning-soft text-warning-text',
 };
 
 interface QuickEntryPreviewProps {
@@ -97,7 +97,7 @@ export function QuickEntryPreview({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DialogTitle>Vista Previa del Registro</DialogTitle>
-              <Badge className={TYPE_COLORS[entry.type]}>
+              <Badge variant="outline" className={TYPE_COLORS[entry.type]}>
                 {TYPE_LABELS[entry.type]}
               </Badge>
             </div>
@@ -157,14 +157,14 @@ export function QuickEntryPreview({
                     className="block rounded-md border border-border overflow-hidden bg-background"
                   >
                     {failedPhotoKeys[`${photo.path ?? 'inline'}-${index}`] ? (
-                      <div className="w-full h-64 flex items-center justify-center bg-black/5 text-sm text-muted-foreground px-4 text-center">
+                      <div className="flex h-64 w-full items-center justify-center bg-overlay/5 px-4 text-center text-sm text-muted-foreground">
                         No se pudo cargar la foto. Toca para abrirla.
                       </div>
                     ) : (
                       <img
                         src={photo.url}
                         alt={`Comprobante ${index + 1}`}
-                        className="w-full h-64 object-contain bg-black/5"
+                        className="h-64 w-full bg-overlay/5 object-contain"
                         loading="eager"
                         onError={() => {
                           const key = `${photo.path ?? 'inline'}-${index}`;

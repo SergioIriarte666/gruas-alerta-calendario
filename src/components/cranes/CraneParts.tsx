@@ -228,7 +228,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           ) : (
             <div className="relative pl-6">
               {/* Línea vertical del timeline */}
-              <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
+              <div className="absolute left-2 top-0 bottom-0 w-px bg-border" />
 
               {monthGroups.map(([month, items]) => {
                 const monthTotal = items.reduce((sum: number, m: any) => sum + getDisplayTotalCost(m), 0);
@@ -239,13 +239,13 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                     {/* Separador de mes */}
                     <div className="relative mb-3 flex items-center gap-3">
                       <div className="absolute -left-6 flex size-3.5 items-center justify-center rounded-full border-2 border-border bg-background" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {month}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {monthCount} consumo{monthCount !== 1 ? 's' : ''}
                       </span>
-                      <span className="ml-auto text-[10px] font-medium text-danger">
+                      <span className="ml-auto text-xs font-medium text-danger">
                         -${formatInt(monthTotal)}
                       </span>
                     </div>
@@ -280,7 +280,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             {/* Nombre y fecha */}
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-foreground">{itemName}</p>
-                              <p className="text-[10px] text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                                 {m.movement_date
                                   ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es })
                                   : '-'}
@@ -289,14 +289,14 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             </div>
 
                             {/* Cantidad */}
-                            <span className="flex-shrink-0 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-medium text-danger">
+                            <span className="flex-shrink-0 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
                               -{m.quantity} {unitMeasure}
                             </span>
 
                             {/* Precios */}
                             <div className="flex-shrink-0 text-right">
                               <p className="text-xs font-semibold text-danger">-${formatInt(totalCost)}</p>
-                              <p className="text-[10px] text-muted-foreground">${formatInt(unitCost)} c/u</p>
+                              <p className="text-xs text-muted-foreground">${formatInt(unitCost)} c/u</p>
                             </div>
 
                             {/* Botón historial (hover) */}

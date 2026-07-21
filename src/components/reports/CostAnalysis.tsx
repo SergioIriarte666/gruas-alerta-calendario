@@ -14,7 +14,7 @@ interface CostAnalysisProps {
 }
 
 const costsByMonthConfig = {
-  total: { label: 'Costo Total', color: '#ef4444' }
+  total: { label: 'Costo Total', color: 'hsl(var(--chart-3))' }
 } satisfies ChartConfig;
 
 export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
@@ -46,14 +46,14 @@ export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
             <CardTitle className="text-foreground">Tendencia de Costos Mensuales</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={costsByMonthConfig} className="w-full h-[300px]">
+            <ChartContainer config={costsByMonthConfig} className="w-full h-72">
               <ResponsiveContainer>
                 <LineChart data={formattedCostsByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" fontSize={12} />
-                  <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
                   <ChartTooltip
-                    cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
+                    cursor={{ stroke: 'hsl(var(--border-strong))', strokeWidth: 1 }}
                     content={<ChartTooltipContent 
                         indicator="dot" 
                         labelFormatter={(label) => <div className="font-bold">{label}</div>}

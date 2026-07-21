@@ -68,7 +68,7 @@ export const ClientsMobileView = ({
         const svcCount = serviceCountByClient?.get(client.id) || 0;
         const isSelected = selectedClients?.has(client.id) ?? false;
         return (
-          <Card key={client.id} className={`operations-panel ${isSelected ? 'ring-2 ring-[hsl(var(--dashboard-lime)/0.5)]' : ''}`}>
+          <Card key={client.id} className={`operations-panel ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
             <CardContent className="p-4">
               {/* Header: checkbox + clickable name + status */}
               <div className="flex items-start justify-between mb-3">
@@ -93,7 +93,7 @@ export const ClientsMobileView = ({
                 </div>
                 <div className="flex items-center gap-2">
                   {svcCount > 0 && (
-                    <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                    <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success">
                       {svcCount} <TrendingUp className="size-3 ml-0.5" />
                     </Badge>
                   )}
@@ -141,10 +141,10 @@ export const ClientsMobileView = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleViewPipeline(client)}>
-                      <TrendingUp className="size-4 mr-2 text-purple-500" />Pipeline VIP
+                      <TrendingUp className="mr-2 size-4 text-primary" />Pipeline VIP
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onToggleStatus(client)}>
-                      {client.isActive ? <><UserX className="size-4 mr-2 text-red-500" />Desactivar</> : <><UserCheck className="size-4 mr-2 text-green-500" />Activar</>}
+                      {client.isActive ? <><UserX className="mr-2 size-4 text-danger" />Desactivar</> : <><UserCheck className="mr-2 size-4 text-success" />Activar</>}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDelete(client)} className="text-destructive">
                       <Trash2 className="size-4 mr-2" />Eliminar

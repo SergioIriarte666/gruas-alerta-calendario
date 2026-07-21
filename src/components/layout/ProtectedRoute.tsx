@@ -22,15 +22,15 @@ const LoadingScreen = ({ message }: { message: string }) => (
 );
 
 const OperatorPortalDisabledScreen = ({ onLogout }: { onLogout: () => void }) => (
-  <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-center">
+  <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center text-foreground">
     <div className="w-full max-w-sm">
-      <h1 className="text-lg font-semibold text-white">Acceso deshabilitado</h1>
-      <p className="mt-3 text-sm text-zinc-400">
+      <h1 className="text-lg font-semibold text-foreground">Acceso deshabilitado</h1>
+      <p className="mt-3 text-sm text-muted-foreground">
         Contacta al administrador.
       </p>
       <button
         onClick={onLogout}
-        className="mt-6 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+        className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
       >
         Salir
       </button>
@@ -124,7 +124,7 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   if (requireRole === 'client' && profileUser?.role === 'client' && !profileUser.client_id) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
-        <div className="w-full max-w-lg rounded-2xl border border-yellow-500/20 bg-card p-6 shadow-sm">
+        <div className="w-full max-w-lg rounded-2xl border border-warning/20 bg-card p-6 shadow-sm">
           <h1 className="text-xl font-semibold text-foreground">Acceso pendiente de vinculacion</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             Tu cuenta cliente aun no tiene una empresa asociada. Solicita a un administrador que te vincule a un cliente para habilitar el portal.

@@ -1,12 +1,16 @@
-import { businessClock } from '@/utils/businessClock';
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, X } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { businessClock } from "@/utils/businessClock";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface PortalServiceFiltersProps {
   dateFrom?: Date;
@@ -25,15 +29,15 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
 }) => {
   const hasFilters = dateFrom || dateTo;
   const pickerBaseClassName =
-    'h-11 w-[176px] justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors hover:bg-[#f4f7fb]';
+    "h-11 w-44 justify-start rounded-xl border-input px-3 text-left font-normal shadow-sm transition-colors hover:bg-muted/70";
 
   return (
-    <div className="mb-6 rounded-[10px] border border-[#e2e8f0] bg-white p-4">
+    <div className="mb-6 rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-center gap-4">
-        <h3 className="text-sm font-medium text-[#64748b]">Filtros:</h3>
-        
+        <h3 className="text-sm font-medium text-muted-foreground">Filtros:</h3>
+
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[#94a3b8]">Desde:</span>
+          <span className="text-sm text-muted-foreground">Desde:</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -41,9 +45,9 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                 className={cn(
                   pickerBaseClassName,
                   dateFrom
-                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                    : 'bg-[#f8fafc] text-[#0f172a]',
-                  !dateFrom && 'text-[#94a3b8]'
+                    ? "border-primary/30 bg-accent text-foreground"
+                    : "bg-muted/40 text-foreground",
+                  !dateFrom && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 size-4" />
@@ -69,7 +73,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[#94a3b8]">Hasta:</span>
+          <span className="text-sm text-muted-foreground">Hasta:</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -77,9 +81,9 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                 className={cn(
                   pickerBaseClassName,
                   dateTo
-                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
-                    : 'bg-[#f8fafc] text-[#0f172a]',
-                  !dateTo && 'text-[#94a3b8]'
+                    ? "border-primary/30 bg-accent text-foreground"
+                    : "bg-muted/40 text-foreground",
+                  !dateTo && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 size-4" />
@@ -109,7 +113,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
+            className="h-11 rounded-xl px-3 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
           >
             <X className="size-4 mr-1" />
             Limpiar filtros

@@ -35,9 +35,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
         <div className="space-y-4">
           {/* Información General */}
-          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-info bg-info-soft p-4">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-info">
+              <div className="rounded bg-info/10 p-1 text-info">
                 <BarChart3 className="size-4" />
               </div>
               Información General
@@ -88,9 +88,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
           </div>
 
           {/* Valor del Inventario */}
-          <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-              <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-success bg-success-soft p-4">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-success">
+              <div className="rounded bg-success/10 p-1 text-success">
                 <DollarSign className="size-4" />
               </div>
               Valor del Inventario
@@ -115,9 +115,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
           {/* Recomendación */}
           {product.match_type === 'exact' && (
-            <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning-soft p-4">
+              <h3 className="mb-2 flex items-center gap-2 font-semibold text-warning">
+                <div className="rounded bg-warning/10 p-1 text-warning">
                   <Package className="size-4" />
                 </div>
                 Recomendación

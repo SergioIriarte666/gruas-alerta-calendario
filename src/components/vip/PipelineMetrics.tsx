@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { businessClock } from '@/utils/businessClock';
-import { 
-  TrendingUp, 
-  Clock, 
+import {
+  TrendingUp,
+  Clock,
   AlertTriangle,
   CheckCircle,
   Package,
@@ -48,11 +48,11 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
     const pendingOCValue = statusValues['purchase_order_pending'] || 0;
 
     // Servicios en proceso (cotizados + programados + en progreso)
-    const inPipeline = (statusCounts['quoted'] || 0) + 
-                      (statusCounts['pending'] || 0) + 
+    const inPipeline = (statusCounts['quoted'] || 0) +
+                      (statusCounts['pending'] || 0) +
                       (statusCounts['in_progress'] || 0);
-    const pipelineValue = (statusValues['quoted'] || 0) + 
-                         (statusValues['pending'] || 0) + 
+    const pipelineValue = (statusValues['quoted'] || 0) +
+                         (statusValues['pending'] || 0) +
                          (statusValues['in_progress'] || 0);
 
     // Servicios completados
@@ -109,8 +109,8 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       value: metrics.pendingOC,
       subtitle: `$${metrics.pendingOCValue.toLocaleString()}`,
       icon: <AlertTriangle className="size-5" />,
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-500/10 border-amber-500/20',
+      color: 'text-warning-text',
+      bgColor: 'bg-warning/10 border-warning/20',
       urgent: metrics.pendingOC > 0
     },
     {
@@ -118,24 +118,24 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       value: metrics.inPipeline,
       subtitle: `$${metrics.pipelineValue.toLocaleString()}`,
       icon: <Package className="size-5" />,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10 border-blue-500/20'
+      color: 'text-info-text',
+      bgColor: 'bg-info/10 border-info/20'
     },
     {
       title: 'Completados',
       value: metrics.completed,
       subtitle: `$${metrics.completedValue.toLocaleString()}`,
       icon: <CheckCircle className="size-5" />,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10 border-green-500/20'
+      color: 'text-success-text',
+      bgColor: 'bg-success/10 border-success/20'
     },
     {
       title: 'Parc. Facturados',
       value: metrics.partiallyInvoiced,
       subtitle: `$${metrics.partiallyInvoicedValue.toLocaleString()}`,
       icon: <FileText className="size-5" />,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10 border-amber-500/20',
+      color: 'text-warning-text',
+      bgColor: 'bg-warning/10 border-warning/20',
       urgent: metrics.partiallyInvoiced > 0
     },
     {
@@ -143,24 +143,24 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       value: metrics.invoiced,
       subtitle: `$${metrics.invoicedValue.toLocaleString()}`,
       icon: <FileText className="size-5" />,
-      color: 'text-gray-400',
-      bgColor: 'bg-gray-500/10 border-gray-500/20'
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted/10 border-border/20'
     },
     {
       title: 'Tiempo Promedio',
       value: `${metrics.avgProcessingTime}d`,
       subtitle: 'Procesamiento',
       icon: <Timer className="size-5" />,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10 border-purple-500/20'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10 border-primary/20'
     },
     {
       title: 'Servicios Urgentes',
       value: metrics.urgentServices,
       subtitle: '+7 días',
       icon: <Clock className="size-5" />,
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10 border-red-500/20',
+      color: 'text-danger-text',
+      bgColor: 'bg-danger/10 border-danger/20',
       urgent: metrics.urgentServices > 0
     }
   ];
@@ -168,14 +168,14 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
   return (
     <div className="space-y-4">
       {/* Overview Card */}
-      <Card className="bg-card border-purple-500/20">
+      <Card className="bg-card border-primary/20">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg text-foreground flex items-center gap-2">
-              <TrendingUp className="size-5 text-purple-400" />
+              <TrendingUp className="size-5 text-primary" />
               Resumen del Pipeline
             </CardTitle>
-            <Badge variant="outline" className="text-purple-300 border-purple-500/30">
+            <Badge variant="outline" className="text-primary border-primary/30">
               {toTitleCase(clientName)}
             </Badge>
           </div>
@@ -187,17 +187,17 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
               <div className="text-muted-foreground">Total Servicios</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">
+              <div className="text-2xl font-bold text-success-text">
                 ${metrics.totalValue.toLocaleString()}
               </div>
               <div className="text-muted-foreground">Valor Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{metrics.inPipeline}</div>
+              <div className="text-2xl font-bold text-info-text">{metrics.inPipeline}</div>
               <div className="text-muted-foreground">En Proceso</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{metrics.avgProcessingTime}d</div>
+              <div className="text-2xl font-bold text-primary">{metrics.avgProcessingTime}d</div>
               <div className="text-muted-foreground">Tiempo Prom.</div>
             </div>
           </div>
@@ -207,8 +207,8 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       {/* Detailed Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricCards.map((metric, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className={`bg-card border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
           >
             <CardContent className="p-4">

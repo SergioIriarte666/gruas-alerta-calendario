@@ -87,7 +87,7 @@ export const ReportFilters = ({
                           <div className="flex flex-col py-0.5">
                             <span className="font-medium">{toTitleCase(client.name)}</span>
                             {client.department && client.department !== 'General' && (
-                              <span className="text-xs text-violet-600 dark:text-violet-400">{client.department}</span>
+                              <span className="text-xs text-primary">{client.department}</span>
                             )}
                           </div>
                         </SelectItem>
@@ -157,7 +157,7 @@ export const ReportFilters = ({
                           <div className="flex flex-col py-0.5">
                             <span className="font-medium">{toTitleCase(client.name)}</span>
                             {client.department && client.department !== 'General' && (
-                              <span className="text-xs text-violet-600 dark:text-violet-400">{client.department}</span>
+                              <span className="text-xs text-primary">{client.department}</span>
                             )}
                           </div>
                         </SelectItem>

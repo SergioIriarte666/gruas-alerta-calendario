@@ -78,7 +78,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {allDone ? (
-            <CheckCircle className="size-4 text-emerald-500" />
+            <CheckCircle className="size-4 text-success-text" />
           ) : (
             <span className="inline-flex size-4 items-center justify-center rounded-full border-2 border-primary">
               <span className="size-1.5 rounded-full bg-primary" />
@@ -91,7 +91,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
         <span
           className={cn(
             'text-sm font-semibold tabular-nums',
-            allDone ? 'text-emerald-500' : 'text-primary'
+            allDone ? 'text-success-text' : 'text-primary'
           )}
         >
           {completedCount}/{totalCount}
@@ -103,7 +103,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
         <div
           className={cn(
             'h-full rounded-full transition-all duration-500 ease-out',
-            allDone ? 'bg-emerald-500' : 'bg-primary'
+            allDone ? 'bg-success' : 'bg-primary'
           )}
           style={{ width: `${progressPct}%` }}
         />
@@ -120,7 +120,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
                 className={cn(
                   'size-7 rounded-full flex items-center justify-center border-2 transition-colors duration-300',
                   done
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    ? 'border-success/30 bg-success text-success-foreground'
                     : 'bg-muted border-border text-muted-foreground'
                 )}
               >
@@ -132,8 +132,8 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
               </div>
               <span
                 className={cn(
-                  'text-[10px] text-center leading-tight truncate w-full px-0.5',
-                  done ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted-foreground'
+                  'text-xs text-center leading-tight truncate w-full px-0.5',
+                  done ? 'text-success-text dark:text-success-text font-medium' : 'text-muted-foreground'
                 )}
               >
                 {section.label}
@@ -144,7 +144,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
       </div>
 
       {allDone && (
-        <p className="text-xs text-center text-emerald-600 dark:text-emerald-400 font-medium">
+        <p className="text-xs text-center text-success-text dark:text-success-text font-medium">
           ✓ Todo completo — listo para enviar
         </p>
       )}

@@ -41,19 +41,19 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
 
   const severityStyles = {
     error: {
-      bg: 'bg-red-50 border-red-200',
-      badge: 'bg-red-100 text-red-700 border-red-300',
-      icon: 'text-red-600',
+      bg: 'border-danger/30 bg-danger-soft',
+      badge: 'border-danger/30 bg-danger/10 text-danger-text',
+      icon: 'text-danger',
     },
     warning: {
-      bg: 'bg-amber-50 border-amber-200',
-      badge: 'bg-amber-100 text-amber-700 border-amber-300',
-      icon: 'text-amber-600',
+      bg: 'border-warning/30 bg-warning-soft',
+      badge: 'border-warning/30 bg-warning/10 text-warning-text',
+      icon: 'text-warning-text',
     },
     success: {
-      bg: 'bg-emerald-50 border-emerald-200',
-      badge: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-      icon: 'text-emerald-600',
+      bg: 'border-success/30 bg-success-soft',
+      badge: 'border-success/30 bg-success/10 text-success-text',
+      icon: 'text-success',
     },
   };
 
@@ -98,7 +98,7 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-violet-600 hover:text-violet-700 gap-1"
+              className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
               onClick={handleNavigate}
             >
               {linkLabel}
@@ -112,7 +112,7 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
         <ScrollArea className="mt-3 max-h-40">
           <div className="space-y-1.5 pr-3">
             {details.slice(0, 20).map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-xs bg-white/60 rounded px-2 py-1.5">
+              <div key={item.id} className="flex items-center justify-between rounded bg-card/60 px-2 py-1.5 text-xs">
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-foreground">{item.label}</span>
                   <span className="text-muted-foreground ml-2">{item.sublabel}</span>

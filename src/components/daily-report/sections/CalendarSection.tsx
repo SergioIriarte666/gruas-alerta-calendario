@@ -40,13 +40,13 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'maintenance':
-        return <Wrench className="size-4 text-orange-500" />;
+        return <Wrench className="size-4 text-warning" />;
       case 'meeting':
-        return <Users className="size-4 text-blue-500" />;
+        return <Users className="size-4 text-info" />;
       case 'service':
-        return <CheckCircle className="size-4 text-green-500" />;
+        return <CheckCircle className="size-4 text-success" />;
       default:
-        return <Calendar className="size-4 text-gray-500" />;
+        return <Calendar className="size-4 text-muted-foreground" />;
     }
   };
 
@@ -55,7 +55,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
       case 'scheduled':
         return <Badge variant="default">Programado</Badge>;
       case 'completed':
-        return <Badge variant="default" className="bg-green-500">Completado</Badge>;
+        return <Badge variant="default" className="bg-success text-success-foreground">Completado</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Cancelado</Badge>;
       default:
@@ -122,7 +122,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                 <p className="text-sm font-medium text-muted-foreground">Total Eventos</p>
                 <p className="text-2xl font-bold">{data.total}</p>
               </div>
-              <Calendar className="size-8 text-blue-500" />
+              <Calendar className="size-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -134,7 +134,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                 <p className="text-sm font-medium text-muted-foreground">Mantenimientos</p>
                 <p className="text-2xl font-bold">{data.maintenances.length}</p>
               </div>
-              <Wrench className="size-8 text-orange-500" />
+              <Wrench className="size-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                 <p className="text-sm font-medium text-muted-foreground">Reuniones</p>
                 <p className="text-2xl font-bold">{data.meetings.length}</p>
               </div>
-              <Users className="size-8 text-blue-500" />
+              <Users className="size-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -158,7 +158,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                 <p className="text-sm font-medium text-muted-foreground">Inspecciones</p>
                 <p className="text-2xl font-bold">{data.inspections.length}</p>
               </div>
-              <CheckCircle className="size-8 text-green-500" />
+              <CheckCircle className="size-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wrench className="size-5 text-orange-500" />
+              <Wrench className="size-5 text-warning" />
               Mantenimientos Programados
               <Badge variant="outline">{data.maintenances.length}</Badge>
             </CardTitle>
@@ -189,7 +189,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="size-5 text-blue-500" />
+              <Users className="size-5 text-info" />
               Reuniones
               <Badge variant="outline">{data.meetings.length}</Badge>
             </CardTitle>
@@ -209,7 +209,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="size-5 text-green-500" />
+              <CheckCircle className="size-5 text-success" />
               Inspecciones
               <Badge variant="outline">{data.inspections.length}</Badge>
             </CardTitle>
@@ -229,7 +229,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="size-5 text-gray-500" />
+              <Calendar className="size-5 text-muted-foreground" />
               Otros Eventos
               <Badge variant="outline">{data.events.length}</Badge>
             </CardTitle>
@@ -249,7 +249,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="size-5 text-purple-500" />
+              <Calendar className="size-5 text-primary" />
               Eventos de la Semana
               <Badge variant="outline">{data.weekEvents.length}</Badge>
             </CardTitle>

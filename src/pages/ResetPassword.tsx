@@ -76,8 +76,8 @@ const ResetPassword = () => {
   if (!ready) {
     return (
       <AuthBackground>
-        <div className="text-center text-white">
-          <div className="size-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <div className="text-center text-auth-foreground">
+          <div className="size-8 border-2 border-auth-border border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p>Verificando enlace...</p>
         </div>
       </AuthBackground>
@@ -86,21 +86,21 @@ const ResetPassword = () => {
 
   return (
     <AuthBackground>
-      <div className="w-full max-w-[400px]">
-        <Card className="bg-transparent border-white/20 shadow-none" style={{ background: 'transparent' }}>
+      <div className="w-full max-w-md">
+        <Card className="bg-transparent border-auth-border/20 shadow-none" style={{ background: 'transparent' }}>
           <CardHeader className="bg-transparent text-center" style={{ background: 'transparent' }}>
-            <div className="size-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Lock className="size-8 text-tms-green" />
+            <div className="mx-auto mb-2 flex size-16 items-center justify-center rounded-full bg-primary/20">
+              <Lock className="size-8 text-primary" />
             </div>
-            <CardTitle className="text-white">Nueva Contraseña</CardTitle>
-            <CardDescription className="text-white/80">
+            <CardTitle className="text-auth-foreground">Nueva Contraseña</CardTitle>
+            <CardDescription className="text-auth-foreground/80">
               Ingresa tu nueva contraseña segura
             </CardDescription>
           </CardHeader>
           <CardContent className="bg-transparent" style={{ background: 'transparent' }}>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-white">Nueva contraseña</Label>
+                <Label htmlFor="new-password" className="text-auth-foreground">Nueva contraseña</Label>
                 <div className="relative">
                   <Input
                     id="new-password"
@@ -108,13 +108,13 @@ const ResetPassword = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 12 caracteres"
-                    className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white pr-10"
+                    className="bg-transparent border-auth-border/50 text-auth-foreground placeholder:text-auth-foreground/60 focus:border-auth-border pr-10"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-auth-foreground/60 hover:text-auth-foreground"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
@@ -122,38 +122,38 @@ const ResetPassword = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-new-password" className="text-white">Confirmar contraseña</Label>
+                <Label htmlFor="confirm-new-password" className="text-auth-foreground">Confirmar contraseña</Label>
                 <Input
                   id="confirm-new-password"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repite tu contraseña"
-                  className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white"
+                  className="bg-transparent border-auth-border/50 text-auth-foreground placeholder:text-auth-foreground/60 focus:border-auth-border"
                   required
                 />
               </div>
 
-              <div className="text-xs text-white/60 space-y-1">
-                <p className="font-medium text-white/80">La contraseña debe tener:</p>
+              <div className="text-xs text-auth-foreground/60 space-y-1">
+                <p className="font-medium text-auth-foreground/80">La contraseña debe tener:</p>
                 <ul className="list-none space-y-1">
-                  <li className={`flex items-center gap-2 ${password.length >= 12 ? 'text-tms-green' : ''}`}>
+                  <li className={`flex items-center gap-2 ${password.length >= 12 ? 'text-auth-success' : ''}`}>
                     <Check className={`size-3 ${password.length >= 12 ? 'opacity-100' : 'opacity-30'}`} />
                     Al menos 12 caracteres
                   </li>
-                  <li className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-tms-green' : ''}`}>
+                  <li className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-auth-success' : ''}`}>
                     <Check className={`size-3 ${/[A-Z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Una letra mayúscula
                   </li>
-                  <li className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-tms-green' : ''}`}>
+                  <li className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-auth-success' : ''}`}>
                     <Check className={`size-3 ${/[a-z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Una letra minúscula
                   </li>
-                  <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-tms-green' : ''}`}>
+                  <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-auth-success' : ''}`}>
                     <Check className={`size-3 ${/[0-9]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Un número
                   </li>
-                  <li className={`flex items-center gap-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-tms-green' : ''}`}>
+                  <li className={`flex items-center gap-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-auth-success' : ''}`}>
                     <Check className={`size-3 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Un símbolo especial
                   </li>
@@ -163,7 +163,7 @@ const ResetPassword = () => {
               <Button
                 type="submit"
                 disabled={loading || !password || !confirmPassword}
-                className="w-full text-white font-semibold bg-transparent border-white/50 hover:bg-white/10"
+                className="w-full text-auth-foreground font-semibold bg-transparent border-auth-border/50 hover:bg-auth-surface/10"
                 style={{ background: 'transparent' }}
               >
                 {loading ? 'Actualizando...' : 'Actualizar contraseña'}

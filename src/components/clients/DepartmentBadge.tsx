@@ -26,7 +26,7 @@ export function DepartmentBadge({ department, clientName, clientRut, allClients,
         <TooltipTrigger>
           <Badge 
             variant="outline" 
-            className={`text-[10px] px-1 py-0 h-5 gap-1 font-normal ${
+            className={`h-5 gap-1 px-1 py-0 text-xs font-normal ${
               color 
                 ? `${color.bg} ${color.text} ${color.border}` 
                 : 'text-muted-foreground'

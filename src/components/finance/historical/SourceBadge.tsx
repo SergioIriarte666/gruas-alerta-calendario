@@ -13,9 +13,9 @@ export const SourceBadge = ({ source, className }: SourceBadgeProps) => {
       variant="outline"
       className={
         (isHistorico
-          ? 'bg-blue-50 text-blue-700 border-blue-200'
-          : 'bg-emerald-50 text-emerald-700 border-emerald-200') +
-        ' text-[9px] px-1.5 py-0' +
+          ? 'bg-info-soft text-info-text border-info'
+          : 'bg-success-soft text-success-text border-success') +
+        ' text-xs px-1.5 py-0' +
         (className ? ` ${className}` : '')
       }
     >

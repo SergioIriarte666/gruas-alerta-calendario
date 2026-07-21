@@ -102,7 +102,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
       
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className="w-full justify-between bg-background border-input text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] p-3">
+          <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className="w-full justify-between bg-background border-input text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed min-h-16 p-3">
             {selectedClosure ? <div className="flex flex-col items-start text-left w-full">
                 <div className="flex items-center gap-2 font-medium text-primary">
                   <FileText className="size-4" />
@@ -116,7 +116,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
           </Button>
         </PopoverTrigger>
         
-        <PopoverContent className="w-[600px] border-border/70 bg-card p-0" align="start">
+        <PopoverContent className="w-[min(37.5rem,calc(100vw-2rem))] border-border/70 bg-card p-0" align="start">
           <Command className="bg-card" shouldFilter={false}>
             <CommandInput 
               placeholder="Buscar por folio, cliente o fecha..." 
@@ -124,7 +124,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
               value={search}
               onValueChange={setSearch}
             />
-            <CommandList className="max-h-[400px]">
+            <CommandList className="max-h-96">
               <CommandEmpty className="text-muted-foreground text-center py-6">
                 No se encontraron cierres.
               </CommandEmpty>

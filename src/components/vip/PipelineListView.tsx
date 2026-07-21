@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  BarChart3, 
-  Search, 
-  ChevronDown, 
-  ChevronRight, 
+import {
+  BarChart3,
+  Search,
+  ChevronDown,
+  ChevronRight,
   DollarSign,
   TrendingUp,
   Calendar,
@@ -66,8 +66,8 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
         fieldExtractor: (s) => s.quoteNumber || '',
         emptyLabel: 'Sin Cotización',
         prefix: '',
-        badgeColor: 'text-violet-600',
-        badgeBg: 'bg-violet-500/10'
+        badgeColor: 'text-primary',
+        badgeBg: 'bg-primary/10'
       };
     case 'invoiced':
     case 'partially_invoiced':
@@ -75,16 +75,16 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
         fieldExtractor: (s) => s.invoiceNumeroFiscal || '',
         emptyLabel: 'Sin Factura',
         prefix: '',
-        badgeColor: 'text-emerald-600',
-        badgeBg: 'bg-emerald-500/10'
+        badgeColor: 'text-success-text',
+        badgeBg: 'bg-success/10'
       };
     default:
       return {
         fieldExtractor: (s) => s.purchaseOrderNumber || s.purchaseOrder || '',
         emptyLabel: 'Sin O.C.',
         prefix: '',
-        badgeColor: 'text-blue-600',
-        badgeBg: 'bg-blue-500/10'
+        badgeColor: 'text-info-text',
+        badgeBg: 'bg-info/10'
       };
   }
 };
@@ -226,8 +226,8 @@ const PIPELINE_STATUSES = [
     id: 'partially_invoiced' as ServiceStatus,
     title: 'Parcialmente Facturado',
     description: 'Servicios con un cierre facturado, falta el otro',
-    color: 'bg-amber-500/10 text-amber-700',
-    textColor: 'text-amber-700'
+    color: 'bg-warning/10 text-warning-text',
+    textColor: 'text-warning-text'
   },
   {
     id: 'invoiced' as ServiceStatus,
@@ -353,7 +353,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       .map(statusConfig => {
         const statusServices = groupedServices[statusConfig.id] || [];
         const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0);
-        const averageDays = statusServices.length > 0 
+        const averageDays = statusServices.length > 0
           ? statusServices.reduce((sum, s) => {
               const days = differenceInDays(businessClock.now(), parseFromDatabase(s.serviceDate));
               return sum + days;
@@ -363,7 +363,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         // Calcular fecha de ordenamiento según el estado
         let sortingDate: Date | null = null;
         let sortingDateLabel = '';
-        
+
         if (statusServices.length > 0) {
           switch (statusConfig.id) {
             case 'pending':
@@ -427,8 +427,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       services: sortServices(disputedServices),
       totalValue: disputedTotalValue,
       averageDays: 0,
-      color: 'bg-amber-500/15 text-amber-800',
-      textColor: 'text-amber-800',
+      color: 'bg-warning/15 text-warning-text',
+      textColor: 'text-warning-text',
       sortingDate: null,
       sortingDateLabel: ''
     };
@@ -528,13 +528,13 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     if (sortField !== field) {
       return <ChevronsUpDown className="size-4 text-muted-foreground" />;
     }
-    return sortDirection === 'asc' 
+    return sortDirection === 'asc'
       ? <ChevronUp className="size-4 text-primary" />
       : <ChevronDown className="size-4 text-primary" />;
   };
 
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-    <TableHead 
+    <TableHead
       className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
       onClick={() => handleSort(field)}
     >
@@ -548,7 +548,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = PIPELINE_STATUSES.find(s => s.id === status);
     if (!statusConfig) return null;
-    
+
     return (
       <Badge variant="secondary">
         {statusConfig.title}
@@ -598,9 +598,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               />
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setIsAdvancedFiltersOpen(true)}
                 className="relative"
               >
@@ -611,8 +611,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 )}
               </Button>
               {hasActiveFilters && (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleClearAdvancedFilters}
                 >
@@ -625,9 +625,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               <Button variant="outline" size="sm" onClick={collapseAll}>
                 Contraer Todo
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowExportModal(true)}
                 className="bg-primary/5 border-primary/20 hover:bg-primary/10"
               >
@@ -635,9 +635,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 Exportar
               </Button>
               {selectedServices.size > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowBatchModal(true)}
                 >
                   <Hash className="size-4 mr-2" />
@@ -714,7 +714,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               open={expandedGroups.has(group.status)}
               onOpenChange={() => toggleGroup(group.status)}
             >
-              <Card className={isDisputedGroup ? 'bg-card border-amber-500/40' : 'bg-card border'}>
+              <Card className={isDisputedGroup ? 'bg-card border-warning/40' : 'bg-card border'}>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/5 transition-colors">
                     <div className="flex items-center justify-between">
@@ -726,7 +726,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                         )}
                         <div className="flex items-center gap-2">
                           {isDisputedGroup ? (
-                            <AlertTriangle className="size-4 text-amber-600" />
+                            <AlertTriangle className="size-4 text-warning-text" />
                           ) : (
                             <Checkbox
                               checked={group.services.every(s => selectedServices.has(s.id))}
@@ -806,7 +806,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                       <TooltipTrigger asChild>
                                         <div className="flex items-center gap-2 cursor-help">
                                           {getStatusBadge(realStatus)}
-                                          <AlertTriangle className="size-3.5 text-amber-600" />
+                                          <AlertTriangle className="size-3.5 text-warning-text" />
                                         </div>
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs">
@@ -837,7 +837,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => onServiceSelect?.(service)}
-                                        className="size-8 p-0 text-blue-400 hover:text-blue-300"
+                                        className="size-8 p-0 text-info-text hover:text-info-text"
                                         title="Ver detalles del servicio"
                                       >
                                         <Eye className="size-3" />
@@ -846,7 +846,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setResolveModalService(service)}
-                                        className="size-8 p-0 text-emerald-500 hover:text-emerald-400"
+                                        className="size-8 p-0 text-success-text hover:text-success-text"
                                         title="Resolver disputa"
                                       >
                                         <CheckCircle2 className="size-3" />
@@ -905,7 +905,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               {service.quoteNumber ? (
-                                <code className="text-xs bg-muted px-1 rounded text-violet-600 font-bold">
+                                <code className="text-xs bg-muted px-1 rounded text-primary font-bold">
                                   {service.quoteNumber}
                                 </code>
                               ) : (
@@ -914,7 +914,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               {(service.purchaseOrderNumber || service.purchaseOrder) ? (
-                                <code className="text-xs bg-muted px-1 rounded text-blue-600 font-bold">
+                                <code className="text-xs bg-muted px-1 rounded text-info-text font-bold">
                                   {service.purchaseOrderNumber || service.purchaseOrder}
                                 </code>
                               ) : (
@@ -923,7 +923,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               {service.invoiceNumeroFiscal ? (
-                                <code className="text-xs bg-muted px-1 rounded text-emerald-600 font-bold">
+                                <code className="text-xs bg-muted px-1 rounded text-success-text font-bold">
                                   {service.invoiceNumeroFiscal}
                                 </code>
                               ) : (
@@ -936,7 +936,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onServiceSelect?.(service)}
-                                  className="size-8 p-0 text-blue-400 hover:text-blue-300"
+                                  className="size-8 p-0 text-info-text hover:text-info-text"
                                   title="Ver detalles del servicio"
                                 >
                                   <Eye className="size-3" />
@@ -945,7 +945,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onServiceEdit?.(service)}
-                                  className="size-8 p-0 text-green-400 hover:text-green-300"
+                                  className="size-8 p-0 text-success-text hover:text-success-text"
                                   title="Editar servicio"
                                 >
                                   <Edit className="size-3" />
@@ -954,7 +954,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => setDisputeModalService(service)}
-                                  className="size-8 p-0 text-amber-500 hover:text-amber-400"
+                                  className="size-8 p-0 text-warning-text hover:text-warning-text"
                                   title="Marcar en disputa"
                                 >
                                   <AlertTriangle className="size-3" />
@@ -1034,7 +1034,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
                               return (
                                 <React.Fragment key={subGroup.poNumber}>
-                                  <TableRow 
+                                  <TableRow
                                     className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-muted"
                                     onClick={() => togglePO(poKey)}
                                   >
@@ -1064,7 +1064,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                             </code>
                                           )}
                                           {subGroupSelectedCount > 0 && (
-                                            <Badge variant="outline" className="text-xs text-violet-600 border-violet-600/30">
+                                            <Badge variant="outline" className="text-xs text-primary border-primary/30">
                                               {subGroupSelectedCount}/{subGroup.services.length} seleccionados
                                             </Badge>
                                           )}

@@ -111,7 +111,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Editar Factura de Compra</DialogTitle>
         </DialogHeader>

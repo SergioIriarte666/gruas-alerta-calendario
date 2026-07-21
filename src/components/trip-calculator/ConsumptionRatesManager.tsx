@@ -118,7 +118,7 @@ export const ConsumptionRatesManager = () => {
           <h2 className="text-lg font-semibold text-foreground">Consumos por Tipo de Grúa</h2>
           <p className="text-sm text-muted-foreground">Configura las tasas de consumo de combustible por tipo de grúa</p>
         </div>
-        <Button onClick={openNew} className="bg-tms-green hover:bg-tms-green/90 text-white">
+        <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus className="size-4 mr-2" />
           Nueva Tasa
         </Button>
@@ -297,7 +297,7 @@ export const ConsumptionRatesManager = () => {
               <Button
                 onClick={handleSave}
                 disabled={isAdding || isUpdating}
-                className="bg-tms-green hover:bg-tms-green/90 text-white"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {editing ? 'Actualizar' : 'Registrar'}
               </Button>

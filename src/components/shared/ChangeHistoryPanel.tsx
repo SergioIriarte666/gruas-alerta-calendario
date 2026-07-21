@@ -13,8 +13,8 @@ interface Props {
 
 const typeMeta: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   CREATE: { label: 'Creación', icon: Plus, className: 'bg-primary/15 text-primary border-primary/30' },
-  UPDATE: { label: 'Edición', icon: Pencil, className: 'bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300' },
-  DELETE: { label: 'Eliminación', icon: Trash2, className: 'bg-rose-500/15 text-rose-700 border-rose-500/30 dark:text-rose-300' },
+  UPDATE: { label: 'Edición', icon: Pencil, className: 'border-warning/30 bg-warning-soft text-warning-text' },
+  DELETE: { label: 'Eliminación', icon: Trash2, className: 'border-danger/30 bg-danger-soft text-danger-text' },
   SNAPSHOT: { label: 'Estado inicial', icon: Camera, className: 'bg-muted text-muted-foreground border-border' },
 };
 

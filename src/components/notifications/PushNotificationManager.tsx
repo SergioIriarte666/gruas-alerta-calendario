@@ -126,11 +126,11 @@ export const PushNotificationManager: React.FC = () => {
   const getPermissionStatus = () => {
     switch (permission) {
       case 'granted':
-        return { icon: CheckCircle, text: 'Permitido', color: 'text-green-500' };
+        return { icon: CheckCircle, text: 'Permitido', color: 'text-success' };
       case 'denied':
-        return { icon: BellOff, text: 'Bloqueado', color: 'text-red-500' };
+        return { icon: BellOff, text: 'Bloqueado', color: 'text-danger' };
       default:
-        return { icon: Bell, text: 'Pendiente', color: 'text-amber-500' };
+        return { icon: Bell, text: 'Pendiente', color: 'text-warning' };
     }
   };
 

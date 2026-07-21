@@ -29,10 +29,10 @@ export const MonthlyInstallments = () => {
 
   const getStatusBadge = (inst: DebtInstallment) => {
     if (inst.status === 'paid')
-      return <Badge className="bg-green-100 text-green-800 text-xs">Pagada</Badge>;
+      return <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text">Pagada</Badge>;
     if (inst.due_date < today)
       return <Badge variant="destructive" className="text-xs">Vencida</Badge>;
-    return <Badge className="bg-amber-100 text-amber-800 text-xs">Pendiente</Badge>;
+    return <Badge variant="outline" className="border-warning/30 bg-warning-soft text-xs text-warning-text">Pendiente</Badge>;
   };
 
   if (isLoading) {
@@ -57,7 +57,7 @@ export const MonthlyInstallments = () => {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-          <Table className="min-w-[600px]">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead>Vencimiento</TableHead>
@@ -66,7 +66,7 @@ export const MonthlyInstallments = () => {
                 <TableHead>Cuota #</TableHead>
                 <TableHead>Monto</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead className="w-[80px]">Acciones</TableHead>
+                <TableHead className="w-20">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,7 +78,7 @@ export const MonthlyInstallments = () => {
                 </TableRow>
               ) : (
                 installments.map((inst) => (
-                  <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-red-50/50' : ''}>
+                  <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-danger-soft/50' : ''}>
                     <TableCell className="text-foreground font-medium">
                       {format(new Date(inst.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
                     </TableCell>

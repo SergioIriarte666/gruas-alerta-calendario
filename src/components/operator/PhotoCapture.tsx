@@ -112,7 +112,7 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
   };
 
   return (
-    <Card className="bg-slate-800 border-slate-700">
+    <Card className="bg-foreground border-border">
       <CardHeader>
         <CardTitle className="text-foreground">{title}</CardTitle>
       </CardHeader>
@@ -126,7 +126,7 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
         />
 
         {isLoading && (
-          <div className="text-center text-gray-400">
+          <div className="text-center text-muted-foreground">
             Procesando fotos...
           </div>
         )}
@@ -134,11 +134,11 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
         <PhotoGrid photos={photoData} onRemovePhoto={removePhoto} />
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">
+          <span className="text-muted-foreground">
             {photos.length}/{maxPhotos} fotos
           </span>
           {photoData.length !== photos.length && photos.length > 0 && (
-            <span className="text-yellow-400 text-xs">
+            <span className="text-warning-text text-xs">
               Algunas fotos necesitan sincronización
             </span>
           )}

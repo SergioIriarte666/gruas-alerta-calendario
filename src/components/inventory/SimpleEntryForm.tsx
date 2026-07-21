@@ -460,7 +460,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess, ent
           <div className="space-y-2">
             <Label>Total</Label>
             <div className="h-10 px-3 py-2 rounded-md border bg-muted flex items-center">
-              <span className="font-semibold text-purple-600">
+              <span className="font-semibold text-primary">
                 ${((watchedValues.quantity || 0) * (watchedValues.unit_cost || 0)).toLocaleString('es-CL')}
               </span>
             </div>

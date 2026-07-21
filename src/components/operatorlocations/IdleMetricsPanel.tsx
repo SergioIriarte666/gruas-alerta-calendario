@@ -46,15 +46,15 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Desde</label>
+          <label className="mb-1 block text-xs text-muted-foreground">Desde</label>
           <DatePickerInput value={dateFrom} onChange={setDateFrom} className="w-40" />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Hasta</label>
+          <label className="mb-1 block text-xs text-muted-foreground">Hasta</label>
           <DatePickerInput value={dateTo} onChange={setDateTo} className="w-40" />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Umbral de gap (min)</label>
+          <label className="mb-1 block text-xs text-muted-foreground">Umbral de gap (min)</label>
           <Input
             type="number"
             min={1}
@@ -88,12 +88,12 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-zinc-500">Cargando...</TableCell>
+                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">Cargando...</TableCell>
               </TableRow>
             )}
             {!isLoading && visibleSummaries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-zinc-500">
+                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                   No hay gaps sobre el umbral en el rango seleccionado
                 </TableCell>
               </TableRow>
@@ -125,9 +125,9 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                     </TableCell>
                   </TableRow>
                   {isExpanded && summary.gaps.map((gap, index) => (
-                    <TableRow key={`${key}-gap-${index}`} className="bg-zinc-950/40">
+                    <TableRow key={`${key}-gap-${index}`} className="bg-muted/40">
                       <TableCell />
-                      <TableCell colSpan={6} className="text-xs text-zinc-400">
+                      <TableCell colSpan={6} className="text-xs text-muted-foreground">
                         Entre folio {gap.fromFolio} terminado {gap.fromEndTime} y folio {gap.toFolio} iniciado {gap.toStartTime}
                         {' '}— {formatMinutes(gap.minutes)}
                       </TableCell>

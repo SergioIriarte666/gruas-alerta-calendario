@@ -20,9 +20,9 @@ const formatDate = (value?: string | null) => {
 };
 
 const getStatusIcon = (status: string | null) => {
-  if (status === 'success') return <CheckCircle2 className="size-4 text-green-600" />;
-  if (status === 'partial') return <AlertTriangle className="size-4 text-amber-600" />;
-  return <XCircle className="size-4 text-red-600" />;
+  if (status === 'success') return <CheckCircle2 className="size-4 text-success-text" />;
+  if (status === 'partial') return <AlertTriangle className="size-4 text-warning-text" />;
+  return <XCircle className="size-4 text-danger-text" />;
 };
 
 const getSummary = (
@@ -65,7 +65,7 @@ export const RecentImportLogsCard = ({
             <span className="truncate">{title}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">
+            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-xs">
               {logs.length}
             </Badge>
             <ChevronDown className="size-3.5 text-muted-foreground" />

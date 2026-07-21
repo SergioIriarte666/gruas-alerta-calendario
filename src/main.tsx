@@ -81,11 +81,11 @@ function showBootError(error: unknown) {
 
   const message = formatBootError(error);
   root.innerHTML = `
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;padding:24px;font-family:system-ui,-apple-system,sans-serif;color:#fff;">
-      <div style="max-width:560px;width:100%;background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35);">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:hsl(var(--background));padding:1.5rem;font-family:system-ui,-apple-system,sans-serif;color:hsl(var(--foreground));">
+      <div style="max-width:35rem;width:100%;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow-lg);">
         <h1 style="margin:0 0 12px;font-size:20px;line-height:1.2;">Error al iniciar TMS Operador</h1>
-        <p style="margin:0 0 12px;color:#cbd5e1;font-size:14px;">La app no pudo completar el arranque. Si este mensaje aparece en iPhone, comparte el texto con soporte.</p>
-        <pre style="margin:0;white-space:pre-wrap;word-break:break-word;background:#020617;color:#f8fafc;padding:12px;border-radius:12px;font-size:12px;line-height:1.45;">${message}</pre>
+        <p style="margin:0 0 0.75rem;color:hsl(var(--muted-foreground));font-size:0.875rem;">La app no pudo completar el arranque. Si este mensaje aparece en iPhone, comparte el texto con soporte.</p>
+        <pre style="margin:0;white-space:pre-wrap;word-break:break-word;background:hsl(var(--muted));color:hsl(var(--foreground));padding:0.75rem;border-radius:var(--radius);font-size:0.75rem;line-height:1.45;">${message}</pre>
       </div>
     </div>
   `;

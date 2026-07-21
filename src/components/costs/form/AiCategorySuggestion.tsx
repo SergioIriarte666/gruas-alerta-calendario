@@ -41,7 +41,7 @@ export const AiCategorySuggestion = ({
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       <Badge
         variant="outline"
-        className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs cursor-pointer transition-colors gap-1.5 pr-1"
+        className="bg-info-soft border-info/30 text-info-text hover:bg-info-soft text-xs cursor-pointer transition-colors gap-1.5 pr-1"
         onClick={onApply}
       >
         <History className="size-3" />
@@ -50,7 +50,7 @@ export const AiCategorySuggestion = ({
           type="button"
           variant="ghost"
           size="sm"
-          className="size-5 p-0 ml-1 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800"
+          className="size-5 p-0 ml-1 rounded-full hover:bg-info-soft"
           onClick={(e) => {
             e.stopPropagation();
             onApply();

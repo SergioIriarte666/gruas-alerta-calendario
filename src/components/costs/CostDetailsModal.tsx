@@ -277,7 +277,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
               <DetailSection title="Notas" icon={FileText}>
                 <div className="col-span-1 md:col-span-2">
                   <div className="bg-muted/50 rounded-lg p-4 border">
-                    <p className="text-muted-foreground whitespace-pre-wrap min-h-[60px]">
+                    <p className="text-muted-foreground whitespace-pre-wrap min-h-16">
                       {cost.notes || 'Sin notas adicionales'}
                     </p>
                   </div>

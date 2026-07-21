@@ -76,7 +76,7 @@ export const CostCombobox = ({
       <PopoverContent
             className="p-0 bg-popover border-border"
             align="start"
-            style={{ width: 'var(--radix-popover-trigger-width)', maxWidth: '400px' }}
+            style={{ width: 'var(--radix-popover-trigger-width)', maxWidth: '25rem' }}
           >
         <Command className="bg-popover">
           <CommandInput 

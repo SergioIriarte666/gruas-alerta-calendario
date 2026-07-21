@@ -7548,7 +7548,12 @@ export type Database = {
           currency: string
           date_format: string
           id: string
+          interface_density: string
           language: string
+          reduce_motion: boolean
+          sidebar_collapsed: boolean
+          text_scale: number
+          theme: string
           timezone: string
           updated_at: string
           use_system_timezone: boolean
@@ -7559,7 +7564,12 @@ export type Database = {
           currency?: string
           date_format?: string
           id?: string
+          interface_density?: string
           language?: string
+          reduce_motion?: boolean
+          sidebar_collapsed?: boolean
+          text_scale?: number
+          theme?: string
           timezone?: string
           updated_at?: string
           use_system_timezone?: boolean
@@ -7570,7 +7580,12 @@ export type Database = {
           currency?: string
           date_format?: string
           id?: string
+          interface_density?: string
           language?: string
+          reduce_motion?: boolean
+          sidebar_collapsed?: boolean
+          text_scale?: number
+          theme?: string
           timezone?: string
           updated_at?: string
           use_system_timezone?: boolean

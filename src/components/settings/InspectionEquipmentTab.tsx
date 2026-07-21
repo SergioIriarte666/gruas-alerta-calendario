@@ -108,7 +108,7 @@ const SortableEquipmentRow = ({
             <button
               type="button"
               onClick={() => onEditSave(item.id)}
-              className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+              className="rounded p-1 text-success hover:bg-success-soft"
             >
               <Check className="size-3.5" />
             </button>
@@ -270,7 +270,7 @@ export const InspectionEquipmentTab = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           {activeItems.length < 5 && activeItems.length > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
+            <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
               <AlertTriangle className="size-4 flex-shrink-0" />
               Quedan menos de 5 elementos activos en el inventario.
             </div>

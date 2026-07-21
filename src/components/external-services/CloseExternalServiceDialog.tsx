@@ -143,7 +143,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
                     placeholder="Detalle de lo ejecutado por el proveedor externo..."
-                    className="mt-1 min-h-[100px]"
+                    className="mt-1 min-h-24"
                   />
                 </div>
                 <div>
@@ -152,7 +152,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Notas internas para el archivo..."
-                    className="mt-1 min-h-[60px]"
+                    className="mt-1 min-h-16"
                   />
                 </div>
               </CardContent>

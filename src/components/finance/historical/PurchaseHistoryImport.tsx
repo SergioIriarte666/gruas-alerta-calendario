@@ -1286,7 +1286,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
-                ${isDragActive ? 'border-emerald-600 bg-emerald-600/5' : 'border-muted-foreground/30 hover:border-emerald-600/50'}`}
+                ${isDragActive ? 'border-success bg-success/5' : 'border-muted-foreground/30 hover:border-success/50'}`}
             >
               <input
                 {...getInputProps({
@@ -1311,14 +1311,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               <CardContent className="grid gap-3 p-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <FileSpreadsheet className="size-4 text-emerald-600" />
+                    <FileSpreadsheet className="size-4 text-success-text" />
                     Formatos aceptados
                   </div>
                   <p className="text-sm text-muted-foreground">`.csv`, `.xlsx`, `.xls`</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <CalendarRange className="size-4 text-emerald-600" />
+                    <CalendarRange className="size-4 text-success-text" />
                     Columnas esperadas
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -1334,7 +1334,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-none px-1 py-4 gap-y-4">
               {overlappingImportLog && (
-                <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                <Alert className="mb-4 border-warning bg-warning-soft text-warning-text [&>svg]:text-warning-text">
                   <AlertTriangle className="size-4" />
                   <AlertTitle>Posible período ya importado</AlertTitle>
                   <AlertDescription>
@@ -1349,11 +1349,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                   <p className="text-xs text-muted-foreground">Documentos detectados</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-green-500">{preview.matched.length}</p>
+                  <p className="text-2xl font-bold text-success-text">{preview.matched.length}</p>
                   <p className="text-xs text-muted-foreground">Con proveedor</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-500">{preview.unmatched.length}</p>
+                  <p className="text-2xl font-bold text-warning-text">{preview.unmatched.length}</p>
                   <p className="text-xs text-muted-foreground">Sin proveedor</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
@@ -1376,7 +1376,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 Seleccionar todos
                 <span className="text-xs font-normal text-muted-foreground">({selectedImportableCount} seleccionados)</span>
               </label>
-              <div className="flex flex-1 flex-col gap-1 sm:ml-auto sm:max-w-[230px]">
+              <div className="flex flex-1 flex-col gap-1 sm:ml-auto sm:max-w-56">
                 <Label htmlFor="purchase-document-status" className="text-xs">Estado de documentos</Label>
                 <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as PurchaseImportStatus)}>
                   <SelectTrigger id="purchase-document-status" aria-label="Estado de documentos de compra" className="h-9">
@@ -1403,7 +1403,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                   <TabsTrigger value="unmatched" className="relative flex-1">
                     Sin proveedor ({preview.unmatched.length})
                     {pendingUnmatchedSuppliers.length > 0 && (
-                      <span className="absolute right-2 top-2 flex size-2 rounded-full bg-amber-500" />
+                      <span className="absolute right-2 top-2 flex size-2 rounded-full bg-warning" />
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="duplicates" className="flex-1">
@@ -1418,7 +1418,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     <div className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium flex items-center gap-2">
-                              <CheckCircle className="size-4 text-green-500" />
+                              <CheckCircle className="size-4 text-success-text" />
                               Facturas listas ({getSelectedMatchedCount()}/{preview.matched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1433,7 +1433,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[30px]"></TableHead>
+                                    <TableHead className="w-8"></TableHead>
                                     <TableHead>Folio</TableHead>
                                     <TableHead>Proveedor</TableHead>
                                     <TableHead>Fecha</TableHead>
@@ -1455,7 +1455,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
-                                        <TableCell className="max-w-[340px] whitespace-nowrap truncate">
+                                        <TableCell className="max-w-[21rem] whitespace-nowrap truncate">
                                           <span title={formatSupplierDisplayName(inv.razonSocial)}>{getInvoiceSupplierLabel(inv)}</span>
                                         </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
@@ -1482,14 +1482,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-medium flex items-center gap-2">
-                                        <Users className="size-4 text-amber-500" />
+                                        <Users className="size-4 text-warning-text" />
                                         Proveedores no encontrados ({unmatchedSuppliers.length}) — {preview?.unmatched.length} facturas
                                     </h3>
                                 </div>
 
                                 {allUnmatchedPending && (
                                   <Button
-                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                    className="bg-success text-success-foreground hover:bg-success/90"
                                     onClick={() => handleBulkAction('create')}
                                   >
                                     Crear todos como nuevos ({unmatchedSuppliers.length})
@@ -1562,7 +1562,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             selectedUnmatchedSupplierIndices.has(i) ? 'border-primary/50 bg-primary/5' : ''
                                           } ${
                                             us.suggestion && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId
-                                              ? 'border-emerald-200 bg-emerald-50/40'
+                                              ? 'border-success bg-success-soft/40'
                                               : ''
                                           } ${
                                             us.resolution === 'ignore' ? 'opacity-60' : 'hover:border-primary/50'
@@ -1582,13 +1582,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                     <Input 
                                                                         value={editSupplierForm.name}
                                                                         onChange={(e) => setEditSupplierForm(prev => ({ ...prev, name: e.target.value }))}
-                                                                        className="h-8 w-[300px]"
+                                                                        className="h-8 w-72"
                                                                         autoFocus
                                                                         onBlur={() => setEditSupplierForm(prev => ({ ...prev, name: toTitleCase(prev.name) }))}
                                                                         onKeyDown={(e) => e.key === 'Enter' && saveQuickEdit()}
                                                                     />
                                                                     <Button size="icon" variant="ghost" className="size-8" onClick={saveQuickEdit}>
-                                                                        <Check className="size-4 text-green-500" />
+                                                                        <Check className="size-4 text-success-text" />
                                                                     </Button>
                                                                 </div>
                                                             ) : (
@@ -1600,7 +1600,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                       <TooltipProvider>
                                                                         <Tooltip>
                                                                           <TooltipTrigger asChild>
-                                                                            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 p-1 text-emerald-600">
+                                                                            <span className="inline-flex rounded-full border border-success bg-success-soft p-1 text-success-text">
                                                                               <RotateCw className="size-3" />
                                                                             </span>
                                                                           </TooltipTrigger>
@@ -1611,7 +1611,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                       </TooltipProvider>
                                                                     )}
                                                                     {!!assignedSupplier && (
-                                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
                                                                         Asignado
                                                                       </span>
                                                                     )}
@@ -1646,7 +1646,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                     </div>
 
                                                     {us.suggestion && !assignedSupplier && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId && (
-                                                      <div className="ml-8 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
+                                                      <div className="ml-8 rounded-md border border-success bg-success-soft/60 px-3 py-2 text-xs text-success-text">
                                                         <span className="inline-flex items-center gap-2">
                                                           <Sparkles className="size-3.5" />
                                                           En sistema: <strong>{formatSupplierDisplayName(us.suggestion.name)}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
@@ -1655,8 +1655,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                     )}
 
                                                     {us.suggestion && us.suggestion.score <= 0.75 && us.resolution === 'pending' && (
-                                                      <div className="ml-8 flex items-center justify-between gap-2 rounded border border-amber-200/50 bg-amber-50/50 p-2">
-                                                        <div className="flex items-center gap-2 text-xs text-amber-800">
+                                                      <div className="ml-8 flex items-center justify-between gap-2 rounded border border-warning/50 bg-warning-soft/50 p-2">
+                                                        <div className="flex items-center gap-2 text-xs text-warning-text">
                                                           <Sparkles className="size-3.5" />
                                                           <span>
                                                             En sistema: <strong>{formatSupplierDisplayName(us.suggestion.name)}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
@@ -1665,7 +1665,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                         <Button
                                                           size="sm"
                                                           variant="ghost"
-                                                          className="h-6 text-xs text-amber-700 hover:bg-amber-100"
+                                                          className="h-6 text-xs text-warning-text hover:bg-warning/90"
                                                           onClick={() => applySuggestion(i)}
                                                         >
                                                           Aplicar
@@ -1703,7 +1703,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                               value={us.assignedSupplierId || ''}
                                                               onValueChange={(value) => handleSupplierResolution(i, 'assign', value)}
                                                             >
-                                                              <SelectTrigger className="h-8 w-[220px] text-xs">
+                                                              <SelectTrigger className="h-8 w-56 text-xs">
                                                                 <SelectValue placeholder="Seleccionar proveedor..." />
                                                               </SelectTrigger>
                                                               <SelectContent>
@@ -1740,7 +1740,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium flex items-center gap-2">
-                              <AlertTriangle className="size-4 text-amber-500" />
+                              <AlertTriangle className="size-4 text-warning-text" />
                               Facturas sin asignar ({getSelectedUnmatchedCount()}/{preview.unmatched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1760,7 +1760,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[30px]"></TableHead>
+                                    <TableHead className="w-8"></TableHead>
                                     <TableHead>Folio</TableHead>
                                     <TableHead>Proveedor (RUT)</TableHead>
                                     <TableHead>Fecha</TableHead>
@@ -1826,7 +1826,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[30px]"></TableHead>
+                                    <TableHead className="w-8"></TableHead>
                                     <TableHead>Folio</TableHead>
                                     <TableHead>Proveedor</TableHead>
                                     <TableHead>Fecha</TableHead>
@@ -1850,7 +1850,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
-                                        <TableCell className="max-w-[340px] whitespace-nowrap truncate">
+                                        <TableCell className="max-w-[21rem] whitespace-nowrap truncate">
                                           <span title={formatSupplierDisplayName(inv.razonSocial)}>{getInvoiceSupplierLabel(inv)}</span>
                                         </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
@@ -1858,7 +1858,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                           <div className="flex flex-col gap-1">
                                             <div className="flex flex-wrap gap-1">
                                               {sources.includes('supplier_invoices') && (
-                                                <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
                                                   Compras
                                                 </span>
                                               )}
@@ -1866,7 +1866,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                 <TooltipProvider>
                                                   <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
                                                         Costos
                                                       </span>
                                                     </TooltipTrigger>
@@ -1878,7 +1878,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                           <div>Monto: {formatCLP(inv.existingCost.amount)}</div>
                                                         )}
                                                         {inv.existingCost?.description && (
-                                                          <div className="max-w-[320px] whitespace-pre-wrap">{inv.existingCost.description}</div>
+                                                          <div className="max-w-xs whitespace-pre-wrap">{inv.existingCost.description}</div>
                                                         )}
                                                       </div>
                                                     </TooltipContent>
@@ -1940,7 +1940,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             {importResult.imported === 0 && importResult.errors > 0 ? (
               <AlertTriangle className="mb-4 size-12 text-destructive" />
             ) : (
-              <CheckCircle className="mb-4 size-12 text-green-500" />
+              <CheckCircle className="mb-4 size-12 text-success-text" />
             )}
             <h3 className="text-lg font-medium">
               {importResult.imported === 0 && importResult.errors > 0
@@ -2031,7 +2031,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               <SelectValue placeholder="Buscar proveedor..." />
             </SelectTrigger>
             <SelectContent>
-                <ScrollArea className="h-[200px]">
+                <ScrollArea className="h-48">
                     {suppliers.map(supplier => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name} ({supplier.rut})
@@ -2056,12 +2056,12 @@ export default PurchaseHistoryImport;
 const ResolutionBadge: React.FC<{ resolution: string }> = ({ resolution }) => {
   switch (resolution) {
     case 'create':
-      return <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Crear nuevo</span>;
+      return <span className="inline-flex items-center rounded-full border border-success bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success-text">Crear nuevo</span>;
     case 'assign':
-      return <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">Asignado</span>;
+      return <span className="inline-flex items-center rounded-full border border-info bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info-text">Asignado</span>;
     case 'ignore':
-      return <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">Ignorado</span>;
+      return <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">Ignorado</span>;
     default:
-      return <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Pendiente</span>;
+      return <span className="inline-flex items-center rounded-full border border-warning bg-warning-soft px-2.5 py-0.5 text-xs font-semibold text-warning-text">Pendiente</span>;
   }
 };

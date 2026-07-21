@@ -164,14 +164,14 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
   return (
     <Card className="bg-card border flex flex-col max-h-[85vh]">
       {/* Header */}
-      <CardHeader className="client-form-header flex-shrink-0 rounded-t-lg text-white">
+      <CardHeader className="client-form-header flex-shrink-0 rounded-t-lg text-primary-foreground">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-primary-foreground">
             <Building2 className="size-5" />
             {isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}
           </CardTitle>
         </div>
-        <p className="mt-1 text-sm text-white/70">
+        <p className="mt-1 text-sm text-primary-foreground/70">
           {isEditing ? 'Modifica los datos del cliente' : 'Ingresa los datos del nuevo cliente'}
         </p>
       </CardHeader>

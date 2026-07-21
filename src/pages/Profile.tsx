@@ -206,12 +206,12 @@ const Profile = () => {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingAvatar}
-                      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/55 opacity-0 transition-opacity group-hover:opacity-100"
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-overlay/60 opacity-0 transition-opacity group-hover:opacity-100"
                     >
                       {uploadingAvatar ? (
-                        <Loader2 className="size-5 animate-spin text-white" />
+                        <Loader2 className="size-5 animate-spin text-effect-highlight" />
                       ) : (
-                        <Camera className="size-5 text-white" />
+                        <Camera className="size-5 text-effect-highlight" />
                       )}
                     </button>
                   </div>

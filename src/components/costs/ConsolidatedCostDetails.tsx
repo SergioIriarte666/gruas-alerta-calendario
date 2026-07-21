@@ -444,7 +444,7 @@ export const ConsolidatedCostDetails = ({
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="min-w-[760px] w-full text-sm">
+                  <table className="min-w-[47.5rem] w-full text-sm">
                     <thead className="bg-muted/40">
                       <tr className="text-left">
                         <th className="px-3 py-2">Codigo</th>
@@ -462,7 +462,7 @@ export const ConsolidatedCostDetails = ({
                           <td className="px-3 py-2 whitespace-nowrap">
                             {item.product_code || item.inventory_item?.sku || item.inventory_item?.barcode || '-'}
                           </td>
-                          <td className="px-3 py-2 min-w-[220px]">
+                          <td className="px-3 py-2 min-w-56">
                             <div className="font-medium text-foreground">{item.description}</div>
                             {item.inventory_item?.name && item.inventory_item.name !== item.description && (
                               <div className="text-xs text-muted-foreground">

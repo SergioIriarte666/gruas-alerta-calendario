@@ -35,8 +35,8 @@ export const QuickDateFilters = ({
             onClick={() => onFilterChange(filter.key)}
             className={`
               ${isActive 
-                ? 'bg-tms-green hover:bg-tms-green/80 text-white' 
-                : 'border-gray-300 hover:bg-gray-50'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'border-border hover:bg-muted/70'
               }
               transition-all duration-200
             `}
@@ -46,7 +46,7 @@ export const QuickDateFilters = ({
             {filter.count !== undefined && filter.count > 0 && (
               <span className={`
                 ml-1 px-1.5 py-0.5 rounded-full text-xs
-                ${isActive ? 'bg-white/20' : 'bg-gray-100'}
+                ${isActive ? 'bg-primary-foreground/20' : 'bg-muted'}
               `}>
                 {filter.count}
               </span>

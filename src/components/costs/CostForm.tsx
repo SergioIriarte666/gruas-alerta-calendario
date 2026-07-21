@@ -855,7 +855,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                             variant="outline"
                                                             disabled={isSubmitting}
                                                             onClick={form.handleSubmit(onSubmit)}
-                                                            className="gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950"
+                                                            className="gap-2 border-success/30 text-success-text hover:bg-success-soft"
                                                         >
                                                             {isSubmitting ? (
                                                                 <Loader2 className="size-4 animate-spin" />
@@ -897,7 +897,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                 </div>
                                             </div>
                                             {!cost && currentStep === 4 && (
-                                                <div className="shrink-0 border-t border-border/70 bg-primary/5 px-6 py-2 text-[11px] text-primary/80">
+                                                <div className="shrink-0 border-t border-border/70 bg-primary/5 px-6 py-2 text-xs text-primary/80">
                                                     💡 Si el proveedor enviará factura electrónica después, podrás vincularla automáticamente al subir el XML — solo asegúrate de asignar el proveedor.
                                                 </div>
                                             )}

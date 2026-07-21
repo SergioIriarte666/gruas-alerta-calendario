@@ -127,7 +127,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[350px] w-full">
+        <ChartContainer config={chartConfig} className="h-80 w-full sm:h-96">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />

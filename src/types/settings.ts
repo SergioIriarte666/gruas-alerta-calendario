@@ -26,6 +26,25 @@ export interface UserSettings {
   currency: 'CLP' | 'USD' | 'EUR';
 }
 
+export type InterfaceDensity = 'comfortable' | 'compact';
+export type InterfaceTextScale = 100 | 110 | 120;
+
+export interface AppearancePreferences {
+  theme: UserSettings['theme'];
+  density: InterfaceDensity;
+  textScale: InterfaceTextScale;
+  reduceMotion: boolean;
+  sidebarCollapsed: boolean;
+}
+
+export const defaultAppearancePreferences: AppearancePreferences = {
+  theme: 'system',
+  density: 'comfortable',
+  textScale: 100,
+  reduceMotion: false,
+  sidebarCollapsed: false,
+};
+
 export interface UserDatabaseSettings {
   timezone: string;
   use_system_timezone: boolean;

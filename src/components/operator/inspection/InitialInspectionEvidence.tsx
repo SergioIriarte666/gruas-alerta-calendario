@@ -9,16 +9,16 @@ interface InitialInspectionEvidenceProps {
 
 export const InitialInspectionEvidenceCard = ({ evidence }: InitialInspectionEvidenceProps) => {
   return (
-    <Card className="mb-6 border-emerald-200 bg-emerald-50">
+    <Card className="mb-6 border-success/30 bg-success-soft">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
-          <FileText className="size-5 text-emerald-600" />
+          <FileText className="size-5 text-success-text" />
           Evidencia de Inspección Inicial
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {evidence.storageTier === 'deleted' && (
-          <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning-text">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
               Respaldo eliminado por política de retención (&gt;2 años)

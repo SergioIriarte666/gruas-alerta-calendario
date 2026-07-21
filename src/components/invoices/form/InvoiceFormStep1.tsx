@@ -105,7 +105,7 @@ export const InvoiceFormStep1 = ({
             value={productServiceDescription}
             onChange={(e) => onProductServiceDescriptionChange(e.target.value)}
             placeholder="Describe el motivo o razón que originó la creación del documento..."
-            className="min-h-[100px] bg-background"
+            className="min-h-24 bg-background"
           />
           {errors.productServiceDescription && (
             <p className="text-sm text-destructive">{errors.productServiceDescription}</p>

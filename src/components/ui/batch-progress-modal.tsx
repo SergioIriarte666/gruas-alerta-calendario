@@ -28,8 +28,8 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && (isComplete || hasError) && onClose?.()}>
-      <DialogContent className="app-overlay-surface overflow-hidden rounded-2xl border-border/80 bg-card p-0 shadow-2xl sm:max-w-[440px] [&>button]:hidden">
-        <div className={cn('h-1 w-full', hasError ? 'bg-destructive' : isComplete ? 'bg-emerald-500' : 'bg-primary')} />
+      <DialogContent className="app-overlay-surface overflow-hidden rounded-2xl border-border/80 bg-card p-0 shadow-2xl sm:max-w-[27.5rem] [&>button]:hidden">
+        <div className={cn('h-1 w-full', hasError ? 'bg-destructive' : isComplete ? 'bg-success' : 'bg-primary')} />
 
         <div className="p-6 sm:p-7">
           <div className="flex items-start gap-3.5">
@@ -39,7 +39,7 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
                 hasError
                   ? 'border-destructive/20 bg-destructive/10 text-destructive'
                   : isComplete
-                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    ? 'border-success/30 bg-success-soft text-success'
                     : 'border-primary/20 bg-primary/10 text-primary'
               )}
             >
@@ -82,7 +82,7 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
 
           {currentItemName && !isComplete && !hasError && (
             <div className="mt-5 rounded-xl border border-border/70 bg-muted/55 px-3.5 py-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Elemento actual</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Elemento actual</p>
               <p className="mt-1 truncate text-sm font-medium text-foreground">{currentItemName}</p>
             </div>
           )}

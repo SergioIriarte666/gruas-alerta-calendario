@@ -272,7 +272,7 @@ export function LocationAutocomplete({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className="max-h-[360px] w-[var(--radix-popover-trigger-width)] p-0"
+          className="max-h-96 w-[var(--radix-popover-trigger-width)] p-0"
           align="start"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
@@ -286,7 +286,7 @@ export function LocationAutocomplete({
                       onSelect={() => handleFavoriteSelect(location)}
                       className="cursor-pointer"
                     >
-                      <Star className="mr-2 h-4 w-4 shrink-0 text-amber-500" />
+                      <Star className="mr-2 h-4 w-4 shrink-0 text-warning" />
                       <div className="min-w-0 flex-1">
                         <span className="truncate font-medium text-foreground">
                           {location.name}

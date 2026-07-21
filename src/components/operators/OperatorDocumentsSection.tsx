@@ -318,7 +318,7 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Archivo</span>
                         <span
-                          className="max-w-[140px] truncate text-foreground"
+                          className="max-w-36 truncate text-foreground"
                           title={doc.fileName}
                         >
                           {doc.fileName}

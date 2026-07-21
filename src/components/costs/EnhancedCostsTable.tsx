@@ -394,7 +394,7 @@ export const EnhancedCostsTable = ({
             {(() => {
               const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
               return itemsCount > 1 ? (
-                <Badge variant="outline" className="shrink-0 border-warning/20 bg-warning/10 px-1.5 py-0 text-[10px] text-warning">
+                <Badge variant="outline" className="shrink-0 border-warning/20 bg-warning/10 px-1.5 py-0 text-xs text-warning">
                   <Layers className="mr-0.5 size-3" />
                   {itemsCount}
                 </Badge>
@@ -549,7 +549,7 @@ export const EnhancedCostsTable = ({
           <Layers className="size-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Agrupar por:</span>
           <Select value={groupBy} onValueChange={(v: GroupBy) => setGroupBy(v)}>
-            <SelectTrigger className="w-[140px] h-9">
+            <SelectTrigger className="w-36 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -572,7 +572,7 @@ export const EnhancedCostsTable = ({
               value={String(effectivePageSize)} 
               onValueChange={(v) => handlePageSizeChange(Number(v))}
             >
-              <SelectTrigger className="w-[80px] h-9">
+              <SelectTrigger className="w-20 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -588,7 +588,7 @@ export const EnhancedCostsTable = ({
       <Card className="bg-background">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table className="min-w-[940px]">
+            <Table className="min-w-[58.75rem]">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (

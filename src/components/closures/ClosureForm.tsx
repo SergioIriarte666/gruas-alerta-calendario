@@ -248,7 +248,7 @@ const ClosureForm = ({
       <DialogContent className="finance-dialog bg-card border max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-primary-soft to-primary/10">
             <DialogTitle className="text-2xl font-bold text-foreground">
               Nuevo Cierre de Servicios
             </DialogTitle>
@@ -331,8 +331,8 @@ const ClosureForm = ({
                     {/* Step 2: Período */}
                     {currentStep === 2 && (
                       <div className="space-y-4">
-                        <Alert className="border border-violet-500/30 bg-violet-500/5">
-                          <AlertCircle className="size-4 text-violet-600" />
+                        <Alert className="border border-primary/30 bg-primary-soft">
+                          <AlertCircle className="size-4 text-primary" />
                           <AlertDescription className="text-muted-foreground">
                             Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
                           </AlertDescription>
@@ -453,7 +453,7 @@ const ClosureForm = ({
                         <Button
                           type="button"
                           onClick={handleNextStep}
-                          className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           Siguiente
                           <ChevronRight className="size-4" />
@@ -463,7 +463,7 @@ const ClosureForm = ({
                           type="button"
                           onClick={handleSubmit}
                           disabled={loading || !isFormValid}
-                          className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           {loading ? (
                             <>

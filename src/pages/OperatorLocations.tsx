@@ -221,14 +221,14 @@ const OperatorLocations = () => {
           )}
 
           <div className={isMobile ? 'flex flex-col gap-4' : 'grid grid-cols-[minmax(0,1fr)_320px] gap-4'}>
-            <div className="resources-panel h-[520px] overflow-hidden">
+            <div className="resources-panel h-[32.5rem] overflow-hidden">
               <LiveOperatorsMap
                 ref={mapHandleRef}
                 locations={mapLocations}
                 onSelectOperator={handleSelectOperator}
               />
             </div>
-            <div className="max-h-[520px] overflow-y-auto">
+            <div className="max-h-[32.5rem] overflow-y-auto">
               <OperatorStatusPanel
                 locations={filteredLocations}
                 selectedOperatorId={selectedOperatorId}

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { AppearanceProvider } from '@/contexts/AppearanceContext';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
@@ -306,19 +307,21 @@ export default function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SessionTimeoutProvider warningMinutes={20} timeoutMinutes={30}>
-          <UserProvider>
-            <NotificationProvider>
-              <ToastProvider>
-                <Router>
-                  <AppContent />
-                </Router>
-              </ToastProvider>
-            </NotificationProvider>
-          </UserProvider>
-        </SessionTimeoutProvider>
-      </AuthProvider>
+        <AuthProvider>
+          <AppearanceProvider>
+            <SessionTimeoutProvider warningMinutes={20} timeoutMinutes={30}>
+              <UserProvider>
+                <NotificationProvider>
+                  <ToastProvider>
+                    <Router>
+                      <AppContent />
+                    </Router>
+                  </ToastProvider>
+                </NotificationProvider>
+              </UserProvider>
+            </SessionTimeoutProvider>
+          </AppearanceProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

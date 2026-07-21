@@ -68,13 +68,13 @@ export const CostsHeader = ({
       {/* Título y botón principal */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-foreground ">
             Gestión de Costos
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground  mt-1">
             Administra y registra todos los costos operativos de la empresa
             {dateFilter !== 'all' && (
-              <span className="ml-2 px-2 py-1 bg-tms-green/10 text-tms-green rounded-full text-xs font-medium">
+              <span className="ml-2 rounded-full bg-success-soft px-2 py-1 text-xs font-medium text-success-text">
                 Mostrando: {getActivePeriodLabel()}
               </span>
             )}
@@ -84,7 +84,7 @@ export const CostsHeader = ({
         <div className="flex gap-2">
           <Button 
             onClick={onAddCost}
-            className="bg-tms-green hover:bg-tms-green/80 text-black hover-scale"
+            className="bg-success text-success-foreground hover:bg-success/90 hover-scale"
           >
             <Plus className="size-4 mr-2" />
             Nuevo Costo
@@ -93,7 +93,7 @@ export const CostsHeader = ({
           <Button 
             onClick={onXMLUpload}
             variant="outline"
-            className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+            className="border-info/30 text-info-text hover:bg-info hover:text-info-foreground"
           >
             <Code className="size-4 mr-2" />
             Cargar XML
@@ -103,10 +103,10 @@ export const CostsHeader = ({
 
       {/* Filtros rápidos de fecha */}
       {onDateFilterChange && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <h3 className="text-sm font-medium text-foreground  mb-2">
                 Filtros Rápidos
               </h3>
               <QuickDateFilters
@@ -122,70 +122,70 @@ export const CostsHeader = ({
       {/* Métricas resumen */}
       {(totalCosts > 0 || totalAmount > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Costos</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm text-muted-foreground ">Total Costos</p>
+                <p className="text-2xl font-bold text-foreground ">
                   {totalCosts}
                 </p>
               </div>
-              <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
-                <span className="size-5 text-blue-600 dark:text-blue-400 text-xl">📊</span>
+              <div className="bg-info-soft p-2 rounded-lg">
+                <span className="size-5 text-info-text text-xl">📊</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Monto Total</p>
-                <p className="text-2xl font-bold text-tms-green">
+                <p className="text-sm text-muted-foreground ">Monto Total</p>
+                <p className="text-2xl font-bold text-success-text">
                   {formatCurrency(totalAmount)}
                 </p>
               </div>
-              <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
-                <span className="text-green-600 dark:text-green-400 text-xl font-bold">$</span>
+              <div className="bg-success-soft p-2 rounded-lg">
+                <span className="text-success-text text-xl font-bold">$</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Promedio</p>
-                <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-muted-foreground ">Promedio</p>
+                <p className="text-lg font-semibold text-foreground ">
                   {totalCosts > 0 ? formatCurrency(totalAmount / totalCosts) : formatCurrency(0)}
                 </p>
               </div>
-              <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
-                <span className="text-orange-600 dark:text-orange-400 text-sm font-bold">AVG</span>
+              <div className="bg-warning-soft p-2 rounded-lg">
+                <span className="text-warning-text text-sm font-bold">AVG</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Este Mes</p>
-                <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
+                <p className="text-sm text-muted-foreground ">Este Mes</p>
+                <p className="text-lg font-semibold text-primary">
                   {formatCurrency(currentMonthTotal)}
                 </p>
                 {monthVariation !== 0 && (
                   <div className="flex items-center mt-1">
                     {monthVariation > 0 ? (
-                      <TrendingUp className="size-3 text-red-500 mr-1" />
+                      <TrendingUp className="size-3 text-danger-text mr-1" />
                     ) : (
-                      <TrendingDown className="size-3 text-green-500 mr-1" />
+                      <TrendingDown className="size-3 text-success-text mr-1" />
                     )}
-                    <span className={`text-xs ${monthVariation > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                    <span className={`text-xs ${monthVariation > 0 ? 'text-danger-text' : 'text-success-text'}`}>
                       {Math.abs(monthVariation).toFixed(1)}%
                     </span>
                   </div>
                 )}
               </div>
-              <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
-                <span className="text-purple-600 dark:text-purple-400 text-xl">📊</span>
+              <div className="bg-accent p-2 rounded-lg">
+                <span className="text-primary text-xl">📊</span>
               </div>
             </div>
           </div>
@@ -195,7 +195,7 @@ export const CostsHeader = ({
       {/* Barra de búsqueda y filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             placeholder="Buscar por descripción, categoría, folio..."
             value={searchTerm}

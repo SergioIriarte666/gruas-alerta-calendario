@@ -30,6 +30,11 @@ interface BatchUploadAnimationsProps {
   targetRef?: React.RefObject<HTMLElement>;
 }
 
+const getTokenColor = (token: string) => {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  return value ? `hsl(${value})` : 'currentColor';
+};
+
 export const BatchUploadAnimations: React.FC<BatchUploadAnimationsProps> = ({
   isActive,
   onComplete = false,
@@ -57,19 +62,13 @@ export const BatchUploadAnimations: React.FC<BatchUploadAnimationsProps> = ({
       vy: Math.sin(angle) * speed,
       life: 1,
       maxLife: 60 + Math.random() * 40,
-      color: `hsl(84, 100%, ${50 + Math.random() * 30}%)`,
+      color: getTokenColor('--primary'),
       size: 2 + Math.random() * 3
     };
   }, []);
 
   const createConfetti = useCallback((x: number, y: number): ConfettiParticle => {
-    const colors = [
-      'hsl(84, 100%, 58%)',   // primary green
-      'hsl(217, 91%, 60%)',   // blue
-      'hsl(142, 76%, 36%)',   // green
-      'hsl(45, 93%, 47%)',    // yellow
-      'hsl(0, 84%, 60%)'      // red
-    ];
+    const colors = ['--primary', '--info', '--success', '--warning', '--danger'].map(getTokenColor);
 
     return {
       x,
@@ -105,10 +104,12 @@ export const BatchUploadAnimations: React.FC<BatchUploadAnimationsProps> = ({
       if (alpha > 0) {
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color.replace(')', `, ${alpha})`).replace('hsl', 'hsla');
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = particle.color;
         ctx.shadowBlur = 10;
         ctx.shadowColor = particle.color;
         ctx.fill();
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         return true;
       }

@@ -1,109 +1,209 @@
-# Sistema de Diseño TMS — v3
+# Guía visual de TMS Grúas
 
-Fuente única de verdad para color, tipografía, espaciado y componentes primitivos.
+Esta guía es la única fuente normativa para crear, modificar o revisar la interfaz visual de la aplicación. Aplica al sistema administrativo, portal de operador, portal de cliente, PWA y diálogos compartidos.
 
-## Paleta
+## Autoridad y archivos canónicos
 
-Color de marca: **violeta `#8b5cf6`** (HSL `271 81% 56%`).
-Definida en `src/index.css :root` como `--primary`. **Cambiar esa línea actualiza toda la app.**
+La responsabilidad está separada para evitar duplicaciones:
 
-| Token              | Light                    | Dark                       | Uso                              |
-|--------------------|--------------------------|----------------------------|----------------------------------|
-| `--primary`        | `271 81% 56%` violeta    | `271 91% 65%` violeta claro| Botones primarios, badges marca  |
-| `--background`     | blanco                   | `222 47% 8%`               | Fondo de la app                  |
-| `--surface`        | blanco                   | `222 40% 11%`              | Tarjetas (alias de `--card`)     |
-| `--text` (`--foreground`) | gris oscuro       | gris claro                 | Texto cuerpo                     |
-| `--text-muted` (`--muted-foreground`) | gris medio | gris medio              | Texto secundario                 |
-| `--border`         | gris muy claro           | gris oscuro                | Separadores                      |
-| `--success`        | verde 36%                | verde 45%                  | Éxito (pagado, completado)       |
-| `--warning`        | ámbar                    | ámbar luminoso             | Advertencia (pendiente)          |
-| `--danger`         | rojo                     | rojo luminoso              | Error (vencido, eliminar)        |
-| `--info`           | azul                     | azul luminoso              | Información                      |
+1. Este documento define las reglas y decisiones de uso.
+2. `src/index.css` contiene los valores efectivos de los tokens para tema claro, oscuro y superficies operativas.
+3. `tailwind.config.ts` expone esos tokens como utilidades semánticas.
+4. `src/components/ui` contiene las primitivas reutilizables.
+5. `src/utils/__tests__/globalVisualContract.test.ts` impide reintroducir estilos físicos o improvisados.
 
-Cada token de estado tiene también `-foreground` (texto sobre el color) y `-soft` (fondo suave para badges).
+Ningún módulo puede declarar una paleta alternativa, rescatar clases antiguas con `!important` ni mantener una guía visual propia. Si otro documento contradice esta guía, prevalece esta guía y el otro documento debe corregirse.
 
-## Modo oscuro
+## Dirección visual
 
-Implementado en `.dark { ... }` en `index.css`. Mismos tokens semánticos, paleta invertida.
-Gestionado por `ThemeProvider` (`src/contexts/ThemeContext.tsx`):
+TMS es una interfaz operacional de alta frecuencia: clara, compacta, sobria y trazable. La jerarquía se obtiene mediante tipografía, espaciado, superficie y contraste; el color se reserva para marca, foco y estados con significado.
+
+Las superficies operativas comparten el lenguaje carbón + lima definido por los tokens `--dashboard-*`. Es una capa semántica sobre el sistema global, no una segunda paleta independiente. Los módulos no deben redefinir esos valores.
+
+## Contrato de color
+
+Los componentes consumen roles, nunca colores físicos.
+
+| Rol | Uso obligatorio |
+| --- | --- |
+| `background` | fondo general de una vista |
+| `card` / `surface` | tarjetas y bloques de contenido |
+| `popover` / `surface-elevated` | menús, popovers y superficies elevadas |
+| `muted` / `surface-sunken` | áreas secundarias, filtros y fondos suaves |
+| `foreground` / `text` | texto principal |
+| `text-strong` | encabezados de máxima jerarquía |
+| `muted-foreground` / `text-muted` | texto secundario |
+| `border` | separadores y bordes normales |
+| `input` | borde de controles editables |
+| `ring` | foco visible |
+| `primary` | marca, acción principal y selección |
+| `success` | resultado exitoso o completado |
+| `warning` | atención, pendiente o próximo a vencer |
+| `danger` | error, vencido o acción destructiva |
+| `info` | información y progreso neutral |
+
+Cada estado dispone de tres funciones:
+
+- base: fondo sólido o icono destacado;
+- `foreground`: contenido colocado sobre el fondo sólido;
+- `text` y `soft`: texto legible y fondo suave para badges, alertas o filas.
+
+Ejemplo válido:
 
 ```tsx
-const { theme, resolvedTheme, setTheme } = useTheme();
-// theme: "light" | "dark" | "system" (preferencia del usuario)
-// resolvedTheme: "light" | "dark" (efectivamente aplicado al DOM)
-setTheme("dark"); // persiste en localStorage y en settings
+<div className="border border-warning/30 bg-warning-soft text-warning-text">
+  Pago próximo a vencer
+</div>
 ```
 
-El selector de tema vive en **Configuración → Preferencias de Usuario**.
+No se permiten clases basadas en nombres de paletas físicas, colores hexadecimales, RGB/HSL numérico dentro de componentes ni aliases históricos. Tampoco se permite compensar una clase incorrecta mediante CSS global.
+
+### Excepciones de salida
+
+Los artefactos que no heredan CSS —PDF, imágenes rasterizadas y ventanas HTML independientes— pueden necesitar valores estáticos. Esos valores representan roles de impresión, deben estar nombrados por función y no pueden reutilizarse como estilos de interfaz. El fondo blanco aplicado al convertir una imagen transparente a JPEG es una excepción técnica explícita.
+
+## Apariencia configurable
+
+Configuración → Apariencia permite ajustes seguros:
+
+- tema claro, oscuro o sincronizado con el sistema;
+- densidad cómoda o compacta;
+- escala de lectura admitida por la aplicación;
+- reducción de movimiento;
+- menú lateral expandido o contraído;
+- restauración de valores predeterminados.
+
+`AppearanceContext` aplica los atributos de documento, guarda un respaldo local y sincroniza las preferencias por usuario en `user_settings`. `ThemeContext` resuelve y aplica el tema.
+
+La pantalla de Apariencia no ofrece edición libre de colores, bordes, sombras o radios. Esos valores afectan contraste, estados, componentes y ambos temas; modificarlos individualmente rompería el contrato global. Una nueva personalización de marca solo puede incorporarse como un conjunto validado de tokens, nunca como valores libres por componente.
 
 ## Tipografía
 
-- **Familia**: Montserrat (sans-serif).
-- Escala: usar utilidades Tailwind estándar (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`).
-- **Títulos de página**: `text-2xl font-bold text-foreground tracking-tight` (ya encapsulado en `<PageHeader>`).
-- **Títulos de sección**: `text-base font-semibold text-foreground` (ya encapsulado en `<SectionCard>`).
-- **Métricas KPI**: `text-2xl font-bold` (ya encapsulado en `<MetricCard>`).
+- Familia principal: Montserrat con fallbacks del sistema.
+- Cuerpo y controles: `text-sm` o `text-base` según densidad.
+- Ayudas, metadatos y badges: `text-xs`.
+- Título de sección: `text-base` o `text-lg` con peso semibold.
+- Título de página: `text-2xl` con peso bold y tracking tight.
+- KPI principal: `text-2xl` o mayor cuando el contenedor lo permita.
+- Valores financieros: usar cifras tabulares cuando la comparación vertical sea importante.
 
-## Componentes primitivos (`src/components/ui/`)
+No se admiten tamaños tipográficos arbitrarios. La densidad se controla mediante espaciado y las preferencias globales, no inventando escalas locales.
 
-### `<PageHeader>`
-Encabezado estándar de página con título, descripción, badges y acciones.
+## Espaciado, tamaño y disposición
+
+- Usar la escala estándar de Tailwind para padding, gap, alto y ancho.
+- La unidad base de composición es 4 px; los tamaños táctiles deben alcanzar al menos 44 × 44 px.
+- Una tabla puede declarar un ancho mínimo estructural en `rem` cuando necesita desplazamiento horizontal.
+- Un overlay puede usar cálculos de viewport o variables de Radix para respetar el espacio disponible.
+- Las medidas arbitrarias en píxeles están prohibidas en componentes.
+- Móvil no es una tabla comprimida: debe priorizar tarjetas, columnas apiladas y acciones alcanzables.
+
+Los valores estructurales en `rem`, `dvh`, `vw`, `calc()` o variables CSS son aceptables cuando expresan una restricción real de layout y no sustituyen una utilidad estándar.
+
+## Bordes, radios y elevación
+
+- Borde normal: `border` + `border-border` cuando sea necesario explicitarlo.
+- Borde de estado: token semántico con opacidad moderada.
+- Radio de control: `rounded-md` o el radio de la primitiva.
+- Tarjeta: `rounded-xl`.
+- Panel o diálogo destacado: `rounded-2xl` solo cuando la jerarquía lo justifique.
+- Sombra: `shadow-sm`, `shadow-md` o `shadow-lg` según elevación.
+- Glow: exclusivamente las utilidades semánticas declaradas en Tailwind.
+
+No se permiten sombras arbitrarias en JSX. Las sombras especiales del shell operacional viven como tokens en `src/index.css`.
+
+## Componentes canónicos
+
+Antes de crear una estructura nueva, usar o extender una primitiva existente:
+
+- `PageHeader`: título, descripción, badges y acciones de página;
+- `MetricCard`: métricas con tonos semánticos;
+- `StatusBadge` o `Badge`: estados de negocio;
+- `SectionCard` y `Card`: agrupación de contenido;
+- `Button`: acciones y estados destructivos;
+- `Dialog`, `Sheet`, `Popover` y menús: overlays con foco y elevación consistentes;
+- `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`: formularios;
+- `Table`: datos tabulares;
+- `Tabs`: navegación local;
+- `Skeleton`, `Spinner`, alertas y toasts: feedback de sistema.
+
+Las variantes nuevas deben definir fondo, texto, borde, hover, foco y estado deshabilitado con roles semánticos. No deben depender del selector de un scope para volverse legibles.
+
+## Estados e interacción
+
+- Hover comunica posibilidad de interacción sin alterar el significado del estado.
+- Focus visible siempre usa `ring` y debe conservar contraste.
+- Disabled reduce énfasis, pero mantiene texto reconocible.
+- Selected usa `primary` o el rol operacional previsto.
+- Destructive usa la variante destructiva de la primitiva.
+- Pending, overdue, paid y completed se expresan por significado, no por un color hardcodeado.
+- El texto y el icono deben acompañar al color; el color nunca es la única señal.
+
+## Tema oscuro y contraste
+
+El tema oscuro redefine los mismos roles en `.dark`; ningún componente necesita una paleta `dark:` paralela para corregir un color físico. Todo cambio visual debe revisarse en claro y oscuro.
+
+Requisitos mínimos:
+
+- contraste AA para texto normal y controles;
+- foco visible por teclado;
+- targets táctiles suficientes;
+- zoom y escala de texto sin pérdida de contenido;
+- soporte para `prefers-reduced-motion` y la preferencia interna;
+- estados comprensibles sin depender únicamente del color.
+
+## Gráficos, mapas y contenido externo
+
+- Gráficos: consumir `--chart-1` a `--chart-6` o un rol semántico.
+- Mapas: resolver tokens CSS con `resolveThemeColor`; no duplicar conversiones locales.
+- Marcadores y popups: usar roles de estado y texto.
+- PDF y exportaciones: usar roles estáticos de impresión con nombres funcionales.
+- Logos e imágenes de terceros conservan sus colores oficiales y no definen la interfaz.
+
+## Ejemplo de implementación
+
 ```tsx
-<PageHeader
-  title="Gestión de Costos"
-  description="Administra y registra todos los costos operativos"
-  actions={<Button onClick={onAdd}>Nuevo Costo</Button>}
-/>
+<Card className="border-border/70 bg-card">
+  <CardHeader>
+    <CardTitle className="text-foreground">Resumen de pagos</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-3">
+    <Badge variant="success">Pagado</Badge>
+    <Button variant="outline">Ver detalle</Button>
+  </CardContent>
+</Card>
 ```
 
-### `<MetricCard>`
-Tarjeta KPI con icono, valor y tendencia.
-```tsx
-<MetricCard
-  title="Monto Total"
-  value={formatCurrency(total)}
-  icon={DollarSign}
-  tone="success"
-  trend={{ value: 12.5, direction: "up", isPositive: false }}
-/>
-```
-Tonos: `primary | success | warning | danger | info | muted`.
+## Validación obligatoria
 
-### `<StatusBadge>`
-Badge semántico para estados de negocio.
-```tsx
-<StatusBadge tone="paid" icon={CheckCircle}>Pagado</StatusBadge>
-<StatusBadge tone="overdue">Vencido</StatusBadge>
-```
-Tonos: `paid | pending | overdue | in_progress | completed | cancelled | draft | info | neutral`.
+Antes de cerrar un cambio visual:
 
-### `<SectionCard>`
-Tarjeta de sección con header tipográfico estandarizado.
-```tsx
-<SectionCard title="Detalles del Servicio" icon={Truck} actions={<Button>Editar</Button>}>
-  ...
-</SectionCard>
+```bash
+npx vitest run src/utils/__tests__/globalVisualContract.test.ts
+npx tsc --noEmit
+npm run lint
+npm test -- --run
+npm run build
+npm run build:operator-mobile
+git diff --check
 ```
 
-### `<Badge>`
-Variantes con tokens semánticos completos: `default | secondary | destructive | outline | tms | success | warning | info`.
+El contrato global recorre `src` y rechaza colores físicos, colores arbitrarios, medidas fijas en píxeles, tipografía fuera de escala, colores directos y opacidades mal formadas.
 
-## Reglas críticas
+## Cómo extender el sistema
 
-1. **Nunca** usar colores Tailwind directos sobre superficies de marca:
-   - ❌ `text-violet-600` sobre `bg-primary` (texto invisible — `--primary` ES violeta)
-   - ❌ `text-white` sobre fondos neutros (no se ve en light mode)
-   - ❌ `bg-gray-700`, `bg-black`, `border-gray-*` (no responden a tokens, rompen dark mode)
-   - ✅ `text-primary-foreground` sobre `bg-primary`
-   - ✅ `text-foreground` sobre `bg-background` / `bg-card`
-   - ✅ `bg-muted`, `border-border`
+Si un caso no está cubierto:
 
-2. **Nunca** estilos inline (`style={{ backgroundColor: '#...' }}`) en primitivas — sobreescriben tokens y rompen dark mode.
+1. demostrar que no corresponde a un rol existente;
+2. definir el nuevo rol en tema claro y oscuro dentro de `src/index.css`;
+3. mapearlo en `tailwind.config.ts` si será consumido desde JSX;
+4. extender la primitiva adecuada;
+5. agregar o actualizar pruebas;
+6. documentar el propósito aquí;
+7. verificar todas las superficies afectadas.
 
-3. **Toda variante nueva** en `cva` (Button, Badge, etc.) DEBE incluir `bg-*` Y `text-*` explícitos. Los wrappers globales `*-scope` fueron eliminados; nadie rescata variantes vacías.
+No se crea el token si solo resuelve una pantalla, un color preferido o una excepción visual evitable.
 
-4. **Para acentos violetas decorativos** (no badges/botones): usar `text-primary` en lugar de `text-violet-600`. Así si la marca cambia, todo se actualiza automáticamente.
+## Estado de saneamiento
 
-## Migración pendiente (no urgente)
-
-~131 archivos aún usan `text-violet-*`/`bg-violet-*` directos como acento (heredado de cuando `--primary` era verde). En modo oscuro estos colores se ven igual de violeta porque ignoran los tokens. Migrarlos a `text-primary`/`bg-primary` cuando se toque cada módulo.
+La migración global de módulos está cerrada. No existe una lista de estilos físicos “pendientes para después”, ni una capa de compatibilidad destinada a ocultarlos. Cualquier nueva infracción debe fallar en el contrato visual y corregirse antes de integrar el cambio.

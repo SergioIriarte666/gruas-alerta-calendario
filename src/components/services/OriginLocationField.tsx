@@ -227,7 +227,7 @@ export function OriginLocationField({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="pointer-events-auto">
-                        <MapPinCheck className="size-4 text-emerald-600" />
+                        <MapPinCheck className="size-4 text-success-text" />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">Coordenadas exactas del cliente</TooltipContent>
@@ -256,7 +256,7 @@ export function OriginLocationField({
                       className="gap-3 px-3 py-3"
                       onSelect={() => selectCatalogMatch(match)}
                     >
-                      <Building2 className="size-4 shrink-0 text-cyan-600" />
+                      <Building2 className="size-4 shrink-0 text-info-text" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{match.name}</p>
                         {match.address ? (
@@ -281,7 +281,7 @@ export function OriginLocationField({
                         setOpen(false);
                       }}
                     >
-                      <Star className="size-4 shrink-0 text-amber-500" />
+                      <Star className="size-4 shrink-0 text-warning-text" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{suggestion.label}</p>
                         {suggestion.address && suggestion.address !== suggestion.label ? (
@@ -305,7 +305,7 @@ export function OriginLocationField({
                     className="gap-3 px-3 py-3"
                     onSelect={selectNetworkResult}
                   >
-                    <MapPin className="size-4 shrink-0 text-emerald-600" />
+                    <MapPin className="size-4 shrink-0 text-success-text" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{value}</p>
                       {/* Direccion resuelta: deja que el operador confirme que no cayo

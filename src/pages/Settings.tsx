@@ -16,7 +16,7 @@ import { WhatsAppSettingsSection } from '@/components/settings/WhatsAppSettingsS
 import { EmailNotificationSettingsSection } from '@/components/settings/EmailNotificationSettingsSection';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, SlidersHorizontal, LayoutGrid, ClipboardList, ArchiveRestore } from 'lucide-react';
+import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, SlidersHorizontal, LayoutGrid, ClipboardList, ArchiveRestore, Palette } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
 import { InspectionEquipmentTab } from '@/components/settings/InspectionEquipmentTab';
@@ -24,6 +24,7 @@ import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { AuditTab } from '@/components/settings/AuditTab';
 import { RecoveryCenterTab } from '@/components/settings/RecoveryCenterTab';
+import { AppearanceSettingsTab } from '@/components/settings/AppearanceSettingsTab';
 
 const Settings = () => {
   const {
@@ -41,7 +42,7 @@ const Settings = () => {
     saveSettings: saveSystemSettings
   } = useSystemSettings();
   const { isAdmin } = useUserPermissions();
-  const [activeTab, setActiveTab] = React.useState('company');
+  const [activeTab, setActiveTab] = React.useState('appearance');
 
   // Soporte para anchors: /settings#respaldos abre la pestaña Sistema
   // y hace scroll a la sección de Gestión de Respaldos.
@@ -77,6 +78,7 @@ const Settings = () => {
   };
 
   const tabs = [
+    { value: 'appearance', label: 'Apariencia', icon: Palette },
     { value: 'company', label: 'Empresa', icon: Building2 },
     { value: 'timezone', label: 'Zona horaria', icon: Globe },
     { value: 'system', label: 'Sistema', icon: SettingsIcon },
@@ -159,6 +161,10 @@ const Settings = () => {
 
           <TabsContent value="company" className="mt-4">
             <CompanySettingsTab />
+          </TabsContent>
+
+          <TabsContent value="appearance" className="mt-4">
+            <AppearanceSettingsTab />
           </TabsContent>
 
           <TabsContent value="timezone" className="mt-4">

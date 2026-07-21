@@ -279,7 +279,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300",
               isDragging 
-                ? "border-primary bg-primary/5 scale-[1.02] shadow-[0_0_30px_rgba(156,250,36,0.3)]" 
+                ? "scale-[1.02] border-primary bg-primary/5 shadow-glow-primary"
                 : "border-border hover:border-primary",
               !file && "animate-breathe"
             )}
@@ -395,9 +395,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <CardHeader>
             <CardTitle className="flex items-center gap-x-2 text-foreground">
               {validationResult.isValid ? (
-                <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
+                <CheckCircle className="size-5 text-success-text animate-bounce-in" />
               ) : (
-                <AlertCircle className="size-5 text-orange-500 animate-bounce-in" />
+                <AlertCircle className="size-5 text-warning-text animate-bounce-in" />
               )}
               <span>Resultado del Análisis Inteligente</span>
             </CardTitle>
@@ -437,7 +437,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
               validationResult.isValid 
                 ? 'bg-success/10 border-success/20' 
                 : 'bg-warning/10 border-warning/20',
-              validationResult.isValid && "shadow-[0_0_20px_hsl(var(--success)/0.18)]"
+              validationResult.isValid && "shadow-lg"
             )}>
               <div className="flex items-center gap-2 mb-2">
                 {validationResult.isValid ? (
@@ -595,7 +595,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {uploadResult && (
         <Card className={cn(
           "glass-card animate-slide-up transition-all duration-500",
-          uploadResult.success && "shadow-[0_0_40px_rgba(34,197,94,0.3)]"
+          uploadResult.success && "shadow-glow-success"
         )}>
           <CardHeader>
             <CardTitle className="flex items-center gap-x-2 text-foreground">

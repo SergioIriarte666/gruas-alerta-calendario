@@ -118,8 +118,8 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Car className="size-4 text-blue-600" />
+              <div className="rounded-lg bg-info-soft p-2">
+                <Car className="size-4 text-info" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.totalServices}</p>
@@ -132,8 +132,8 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <Receipt className="size-4 text-green-600" />
+              <div className="rounded-lg bg-success-soft p-2">
+                <Receipt className="size-4 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.totalInvoices}</p>
@@ -146,8 +146,8 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle2 className="size-4 text-emerald-600" />
+              <div className="rounded-lg bg-success-soft p-2">
+                <CheckCircle2 className="size-4 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.completedServices}</p>
@@ -207,7 +207,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">Fecha</TableHead>
+                  <TableHead className="w-24">Fecha</TableHead>
                   <TableHead>Folio</TableHead>
                   <TableHead>N° Fiscal</TableHead>
                   <TableHead>Tipo Servicio</TableHead>
@@ -233,7 +233,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                       <TableCell className="font-mono text-sm">
                         {service.relatedInvoice?.numeroFiscal || '-'}
                       </TableCell>
-                      <TableCell className="text-sm max-w-[150px] truncate">
+                      <TableCell className="max-w-36 truncate text-sm">
                         {service.serviceTypeName || '-'}
                       </TableCell>
                       <TableCell>
@@ -241,7 +241,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                           {statusConfig.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm max-w-[120px] truncate">
+                      <TableCell className="max-w-32 truncate text-sm">
                         {service.clientName}
                       </TableCell>
                       <TableCell className="text-right font-medium">
@@ -267,7 +267,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                       <TableCell>
                         {service.relatedInvoice ? (
                           <div className="flex items-center gap-2">
-                            <Receipt className="size-4 text-green-600" />
+                            <Receipt className="size-4 text-success" />
                             <div className="text-xs font-medium">
                               {service.relatedInvoice.numeroFiscal || 'Pendiente'}
                             </div>

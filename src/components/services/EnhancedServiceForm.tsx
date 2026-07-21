@@ -1156,12 +1156,12 @@ export const EnhancedServiceForm = React.memo(({
         <div className="flex items-center gap-4">
           <div className={cn(
             "p-3 rounded-xl",
-            service ? "bg-amber-500/10" : "bg-violet-500/10"
+            service ? "bg-warning/10" : "bg-primary/10"
           )}>
             {service ? (
-              <FileText className="size-6 text-amber-600 dark:text-amber-400" />
+              <FileText className="size-6 text-warning-text" />
             ) : (
-              <Sparkles className="size-6 text-violet-600 dark:text-violet-400" />
+              <Sparkles className="size-6 text-primary" />
             )}
           </div>
           <div className="flex-1">
@@ -1415,7 +1415,7 @@ export const EnhancedServiceForm = React.memo(({
                         </SelectContent>
                       </Select>
                       {craneComplianceIssues.length > 0 && (
-                        <p className={`text-sm ${craneComplianceIssues.some((issue) => issue.level === 'error') ? 'text-destructive' : 'text-amber-600'}`}>
+                        <p className={`text-sm ${craneComplianceIssues.some((issue) => issue.level === 'error') ? 'text-destructive' : 'text-warning-text'}`}>
                           ⚠ {formatComplianceIssueMessage(craneComplianceIssues[0], { includeResourcePrefix: false })}
                         </p>
                       )}
@@ -1616,7 +1616,7 @@ export const EnhancedServiceForm = React.memo(({
                               <tr key={item.id} className="bg-card">
                                 <td className="px-3 py-2">
                                   <Input value={item.glosa} placeholder="Descripción del trabajo"
-                                    className="h-8 min-w-[160px]"
+                                    className="h-8 min-w-40"
                                     onChange={(e) => updateServiceItem(item.id, 'glosa', e.target.value)} />
                                 </td>
                                 <td className="px-3 py-2">
@@ -1740,7 +1740,7 @@ export const EnhancedServiceForm = React.memo(({
                 size="sm"
                 onClick={performSave}
                 disabled={isCreating || isUpdating || isSubmitting}
-                className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
+                className="bg-success px-2 text-xs text-success-foreground hover:bg-success/90 sm:px-3 sm:text-sm"
               >
                 <Save className="size-4 mr-0.5 sm:mr-1" />
                 {isUpdating || isSubmitting ? 'Guardando...' : 'Guardar'}
@@ -1770,7 +1770,7 @@ export const EnhancedServiceForm = React.memo(({
                 form="enhanced-service-form"
                 size="sm"
                 disabled={hasErrors || isCreating || isUpdating || isSubmitting}
-                className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
+                className="bg-success px-2 text-xs text-success-foreground hover:bg-success/90 sm:px-3 sm:text-sm"
               >
                 {isCreating || isUpdating ? 'Guardando...' : 'Crear Servicio'}
               </Button>

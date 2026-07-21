@@ -88,7 +88,7 @@ export const ClosuresMobileView = ({
               if (option) onSortSelect(option.field, option.direction);
             }}
           >
-            <SelectTrigger className="h-9 w-[190px] border-border/70 bg-background/70 text-foreground">
+            <SelectTrigger className="h-9 w-[11.875rem] border-border/70 bg-background/70 text-foreground">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent className="bg-background border-border">

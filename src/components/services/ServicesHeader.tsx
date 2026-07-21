@@ -99,7 +99,7 @@ export const ServicesHeader = ({
                 disabled={isExportingPending || pendingServicesCount === 0}
                 variant="outline"
                 size="sm"
-                className="border-warning/25 bg-warning/10 text-foreground hover:bg-warning/15"
+                className="border-warning/25 bg-warning/10 text-foreground hover:bg-warning/20"
                 title={pendingServicesCount === 0 ? 'No hay servicios pendientes' : 'Exportar servicios pendientes a PDF'}
               >
                 <FileDown className={`size-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />

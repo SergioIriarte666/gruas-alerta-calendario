@@ -73,7 +73,22 @@ const MAP_PIN_ICON_PATH = `
 
 const CRANE_MARKER_SIZE = 48;
 const CRANE_ICON_SIZE = 28;
-const GRAY_MUTED = '#6b7280';
+
+type TrackingColorToken =
+  | '--primary'
+  | '--muted-foreground'
+  | '--signature-surface';
+
+// Mapbox requiere HSL legacy con comas; los tokens CSS se guardan con la
+// sintaxis moderna "h s% l%". Si el token no existe, la capa queda
+// transparente en lugar de introducir un color fijo ajeno al tema.
+const resolveTrackingColor = (token: TrackingColorToken): string => {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  const parts = raw.split(/\s+/);
+  if (parts.length !== 3) return 'transparent';
+  const [h, s, l] = parts;
+  return `hsl(${h}, ${s}, ${l})`;
+};
 
 const createCraneMarkerElement = () => {
   const wrapper = document.createElement('div');
@@ -92,8 +107,8 @@ const createCraneMarkerElement = () => {
   circle.style.position = 'absolute';
   circle.style.inset = '0';
   circle.style.borderRadius = '9999px';
-  circle.style.backgroundColor = '#ffffff';
-  circle.style.boxShadow = '0 4px 12px rgba(15,23,42,0.35)';
+  circle.style.backgroundColor = 'hsl(var(--signature-surface))';
+  circle.style.boxShadow = '0 4px 12px hsl(var(--overlay) / 0.35)';
   circle.style.display = 'flex';
   circle.style.alignItems = 'center';
   circle.style.justifyContent = 'center';
@@ -117,7 +132,7 @@ const updateCraneMarkerElement = (
   heading: number | null,
   isActive: boolean,
 ) => {
-  const color = isActive ? 'hsl(var(--primary))' : GRAY_MUTED;
+  const color = isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))';
   refs.circle.style.border = `2px solid ${color}`;
   const svg = refs.iconWrapper.querySelector('svg');
   if (svg) svg.setAttribute('stroke', color);
@@ -156,7 +171,7 @@ const createOriginMarkerElement = () => {
   pin.style.left = '0';
   pin.style.transform = 'translate(-50%, 0)';
   pin.style.lineHeight = '0';
-  pin.innerHTML = `<svg width="32" height="40" viewBox="0 0 24 24" fill="hsl(var(--primary))" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(15,23,42,0.35));">${MAP_PIN_ICON_PATH}</svg>`;
+  pin.innerHTML = `<svg width="32" height="40" viewBox="0 0 24 24" fill="hsl(var(--primary))" stroke="hsl(var(--signature-surface))" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px hsl(var(--overlay) / 0.35));">${MAP_PIN_ICON_PATH}</svg>`;
 
   const label = document.createElement('div');
   label.style.position = 'absolute';
@@ -164,13 +179,13 @@ const createOriginMarkerElement = () => {
   label.style.left = '0';
   label.style.transform = 'translate(-50%, 0)';
   label.style.whiteSpace = 'nowrap';
-  label.style.backgroundColor = '#ffffff';
+  label.style.backgroundColor = 'hsl(var(--signature-surface))';
   label.style.borderRadius = '9999px';
   label.style.padding = '2px 8px';
-  label.style.boxShadow = '0 2px 6px rgba(15,23,42,0.25)';
+  label.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.25)';
   label.style.fontSize = '11px';
   label.style.fontWeight = '600';
-  label.style.color = '#1f2937';
+  label.style.color = 'hsl(var(--signature-ink))';
 
   anchor.appendChild(pin);
   anchor.appendChild(label);
@@ -228,20 +243,12 @@ const decodePolyline = (encoded: string): [number, number][] => {
 const ROUTE_SOURCE_ID = 'tm-route-source';
 const ROUTE_CASING_LAYER_ID = 'tm-route-casing';
 const ROUTE_LINE_LAYER_ID = 'tm-route-line';
-const DEFAULT_ROUTE_COLOR = '#8b5cf6';
-
 // Mapbox GL usa csscolorparser internamente, que solo entiende la sintaxis
 // legacy "hsl(h, s%, l%)" con comas — la sintaxis moderna sin comas que usan
 // los tokens del tema ("271 81% 56%") hace que addLayer falle en silencio
 // (emite un error async, no lanza), dejando la capa sin dibujar. Bug real
 // encontrado en producción: la polyline nunca se veía desde Fase 2 por esto.
-const resolvePrimaryColor = (): string => {
-  const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-  const parts = raw.split(/\s+/);
-  if (parts.length !== 3) return DEFAULT_ROUTE_COLOR;
-  const [h, s, l] = parts;
-  return `hsl(${h}, ${s}, ${l})`;
-};
+const resolvePrimaryColor = (): string => resolveTrackingColor('--primary');
 
 // > 60 min -> "4 h 54 min" (nunca "294 min").
 const formatDurationLabel = (seconds: number): string => {
@@ -510,7 +517,7 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
           type: 'line',
           source: ROUTE_SOURCE_ID,
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': '#ffffff', 'line-width': 8, 'line-opacity': 0.9 },
+          paint: { 'line-color': resolveTrackingColor('--signature-surface'), 'line-width': 8, 'line-opacity': 0.9 },
         });
         map.addLayer({
           id: ROUTE_LINE_LAYER_ID,
@@ -665,7 +672,7 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
   if (data.eta) {
     return (
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Tu grúa llega en
         </p>
         <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
@@ -826,7 +833,7 @@ const TrackService = () => {
 
           <CallButton phone={data.support_phone} />
 
-          <p className="text-center text-[11px] text-muted-foreground/80">
+          <p className="text-center text-xs text-muted-foreground/80">
             {COMPANY_NAME} SpA · {COMPANY_LOCATION}
           </p>
         </div>

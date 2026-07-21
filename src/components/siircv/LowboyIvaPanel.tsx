@@ -49,16 +49,16 @@ function HeroCard({ latest }: { latest: LowboyIvaMonth }) {
     <Card
       className={`overflow-hidden border-2 ${
         debePagar
-          ? 'border-orange-500/60 bg-orange-500/5'
-          : 'border-emerald-500/60 bg-emerald-500/5'
+          ? 'border-warning/60 bg-warning-soft'
+          : 'border-success/60 bg-success-soft'
       }`}
     >
       <CardContent className="p-6 sm:p-8">
         <div className="flex items-start gap-3">
           {debePagar ? (
-            <TrendingUp className="mt-1 size-6 shrink-0 text-orange-600" />
+            <TrendingUp className="mt-1 size-6 shrink-0 text-warning" />
           ) : (
-            <TrendingDown className="mt-1 size-6 shrink-0 text-emerald-600" />
+            <TrendingDown className="mt-1 size-6 shrink-0 text-success" />
           )}
           <div className="min-w-0">
             <p className="text-sm font-medium text-muted-foreground">
@@ -68,13 +68,13 @@ function HeroCard({ latest }: { latest: LowboyIvaMonth }) {
             </p>
             <p
               className={`mt-1 text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl ${
-                debePagar ? 'text-orange-600' : 'text-emerald-600'
+                debePagar ? 'text-warning' : 'text-success'
               }`}
             >
               {debePagar ? formatCLP(latest.ivaPagar) : formatCLP(latest.remanenteSiguiente)}
             </p>
             {!debePagar && (
-              <p className="mt-1 text-sm font-semibold text-emerald-600">
+              <p className="mt-1 text-sm font-semibold text-success">
                 Remanente a favor para el mes siguiente
               </p>
             )}
@@ -114,14 +114,14 @@ function MonthlyTable({ months }: { months: LowboyIvaMonth[] }) {
                   <TableCell className="whitespace-nowrap text-right">{formatCLP(m.remanenteAnterior)}</TableCell>
                   <TableCell
                     className={`whitespace-nowrap text-right font-bold ${
-                      m.ivaPagar > 0 ? 'text-orange-600' : 'text-muted-foreground'
+                      m.ivaPagar > 0 ? 'text-warning' : 'text-muted-foreground'
                     }`}
                   >
                     {formatCLP(m.ivaPagar)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
                     {m.remanenteSiguiente > 0 ? (
-                      <span className="text-emerald-600">{formatCLP(m.remanenteSiguiente)}</span>
+                      <span className="text-success">{formatCLP(m.remanenteSiguiente)}</span>
                     ) : (
                       formatCLP(0)
                     )}
@@ -144,7 +144,7 @@ function MonthlyCards({ months }: { months: LowboyIvaMonth[] }) {
           <CardContent className="space-y-2 p-4">
             <div className="flex items-center justify-between">
               <span className="font-semibold">{monthLabel(m.month)}</span>
-              <span className={`text-lg font-bold ${m.ivaPagar > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>
+              <span className={`text-lg font-bold ${m.ivaPagar > 0 ? 'text-warning' : 'text-success'}`}>
                 {m.ivaPagar > 0 ? formatCLP(m.ivaPagar) : formatCLP(0)}
               </span>
             </div>
@@ -156,7 +156,7 @@ function MonthlyCards({ months }: { months: LowboyIvaMonth[] }) {
               <dt className="text-muted-foreground">Remanente anterior</dt>
               <dd className="text-right">{formatCLP(m.remanenteAnterior)}</dd>
               <dt className="text-muted-foreground">Remanente siguiente</dt>
-              <dd className="text-right text-emerald-600">{formatCLP(m.remanenteSiguiente)}</dd>
+              <dd className="text-right text-success">{formatCLP(m.remanenteSiguiente)}</dd>
             </dl>
           </CardContent>
         </Card>
@@ -194,7 +194,7 @@ function DetailSection({ months }: { months: LowboyIvaMonth[] }) {
                       <TableCell className="whitespace-nowrap text-right">{formatCLP(m.comprasNet)}</TableCell>
                       <TableCell
                         className={`whitespace-nowrap text-right font-medium ${
-                          m.resultado >= 0 ? 'text-emerald-600' : 'text-destructive'
+                          m.resultado >= 0 ? 'text-success' : 'text-destructive'
                         }`}
                       >
                         {formatCLP(m.resultado)}

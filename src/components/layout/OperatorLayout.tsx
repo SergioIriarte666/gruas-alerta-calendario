@@ -64,7 +64,7 @@ export const OperatorLayout = () => {
               </div>
             )}
             <div className="min-w-0">
-              <p className="mb-0.5 text-[11px] leading-none text-muted-foreground">Portal Operador</p>
+              <p className="mb-0.5 text-xs leading-none text-muted-foreground">Portal Operador</p>
               <p className="truncate text-sm font-semibold leading-none text-foreground">
                 {user?.name || user?.email}
               </p>
@@ -78,7 +78,7 @@ export const OperatorLayout = () => {
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut className="size-3.5" />
-              <span className="hidden min-[380px]:inline">Salir</span>
+              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </header>

@@ -80,9 +80,9 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
           </div>
 
           {/* Información Básica */}
-          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-4">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-info-text">
+              <div className="rounded bg-info/10 p-1 text-info">
                 <Calendar className="size-4" />
               </div>
               Información Básica
@@ -103,9 +103,9 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
 
           {/* Participantes */}
           {(event.client || event.operator) && (
-            <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-success bg-success/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-success-text">
+                <div className="rounded bg-success/10 p-1 text-success">
                   <User className="size-4" />
                 </div>
                 Participantes
@@ -129,9 +129,9 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
 
           {/* Información del Equipo */}
           {event.crane && (
-            <div className="rounded-lg border border-border border-l-4 border-l-orange-500 bg-orange-500/5 p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                <div className="p-1 rounded bg-orange-500/10 text-orange-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-warning-text">
+                <div className="rounded bg-warning/10 p-1 text-warning-text">
                   <Wrench className="size-4" />
                 </div>
                 Información del Equipo
@@ -142,9 +142,9 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
 
           {/* Ubicación */}
           {event.location && (
-            <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-cyan-700 dark:text-cyan-300">
-                <div className="p-1 rounded bg-cyan-500/10 text-cyan-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-info-text">
+                <div className="rounded bg-info/10 p-1 text-info">
                   <MapPin className="size-4" />
                 </div>
                 Ubicación
@@ -155,9 +155,9 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
 
           {/* Descripción */}
           {event.description && (
-            <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-warning-text">
+                <div className="rounded bg-warning/10 p-1 text-warning-text">
                   <FileText className="size-4" />
                 </div>
                 Descripción

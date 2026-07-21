@@ -51,11 +51,11 @@ export const getPasswordStrength = (password: string): 'weak' | 'medium' | 'stro
 export const getStrengthColor = (strength: 'weak' | 'medium' | 'strong'): string => {
   switch (strength) {
     case 'weak':
-      return 'bg-red-500';
+      return 'bg-danger';
     case 'medium':
-      return 'bg-yellow-500';
+      return 'bg-warning';
     case 'strong':
-      return 'bg-green-500';
+      return 'bg-success';
   }
 };
 

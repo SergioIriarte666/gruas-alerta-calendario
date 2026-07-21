@@ -9,10 +9,13 @@ import { QuickEntryProvider } from '@/contexts/QuickEntryContext';
 import { useServiceRequestAlerts } from '@/hooks/useServiceRequestAlerts';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
+import { useAppearance } from '@/contexts/AppearanceContext';
 
 export const Layout = () => {
   const { isMobile, isTablet } = useDeviceType();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { preferences, updatePreferences } = useAppearance();
+  const isCollapsed = preferences.sidebarCollapsed;
+  const setIsCollapsed = (collapsed: boolean) => updatePreferences({ sidebarCollapsed: collapsed });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Configurar alertas de solicitudes de servicio
@@ -41,13 +44,16 @@ export const Layout = () => {
           <main
             id="main-content"
             className={cn(
-              "flex-1 overflow-x-hidden overflow-y-auto bg-background",
-              isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
+              "app-density-content flex-1 overflow-x-hidden overflow-y-auto bg-background",
+              isMobile ? "p-3" : isTablet ? "p-4" : preferences.density === 'compact' ? "p-4" : "p-6"
             )}
           >
-            <div className="mx-auto w-full max-w-[1600px]">
-              <div className="rounded-[28px] border border-border/60 bg-card/35 shadow-sm backdrop-blur-sm">
-                <div className={cn(isMobile ? "p-3" : isTablet ? "p-4" : "p-6")}>
+            <div className="mx-auto w-full max-w-screen-2xl">
+              <div className="rounded-3xl border border-border/60 bg-card/35 shadow-sm backdrop-blur-sm">
+                <div className={cn(
+                  "app-density-page",
+                  isMobile ? "p-3" : isTablet ? "p-4" : preferences.density === 'compact' ? "p-4" : "p-6",
+                )}>
             <ErrorBoundary name="Página">
               <Suspense fallback={null}>
                 <Outlet />

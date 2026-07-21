@@ -144,12 +144,12 @@ function SaleDescription({ sale }: SaleDescriptionProps) {
       )}
       {vehicles.length > 0 && (
         <div className="mt-1.5 flex flex-wrap items-center gap-1" title={vehiclesTitle}>
-          <Badge variant="outline" className="gap-1 border-indigo-500/40 bg-indigo-500/5 px-1.5 py-0 text-[11px] text-indigo-600">
+          <Badge variant="outline" className="gap-1 border-info/40 bg-info-soft px-1.5 py-0 text-xs text-info">
             <Truck className="size-3" />
             {vehicles.length} {vehicles.length === 1 ? 'vehículo' : 'vehículos'}
           </Badge>
           {firstVehicle && vehicleLabel(firstVehicle) && (
-            <span className="truncate text-[11px] text-muted-foreground">
+            <span className="truncate text-xs text-muted-foreground">
               {vehicleLabel(firstVehicle)}{vehicles.length > 1 ? ` y ${vehicles.length - 1} más` : ''}
             </span>
           )}
@@ -158,7 +158,7 @@ function SaleDescription({ sale }: SaleDescriptionProps) {
       {sale.sale_type === 'producto' && (sale.lowboy_containers?.length ?? 0) > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
           {sale.lowboy_containers?.map((container) => (
-            <Badge key={container.id} variant="outline" className="gap-1 border-teal-600/40 bg-teal-600/5 px-1.5 py-0 text-[11px] text-teal-700">
+            <Badge key={container.id} variant="outline" className="gap-1 border-primary/40 bg-primary-soft px-1.5 py-0 text-xs text-primary">
               <Box className="size-3" />
               {container.serial_number || `${container.size}' sin serie`}
             </Badge>
@@ -358,7 +358,7 @@ export function LowboySalesPanel() {
             </DropdownMenuItem>
           )}
           {canCancel(sale) && (
-            <DropdownMenuItem className="text-amber-600 focus:text-amber-600" onClick={() => setCancelingSale(sale)}>
+            <DropdownMenuItem className="text-warning focus:text-warning" onClick={() => setCancelingSale(sale)}>
               <Ban className="mr-2 size-4" />Cancelar venta
             </DropdownMenuItem>
           )}
@@ -375,10 +375,10 @@ export function LowboySalesPanel() {
     <div className="space-y-4">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Ventas activas" value={String(kpis.activeCount)} accent="text-sky-600" />
-        <KpiCard label="Por facturar (ejecutadas)" value={formatCLP(kpis.toInvoice)} accent="text-amber-600" />
-        <KpiCard label="Por cobrar (facturadas)" value={formatCLP(kpis.toCollect)} accent="text-cyan-800 dark:text-cyan-400" />
-        <KpiCard label="Pagado del mes" value={formatCLP(kpis.paidThisMonth)} accent="text-emerald-600" />
+        <KpiCard label="Ventas activas" value={String(kpis.activeCount)} accent="text-primary" />
+        <KpiCard label="Por facturar (ejecutadas)" value={formatCLP(kpis.toInvoice)} accent="text-warning" />
+        <KpiCard label="Por cobrar (facturadas)" value={formatCLP(kpis.toCollect)} accent="text-info" />
+        <KpiCard label="Pagado del mes" value={formatCLP(kpis.paidThisMonth)} accent="text-success" />
       </div>
 
       <Card>
@@ -460,7 +460,7 @@ export function LowboySalesPanel() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[56.25rem]">
                 <TableHeader>
                   <TableRow>
                     <TableHead><SortHeader sortKey="scheduled_date" label="Fecha comprometida" /></TableHead>
@@ -571,7 +571,7 @@ export function LowboySalesPanel() {
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={manager.setStatus.isPending}>Volver</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-amber-600 lowboy-on-color hover:bg-amber-700"
+                  className="bg-warning text-warning-foreground hover:bg-warning/90"
                   onClick={(event) => { event.preventDefault(); confirmCancel(); }}
                   disabled={manager.setStatus.isPending}
                 >
@@ -652,7 +652,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       onClick={onClick}
       className={cn(
         'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-        active ? 'border-emerald-600 bg-emerald-600 lowboy-on-color' : 'border-border bg-background text-muted-foreground hover:bg-muted',
+        active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-muted-foreground hover:bg-muted',
       )}
     >
       {children}

@@ -40,14 +40,14 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
   }
 
   const InvoiceCard = ({ invoice, isOverdue = false }: { invoice: any; isOverdue?: boolean }) => (
-    <Card className={`${isOverdue ? 'border-red-200 bg-red-50' : ''}`}>
+    <Card className={`${isOverdue ? 'border-danger/30 bg-danger-soft' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <FileText className="size-4 text-muted-foreground" />
               <span className="font-medium">{invoice.folio}</span>
-              {isOverdue && <AlertTriangle className="size-4 text-red-500" />}
+              {isOverdue && <AlertTriangle className="size-4 text-danger" />}
             </div>
             
             <div className="text-sm text-muted-foreground space-y-1">
@@ -97,14 +97,14 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
   );
 
   const ServiceToInvoiceCard = ({ service }: { service: any }) => (
-    <Card className="border-green-200">
+    <Card className="border-success/30">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <FileText className="size-4 text-green-500" />
+              <FileText className="size-4 text-success" />
               <span className="font-medium">{service.folio}</span>
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="border-success/30 bg-success-soft text-success">
                 Listo para facturar
               </Badge>
             </div>
@@ -134,9 +134,9 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Por Cobrar Hoy</p>
-                <p className="text-2xl font-bold text-blue-600">{formatCurrency(data.totalDue)}</p>
+                <p className="text-2xl font-bold text-info">{formatCurrency(data.totalDue)}</p>
               </div>
-              <TrendingUp className="size-8 text-blue-500" />
+              <TrendingUp className="size-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -146,9 +146,9 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Vencido</p>
-                <p className="text-2xl font-bold text-red-600">{formatCurrency(data.totalOverdue)}</p>
+                <p className="text-2xl font-bold text-danger">{formatCurrency(data.totalOverdue)}</p>
               </div>
-              <TrendingDown className="size-8 text-red-500" />
+              <TrendingDown className="size-8 text-danger" />
             </div>
           </CardContent>
         </Card>
@@ -158,9 +158,9 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Servicios Listos</p>
-                <p className="text-2xl font-bold text-green-600">{data.invoicesToIssue.length}</p>
+                <p className="text-2xl font-bold text-success">{data.invoicesToIssue.length}</p>
               </div>
-              <FileText className="size-8 text-green-500" />
+              <FileText className="size-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -168,9 +168,9 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
 
       {/* Facturas Vencidas */}
       {data.invoicesOverdue.length > 0 && (
-        <Card className="border-red-200">
+        <Card className="border-danger/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-danger">
               <AlertTriangle className="size-5" />
               Facturas Vencidas
               <Badge variant="destructive">{data.invoicesOverdue.length}</Badge>
@@ -191,7 +191,7 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="size-5 text-orange-500" />
+              <Clock className="size-5 text-warning" />
               Facturas con Vencimiento Hoy
               <Badge variant="outline">{data.invoicesDue.length}</Badge>
             </CardTitle>
@@ -212,7 +212,7 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="size-5 text-blue-500" />
+              <CreditCard className="size-5 text-info" />
               Pagos Programados Hoy
               <Badge variant="outline">{data.paymentsToMake.length}</Badge>
             </CardTitle>
@@ -232,7 +232,7 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="size-5 text-green-500" />
+              <FileText className="size-5 text-success" />
               Servicios Listos para Facturar
               <Badge variant="outline">{data.invoicesToIssue.length}</Badge>
             </CardTitle>

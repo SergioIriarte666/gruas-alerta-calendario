@@ -53,10 +53,10 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Vencido</CardTitle>
-          <AlertCircle className="size-4 text-red-500" />
+          <AlertCircle className="size-4 text-danger-text" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">{formatCurrency(stats.overdueAmount)}</div>
+          <div className="text-2xl font-bold text-danger-text">{formatCurrency(stats.overdueAmount)}</div>
           <p className="text-xs text-muted-foreground">
             Requiere atención
           </p>
@@ -66,10 +66,10 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pagado</CardTitle>
-          <CheckCircle2 className="size-4 text-green-500" />
+          <CheckCircle2 className="size-4 text-success-text" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.paidAmount)}</div>
+          <div className="text-2xl font-bold text-success-text">{formatCurrency(stats.paidAmount)}</div>
           <p className="text-xs text-muted-foreground">
             Completado
           </p>

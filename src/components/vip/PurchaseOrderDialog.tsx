@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
+import {
+  FileText,
+  Calendar,
+  DollarSign,
+  MapPin,
   Building2,
   User,
   Send
@@ -96,38 +96,38 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] bg-gray-900 border-gray-700">
+      <DialogContent className="max-w-2xl w-[95vw] bg-muted border-border">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <FileText className="size-5 text-blue-400" />
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <FileText className="size-5 text-info-text" />
             Registrar Información del Servicio
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Service Summary */}
-          <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-white">Resumen del Servicio</h3>
-              <Badge variant="outline" className="text-blue-300 border-blue-500/30">
+              <h3 className="font-medium text-foreground">Resumen del Servicio</h3>
+              <Badge variant="outline" className="text-info-text border-info/30">
                 {service.folio}
               </Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-300">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="size-4" />
                   <span>{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</span>
                 </div>
-                
-                <div className="flex items-center gap-2 text-gray-300">
+
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Building2 className="size-4" />
                   <span>{service.serviceType.name}</span>
                 </div>
 
                 {service.operator && (
-                  <div className="flex items-center gap-2 text-gray-300">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="size-4" />
                     <span>{service.operator.name}</span>
                   </div>
@@ -135,7 +135,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-300">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="size-4" />
                   <div className="truncate">
                     {service.origin}
@@ -145,7 +145,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-green-400">
+                <div className="flex items-center gap-2 text-success-text">
                   <DollarSign className="size-4" />
                   <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
                 </div>
@@ -156,7 +156,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
           {/* Purchase Order Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="purchase-order" className="text-white">
+              <Label htmlFor="purchase-order" className="text-foreground">
                 Número de Orden de Compra *
               </Label>
               <Input
@@ -164,13 +164,13 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                 value={purchaseOrderNumber}
                 onChange={(e) => setPurchaseOrderNumber(e.target.value)}
                 placeholder="Ej: OC-2024-001234"
-                className="bg-gray-800 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quote-number" className="text-white">
+              <Label htmlFor="quote-number" className="text-foreground">
                 Número de Cotización (Opcional)
               </Label>
               <Input
@@ -178,12 +178,12 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                 value={quoteNumber}
                 onChange={(e) => setQuoteNumber(e.target.value)}
                 placeholder="Ej: COT-24-001"
-                className="bg-gray-800 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes" className="text-white">
+              <Label htmlFor="notes" className="text-foreground">
                 Observaciones (opcional)
               </Label>
               <Textarea
@@ -191,11 +191,11 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Notas adicionales sobre la orden de compra..."
-                className="bg-gray-800 border-gray-600 text-white min-h-[80px]"
+                className="bg-muted border-border text-foreground min-h-20"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-border">
               <Button
                 type="button"
                 variant="outline"
@@ -207,7 +207,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
               <Button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-info text-info-foreground hover:bg-info/90"
               >
                 {loading ? (
                   'Registrando...'

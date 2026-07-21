@@ -161,7 +161,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="configuration-dialog flex max-h-[80vh] flex-col overflow-clip border-border/70 bg-card sm:max-w-[600px]">
+      <DialogContent className="configuration-dialog flex max-h-[80vh] flex-col overflow-clip border-border/70 bg-card sm:max-w-[37.5rem]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="size-5 text-primary" />
@@ -235,7 +235,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
             disabled={saving || loading}
           >
             {saving ? (
-              <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <div className="mr-2 size-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
             ) : (
               <Save className="size-4 mr-2" />
             )}

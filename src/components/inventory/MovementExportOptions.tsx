@@ -242,7 +242,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
         <Button onClick={handleExport} disabled={isExporting}>
           {isExporting ? (
             <>
-              <div className="animate-spin rounded-full size-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 size-4 animate-spin rounded-full border-b-2 border-primary-foreground"></div>
               Exportando...
             </>
           ) : (

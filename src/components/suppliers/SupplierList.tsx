@@ -389,7 +389,7 @@ export const SupplierList: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border">
-                    <TableHead className="w-[50px]">
+                    <TableHead className="w-12">
                       <Checkbox
                         checked={selectedIds.length > 0 && selectedIds.length === filteredAndSortedSuppliers.length}
                         onCheckedChange={(checked) => handleSelectAll(!!checked)}

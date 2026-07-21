@@ -140,7 +140,7 @@ export const HistoricalPurchasesGroupedList = ({
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground ml-14 sm:ml-0">
-                  <div className="flex flex-col sm:items-end min-w-[100px]">
+                  <div className="flex flex-col sm:items-end min-w-24">
                     <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground/70">Total Comprado</span>
                     <span className="font-bold text-foreground text-lg">
                       {formatCurrency(totalAmount)}

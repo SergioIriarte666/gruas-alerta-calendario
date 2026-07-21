@@ -30,27 +30,27 @@ export const AdminEmergencyPanel = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-6 bg-card border h-auto p-1 gap-1">
-            <TabsTrigger value="liberation" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="liberation" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Unlock className="size-4" />
               <span>Liberación</span>
             </TabsTrigger>
-            <TabsTrigger value="force-status" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="force-status" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <RefreshCw className="size-4" />
               <span>Forzar Estado</span>
             </TabsTrigger>
-            <TabsTrigger value="bulk-repair" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="bulk-repair" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <ScanSearch className="size-4" />
               <span>Reparación Masiva</span>
             </TabsTrigger>
-            <TabsTrigger value="delete-service" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="delete-service" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trash2 className="size-4" />
               <span>Eliminar Servicio</span>
             </TabsTrigger>
-            <TabsTrigger value="payment-reassign" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="payment-reassign" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <ArrowRightLeft className="size-4" />
               <span>Reconexión Pagos</span>
             </TabsTrigger>
-            <TabsTrigger value="void-purchase" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+            <TabsTrigger value="void-purchase" className="flex min-h-10 h-auto flex-shrink-0 items-center gap-2 whitespace-nowrap p-2 text-xs text-foreground hover:bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <PackageX className="size-4" />
               <span>Anular Compra</span>
             </TabsTrigger>

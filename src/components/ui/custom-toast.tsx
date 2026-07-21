@@ -89,78 +89,56 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="size-5 text-tms-green" />;
+        return <CheckCircle className="size-5 text-success" />;
       case 'error':
-        return <AlertCircle className="size-5 text-white" />;
+        return <AlertCircle className="size-5 text-danger" />;
       case 'warning':
-        return <AlertCircle className="size-5 text-yellow-400" />;
+        return <AlertCircle className="size-5 text-warning" />;
       case 'info':
-        return <Info className="size-5 text-blue-400" />;
+        return <Info className="size-5 text-info" />;
     }
   };
 
-  const getBorderColor = () => {
+  const getToneClasses = () => {
     switch (toast.type) {
       case 'success':
-        return 'border-l-tms-green';
+        return 'border-success/30 border-l-success bg-success-soft text-success-text';
       case 'error':
-        return 'border-red-950/70';
+        return 'border-danger/30 border-l-danger bg-danger-soft text-danger-text';
       case 'warning':
-        return 'border-l-yellow-400';
+        return 'border-warning/30 border-l-warning bg-warning-soft text-warning-text';
       case 'info':
-        return 'border-l-blue-400';
-    }
-  };
-
-  const getBackgroundColor = () => {
-    switch (toast.type) {
-      case 'success':
-        return 'bg-tms-green/10 border-tms-green/30';
-      case 'error':
-        return 'text-white';
-      case 'warning':
-        return 'bg-yellow-500/10 border-yellow-500/30';
-      case 'info':
-        return 'bg-blue-500/10 border-blue-500/30';
+        return 'border-info/30 border-l-info bg-info-soft text-info-text';
     }
   };
 
   return (
     <div 
       className={cn(
-        "border-l-4 rounded-lg shadow-lg p-4 w-[calc(100vw-2rem)] max-w-[360px] sm:min-w-[300px] animate-in slide-in-from-right-full fade-in border transition-all duration-300",
-        getBorderColor(),
-        getBackgroundColor()
+        "w-[calc(100vw-2rem)] max-w-[22.5rem] animate-in rounded-lg border border-l-4 p-4 shadow-lg transition-all duration-300 fade-in slide-in-from-right-full sm:min-w-[18.75rem]",
+        getToneClasses()
       )}
-      style={toast.type === 'error' ? {
-        background: 'color-mix(in srgb, hsl(var(--destructive)) 70%, black)',
-        borderColor: 'color-mix(in srgb, hsl(var(--destructive)) 45%, black)',
-      } : {
-        background: 'hsl(var(--card))',
-        borderColor: toast.type === 'success' ? 'hsl(var(--success))' :
-          toast.type === 'warning' ? 'hsl(var(--warning))' : 'hsl(var(--primary))',
-      }}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-x-3">
           {getIcon()}
           <div className="flex-1">
             {toast.title && (
-              <h4 className={cn("font-semibold text-sm", toast.type === 'error' ? 'text-white' : 'text-card-foreground')}>
+              <h4 className="text-sm font-semibold text-current">
                 {toast.title}
               </h4>
             )}
             {toast.description && (
-              <p className={cn("text-sm mt-1", toast.type === 'error' ? 'text-white/95' : 'text-muted-foreground')}>
+              <p className="mt-1 text-sm text-current opacity-80">
                 {toast.description}
               </p>
             )}
             {toast.technicalDetails && (
-              <details className="mt-2 text-xs text-white">
-                <summary className="cursor-pointer font-medium underline decoration-white/60 underline-offset-2">
+              <details className="mt-2 text-xs text-current">
+                <summary className="cursor-pointer font-medium underline decoration-current underline-offset-2">
                   Ver detalle
                 </summary>
-                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded border border-white/30 bg-black/20 p-2 font-mono text-[11px] leading-4 text-white">
+                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded border border-current/30 bg-background/30 p-2 font-mono text-xs leading-4 text-current">
                   {toast.technicalDetails}
                 </pre>
               </details>
@@ -169,10 +147,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className={cn(
-            "ml-2 transition-colors",
-            toast.type === 'error' ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground',
-          )}
+          className="ml-2 text-current opacity-70 transition-opacity hover:opacity-100"
           aria-label="Cerrar notificación"
         >
           <X className="size-4" />

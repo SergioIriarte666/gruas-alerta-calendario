@@ -88,7 +88,7 @@ export const CreditorList = () => {
                 <TableHead>Categoría</TableHead>
                 <TableHead>Subcategoría</TableHead>
                 <TableHead>Notas</TableHead>
-                <TableHead className="w-[80px]">Acciones</TableHead>
+                <TableHead className="w-20">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

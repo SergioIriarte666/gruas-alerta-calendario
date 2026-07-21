@@ -35,9 +35,9 @@ const statusLabels: Record<string, string> = {
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'paid': case 'completed': case 'closed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 'invoiced': case 'sent': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'overdue': case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    case 'paid': case 'completed': case 'closed': return 'border-success/30 bg-success-soft text-success-text';
+    case 'invoiced': case 'sent': return 'border-info/30 bg-info-soft text-info-text';
+    case 'overdue': case 'cancelled': return 'border-danger/30 bg-danger-soft text-danger-text';
     default: return 'bg-muted text-muted-foreground';
   }
 };
@@ -209,7 +209,7 @@ const ResultCard = ({
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Icon className="size-5" />
             {result.folio}
-            <Badge className={statusColor(result.status)}>
+            <Badge variant="outline" className={statusColor(result.status)}>
               {statusLabels[result.status] || result.status}
             </Badge>
           </CardTitle>
@@ -234,7 +234,7 @@ const ResultCard = ({
                   <span className="font-mono text-xs">{svc.folio}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">{formatCurrency(svc.total)}</span>
-                    <Badge variant="outline" className={`text-[10px] ${statusColor(svc.status)}`}>
+                    <Badge variant="outline" className={`text-xs ${statusColor(svc.status)}`}>
                       {statusLabels[svc.status] || svc.status}
                     </Badge>
                   </div>
@@ -254,7 +254,7 @@ const ResultCard = ({
               {result.linkedClosures.map((cl) => (
                 <div key={cl.id} className="flex items-center justify-between text-sm py-1 px-2 rounded bg-muted/50">
                   <span className="font-mono text-xs">{cl.folio}</span>
-                  <Badge variant="outline" className={`text-[10px] ${statusColor(cl.status)}`}>
+                  <Badge variant="outline" className={`text-xs ${statusColor(cl.status)}`}>
                     {statusLabels[cl.status] || cl.status}
                   </Badge>
                 </div>
@@ -276,7 +276,7 @@ const ResultCard = ({
         <div className="p-3 rounded-md border bg-muted/30 text-sm space-y-1">
           <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Vista previa del impacto</h4>
           <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-            <li>{result.services.length} servicio(s) volverán a estado <Badge variant="outline" className="text-[10px] ml-1">Con OC</Badge></li>
+            <li>{result.services.length} servicio(s) volverán a estado <Badge variant="outline" className="ml-1 text-xs">Con OC</Badge></li>
             {result.type === 'invoice' && (
               <>
                 <li>Se eliminarán relaciones en invoice_services e invoice_closures</li>

@@ -58,7 +58,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="inventory-dialog h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
+        <DialogContent className="inventory-dialog h-[95vh] w-[min(99vw,100rem)] max-w-[100rem] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
           <XMLImportDialogHeader icon={Receipt} title="Importar XML a Bodega"
             description="Valida documentos, corrige glosas, crea productos faltantes y sincroniza Bodega, Costos y Proveedores."
             fileName={selectedFile?.name} documentCount={summary.totalDocs} />
@@ -166,7 +166,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
 
                   {validatedDocuments.length === 0 && !parseResult?.errors?.length && (
                     <Card className="border-dashed border-primary/20 bg-gradient-to-br from-background to-primary/5 shadow-none">
-                      <CardContent className="flex min-h-[260px] flex-col items-center justify-center text-center">
+                      <CardContent className="flex min-h-[16.25rem] flex-col items-center justify-center text-center">
                         <div className="mb-4 rounded-2xl bg-primary/10 p-4 text-primary"><FileText className="size-10" /></div>
                         <p className="text-lg font-semibold">Aún no hay facturas cargadas</p>
                         <p className="mt-2 max-w-md text-sm text-muted-foreground">Carga un XML para ver el detalle de documentos, editar glosas, validar productos y revisar errores antes de importar.</p>

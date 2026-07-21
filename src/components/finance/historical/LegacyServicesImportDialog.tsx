@@ -119,19 +119,19 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[92vh] w-[95vw] max-w-7xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="size-5 text-amber-600" /> Importar servicios legacy</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="size-5 text-warning-text" /> Importar servicios legacy</DialogTitle>
           <DialogDescription>Los datos se guardarán en un archivo histórico aislado, sin modificar servicios ni reportes vigentes.</DialogDescription>
         </DialogHeader>
 
         {step === 'upload' && (
           <div className="space-y-5 py-3">
-            <div {...getRootProps()} className={`group cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${isDragActive ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/20' : 'border-muted-foreground/25 hover:border-amber-500/70 hover:bg-muted/30'}`}>
+            <div {...getRootProps()} className={`group cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${isDragActive ? 'border-warning bg-warning-soft' : 'border-muted-foreground/25 hover:border-warning/70 hover:bg-muted/30'}`}>
               <input {...getInputProps()} />
-              {parsing ? <Loader2 className="mx-auto mb-4 size-10 animate-spin text-amber-600" /> : <Upload className="mx-auto mb-4 size-10 text-muted-foreground transition-colors group-hover:text-amber-600" />}
+              {parsing ? <Loader2 className="mx-auto mb-4 size-10 animate-spin text-warning-text" /> : <Upload className="mx-auto mb-4 size-10 text-muted-foreground transition-colors group-hover:text-warning-text/80" />}
               <p className="font-semibold">{parsing ? 'Leyendo y validando archivo…' : 'Arrastre aquí el respaldo XLSX'}</p>
               <p className="mt-2 text-sm text-muted-foreground">o haga clic para seleccionarlo</p>
             </div>
-            <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg border border-warning bg-warning-soft/70 p-4 text-sm text-warning-text sm:flex-row sm:items-center sm:justify-between">
               <p>Puede usar la plantilla nueva (hoja “Servicios Legacy”) o el reporte original “ReporteMemoriasDescriptivas” sin reformatear.</p>
               <Button variant="outline" size="sm" className="shrink-0 bg-background/80" asChild>
                 <a href="/templates/plantilla_servicios_legacy.xlsx" download="plantilla_servicios_legacy.xlsx">
@@ -146,7 +146,7 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
           <div className="space-y-5 py-2">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 p-4">
               <div><p className="font-semibold">{file?.name}</p><p className="text-sm text-muted-foreground">Período {formatDate(stats.period_from)} — {formatDate(stats.period_to)}</p></div>
-              <div className="flex gap-2"><Badge className="bg-emerald-600">{stats.valid_rows} válidas</Badge>{stats.invalid_rows > 0 && <Badge variant="destructive">{stats.invalid_rows} inválidas</Badge>}</div>
+              <div className="flex gap-2"><Badge className="bg-success text-success-foreground">{stats.valid_rows} válidas</Badge>{stats.invalid_rows > 0 && <Badge variant="destructive">{stats.invalid_rows} inválidas</Badge>}</div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[['Filas detectadas', stats.total_rows.toLocaleString('es-CL')], ['Filas válidas', stats.valid_rows.toLocaleString('es-CL')], ['Total', formatCLP(stats.total_clp)], ['Filas inválidas', stats.invalid_rows.toLocaleString('es-CL')]].map(([label, value]) => <div key={label} className="rounded-lg border p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold">{value}</p></div>)}
@@ -160,7 +160,7 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
                   <p>
                     Se detectaron {stats.overlap_stats.total_overlapping.toLocaleString('es-CL')} filas con la misma fecha y placa que ya existen en otra importación previa. Esto puede indicar solape entre archivos exportados de distintos rangos. Igual puede continuar — el sistema no bloquea el import.
                   </p>
-                  <Accordion type="single" collapsible className="mt-3 rounded-lg border border-amber-200/70 bg-background/60 px-3 dark:border-amber-900/60">
+                  <Accordion type="single" collapsible className="mt-3 rounded-lg border border-warning/70 bg-background/60 px-3">
                     <AccordionItem value="overlap-detail" className="border-b-0">
                       <AccordionTrigger className="py-2 text-sm hover:no-underline">Ver detalle de coincidencias</AccordionTrigger>
                       <AccordionContent className="pb-3">
@@ -181,11 +181,11 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
               </Alert>
             )}
             {stats.normalization_applied.total_normalizations > 0 && (
-              <Accordion type="single" collapsible className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 dark:border-amber-900 dark:bg-amber-950/20">
+              <Accordion type="single" collapsible className="rounded-xl border border-warning bg-warning-soft/50 px-4">
                 <AccordionItem value="normalization" className="border-b-0">
                   <AccordionTrigger className="hover:no-underline">
                     <span className="flex items-center gap-2 text-left">
-                      <Sparkles className="size-4 text-amber-600" />
+                      <Sparkles className="size-4 text-warning-text" />
                       Normalización aplicada ({stats.normalization_applied.total_normalizations} variaciones consolidadas)
                     </span>
                   </AccordionTrigger>
@@ -200,13 +200,13 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
             )}
             <div className="grid gap-3 md:grid-cols-3"><MiniRanking title="Top aseguradoras" items={stats.top_insurers} /><MiniRanking title="Top operadores" items={stats.top_operators} /><MiniRanking title="Top tipos de servicio" items={stats.top_service_types} /></div>
             <div className="space-y-2"><Label htmlFor="legacy-notes">Notas del lote (opcional)</Label><Textarea id="legacy-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: respaldo septiembre–diciembre 2020" /></div>
-            <div className="flex justify-end gap-2"><Button variant="outline" onClick={reset}>Cancelar</Button><AlertDialog><AlertDialogTrigger asChild><Button className="bg-amber-600 text-white hover:bg-amber-700">Confirmar e importar</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Importar este respaldo?</AlertDialogTitle><AlertDialogDescription>Se importarán {stats.valid_rows} filas válidas. Las {stats.invalid_rows} filas inválidas serán omitidas. ¿Continuar?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={confirmImport} className="bg-amber-600 hover:bg-amber-700">Continuar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>
+            <div className="flex justify-end gap-2"><Button variant="outline" onClick={reset}>Cancelar</Button><AlertDialog><AlertDialogTrigger asChild><Button className="bg-warning text-warning-foreground hover:bg-warning/90">Confirmar e importar</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Importar este respaldo?</AlertDialogTitle><AlertDialogDescription>Se importarán {stats.valid_rows} filas válidas. Las {stats.invalid_rows} filas inválidas serán omitidas. ¿Continuar?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={confirmImport} className="bg-warning text-warning-foreground hover:bg-warning/90">Continuar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>
           </div>
         )}
 
-        {step === 'importing' && <div className="flex min-h-72 flex-col items-center justify-center gap-5"><Loader2 className="size-12 animate-spin text-amber-600" /><div className="text-center"><p className="font-semibold">Insertando {importProgress.current} de {importProgress.total || stats?.valid_rows || rows.length}…</p><p className="text-sm text-muted-foreground">Los registros se procesan en lotes seguros de 200.</p></div><Progress value={importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0} className="max-w-md" /></div>}
+        {step === 'importing' && <div className="flex min-h-72 flex-col items-center justify-center gap-5"><Loader2 className="size-12 animate-spin text-warning-text" /><div className="text-center"><p className="font-semibold">Insertando {importProgress.current} de {importProgress.total || stats?.valid_rows || rows.length}…</p><p className="text-sm text-muted-foreground">Los registros se procesan en lotes seguros de 200.</p></div><Progress value={importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0} className="max-w-md" /></div>}
 
-        {step === 'done' && result && <div className="flex min-h-72 flex-col items-center justify-center gap-5 text-center"><CheckCircle2 className="size-14 text-emerald-600" /><div><h3 className="text-xl font-bold">Importación completada</h3><p className="mt-1 text-muted-foreground">{result.inserted} insertados · {result.skipped} omitidos</p></div>{result.errors.length > 0 && <ScrollArea className="h-28 w-full max-w-2xl rounded-lg border p-3 text-left text-sm text-destructive">{result.errors.map((error) => <p key={error}>{error}</p>)}</ScrollArea>}<div className="flex gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="mr-2 size-4" />Importar otro archivo</Button><Button onClick={() => { onImportComplete(); onOpenChange(false); reset(); }}>Cerrar</Button></div></div>}
+        {step === 'done' && result && <div className="flex min-h-72 flex-col items-center justify-center gap-5 text-center"><CheckCircle2 className="size-14 text-success-text" /><div><h3 className="text-xl font-bold">Importación completada</h3><p className="mt-1 text-muted-foreground">{result.inserted} insertados · {result.skipped} omitidos</p></div>{result.errors.length > 0 && <ScrollArea className="h-28 w-full max-w-2xl rounded-lg border p-3 text-left text-sm text-destructive">{result.errors.map((error) => <p key={error}>{error}</p>)}</ScrollArea>}<div className="flex gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="mr-2 size-4" />Importar otro archivo</Button><Button onClick={() => { onImportComplete(); onOpenChange(false); reset(); }}>Cerrar</Button></div></div>}
       </DialogContent>
     </Dialog>
   );

@@ -149,7 +149,7 @@ const ChangeRow: React.FC<{ change: ServiceChangeEntry }> = ({ change }) => {
           <p className="text-xs text-muted-foreground italic mb-2">{change.changeSummary}</p>
           {snapshotFields.map(([fieldName, value]) => (
             <div key={fieldName} className="flex items-start gap-2 rounded bg-background/60 px-2 py-1 text-xs">
-              <span className="font-medium text-foreground min-w-[140px]">
+              <span className="font-medium text-foreground min-w-36">
                 {FIELD_LABELS[fieldName] || fieldName}:
               </span>
               <span className="text-foreground">{formatValue(fieldName, String(value))}</span>
@@ -173,7 +173,7 @@ const ChangeRow: React.FC<{ change: ServiceChangeEntry }> = ({ change }) => {
   return (
     <div className="flex items-start gap-2 rounded bg-background/60 px-2 py-1.5 text-xs">
       {isItem && <Package className="mt-0.5 size-3 shrink-0 text-muted-foreground" />}
-      <span className="font-medium text-foreground min-w-[140px]">{label}:</span>
+      <span className="font-medium text-foreground min-w-36">{label}:</span>
       {change.changeType === 'CREATE' ? (
         <span className="text-muted-foreground italic">
           {change.changeSummary || (isItem ? 'Item agregado' : 'Servicio creado')}
@@ -260,7 +260,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
           </Badge>
         </div>
 
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-96">
         <div className="space-y-4 pb-4">
           {groupedChanges.map((group) => {
             const primaryChangeType = group.changes[0]?.changeType || 'UPDATE';

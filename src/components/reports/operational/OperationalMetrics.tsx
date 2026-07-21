@@ -16,28 +16,28 @@ export const OperationalMetricsComponent = ({ metrics }: OperationalMetricsProps
         title="Total Servicios"
         value={metrics.totalServices}
         description="Servicios realizados en el período"
-        valueClassName="text-blue-400"
+        valueClassName="text-info-text"
       />
       <ReportMetricCard
         icon={DollarSign}
         title="Ingresos Totales"
         value={`$${metrics.totalRevenue.toLocaleString()}`}
         description="Ingresos generados en el período"
-        valueClassName="text-green-400"
+        valueClassName="text-success-text"
       />
       <ReportMetricCard
         icon={TrendingUp}
         title="Valor Promedio"
         value={`$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         description="Promedio por servicio"
-        valueClassName="text-purple-400"
+        valueClassName="text-primary"
       />
       <ReportMetricCard
         icon={Clock}
         title="Facturas Pendientes"
         value={metrics.pendingInvoices}
         description={`${metrics.overdueInvoices} vencidas`}
-        valueClassName="text-yellow-400"
+        valueClassName="text-warning-text"
       />
     </div>
 
@@ -48,21 +48,21 @@ export const OperationalMetricsComponent = ({ metrics }: OperationalMetricsProps
         title="Clientes Activos"
         value={metrics.activeClients}
         description="Clientes con servicios en el período"
-        valueClassName="text-green-400"
+        valueClassName="text-success-text"
       />
       <ReportMetricCard
         icon={Settings}
         title="Grúas Activas"
         value={metrics.activeCranes}
         description="Grúas disponibles para servicios"
-        valueClassName="text-blue-400"
+        valueClassName="text-info-text"
       />
       <ReportMetricCard
         icon={User}
         title="Operadores Activos"
         value={metrics.activeOperators}
         description="Operadores disponibles"
-        valueClassName="text-purple-400"
+        valueClassName="text-primary"
       />
     </div>
   </div>

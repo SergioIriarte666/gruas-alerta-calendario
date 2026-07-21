@@ -39,9 +39,9 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
 
         <div className="space-y-4">
           {/* Cliente */}
-          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-3">
-            <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
-              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-3">
+            <div className="mb-1 flex items-center gap-2 text-sm font-medium text-info-text">
+              <div className="rounded bg-info/10 p-1 text-info">
                 <User className="size-3" />
               </div>
               Cliente
@@ -53,9 +53,9 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           </div>
 
           {/* Tipo de Servicio */}
-          <div className="rounded-lg border border-border border-l-4 border-l-orange-500 bg-orange-500/5 p-3">
-            <div className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300 font-medium mb-1">
-              <div className="p-1 rounded bg-orange-500/10 text-orange-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-3">
+            <div className="mb-1 flex items-center gap-2 text-sm font-medium text-warning-text">
+              <div className="rounded bg-warning/10 p-1 text-warning-text">
                 <FileText className="size-3" />
               </div>
               Tipo de Servicio
@@ -68,9 +68,9 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           </div>
 
           {/* Ruta */}
-          <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-3">
-            <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300 font-medium mb-1">
-              <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-success bg-success/5 p-3">
+            <div className="mb-1 flex items-center gap-2 text-sm font-medium text-success-text">
+              <div className="rounded bg-success/10 p-1 text-success">
                 <MapPin className="size-3" />
               </div>
               Ruta
@@ -87,18 +87,18 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           </div>
 
           {/* Valor */}
-          <div className="rounded-lg border border-border border-l-4 border-l-violet-500 bg-violet-500/5 p-4 text-center">
-            <div className="text-sm text-violet-700 dark:text-violet-300 font-medium mb-1">Valor del Servicio</div>
-            <p className="text-3xl font-bold text-violet-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-primary bg-primary/5 p-4 text-center">
+            <div className="mb-1 text-sm font-medium text-primary">Valor del Servicio</div>
+            <p className="text-3xl font-bold text-primary">
               {formatCurrency(rate.value)}
             </p>
           </div>
 
           {/* Notas */}
           {rate.notes && (
-            <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-3">
-              <div className="flex items-center gap-2 text-sm text-cyan-700 dark:text-cyan-300 font-medium mb-1">
-                <div className="p-1 rounded bg-cyan-500/10 text-cyan-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-3">
+              <div className="mb-1 flex items-center gap-2 text-sm font-medium text-info-text">
+                <div className="rounded bg-info/10 p-1 text-info">
                   <FileText className="size-3" />
                 </div>
                 Notas

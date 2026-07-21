@@ -21,10 +21,10 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
       <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
-      <p className="text-black mt-1">
+      <p className="text-foreground mt-1">
         Análisis detallado y métricas de rendimiento del negocio.
         {lastUpdate && (
-          <span className="block text-sm text-black mt-1">
+          <span className="block text-sm text-foreground mt-1">
             Última actualización: {lastUpdate.toLocaleTimeString()}
           </span>
         )}

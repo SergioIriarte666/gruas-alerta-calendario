@@ -10,8 +10,6 @@ interface CostChartsProps {
   costsByCategoryConfig: ChartConfig;
 }
 
-const _COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'];
-
 export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) => {
   if (!metrics.costsByCategory || metrics.costsByCategory.length === 0) {
     return null;
@@ -24,7 +22,7 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
           <CardTitle className="text-foreground">Distribución de Costos por Categoría</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={costsByCategoryConfig} className="w-full h-[350px]">
+          <ChartContainer config={costsByCategoryConfig} className="h-80 w-full">
             <PieChart>
               <ChartTooltip 
                 cursor={false}
@@ -32,7 +30,7 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
                   formatter={(value, name) => (
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-foreground">{name}</span>
-                      <span className="text-black">{`$${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}</span>
+                      <span className="text-foreground">{`$${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}</span>
                     </div>
                   )}
                 />}

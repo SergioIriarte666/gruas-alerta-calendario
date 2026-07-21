@@ -42,25 +42,25 @@ export const GlobalSearch = () => {
   return (
     <div className="relative max-w-md flex-1">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Buscar servicios, clientes, facturas..."
-          className="pl-10 pr-4 bg-white border-gray-300 text-black placeholder-gray-500 focus:border-tms-green focus:ring-tms-green"
+          className="border-border bg-background pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
           value={searchTerm}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
         />
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4 animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
       </div>
 
       {/* Results Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-lg">
           {results.length === 0 && !isLoading && searchTerm.trim().length >= 2 && (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-muted-foreground">
               No se encontraron resultados
             </div>
           )}
@@ -70,24 +70,24 @@ export const GlobalSearch = () => {
               {results.map((result) => (
                 <div
                   key={`${result.type}-${result.id}`}
-                  className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-gray-100"
+                  className="cursor-pointer border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent/60"
                   onClick={() => handleResultClick(result)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 text-gray-400">
+                    <div className="flex-shrink-0 text-muted-foreground">
                       {getIconForType(result.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 truncate">
+                        <span className="truncate font-medium text-foreground">
                           {result.title}
                         </span>
-                        <span className="text-xs px-2 py-0.5 bg-tms-green/20 text-tms-green rounded-full font-medium">
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                           {getTypeLabel(result.type)}
                         </span>
                       </div>
                       {result.subtitle && (
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="truncate text-sm text-muted-foreground">
                           {result.subtitle}
                         </p>
                       )}
@@ -99,7 +99,7 @@ export const GlobalSearch = () => {
           )}
           
           {searchTerm.trim().length < 2 && (
-            <div className="p-4 text-center text-gray-500 text-sm">
+            <div className="p-4 text-center text-sm text-muted-foreground">
               Escribe al menos 2 caracteres para buscar
             </div>
           )}

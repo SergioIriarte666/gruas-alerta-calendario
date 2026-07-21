@@ -25,7 +25,7 @@ export const ComplianceBadge = ({ level, compact = false, tooltip }: ComplianceB
   const badge = (
     <Badge
       variant={config.variant}
-      className={compact ? 'px-2 py-0 text-[11px] leading-5' : undefined}
+      className={compact ? 'px-2 py-0 text-xs leading-5' : undefined}
     >
       {compact && level === 'warning' ? 'Observado' : config.label}
     </Badge>

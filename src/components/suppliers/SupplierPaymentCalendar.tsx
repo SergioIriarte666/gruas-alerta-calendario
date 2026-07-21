@@ -192,7 +192,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 <div
                   key={date.toString()}
                   className={`
-                    p-2 min-h-[80px] border rounded-lg transition-colors
+                    min-h-20 rounded-lg border p-2 transition-colors
                     ${isCurrentDay ? 'bg-primary/10 border-primary' : 'bg-muted/50 border hover:bg-muted'}
                   `}
                 >
@@ -214,7 +214,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                         className="text-xs p-1 rounded truncate"
                         title={`${getSupplierName(payment.supplier_id)}: ${payment.description} - ${formatCurrency(payment.amount)}`}
                       >
-                        <Badge className={`${getStatusColor(payment.status)} text-xs py-0 px-1 text-black`}>
+                        <Badge className={`${getStatusColor(payment.status)} px-1 py-0 text-xs`}>
                           {getStatusLabel(payment.status)}
                         </Badge>
                         <div className="text-foreground mt-1 truncate">

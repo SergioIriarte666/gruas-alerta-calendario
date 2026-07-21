@@ -14,21 +14,21 @@ export const ProfitabilityMetrics = ({ metrics }: ProfitabilityMetricsProps) => 
       title="Total Costos"
       value={`$${metrics.totalCosts.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       description="Costos operativos en el período"
-      valueClassName="text-yellow-400"
+      valueClassName="text-warning-text"
     />
     <ReportMetricCard
       icon={PiggyBank}
       title="Beneficio Neto"
       value={`$${metrics.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       description="Ingresos menos costos"
-      valueClassName={metrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}
+      valueClassName={metrics.netProfit >= 0 ? 'text-success-text' : 'text-danger-text'}
     />
     <ReportMetricCard
       icon={Percent}
       title="Margen de Beneficio"
       value={`${metrics.profitMargin.toFixed(1)}%`}
       description="Porcentaje de beneficio sobre ingresos"
-      valueClassName="text-blue-400"
+      valueClassName="text-info-text"
     />
   </div>
 );

@@ -259,7 +259,7 @@ export const OperatorsTable = ({
                         {operator.isActive ? 'Activo' : 'Inactivo'}
                       </Badge>
                       {operator.trackingEnabled === false && (
-                        <Badge variant="secondary" className="border-zinc-500/30 bg-zinc-500/10 text-zinc-400 text-xs">
+                        <Badge variant="outline" className="border-border bg-muted/50 text-xs text-muted-foreground">
                           Sin rastreo
                         </Badge>
                       )}

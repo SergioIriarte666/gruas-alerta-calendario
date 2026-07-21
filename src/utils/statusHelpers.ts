@@ -1,33 +1,33 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 
 export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
 
 interface StatusConfig {
   label: string;
-  className: string;
+  tone: StatusTone;
 }
 
 export const SERVICE_STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
-  pending: { label: 'Pendiente', className: 'bg-yellow-500/80 text-white' },
-  in_progress: { label: 'En Progreso', className: 'bg-blue-500/80 text-white' },
-  inspection_completed: { label: 'Inspección Completada', className: 'bg-orange-500/80 text-white' },
-  completed: { label: 'Completado', className: 'bg-green-500/80 text-white' },
-  cancelled: { label: 'Cancelado', className: 'bg-red-500/80 text-white' },
-  invoiced: { label: 'Facturado', className: 'bg-purple-500/80 text-white' },
-  quoted: { label: 'Cotizado', className: 'bg-cyan-500/80 text-white' },
-  purchase_order_pending: { label: 'OC Pendiente', className: 'bg-amber-500/80 text-white' },
-  with_purchase_order: { label: 'Con O.C.', className: 'bg-teal-500/80 text-white' },
-  failed: { label: 'Fallido', className: 'bg-orange-600/80 text-white' }
+  pending: { label: 'Pendiente', tone: 'pending' },
+  in_progress: { label: 'En Progreso', tone: 'in_progress' },
+  inspection_completed: { label: 'Inspección Completada', tone: 'info' },
+  completed: { label: 'Completado', tone: 'completed' },
+  cancelled: { label: 'Cancelado', tone: 'cancelled' },
+  invoiced: { label: 'Facturado', tone: 'paid' },
+  quoted: { label: 'Cotizado', tone: 'info' },
+  purchase_order_pending: { label: 'OC Pendiente', tone: 'pending' },
+  with_purchase_order: { label: 'Con O.C.', tone: 'info' },
+  failed: { label: 'Fallido', tone: 'overdue' }
 };
 
 export const getServiceStatusBadge = (status: string) => {
-  const config = SERVICE_STATUS_CONFIG[status as ServiceStatus] || { 
-    label: 'Desconocido', 
-    className: 'bg-gray-500/80 text-white' 
+  const config = SERVICE_STATUS_CONFIG[status as ServiceStatus] || {
+    label: 'Desconocido',
+    tone: 'neutral' as const
   };
   
-  return React.createElement(Badge, { className: `${config.className} border-none` }, config.label);
+  return React.createElement(StatusBadge, { tone: config.tone }, config.label);
 };
 
 export const getServiceStatusLabel = (status: string) => {

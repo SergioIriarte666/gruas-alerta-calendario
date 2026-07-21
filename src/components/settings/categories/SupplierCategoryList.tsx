@@ -120,7 +120,7 @@ export const SupplierCategoryList = () => {
                         {category.is_active ? 'Activa' : 'Inactiva'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-[420px] truncate">{category.description || '-'}</TableCell>
+                    <TableCell className="max-w-[26.25rem] truncate">{category.description || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <Button

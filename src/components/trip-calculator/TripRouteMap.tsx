@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Map as MapIcon, ExternalLink, Maximize2, Loader2, MapPinOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { resolveThemeColor } from '@/lib/themeColors';
 import {
   Dialog,
   DialogContent,
@@ -67,10 +68,14 @@ function InteractiveRouteMap({
         });
 
         const path = geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+        const routeColor = resolveThemeColor(containerRef.current, '--primary');
+        const originColor = resolveThemeColor(containerRef.current, '--success');
+        const destinationColor = resolveThemeColor(containerRef.current, '--danger');
+        const markerContrast = resolveThemeColor(containerRef.current, '--effect-highlight');
 
         new g.maps.Polyline({
           path,
-          strokeColor: '#7c3aed',
+          strokeColor: routeColor,
           strokeOpacity: 0.9,
           strokeWeight: 5,
           map,
@@ -79,12 +84,12 @@ function InteractiveRouteMap({
         new g.maps.Marker({
           position: { lat: originCoords[1], lng: originCoords[0] },
           map,
-          label: { text: 'A', color: '#ffffff', fontWeight: 'bold' },
+          label: { text: 'A', color: markerContrast, fontWeight: 'bold' },
           icon: {
             path: g.maps.SymbolPath.CIRCLE,
-            fillColor: '#16a34a',
+            fillColor: originColor,
             fillOpacity: 1,
-            strokeColor: '#ffffff',
+            strokeColor: markerContrast,
             strokeWeight: 2,
             scale: 11,
           },
@@ -93,12 +98,12 @@ function InteractiveRouteMap({
         new g.maps.Marker({
           position: { lat: destinationCoords[1], lng: destinationCoords[0] },
           map,
-          label: { text: 'B', color: '#ffffff', fontWeight: 'bold' },
+          label: { text: 'B', color: markerContrast, fontWeight: 'bold' },
           icon: {
             path: g.maps.SymbolPath.CIRCLE,
-            fillColor: '#ef4444',
+            fillColor: destinationColor,
             fillOpacity: 1,
-            strokeColor: '#ffffff',
+            strokeColor: markerContrast,
             strokeWeight: 2,
             scale: 11,
           },
@@ -145,8 +150,8 @@ function InteractiveRouteMap({
     <div className={`${className ?? ''} relative`}>
       <div ref={containerRef} className="size-full" />
       {status === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-          <Loader2 className="size-6 animate-spin text-violet-600" />
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       )}
     </div>
@@ -177,7 +182,7 @@ export const TripRouteMap = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
-                <MapIcon className="size-5 text-violet-600" />
+                <MapIcon className="size-5 text-primary" />
                 Mapa de Ruta
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
@@ -212,7 +217,7 @@ export const TripRouteMap = ({
             originCoords={originCoords}
             destinationCoords={destinationCoords}
             gestureHandling="cooperative"
-            className="h-[320px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+            className="h-80 w-full overflow-hidden rounded-2xl border border-border bg-muted"
           />
         </CardContent>
       </Card>
@@ -223,7 +228,7 @@ export const TripRouteMap = ({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <DlgTitle className="flex items-center gap-2 text-lg">
-                  <MapIcon className="size-5 text-violet-600" />
+                  <MapIcon className="size-5 text-primary" />
                   Mapa de Ruta Completo
                 </DlgTitle>
                 <DialogDescription>
@@ -250,7 +255,7 @@ export const TripRouteMap = ({
               originCoords={originCoords}
               destinationCoords={destinationCoords}
               gestureHandling="greedy"
-              className="h-[68vh] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+              className="h-[68vh] w-full overflow-hidden rounded-2xl border border-border bg-muted"
             />
           )}
         </DialogContent>

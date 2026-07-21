@@ -17,7 +17,7 @@ export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtili
         <CardTitle className="text-foreground">Distribución por Estado</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={servicesByStatusConfig} className="w-full h-[300px]">
+        <ChartContainer config={servicesByStatusConfig} className="w-full h-72">
           <PieChart>
             <ChartTooltip content={<ChartTooltipContent nameKey="status" hideLabel />} />
             <Pie
@@ -43,7 +43,7 @@ export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtili
         <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={craneUtilizationConfig} className="w-full h-[300px]">
+        <ChartContainer config={craneUtilizationConfig} className="w-full h-72">
            <BarChart data={metrics.craneUtilization} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis type="number" stroke="hsl(var(--muted-foreground))" />

@@ -48,10 +48,10 @@ export const getStatusLabel = (status: SupplierPaymentStatus): string => {
 
 export const getStatusColor = (status: SupplierPaymentStatus): string => {
   const colors = {
-    pending: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30',
-    paid: 'bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/30',
-    overdue: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30',
-    cancelled: 'bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-500/30'
+    pending: 'border-warning/30 bg-warning-soft text-warning-text',
+    paid: 'border-success/30 bg-success-soft text-success-text',
+    overdue: 'border-danger/30 bg-danger-soft text-danger-text',
+    cancelled: 'border-border bg-muted text-muted-foreground'
   };
   return colors[status] || colors.pending;
 };

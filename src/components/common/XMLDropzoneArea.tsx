@@ -48,7 +48,7 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
             : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
         )}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.12),_transparent_52%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-primary/5" />
         <input {...getInputProps()} />
         <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition-transform duration-200 group-hover:-translate-y-0.5">
           <Upload className="size-7" aria-hidden="true" />

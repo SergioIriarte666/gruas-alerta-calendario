@@ -58,20 +58,20 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
   };
 
   return (
-    <div className="rounded-3xl border border-white/15 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+    <div className="rounded-3xl border border-auth-border/15 bg-auth-surface/10 p-8 shadow-2xl backdrop-blur-xl">
       <div className="text-center mb-6">
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/20">
           <Lock className="size-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Configura tu contraseña</h2>
-        <p className="text-sm text-white/70">
+        <h2 className="text-2xl font-bold text-auth-foreground mb-2">Configura tu contraseña</h2>
+        <p className="text-sm text-auth-foreground/70">
           Crea una contraseña segura para acceder al sistema
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-white/85">Nueva contraseña</Label>
+          <Label htmlFor="password" className="text-auth-foreground/85">Nueva contraseña</Label>
           <div className="relative">
             <Input
               id="password"
@@ -79,13 +79,13 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="h-11 rounded-xl border-gray-300 bg-white pr-10 text-gray-900 placeholder:text-gray-400"
+              className="h-11 rounded-xl border-auth-input-border bg-auth-input pr-10 text-auth-input-foreground placeholder:text-auth-input-muted"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-auth-input-muted hover:text-auth-input-foreground"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -93,19 +93,19 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-white/85">Confirmar contraseña</Label>
+          <Label htmlFor="confirmPassword" className="text-auth-foreground/85">Confirmar contraseña</Label>
           <Input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Repite tu contraseña"
-            className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400"
+            className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted"
             required
           />
         </div>
 
-        <div className="space-y-1 text-xs text-white/55">
+        <div className="space-y-1 text-xs text-auth-foreground/55">
           <p className="font-medium">La contraseña debe tener:</p>
           <ul className="list-none space-y-1">
             <li className={`flex items-center gap-2 ${password.length >= 8 ? 'text-primary' : ''}`}>

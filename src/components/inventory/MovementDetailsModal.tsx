@@ -75,10 +75,10 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
   };
   const getMovementBadge = (type: string) => {
     const badges = {
-      entry: { variant: 'default' as const, label: 'Entrada', icon: TrendingUp, color: 'text-green-600' },
-      exit: { variant: 'destructive' as const, label: 'Salida', icon: TrendingDown, color: 'text-red-600' },
-      transfer: { variant: 'secondary' as const, label: 'Transferencia', icon: ArrowUpDown, color: 'text-blue-600' },
-      adjustment: { variant: 'outline' as const, label: 'Ajuste', icon: AlertTriangle, color: 'text-yellow-600' },
+      entry: { variant: 'default' as const, label: 'Entrada', icon: TrendingUp, color: 'text-success' },
+      exit: { variant: 'destructive' as const, label: 'Salida', icon: TrendingDown, color: 'text-danger' },
+      transfer: { variant: 'secondary' as const, label: 'Transferencia', icon: ArrowUpDown, color: 'text-info' },
+      adjustment: { variant: 'outline' as const, label: 'Ajuste', icon: AlertTriangle, color: 'text-warning' },
     };
     
     const config = badges[type as keyof typeof badges] || badges.adjustment;
@@ -156,7 +156,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {intercompanyAdjustment && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Cuenta intercompañía:</span>
-                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-700">
+                <Badge variant="outline" className="border-warning/30 bg-warning-soft text-warning">
                   Intercompañía ${Number(intercompanyAdjustment.amount || 0).toLocaleString('es-CL')}
                 </Badge>
               </div>

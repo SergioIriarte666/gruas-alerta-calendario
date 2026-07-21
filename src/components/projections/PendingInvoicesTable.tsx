@@ -39,19 +39,19 @@ export const PendingInvoicesTable = ({ invoices, isLoading }: PendingInvoicesTab
       return <Badge variant="destructive" className="whitespace-nowrap">Vencida {invoice.days_overdue}d</Badge>;
     }
     if (invoice.days_until_due <= 7) {
-      return <Badge variant="secondary" className="whitespace-nowrap bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Vence en {invoice.days_until_due}d</Badge>;
+      return <Badge variant="outline" className="whitespace-nowrap border-warning/30 bg-warning-soft text-warning-text">Vence en {invoice.days_until_due}d</Badge>;
     }
     return <Badge variant="outline" className="whitespace-nowrap">{invoice.days_until_due}d</Badge>;
   };
 
   const getRowUrgencyClass = (invoice: ProjectedInvoice) => {
     if (invoice.status === 'overdue') {
-      if (invoice.days_overdue > 90) return 'bg-red-50 dark:bg-red-950/20 border-l-4 border-l-red-500';
-      if (invoice.days_overdue > 60) return 'bg-red-50 dark:bg-red-950/10 border-l-4 border-l-red-400';
-      if (invoice.days_overdue > 30) return 'bg-orange-50 dark:bg-orange-950/10 border-l-4 border-l-orange-400';
-      return 'bg-yellow-50 dark:bg-yellow-950/10 border-l-4 border-l-yellow-400';
+      if (invoice.days_overdue > 90) return 'border-l-4 border-l-danger bg-danger-soft';
+      if (invoice.days_overdue > 60) return 'border-l-4 border-l-danger/80 bg-danger-soft/80';
+      if (invoice.days_overdue > 30) return 'border-l-4 border-l-warning bg-warning-soft/80';
+      return 'border-l-4 border-l-warning/80 bg-warning-soft/60';
     }
-    if (invoice.days_until_due <= 7) return 'bg-yellow-50/50 dark:bg-yellow-950/5 border-l-4 border-l-yellow-300';
+    if (invoice.days_until_due <= 7) return 'border-l-4 border-l-warning/50 bg-warning-soft/40';
     return '';
   };
 

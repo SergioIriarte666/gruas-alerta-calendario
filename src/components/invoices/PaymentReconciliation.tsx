@@ -96,10 +96,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
   const s = hook.reconciliationStats;
   const stats = s ? [
-    { label: 'Pendientes', value: s.pending_payments || 0, color: 'text-blue-500' },
-    { label: 'Aplicados', value: s.applied_payments || 0, color: 'text-green-500' },
-    { label: 'Parciales', value: s.partial_payments || 0, color: 'text-amber-500' },
-    { label: 'Total Monto', value: formatCurrency(s.total_amount || 0), color: 'text-purple-500' },
+    { label: 'Pendientes', value: s.pending_payments || 0, color: 'text-info-text' },
+    { label: 'Aplicados', value: s.applied_payments || 0, color: 'text-success-text' },
+    { label: 'Parciales', value: s.partial_payments || 0, color: 'text-warning-text' },
+    { label: 'Total Monto', value: formatCurrency(s.total_amount || 0), color: 'text-primary' },
   ] : [];
 
   return (
@@ -140,7 +140,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
       <div className="flex gap-4 items-center">
         <Select value={selectedClient} onValueChange={setSelectedClient}>
-          <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Filtrar por cliente" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Filtrar por cliente" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los clientes</SelectItem>
             {hook.clients.filter(c => c.isActive).map(c => <SelectItem key={c.id} value={c.id}>{toTitleCase(c.name)}</SelectItem>)}
@@ -177,12 +177,12 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                       <TableCell>
                         <div className="flex gap-2">
                           <Button onClick={() => handleDownloadReceipt(payment)} disabled={isGeneratingReceipt} size="sm" variant="ghost"
-                            className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950">
+                            className="text-primary hover:text-primary hover:bg-accent">
                             <Download className="size-4 mr-1" />Comprobante
                           </Button>
                           {payment.applied_amount > 0 && (
                             <Button onClick={() => { setSelectedPaymentForDetail(payment); setShowPaymentDetail(true); }}
-                              size="sm" variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950">
+                              size="sm" variant="ghost" className="text-info-text hover:text-info-text hover:bg-info-soft">
                               <Eye className="size-4 mr-1" />Ver Detalle
                             </Button>
                           )}

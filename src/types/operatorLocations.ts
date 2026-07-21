@@ -38,14 +38,14 @@ export const OPERATOR_STATUS_LABELS: Record<OperatorLiveStatus, string> = {
   inactivo: 'Inactivo',
 };
 
-export const OPERATOR_STATUS_COLORS: Record<OperatorLiveStatus, string> = {
-  en_servicio: '#22d3ee',
-  en_jornada: '#34d399',
-  manual: '#a1a1aa',
-  sin_senal: '#fbbf24',
-  pausado: '#a1a1aa',
-  fuera_jornada: '#94a3b8',
-  inactivo: '#a1a1aa',
+export const OPERATOR_STATUS_COLOR_TOKENS: Record<OperatorLiveStatus, `--${string}`> = {
+  en_servicio: '--info',
+  en_jornada: '--success',
+  manual: '--muted-foreground',
+  sin_senal: '--warning',
+  pausado: '--muted-foreground',
+  fuera_jornada: '--text-subtle',
+  inactivo: '--muted-foreground',
 };
 
 const SIGNAL_STALE_MINUTES = 3;

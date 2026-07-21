@@ -168,8 +168,8 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                   por costo
                 </p>
               </div>
-              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
-                <BarChart3 className="size-6 text-blue-600 dark:text-blue-400" />
+              <div className="bg-info-soft p-3 rounded-xl">
+                <BarChart3 className="size-6 text-info-text" />
               </div>
             </div>
           </CardContent>
@@ -188,21 +188,21 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 {metrics.monthVariation !== 0 && (
                   <div className="flex items-center gap-1 mt-1">
                     {metrics.monthVariation > 0 ? (
-                      <TrendingUp className="size-3 text-red-500" />
+                      <TrendingUp className="size-3 text-danger-text" />
                     ) : (
-                      <TrendingDown className="size-3 text-green-500" />
+                      <TrendingDown className="size-3 text-success-text" />
                     )}
                     <span className={cn(
                       'text-xs font-medium',
-                      metrics.monthVariation > 0 ? 'text-red-500' : 'text-green-500'
+                      metrics.monthVariation > 0 ? 'text-danger-text' : 'text-success-text'
                     )}>
                       {Math.abs(metrics.monthVariation).toFixed(1)}% vs mes ant.
                     </span>
                   </div>
                 )}
               </div>
-              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
-                <FileText className="size-6 text-purple-600 dark:text-purple-400" />
+              <div className="bg-accent p-3 rounded-xl">
+                <FileText className="size-6 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -222,8 +222,8 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                   {metrics.todayCount} registros
                 </p>
               </div>
-              <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
-                <DollarSign className="size-6 text-green-600 dark:text-green-400" />
+              <div className="bg-success-soft p-3 rounded-xl">
+                <DollarSign className="size-6 text-success-text" />
               </div>
             </div>
           </CardContent>
@@ -246,14 +246,14 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                   {categoryBreakdown.map((cat, _index) => (
                     <div key={cat.name} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-foreground font-medium truncate max-w-[200px]">
+                        <span className="text-foreground font-medium truncate max-w-52">
                           {cat.name}
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="text-muted-foreground">
                             {cat.percentage.toFixed(1)}%
                           </span>
-                          <span className="font-medium text-foreground min-w-[80px] text-right">
+                          <span className="font-medium text-foreground min-w-20 text-right">
                             {formatCompactCurrency(cat.amount)}
                           </span>
                         </div>

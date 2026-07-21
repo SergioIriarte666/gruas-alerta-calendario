@@ -74,10 +74,10 @@ export const TopDebtorsCard = ({ invoices, onClientSelect }: TopDebtorsCardProps
 
   const getRiskBadge = (level: string) => {
     const config = {
-      low: { label: 'Bajo', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-      medium: { label: 'Medio', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-      high: { label: 'Alto', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
-      critical: { label: 'Crítico', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+      low: { label: 'Bajo', className: 'border-success/30 bg-success-soft text-success-text' },
+      medium: { label: 'Medio', className: 'border-warning/30 bg-warning-soft text-warning-text' },
+      high: { label: 'Alto', className: 'border-danger/20 bg-danger-soft/70 text-danger-text' },
+      critical: { label: 'Crítico', className: 'border-danger/40 bg-danger-soft text-danger-text' },
     };
     
     const { label, className } = config[level as keyof typeof config];

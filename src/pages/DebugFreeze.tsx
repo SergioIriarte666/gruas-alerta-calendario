@@ -29,7 +29,7 @@ export default function DebugFreeze() {
       </div>
 
       {showForm && (
-        <div className="border p-4 rounded bg-gray-50">
+        <div className="rounded border border-border bg-muted/40 p-4">
           <h2 className="mb-2 font-semibold">Invoice Form Container</h2>
           <InvoiceForm 
             preselectedClosureId={preselectedClosureId}

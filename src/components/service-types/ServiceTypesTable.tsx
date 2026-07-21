@@ -102,7 +102,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   variant="outline"
                   size="sm"
                   onClick={() => onView(serviceType)}
-                  className="flex-1 text-xs h-8 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950"
+                  className="h-8 flex-1 border-info/30 text-xs text-info hover:bg-info-soft"
                 >
                   <Eye className="size-3.5 mr-1" /> Ver
                 </Button>
@@ -110,7 +110,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   variant="outline"
                   size="sm"
                   onClick={() => onEdit(serviceType)}
-                  className="flex-1 text-xs h-8 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950"
+                  className="h-8 flex-1 border-warning/30 text-xs text-warning hover:bg-warning-soft"
                 >
                   <Edit className="size-3.5 mr-1" /> Editar
                 </Button>
@@ -193,7 +193,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                           variant="ghost"
                           size="icon"
                           onClick={() => onView(serviceType)}
-                          className="size-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950"
+                          className="size-8 text-info hover:bg-info-soft hover:text-info"
                           aria-label="Ver detalles"
                         >
                           <Eye className="size-4" />
@@ -207,7 +207,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                           variant="ghost"
                           size="icon"
                           onClick={() => onEdit(serviceType)}
-                          className="size-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-950"
+                          className="size-8 text-warning hover:bg-warning-soft hover:text-warning"
                           aria-label="Editar"
                         >
                           <Edit className="size-4" />

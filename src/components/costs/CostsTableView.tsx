@@ -187,12 +187,12 @@ export const CostsTableView = ({
 
   if (loading) {
     return (
-      <Card className="bg-white dark:bg-gray-800">
+      <Card className="bg-card">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-full"></div>
+            <div className="h-4 bg-muted rounded w-3/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
           </div>
         </CardContent>
       </Card>
@@ -211,7 +211,7 @@ export const CostsTableView = ({
         />
       )}
 
-      <Card className="bg-white dark:bg-gray-800">
+      <Card className="bg-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -268,7 +268,7 @@ export const CostsTableView = ({
               <TableBody>
                 {sortedCosts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={onSelectionChange ? 8 : 7} className="text-center text-gray-500 py-8">
+                    <TableCell colSpan={onSelectionChange ? 8 : 7} className="text-center text-muted-foreground py-8">
                       No se encontraron costos que coincidan con los filtros aplicados.
                     </TableCell>
                   </TableRow>
@@ -276,9 +276,9 @@ export const CostsTableView = ({
                   sortedCosts.map((cost) => (
                     <TableRow 
                       key={cost.id} 
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                      className={`hover:bg-muted/40 dark:hover:bg-muted ${
                         highlightedCostId === cost.id 
-                          ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' 
+                          ? 'border-l-4 border-info/30 bg-info-soft'
                           : ''
                       }`}
                     >
@@ -302,7 +302,7 @@ export const CostsTableView = ({
                           {(() => {
                             const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
                             return itemsCount > 1 ? (
-                              <span className="shrink-0 inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+                              <span className="shrink-0 inline-flex items-center px-1.5 py-0 rounded-full text-xs font-medium border border-warning/30 bg-warning-soft text-warning-text">
                                 <Layers className="size-3 mr-0.5" />
                                 {itemsCount}
                               </span>
@@ -311,13 +311,13 @@ export const CostsTableView = ({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-text">
                           {cost.cost_categories?.name || 'Sin categoría'}
                         </span>
                       </TableCell>
                       <TableCell>
                         {cost.subcategory && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground  ">
                             {getSubcategoryDisplay(cost.subcategory)}
                           </span>
                         )}
@@ -325,11 +325,11 @@ export const CostsTableView = ({
                       <TableCell className="text-right font-medium">
                         ${Number(cost.amount).toLocaleString('es-CL')}
                       </TableCell>
-                      <TableCell className="text-gray-600 dark:text-gray-400 text-sm">
+                      <TableCell className="text-muted-foreground  text-sm">
                         {cost.services ? (
                           <button
                             onClick={() => handleServiceClick(cost)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer"
+                            className="text-info-text hover:text-info-text underline cursor-pointer"
                           >
                             {getAssociatedTo(cost)}
                           </button>
@@ -362,7 +362,7 @@ export const CostsTableView = ({
                             )}
                             <DropdownMenuItem 
                               onClick={() => onDelete(cost)}
-                              className="text-red-600 focus:text-red-600"
+                              className="text-danger-text focus:text-danger-text"
                             >
                               <Trash2 className="mr-2 size-4" />
                               Eliminar
@@ -381,22 +381,22 @@ export const CostsTableView = ({
 
       {/* Totales */}
       {costs.length > 0 && (
-        <Card className="bg-gray-50 dark:bg-gray-800">
+        <Card className="bg-muted/40 ">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div className="flex gap-x-6">
                 <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Total registros:</span>
+                  <span className="text-sm text-muted-foreground ">Total registros:</span>
                   <span className="ml-2 font-semibold">{costs.length}</span>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Total monto:</span>
-                  <span className="ml-2 font-semibold text-green-600">
+                  <span className="text-sm text-muted-foreground ">Total monto:</span>
+                  <span className="ml-2 font-semibold text-success-text">
                     ${calculateTotals().toLocaleString('es-CL')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Promedio:</span>
+                  <span className="text-sm text-muted-foreground ">Promedio:</span>
                   <span className="ml-2 font-semibold">
                     ${costs.length > 0 ? (calculateTotals() / costs.length).toLocaleString('es-CL') : '0'}
                   </span>

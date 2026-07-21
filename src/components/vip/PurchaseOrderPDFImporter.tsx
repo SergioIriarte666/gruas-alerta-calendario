@@ -155,18 +155,18 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
           <div className="space-y-4">
             {/* Summary badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 border-violet-600/20">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                 <CheckCircle className="size-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
               {sameOCCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                <Badge variant="secondary" className="bg-info/10 text-info-text border-info/20">
                   <CheckCheck className="size-3 mr-1" />
                   {sameOCCount} ya asignada
                 </Badge>
               )}
               {alreadyHasOCCount > 0 && (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                <Badge variant="secondary" className="bg-warning/10 text-warning-text border-warning/20">
                   <AlertTriangle className="size-3 mr-1" />
                   {alreadyHasOCCount} OC diferente
                 </Badge>
@@ -178,7 +178,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                 </Badge>
               )}
               {state.parsedOCs.length > 0 && (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                <Badge variant="secondary" className="bg-success/10 text-success-text border-success/20">
                   💰 Total OC: {formatCurrency(state.parsedOCs[0]?.totals.neto || 0, getUserCurrencySync())}
                 </Badge>
               )}
@@ -218,7 +218,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                               value={match.service?.id ?? ''}
                               onValueChange={(val) => reassignMatch(index, val)}
                             >
-                              <SelectTrigger className="h-7 text-xs font-mono w-[320px]">
+                              <SelectTrigger className="h-7 text-xs font-mono w-80">
                                 <SelectValue placeholder="Seleccionar..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -239,7 +239,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
-                                className="text-violet-600 hover:text-violet-600/80"
+                                className="text-primary hover:text-primary/80"
                                 title="Ver detalle"
                               >
                                 <Eye className="size-3.5" />
@@ -249,7 +249,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         ) : match.service ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
-                            className="text-violet-600 underline hover:text-violet-600/80 cursor-pointer font-medium"
+                            className="text-primary underline hover:text-primary/80 cursor-pointer font-medium"
                           >
                             {match.service.folio}
                             {match.service.serviceDate && (
@@ -258,7 +258,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                               </span>
                             )}
                             {match.service.quoteNumber && (
-                              <span className="text-muted-foreground ml-1 no-underline text-[10px]">
+                              <span className="text-muted-foreground ml-1 no-underline text-xs">
                                 · Cot: {match.service.quoteNumber}
                               </span>
                             )}
@@ -284,7 +284,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         {match.status === 'matched' && (
                           <Badge
                             variant="secondary"
-                            className="bg-violet-600/10 text-violet-600 text-xs"
+                            className="bg-primary/10 text-primary text-xs"
                             title={match.matchReason || 'Match'}
                           >
                             <CheckCircle className="size-3 mr-1" />
@@ -292,13 +292,13 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                           </Badge>
                         )}
                         {match.status === 'same_oc' && (
-                          <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 text-xs">
+                          <Badge variant="secondary" className="bg-info/10 text-info-text text-xs">
                             <CheckCheck className="size-3 mr-1" />
                             Ya asignada
                           </Badge>
                         )}
                         {match.status === 'already_has_oc' && (
-                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
+                          <Badge variant="secondary" className="bg-warning/10 text-warning-text text-xs">
                             <AlertTriangle className="size-3 mr-1" />
                             OC diferente
                           </Badge>
@@ -332,7 +332,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                         {c.service.serviceDate && ` · ${format(new Date(c.service.serviceDate), 'dd/MM/yy')}`}
                                         {c.service.quoteNumber && ` · Cot: ${c.service.quoteNumber}`}
                                       </div>
-                                      <div className="text-violet-600">{c.reasons.join(' + ')}</div>
+                                      <div className="text-primary">{c.reasons.join(' + ')}</div>
                                     </li>
                                   ))}
                                 </ul>

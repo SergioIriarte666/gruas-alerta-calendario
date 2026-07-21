@@ -64,7 +64,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="finance-dialog flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,1600px)]">
+      <DialogContent className="finance-dialog flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[100rem] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,100rem)]">
         <XMLImportDialogHeader icon={Code} title="Cargar Gastos desde XML" description="Analiza documentos XML, detecta duplicados y registra gastos con categorización automática." fileName={selectedFile?.name} documentCount={parseResult?.totalDocuments} />
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-muted/20 px-3 pb-5 pt-4 sm:px-6 sm:pb-6">
@@ -299,7 +299,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               <XMLImportStepGuide step={3} title="Confirma la carga" description="Revisa el resumen antes de confirmar." />
 
-              <div className="sticky bottom-0 z-10 -mx-3 flex flex-col gap-4 border-t border-border/70 bg-card/95 px-3 py-4 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)] backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="sticky bottom-0 z-10 -mx-3 flex flex-col gap-4 border-t border-border/70 bg-card/95 px-3 py-4 shadow-lg backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="text-sm text-muted-foreground">
                   {selectedDocuments.size > 0 && <div className="space-y-1"><span className="block">{selectedDocuments.size} documento(s) seleccionados</span><span className="block">Total seleccionado: ${selectedTotal.toLocaleString('es-CL')}</span></div>}
                 </div>

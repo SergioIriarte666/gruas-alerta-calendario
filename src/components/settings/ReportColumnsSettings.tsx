@@ -97,22 +97,22 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
         <div className="flex items-center gap-1">
           <span className="text-xs sm:text-sm text-muted-foreground">
             Total: 
-            <span className={`font-medium ml-1 ${isValid ? 'text-tms-green' : 'text-amber-600'}`}>
+            <span className={`ml-1 font-medium ${isValid ? 'text-success' : 'text-warning'}`}>
               {totalWidth}%
             </span>
           </span>
           {isValid ? (
-            <CheckCircle2 className="size-4 text-tms-green" />
+            <CheckCircle2 className="size-4 text-success" />
           ) : (
-            <AlertTriangle className="size-4 text-amber-600" />
+            <AlertTriangle className="size-4 text-warning" />
           )}
         </div>
       </div>
 
       {!isValid && (
-        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <AlertTriangle className="size-4 text-amber-600 flex-shrink-0" />
-          <span className="text-sm text-amber-800">
+        <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft p-3">
+          <AlertTriangle className="size-4 flex-shrink-0 text-warning" />
+          <span className="text-sm text-warning">
             El total de anchos debe sumar 100%. Actual: {totalWidth}%
           </span>
           <Button

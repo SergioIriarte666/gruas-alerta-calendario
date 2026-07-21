@@ -130,7 +130,7 @@ export const PurchaseVoidTool = () => {
                   key={p.id}
                   onClick={() => setSelected(p)}
                   className={`w-full text-left p-3 hover:bg-muted/50 transition-colors ${
-                    selected?.id === p.id ? 'bg-violet-50 dark:bg-violet-950/30' : ''
+                    selected?.id === p.id ? 'bg-primary-soft' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">

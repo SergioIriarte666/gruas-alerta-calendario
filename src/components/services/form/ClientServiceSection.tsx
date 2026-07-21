@@ -67,7 +67,7 @@ export const ClientServiceSection = ({
                 <div className="flex flex-col py-0.5">
                   <span className="font-medium">{toTitleCase(client.name)}</span>
                   {client.department && client.department !== 'General' && (
-                    <span className="text-xs text-violet-600 dark:text-violet-400">
+                    <span className="text-xs text-primary">
                       {client.department}
                     </span>
                   )}
@@ -146,7 +146,7 @@ export const ClientServiceSection = ({
                 id="invoiceFolio"
                 value={invoiceFolio}
                 readOnly
-                className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                className="bg-muted cursor-not-allowed"
                 placeholder="Sin facturar"
               />
             </div>
@@ -159,7 +159,7 @@ export const ClientServiceSection = ({
                 id="invoiceNumeroFiscal"
                 value={invoiceNumeroFiscal}
                 readOnly
-                className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                className="bg-muted cursor-not-allowed"
                 placeholder="Sin número fiscal"
               />
             </div>

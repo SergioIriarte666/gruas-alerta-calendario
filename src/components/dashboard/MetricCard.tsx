@@ -31,7 +31,7 @@ export const MetricCard = ({
   const getChangeColor = () => {
     switch (changeType) {
       case 'positive':
-        return 'text-emerald-600';
+        return 'text-success';
       case 'negative':
         return 'text-destructive';
       default:
@@ -46,9 +46,9 @@ export const MetricCard = ({
   };
 
   const cardClasses = cn(
-    "metric-card group h-full bg-gradient-card border tms-border",
+    "metric-card group h-full border bg-gradient-card",
     isMobile ? "p-3" : isTablet ? "p-4" : "p-6",
-    linkTo ? 'cursor-pointer hover:border-primary hover:tms-glow transition-all' : ''
+    linkTo ? 'cursor-pointer transition-all hover:border-primary hover:shadow-glow-primary' : ''
   );
 
   return (

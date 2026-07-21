@@ -109,9 +109,9 @@ export const ServiceFilters = React.memo(({
         onChange={(value) => onListDateFromChange?.(value)}
         placeholder="Desde"
         className={cn(
-          'h-10 w-[176px] rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
+          'h-10 w-44 rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
           listDateFrom
-            ? 'border-[hsl(var(--dashboard-lime)/0.45)] bg-[hsl(var(--dashboard-lime)/0.10)]'
+            ? 'border-success/50 bg-success/10'
             : 'bg-background/70'
         )}
         id="services-date-from"
@@ -122,9 +122,9 @@ export const ServiceFilters = React.memo(({
         onChange={(value) => onListDateToChange?.(value)}
         placeholder="Hasta"
         className={cn(
-          'h-10 w-[176px] rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
+          'h-10 w-44 rounded-lg border-border/70 px-3 text-foreground shadow-sm hover:bg-accent/40',
           listDateTo
-            ? 'border-[hsl(var(--dashboard-lime)/0.45)] bg-[hsl(var(--dashboard-lime)/0.10)]'
+            ? 'border-success/50 bg-success/10'
             : 'bg-background/70'
         )}
         id="services-date-to"

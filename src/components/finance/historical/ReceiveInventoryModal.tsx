@@ -170,7 +170,7 @@ export const ReceiveInventoryModal = ({
                 <div className="col-span-2 text-right">Costo</div>
                 <div className="col-span-2 text-right">Total</div>
               </div>
-              <div className="max-h-[150px] overflow-y-auto">
+              <div className="max-h-40 overflow-y-auto">
                 {existingMovements.map((mov) => (
                   <div key={mov.id} className="grid grid-cols-12 gap-2 p-2 border-b last:border-0 text-xs items-center hover:bg-muted/10">
                     <div className="col-span-6 font-medium truncate" title={mov.item?.name}>

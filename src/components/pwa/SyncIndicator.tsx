@@ -54,7 +54,8 @@ export const SyncIndicator = () => {
     <div className="fixed bottom-4 right-4 z-50">
       {!showDetails ? (
         <Badge
-          className="bg-slate-800/90 backdrop-blur-sm text-white border border-slate-700 cursor-pointer hover:bg-slate-700/90 transition-colors"
+          variant="outline"
+          className="cursor-pointer border-border/70 bg-popover/95 text-popover-foreground backdrop-blur-sm transition-colors hover:bg-accent"
           onClick={() => setShowDetails(true)}
         >
           {syncStatus.isOnline ? (
@@ -65,27 +66,27 @@ export const SyncIndicator = () => {
               </>
             ) : (
               <>
-                <CheckCircle className="size-3 mr-1 text-green-400" />
+                <CheckCircle className="size-3 mr-1 text-success" />
                 Sincronizado
               </>
             )
           ) : (
             <>
-              <AlertCircle className="size-3 mr-1 text-yellow-400" />
+              <AlertCircle className="size-3 mr-1 text-warning" />
               Offline - {offlineActions} pendientes
             </>
           )}
         </Badge>
       ) : (
-        <Card className="w-80 bg-slate-800/95 backdrop-blur-sm border-slate-700">
+        <Card className="w-80 border-border/70 bg-popover/95 text-popover-foreground backdrop-blur-sm shadow-2xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-white text-sm">Estado de Sincronización</CardTitle>
+              <CardTitle className="text-sm text-foreground">Estado de Sincronización</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-white size-6 p-0"
+                className="size-6 p-0 text-muted-foreground hover:text-foreground"
               >
                 ×
               </Button>
@@ -98,8 +99,8 @@ export const SyncIndicator = () => {
             {offlineActions > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Acciones pendientes:</span>
-                  <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                  <span className="text-muted-foreground">Acciones pendientes:</span>
+                  <Badge variant="outline" className="border-warning/30 bg-warning/20 text-warning-text">
                     {offlineActions}
                   </Badge>
                 </div>
@@ -107,7 +108,7 @@ export const SyncIndicator = () => {
                   <Button
                     onClick={handleManualSync}
                     size="sm"
-                    className="w-full bg-tms-green hover:bg-tms-green/90 text-slate-900"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <RefreshCw className="size-3 mr-1" />
                     Sincronizar ahora
@@ -118,21 +119,21 @@ export const SyncIndicator = () => {
             
             {syncHistory.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-white">Historial reciente:</h4>
+                <h4 className="text-sm font-medium text-foreground">Historial reciente:</h4>
                 <div className="space-y-1 max-h-24 overflow-y-auto">
                   {syncHistory.slice().reverse().map((entry, index) => (
                     <div key={index} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1 text-gray-400">
+                      <div className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="size-3" />
                         {entry.time.toLocaleTimeString()}
                       </div>
                       <div className="flex items-center gap-1">
                         {entry.success ? (
-                          <CheckCircle className="size-3 text-green-400" />
+                          <CheckCircle className="size-3 text-success" />
                         ) : (
-                          <AlertCircle className="size-3 text-red-400" />
+                          <AlertCircle className="size-3 text-danger" />
                         )}
-                        <span className="text-gray-400">{entry.count} items</span>
+                        <span className="text-muted-foreground">{entry.count} items</span>
                       </div>
                     </div>
                   ))}
@@ -141,7 +142,7 @@ export const SyncIndicator = () => {
             )}
             
             {syncStatus.lastSync && (
-              <div className="text-xs text-gray-400 pt-2 border-t border-slate-700">
+              <div className="border-t border-border pt-2 text-xs text-muted-foreground">
                 Última sync: {syncStatus.lastSync.toLocaleString()}
               </div>
             )}

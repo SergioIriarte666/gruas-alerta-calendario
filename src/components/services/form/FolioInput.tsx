@@ -84,15 +84,15 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     if (!shouldShowValidation || !normalizedFolio) return null;
     
     if (validation.isValidating) {
-      return <Loader2 className="size-4 animate-spin text-yellow-500" />;
+      return <Loader2 className="size-4 animate-spin text-warning-text" />;
     }
     
     if (validation.isValid) {
-      return <CheckCircle className="size-4 text-green-500" />;
+      return <CheckCircle className="size-4 text-success-text" />;
     }
     
     if (validation.error) {
-      return <AlertCircle className="size-4 text-red-500" />;
+      return <AlertCircle className="size-4 text-danger-text" />;
     }
     
     return null;
@@ -101,7 +101,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
   const getValidationMessage = () => {
     // Mostrar mensaje de generación automática si no hay folio y no es manual
     if (!normalizedFolio && !isManualFolio && !isEditing) {
-      return <span className="text-sm text-blue-600">ℹ️ El folio se generará automáticamente al guardar</span>;
+      return <span className="text-sm text-info-text">ℹ️ El folio se generará automáticamente al guardar</span>;
     }
     
     if (!shouldShowValidation || !normalizedFolio) {
@@ -109,17 +109,17 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     }
     
     if (validation.isValidating) {
-      return <span className="text-sm text-yellow-600">Validando folio...</span>;
+      return <span className="text-sm text-warning-text">Validando folio...</span>;
     }
     
     if (validation.isValid) {
-      return <span className="text-sm text-green-600">✅ Folio disponible</span>;
+      return <span className="text-sm text-success-text">✅ Folio disponible</span>;
     }
     
     if (validation.error && validation.existingService) {
       const createdDate = formatForDisplay(parseFromDatabase(validation.existingService.createdAt));
       return (
-        <div className="text-sm text-red-600">
+        <div className="text-sm text-danger-text">
           <div className="font-medium">❌ {validation.error}</div>
           <div className="text-xs mt-1">
             Cliente: {toTitleCase(validation.existingService.clientName)} • Creado: {createdDate}
@@ -129,7 +129,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     }
     
     if (validation.error) {
-      return <span className="text-sm text-red-600">❌ {validation.error}</span>;
+      return <span className="text-sm text-danger-text">❌ {validation.error}</span>;
     }
     
     return null;
@@ -138,7 +138,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="folio">
-        Folio del Servicio <span className="text-red-500">*</span>
+        Folio del Servicio <span className="text-danger-text">*</span>
       </Label>
       <div className="relative">
         <Input
@@ -154,8 +154,8 @@ export const FolioInput: React.FC<FolioInputProps> = ({
           className={`pr-10 ${
             shouldShowValidation && normalizedFolio
               ? validation.isValid
-                ? 'border-green-500 focus:border-green-500'
-                : 'border-red-500 focus:border-red-500'
+                ? 'border-success focus:border-success'
+                : 'border-danger focus:border-danger'
               : ''
           }`}
         />
