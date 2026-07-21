@@ -133,7 +133,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
               <span
                 className={cn(
                   'text-xs text-center leading-tight truncate w-full px-0.5',
-                  done ? 'text-success-text dark:text-success-text font-medium' : 'text-muted-foreground'
+                  done ? 'text-success-text font-medium' : 'text-muted-foreground'
                 )}
               >
                 {section.label}
@@ -144,7 +144,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
       </div>
 
       {allDone && (
-        <p className="text-xs text-center text-success-text dark:text-success-text font-medium">
+        <p className="text-xs text-center text-success-text font-medium">
           ✓ Todo completo — listo para enviar
         </p>
       )}

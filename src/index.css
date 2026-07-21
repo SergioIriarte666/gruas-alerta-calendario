@@ -1056,74 +1056,10 @@ html.reduce-motion *::after {
   }
 }
 
-/* Estados de navegación */
-.nav-link {
-  color: hsl(var(--muted-foreground));
-  transition: all 0.2s ease-in-out;
-}
-
-.nav-link:hover {
-  color: hsl(var(--foreground));
-  background-color: hsl(var(--accent));
-}
-
-.nav-link.active {
-  color: hsl(var(--primary-foreground));
-  background-color: hsl(var(--primary));
-  font-weight: 600;
-}
-
-/* Estados de elementos */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: calc(var(--radius));
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.pending {
-  background-color: hsl(var(--warning-soft));
-  color: hsl(var(--warning-text));
-}
-
-.status-badge.in-progress {
-  background-color: hsl(var(--info-soft));
-  color: hsl(var(--info-text));
-}
-
-.status-badge.completed {
-  background-color: hsl(var(--success-soft));
-  color: hsl(var(--success-text));
-}
-
-.status-badge.overdue {
-  background-color: hsl(var(--danger-soft));
-  color: hsl(var(--danger-text));
-}
-
-/* Grid responsive */
-.responsive-grid {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-/* Focus Ring Utility */
-.focus-ring {
-  @apply ring-2 ring-primary/20 ring-offset-2 ring-offset-background;
-}
-
 /* (Legacy sidebar group/item/indicator styles removed — new sidebar uses semantic tokens directly) */
 
 /* Media queries para responsive */
 @media (max-width: 768px) {
-  .responsive-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
   .glass-card,
   .metric-card {
     margin: 0.5rem;

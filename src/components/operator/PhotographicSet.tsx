@@ -260,7 +260,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                       <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
                         <span>{photo!.fileName}</span>
                         {photo!.storageUrl && (
-                          <span className="text-success-text dark:text-success-text">✓ guardada</span>
+                          <span className="text-success-text">✓ guardada</span>
                         )}
                       </div>
                     </div>

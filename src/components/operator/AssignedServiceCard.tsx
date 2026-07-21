@@ -35,8 +35,8 @@ const getUrgencyBorder = (serviceDate: string, status: Service['status']): strin
 const UrgencyBadge = ({ serviceDate, status }: { serviceDate: string; status: Service['status'] }) => {
   if (status === 'completed' || status === 'in_progress' || status === 'inspection_completed') return null;
   const days = getImminenceDays(serviceDate);
-  if (days < 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text dark:text-danger-text">Vencido</span>;
-  if (days === 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text dark:text-danger-text">Hoy</span>;
+  if (days < 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text">Vencido</span>;
+  if (days === 0) return <span className="rounded bg-danger-soft px-1.5 py-0.5 text-xs font-bold text-danger-text">Hoy</span>;
   if (days === 1) return <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">Mañana</span>;
   if (days <= 7)  return <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">en {days}d</span>;
   return null;
@@ -45,9 +45,9 @@ const UrgencyBadge = ({ serviceDate, status }: { serviceDate: string; status: Se
 const StatusBadge = ({ status }: { status: Service['status'] }) => {
   const map: Record<string, { label: string; className: string }> = {
     pending:              { label: 'Pendiente',    className: 'bg-muted text-muted-foreground' },
-    in_progress:          { label: 'En curso',     className: 'bg-info-soft text-info-text dark:text-info-text' },
-    inspection_completed: { label: 'Por entregar', className: 'bg-warning-soft text-warning-text dark:text-warning-text' },
-    completed:            { label: 'Completado',   className: 'bg-success-soft text-success-text dark:text-success-text' },
+    in_progress:          { label: 'En curso',     className: 'bg-info-soft text-info-text' },
+    inspection_completed: { label: 'Por entregar', className: 'bg-warning-soft text-warning-text' },
+    completed:            { label: 'Completado',   className: 'bg-success-soft text-success-text' },
   };
   const chip = map[status];
   if (!chip) return null;
@@ -146,7 +146,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
         <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
           <CardHeader service={service} rightSlot={<Play className="size-4 text-info-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text dark:text-info-text">
+          <div className="mt-3 rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text">
             Toca para continuar con la inspección inicial
           </div>
         </div>
@@ -161,7 +161,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
         <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
           <CardHeader service={service} rightSlot={<Package className="size-4 text-warning-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-center text-xs font-medium text-warning-text dark:text-warning-text">
+          <div className="mt-3 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-center text-xs font-medium text-warning-text">
             Toca para completar la entrega
           </div>
         </div>
@@ -179,7 +179,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           type="button"
           onClick={handleStartService}
           disabled={updateServiceStatusMutation.isPending}
-          className="mt-3 w-full rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text transition-transform active:scale-[0.99] disabled:opacity-60 dark:text-info-text"
+          className="mt-3 w-full rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
         </button>

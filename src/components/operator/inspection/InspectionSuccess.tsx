@@ -28,7 +28,7 @@ export const InspectionSuccess = ({
             ? `El servicio ${folio} quedó guardado en este dispositivo y se sincronizará cuando vuelva la conexión.`
             : `El servicio ${folio} quedó listo para entrega y ya salió de las inspecciones disponibles.`}
         </p>
-        <div className="rounded-full border border-success/30 bg-background/70 px-3 py-1 text-xs font-medium text-success-text dark:text-success-text">
+        <div className="rounded-full border border-success/30 bg-background/70 px-3 py-1 text-xs font-medium text-success-text">
           {queuedOffline
             ? 'Fotos · firmas · formulario guardados localmente'
             : 'Fotos · PDF · registro · estado sincronizados'}

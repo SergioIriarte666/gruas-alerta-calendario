@@ -72,7 +72,7 @@ export const SessionTimeoutModal = ({
               'flex size-11 shrink-0 items-center justify-center rounded-xl border',
               isLowTime
                 ? 'border-destructive/20 bg-destructive/10 text-destructive'
-                : 'border-warning/20 bg-warning-soft text-warning-text dark:text-warning-text'
+                : 'border-warning/20 bg-warning-soft text-warning-text'
             )}>
               <Timer className="size-5" />
             </div>

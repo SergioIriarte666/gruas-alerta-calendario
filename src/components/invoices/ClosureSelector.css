@@ -7,9 +7,9 @@
 .ClosureSelector-container [data-radix-select-trigger] {
   min-width: 0 !important;
   width: 100% !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: #374151 !important;
-  color: #f8fafc !important;
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
   height: auto !important;
   min-height: 60px !important;
   padding: 12px !important;
@@ -41,9 +41,9 @@
   min-width: min(600px, 90vw) !important;
   max-width: 90vw !important;
   width: auto !important;
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-  color: #f8fafc !important;
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--popover-foreground)) !important;
   z-index: 50 !important;
 }
 
@@ -54,20 +54,16 @@
   min-height: auto !important;
   height: auto !important;
   padding: 12px 8px !important;
-  color: #f8fafc !important;
+  color: hsl(var(--popover-foreground)) !important;
 }
 
 .ClosureSelector-container [data-radix-select-item]:hover {
   background-color: hsl(var(--primary) / 0.15) !important;
 }
 
-.ClosureSelector-container [data-radix-select-item] .text-green-600 {
-  color: hsl(var(--primary)) !important;
-}
-
 /* Item text styling */
 .ClosureSelector-container [data-radix-select-item] [data-radix-select-item-text] {
-  color: #f8fafc !important;
+  color: hsl(var(--popover-foreground)) !important;
   white-space: normal !important;
   word-wrap: break-word !important;
 }
