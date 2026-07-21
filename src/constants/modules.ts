@@ -174,7 +174,7 @@ export const APP_MODULES: AppModule[] = [
     icon: FileText, 
     description: 'Tarifas de servicios',
     defaultRoles: ['admin'],
-    route: '/service-rates'
+    route: '/settings#service-rates'
   },
   {
     key: 'backup',
@@ -182,7 +182,7 @@ export const APP_MODULES: AppModule[] = [
     icon: Database,
     description: 'Respaldos manuales y herramientas avanzadas de reparación',
     defaultRoles: ['admin'],
-    route: '/backup'
+    route: '/settings#respaldos'
   },
   {
     key: 'settings',

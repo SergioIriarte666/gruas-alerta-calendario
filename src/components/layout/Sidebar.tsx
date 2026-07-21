@@ -12,9 +12,9 @@ import { Separator } from '@/components/ui/separator';
 import { useUpcomingServicesCount } from '@/hooks/useUpcomingServicesCount';
 import { usePendingUsersCount } from '@/hooks/usePendingUsersCount';
 import { 
-  LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
+  LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign,
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
-  Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
+  Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
   Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive, FileClock,
   BookOpenCheck
 } from 'lucide-react';
@@ -167,13 +167,10 @@ export const Sidebar = ({
       name: 'Configuración',
       icon: Cog,
       items: [
-        { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: false },
-        { name: 'Tarifas de Servicio', href: '/service-rates', icon: DollarSign, adminOnly: false },
-        { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
-        { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
-        { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
-        { name: 'Regenerar Inspección', href: '/admin/inspecciones/regenerar', icon: FileClock, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
+        { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
+        { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
+        { name: 'Regenerar Inspección', href: '/admin/inspecciones/regenerar', icon: FileClock, adminOnly: true },
         { name: 'Usuarios pendientes', href: '/admin/usuarios-pendientes', icon: UserCheck, adminOnly: true },
       ]
     }

@@ -90,14 +90,14 @@ Notas:
 | Modulo | Ruta | Uso principal |
 |---|---|---|
 | Operadores | `/operators` | Gestion administrativa de operadores |
-| Tipos de servicio | `/service-types` | Catalogo de tipos de servicio |
-| Tarifas de servicio | `/service-rates` | Tarifas y reglas operativas |
+| Tipos de servicio | `/settings#service-types` | Catálogo de tipos de servicio dentro de Configuración |
+| Tarifas de servicio | `/settings#service-rates` | Tarifas y reglas operativas dentro de Configuración |
 | Vehiculos | `/vehicles` | Catalogos relacionados a vehiculos |
 | Comisiones | `/commissions` | Seguimiento y pago de comisiones |
-| Centros de costo | `/cost-centers` | Catalogo para costos y reportes |
-| Configuracion | `/settings` | Empresa, zona horaria, sistema, alertas, usuarios e integraciones |
+| Centros de costo | `/settings#cost-centers` | Catálogo para costos y reportes dentro de Configuración |
+| Configuración | `/settings` | Empresa, catálogos, costos, zona horaria, sistema, alertas, usuarios e integraciones |
 | Entradas rapidas | `/quick-entries` | Captura rapida con apoyo movil y OCR |
-| Backup | `/backup` | Herramientas de respaldo |
+| Respaldos | `/settings#respaldos` | Gestión de respaldos; también disponible como acceso directo en el sidebar |
 
 ### Otras rutas relevantes
 

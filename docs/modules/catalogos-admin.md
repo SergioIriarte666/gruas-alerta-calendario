@@ -9,14 +9,14 @@ Módulo administrativo de **catálogos** que soportan el resto del sistema:
 
 **Entrypoints**
 - Páginas:
-  - [ServiceTypes](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/ServiceTypes.tsx)
-  - [ServiceRates](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/ServiceRates.tsx)
-  - [CostCenters](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/CostCenters.tsx)
-  - [Vehicles](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Vehicles.tsx)
+  - [ServiceTypes](../../src/pages/ServiceTypes.tsx)
+  - [ServiceRates](../../src/pages/ServiceRates.tsx)
+  - [CostCenters](../../src/pages/CostCenters.tsx)
+  - [Vehicles](../../src/pages/Vehicles.tsx)
 - Componentes:
-  - [components/service-types](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/service-types)
-  - [components/serviceRates](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/serviceRates)
-  - [components/cost-centers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/cost-centers)
+  - [components/service-types](../../src/components/service-types)
+  - [components/serviceRates](../../src/components/serviceRates)
+  - [components/cost-centers](../../src/components/cost-centers)
 
 ## Arquitectura y componentes
 - CRUD por entidad con formularios (react-hook-form + zod) y tablas.
@@ -25,9 +25,10 @@ Módulo administrativo de **catálogos** que soportan el resto del sistema:
 ## API expuesta
 
 ### Rutas (frontend)
-- `/service-types` (AdminOnlyRoute)
-- `/service-rates` (AdminOnlyRoute)
-- `/cost-centers` (AdminOnlyRoute)
+- `/settings#service-types` (canónica, AdminOnlyRoute)
+- `/settings#service-rates` (canónica, AdminOnlyRoute)
+- `/settings#cost-centers` (canónica, AdminOnlyRoute)
+- `/service-types`, `/service-rates` y `/cost-centers` se conservan como redirecciones retrocompatibles.
 - `/vehicles` (AdminOnlyRoute)
 
 ### Operaciones Supabase (tablas)

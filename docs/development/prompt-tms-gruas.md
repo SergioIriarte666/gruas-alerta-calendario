@@ -286,7 +286,7 @@ Si no: queda en stock, se descuenta después con movimiento manual
 - Cuotas mensuales con calendario de vencimientos
 - Estados por cuota: pendiente / pagado / vencido
 
-### 13. Centros de Costo (`/cost-centers`)
+### 13. Centros de Costo (`/settings#cost-centers`; `/cost-centers` redirige)
 - Jerarquía de centros (parent/child)
 - Presupuesto por período (mensual/trimestral/anual)
 - Métricas de uso vs presupuesto

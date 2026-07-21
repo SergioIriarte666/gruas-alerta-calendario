@@ -58,7 +58,7 @@ flowchart TD
 | Operadores | `/operators` | Administración de operadores. | [operators-admin](./operators-admin.md) |
 | Facturas | `/invoices` | Facturación, pagos y reconciliación. | [invoices](./invoices.md) |
 | Costos | `/costs` | Costos, XML/CSV y cruces operativos. | [costs](./costs.md) |
-| Centros de costo | `/cost-centers` | Catálogo administrativo para costos y reportes. | [catalogos-admin](./catalogos-admin.md) |
+| Centros de costo | `/settings#cost-centers` | Catálogo administrativo integrado en Configuración. | [catalogos-admin](./catalogos-admin.md) |
 | Inventario | `/inventory` | Stock, movimientos y compras enlazadas. | [inventory](./inventory.md) |
 | Proveedores | `/suppliers` | Proveedores, pagos y documentos XML. | [suppliers](./suppliers.md) |
 | Cuentas por pagar | `/accounts-payable` | Deudas, cuotas y obligaciones financieras. | [accounts-payable](./accounts-payable.md) |

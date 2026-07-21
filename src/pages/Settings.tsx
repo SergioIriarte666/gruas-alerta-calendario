@@ -1,121 +1,439 @@
+import * as React from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArchiveRestore,
+  Bell,
+  Building2,
+  ClipboardCheck,
+  ClipboardList,
+  CreditCard,
+  DollarSign,
+  Globe,
+  Mail,
+  MessageCircle,
+  Palette,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  Tag,
+  Tags,
+  Target,
+  Unlock,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminEmergencyPanel } from "@/components/admin/AdminEmergencyPanel";
+import { InvoiceAlertSettings } from "@/components/invoices/InvoiceAlertSettings";
+import { AppearanceSettingsTab } from "@/components/settings/AppearanceSettingsTab";
+import { AuditTab } from "@/components/settings/AuditTab";
+import { CategoriesTab } from "@/components/settings/CategoriesTab";
+import { CompanySettingsTab } from "@/components/settings/CompanySettingsTab";
+import { EmailNotificationSettingsSection } from "@/components/settings/EmailNotificationSettingsSection";
+import { InspectionEquipmentTab } from "@/components/settings/InspectionEquipmentTab";
+import { NotificationSettingsTab } from "@/components/settings/NotificationSettingsTab";
+import { PaymentTermsSettings } from "@/components/settings/PaymentTermsSettings";
+import { RecoveryCenterTab } from "@/components/settings/RecoveryCenterTab";
+import { SettingsHeader } from "@/components/settings/SettingsHeader";
+import { SystemSettingsTab } from "@/components/settings/SystemSettingsTab";
+import { TimezoneSettingsTab } from "@/components/settings/TimezoneSettingsTab";
+import { UserManagementTab } from "@/components/settings/UserManagementTab";
+import { WhatsAppSettingsSection } from "@/components/settings/WhatsAppSettingsSection";
+import { useSettings } from "@/hooks/useSettings";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { cn } from "@/lib/utils";
 
-import * as React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { SectionCard } from '@/components/ui/section-card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { useSettings } from '@/hooks/useSettings';
-import { useSystemSettings } from '@/hooks/useSystemSettings';
-import { SettingsHeader } from '@/components/settings/SettingsHeader';
-import { CompanySettingsTab } from '@/components/settings/CompanySettingsTab';
-import { SystemSettingsTab } from '@/components/settings/SystemSettingsTab';
-import { NotificationSettingsTab } from '@/components/settings/NotificationSettingsTab';
-import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
-import { WhatsAppSettingsSection } from '@/components/settings/WhatsAppSettingsSection';
-import { EmailNotificationSettingsSection } from '@/components/settings/EmailNotificationSettingsSection';
-import { UserManagementTab } from '@/components/settings/UserManagementTab';
-import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, SlidersHorizontal, LayoutGrid, ClipboardList, ArchiveRestore, Palette } from 'lucide-react';
-import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
-import { CategoriesTab } from '@/components/settings/CategoriesTab';
-import { InspectionEquipmentTab } from '@/components/settings/InspectionEquipmentTab';
-import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
-import { AuditTab } from '@/components/settings/AuditTab';
-import { RecoveryCenterTab } from '@/components/settings/RecoveryCenterTab';
-import { AppearanceSettingsTab } from '@/components/settings/AppearanceSettingsTab';
+const ServiceTypesSettings = React.lazy(() => import("@/pages/ServiceTypes"));
+const ServiceRatesSettings = React.lazy(() => import("@/pages/ServiceRates"));
+const CostCentersSettings = React.lazy(() => import("@/pages/CostCenters"));
+
+interface SettingsSection {
+  value: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  keywords: string[];
+  adminOnly?: boolean;
+}
+
+interface SettingsGroup {
+  id: string;
+  label: string;
+  description: string;
+  sections: SettingsSection[];
+}
+
+const SETTINGS_GROUPS: SettingsGroup[] = [
+  {
+    id: "experience",
+    label: "Experiencia",
+    description: "Preferencias personales de uso.",
+    sections: [
+      {
+        value: "appearance",
+        label: "Apariencia",
+        description: "Tema, densidad, lectura y menú lateral.",
+        icon: Palette,
+        keywords: ["tema", "oscuro", "claro", "densidad", "texto", "menú"],
+      },
+    ],
+  },
+  {
+    id: "organization",
+    label: "Organización",
+    description: "Identidad y reglas comerciales.",
+    sections: [
+      {
+        value: "company",
+        label: "Empresa",
+        description: "Identidad, datos legales, contacto y logo.",
+        icon: Building2,
+        keywords: ["empresa", "rut", "logo", "dirección", "contacto"],
+      },
+      {
+        value: "timezone",
+        label: "Zona horaria",
+        description: "Hora local y formato de fechas.",
+        icon: Globe,
+        keywords: ["hora", "fecha", "zona", "formato"],
+      },
+      {
+        value: "payment-terms",
+        label: "Condiciones de pago",
+        description: "Plazos y condiciones comerciales.",
+        icon: CreditCard,
+        keywords: ["pago", "plazo", "crédito", "condiciones"],
+      },
+    ],
+  },
+  {
+    id: "catalogs",
+    label: "Catálogos y costos",
+    description: "Servicios, tarifas y estructura de costos.",
+    sections: [
+      {
+        value: "service-types",
+        label: "Tipos de servicio",
+        description: "Catálogo operativo usado al crear servicios.",
+        icon: Tags,
+        keywords: ["tipos", "servicios", "catálogo", "operación"],
+        adminOnly: true,
+      },
+      {
+        value: "service-rates",
+        label: "Tarifas de servicio",
+        description: "Precios por cliente, servicio y ruta.",
+        icon: DollarSign,
+        keywords: ["tarifas", "precios", "clientes", "rutas"],
+        adminOnly: true,
+      },
+      {
+        value: "cost-centers",
+        label: "Centros de costo",
+        description: "Estructura presupuestaria y control de gastos.",
+        icon: Target,
+        keywords: ["centros", "costos", "presupuesto", "gastos"],
+        adminOnly: true,
+      },
+    ],
+  },
+  {
+    id: "operations",
+    label: "Operación",
+    description: "Reglas que usa el trabajo diario.",
+    sections: [
+      {
+        value: "notifications",
+        label: "Alertas y canales",
+        description: "Notificaciones, correo, facturas y WhatsApp.",
+        icon: Bell,
+        keywords: [
+          "alertas",
+          "notificaciones",
+          "correo",
+          "email",
+          "whatsapp",
+          "facturas",
+        ],
+      },
+      {
+        value: "categories",
+        label: "Categorías",
+        description: "Clasificación de costos y proveedores.",
+        icon: Tag,
+        keywords: ["categorías", "costos", "proveedores", "clasificación"],
+      },
+      {
+        value: "inspection-equipment",
+        label: "Equipamiento de inspección",
+        description: "Checklist operativo por tipo de grúa.",
+        icon: ClipboardCheck,
+        keywords: ["equipamiento", "inspección", "checklist", "grúa"],
+      },
+    ],
+  },
+  {
+    id: "access",
+    label: "Acceso y trazabilidad",
+    description: "Personas, permisos y actividad.",
+    sections: [
+      {
+        value: "users",
+        label: "Usuarios y permisos",
+        description: "Cuentas, roles y acceso por módulo.",
+        icon: Users,
+        keywords: ["usuarios", "roles", "permisos", "cuentas", "acceso"],
+        adminOnly: true,
+      },
+      {
+        value: "audit",
+        label: "Auditoría",
+        description: "Historial de cambios y responsables.",
+        icon: ClipboardList,
+        keywords: ["auditoría", "historial", "cambios", "actividad"],
+        adminOnly: true,
+      },
+    ],
+  },
+  {
+    id: "integrity",
+    label: "Sistema e integridad",
+    description: "Mantenimiento y herramientas críticas.",
+    sections: [
+      {
+        value: "system",
+        label: "Sistema y respaldos",
+        description: "Parámetros generales y copias de seguridad.",
+        icon: SettingsIcon,
+        keywords: ["sistema", "respaldos", "backup", "parámetros"],
+      },
+      {
+        value: "recovery",
+        label: "Centro de recuperación",
+        description: "Reversión controlada de operaciones.",
+        icon: ArchiveRestore,
+        keywords: ["recuperación", "revertir", "restaurar", "operaciones"],
+        adminOnly: true,
+      },
+      {
+        value: "liberation",
+        label: "Herramientas de emergencia",
+        description: "Reparación y liberación administrativa.",
+        icon: Unlock,
+        keywords: ["emergencia", "liberación", "reparación", "administración"],
+        adminOnly: true,
+      },
+    ],
+  },
+];
+
+const NotificationsSettingsPanel = () => (
+  <Tabs defaultValue="general" className="space-y-4">
+    <div className="configuration-panel border border-border/70 bg-card/80 p-3 shadow-sm sm:p-4">
+      <div className="mb-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+          Canal de configuración
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Abre sólo el canal que necesitas ajustar.
+        </p>
+      </div>
+      <TabsList className="h-auto w-full justify-start rounded-lg bg-muted/70 p-1">
+        <TabsTrigger value="general" className="gap-2 py-2">
+          <Bell className="size-4" />
+          Generales
+        </TabsTrigger>
+        <TabsTrigger value="invoices" className="gap-2 py-2">
+          <CreditCard className="size-4" />
+          Facturas
+        </TabsTrigger>
+        <TabsTrigger value="email" className="gap-2 py-2">
+          <Mail className="size-4" />
+          Correo
+        </TabsTrigger>
+        <TabsTrigger value="whatsapp" className="gap-2 py-2">
+          <MessageCircle className="size-4" />
+          WhatsApp
+        </TabsTrigger>
+      </TabsList>
+    </div>
+
+    <TabsContent value="general" className="mt-0">
+      <NotificationSettingsTab />
+    </TabsContent>
+    <TabsContent value="invoices" className="mt-0">
+      <InvoiceAlertSettings />
+    </TabsContent>
+    <TabsContent value="email" className="mt-0">
+      <EmailNotificationSettingsSection />
+    </TabsContent>
+    <TabsContent value="whatsapp" className="mt-0">
+      <WhatsAppSettingsSection />
+    </TabsContent>
+  </Tabs>
+);
 
 const Settings = () => {
-  const {
-    settings,
-    loading,
-    resetSettings
-  } = useSettings();
+  const { settings, loading, resetSettings } = useSettings();
   const {
     systemSettings,
-    notificationSettings: _notificationSettings,
     loading: systemLoading,
     saving: systemSaving,
     updateSystemSettings,
-    updateNotificationSettings: _updateNotificationSettings,
-    saveSettings: saveSystemSettings
+    saveSettings: saveSystemSettings,
   } = useSystemSettings();
   const { isAdmin } = useUserPermissions();
-  const [activeTab, setActiveTab] = React.useState('appearance');
+  const [activeTab, setActiveTab] = React.useState("appearance");
 
-  // Soporte para anchors: /settings#respaldos abre la pestaña Sistema
-  // y hace scroll a la sección de Gestión de Respaldos.
+  const visibleGroups = React.useMemo(
+    () =>
+      SETTINGS_GROUPS.map((group) => ({
+        ...group,
+        sections: group.sections.filter(
+          (section) => !section.adminOnly || isAdmin,
+        ),
+      })).filter((group) => group.sections.length > 0),
+    [isAdmin],
+  );
+
+  const visibleSections = React.useMemo(
+    () => visibleGroups.flatMap((group) => group.sections),
+    [visibleGroups],
+  );
+
+  const activeSection =
+    visibleSections.find((section) => section.value === activeTab) ??
+    visibleSections[0];
+  const activeGroup = visibleGroups.find((group) =>
+    group.sections.some((section) => section.value === activeSection?.value),
+  );
+  const activePosition =
+    visibleSections.findIndex(
+      (section) => section.value === activeSection?.value,
+    ) + 1;
+
   React.useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
+      const hash = window.location.hash.replace("#", "");
       if (!hash) return;
-      if (hash === 'respaldos') {
-        setActiveTab('system');
-        // Esperar a que la pestaña pinte
-        setTimeout(() => {
-          const el = document.getElementById('respaldos');
-          el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const target = hash === "respaldos" ? "system" : hash;
+      if (!visibleSections.some((section) => section.value === target)) return;
+
+      setActiveTab(target);
+      if (hash === "respaldos") {
+        window.setTimeout(() => {
+          document
+            .getElementById("respaldos")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 200);
       }
     };
+
     handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, [visibleSections]);
+
+  const handleSectionChange = (value: string) => {
+    setActiveTab(value);
+    const nextUrl = `${window.location.pathname}${window.location.search}#${value}`;
+    window.history.replaceState(null, "", nextUrl);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSystemSave = async () => {
     const result = await saveSystemSettings();
     if (result.success) {
       toast.success("Configuración del sistema guardada", {
-        description: "Los cambios se han guardado correctamente."
+        description: "Los cambios se han guardado correctamente.",
       });
     } else {
       toast.error("Error al guardar", {
-        description: result.error || "No se pudo guardar la configuración del sistema."
+        description:
+          result.error || "No se pudo guardar la configuración del sistema.",
       });
     }
   };
 
-  const tabs = [
-    { value: 'appearance', label: 'Apariencia', icon: Palette },
-    { value: 'company', label: 'Empresa', icon: Building2 },
-    { value: 'timezone', label: 'Zona horaria', icon: Globe },
-    { value: 'system', label: 'Sistema', icon: SettingsIcon },
-    { value: 'payment-terms', label: 'Cond. pago', icon: CreditCard },
-    { value: 'notifications', label: 'Alertas', icon: Bell },
-    { value: 'categories', label: 'Categorías', icon: Tag },
-    { value: 'inspection-equipment', label: 'Inventario', icon: ClipboardList },
-    ...(isAdmin ? [
-      { value: 'users',      label: 'Usuarios',    icon: Users },
-      { value: 'audit',      label: 'Auditoría',  icon: ClipboardList },
-      { value: 'recovery',   label: 'Recuperación', icon: ArchiveRestore },
-      { value: 'liberation', label: 'Liberación', icon: Unlock },
-    ] : []),
-  ];
+  const renderDeferredSection = (section: React.ReactNode) => (
+    <React.Suspense
+      fallback={
+        <div className="space-y-4">
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-80 rounded-xl" />
+        </div>
+      }
+    >
+      {section}
+    </React.Suspense>
+  );
 
-  if (loading || systemLoading || !settings) {
+  const renderActiveSection = () => {
+    switch (activeSection?.value) {
+      case "appearance":
+        return <AppearanceSettingsTab />;
+      case "company":
+        return <CompanySettingsTab />;
+      case "timezone":
+        return <TimezoneSettingsTab />;
+      case "system":
+        return (
+          <SystemSettingsTab
+            settings={systemSettings}
+            saving={systemSaving}
+            onSave={handleSystemSave}
+            onUpdateSettings={updateSystemSettings}
+            isAdmin={isAdmin}
+          />
+        );
+      case "payment-terms":
+        return <PaymentTermsSettings />;
+      case "service-types":
+        return renderDeferredSection(<ServiceTypesSettings />);
+      case "service-rates":
+        return renderDeferredSection(<ServiceRatesSettings />);
+      case "cost-centers":
+        return renderDeferredSection(<CostCentersSettings />);
+      case "notifications":
+        return <NotificationsSettingsPanel />;
+      case "users":
+        return isAdmin ? <UserManagementTab /> : null;
+      case "categories":
+        return <CategoriesTab />;
+      case "inspection-equipment":
+        return <InspectionEquipmentTab />;
+      case "audit":
+        return isAdmin ? <AuditTab /> : null;
+      case "recovery":
+        return isAdmin ? <RecoveryCenterTab /> : null;
+      case "liberation":
+        return isAdmin ? <AdminEmergencyPanel /> : null;
+      default:
+        return null;
+    }
+  };
+
+  if (loading || systemLoading || !settings || !activeSection) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-9 w-72" />
           <Skeleton className="h-4 w-full max-w-2xl" />
         </div>
-
-        <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
-          <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
-            <Skeleton className="h-6 w-40 rounded-full" />
-            <Skeleton className="h-6 w-32 rounded-full" />
-            <Skeleton className="h-6 w-36 rounded-full" />
-          </div>
-          <div className="px-3 sm:px-6">
-            <Skeleton className="h-12 w-full rounded-xl" />
-          </div>
-          <div className="grid gap-4 px-3 pb-4 sm:px-6 sm:pb-6 md:grid-cols-2">
-            <Skeleton className="h-64 rounded-xl" />
-            <Skeleton className="h-64 rounded-xl" />
-          </div>
-        </SectionCard>
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-96 rounded-xl" />
       </div>
     );
   }
@@ -124,109 +442,153 @@ const Settings = () => {
     <div className="settings-concept min-h-screen space-y-6 overflow-x-hidden pb-6 animate-fade-in">
       <SettingsHeader onReset={resetSettings} />
 
-      <SectionCard flush className="configuration-panel border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
-        <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
-          <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
-            <SlidersHorizontal className="size-3.5" />
-            Ajustes globales
-          </Badge>
-          <Badge variant="outline" className="gap-1 rounded-full px-3 py-1">
-            <LayoutGrid className="size-3.5" />
-            {tabs.length} secciones activas
-          </Badge>
-          <Badge variant="outline" className="rounded-full px-3 py-1">
-            {isAdmin ? 'Modo administrador' : 'Perfil estándar'}
-          </Badge>
+      <nav
+        aria-label="Secciones de configuración"
+        className="configuration-panel overflow-hidden border border-border/70 bg-card/80 shadow-sm"
+      >
+        <div className="p-3 xl:hidden sm:p-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {activeGroup?.label}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {activeSection.description}
+              </p>
+            </div>
+            <Badge variant="outline" className="shrink-0 rounded-full">
+              {activePosition}/{visibleSections.length}
+            </Badge>
+          </div>
+          <Select
+            value={activeSection.value}
+            onValueChange={handleSectionChange}
+          >
+            <SelectTrigger
+              aria-label="Cambiar sección de configuración"
+              className="h-11 bg-background"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {visibleGroups.map((group) => (
+                <SelectGroup key={group.id}>
+                  <SelectLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </SelectLabel>
+                  {group.sections.map((section) => (
+                    <SelectItem key={section.value} value={section.value}>
+                      {section.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
-          <div className="overflow-x-auto scrollbar-none -mx-3 sm:-mx-6 px-3 sm:px-6">
-            <TabsList className="configuration-tabs flex w-max min-w-full gap-1 p-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted-foreground whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <Icon className="size-3.5 sm:size-4 shrink-0" />
-                    <span>{tab.label}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+        <div className="hidden xl:block">
+          <div className="flex border-b border-border/70 bg-muted/25">
+            {visibleGroups.map((group, groupIndex) => {
+              const isActive = group.id === activeGroup?.id;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => handleSectionChange(group.sections[0].value)}
+                  aria-current={isActive ? "step" : undefined}
+                  className={cn(
+                    "relative min-w-0 flex-1 border-r border-border/70 px-4 py-3 text-left transition-colors last:border-r-0",
+                    isActive
+                      ? "bg-card text-foreground"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                  )}
+                >
+                  {isActive && (
+                    <span
+                      className="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "font-mono text-xs font-semibold",
+                        isActive && "text-primary",
+                      )}
+                    >
+                      {String(groupIndex + 1).padStart(2, "0")}
+                    </span>
+                    <span className="truncate text-xs font-semibold uppercase tracking-wide">
+                      {group.label}
+                    </span>
+                    <span className="ml-auto text-xs tabular-nums">
+                      {group.sections.length}
+                    </span>
+                  </span>
+                  <span className="mt-1 block truncate text-xs">
+                    {group.description}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          <TabsContent value="company" className="mt-4">
-            <CompanySettingsTab />
-          </TabsContent>
+          <div className="flex gap-2 p-3">
+            {activeGroup?.sections.map((section) => {
+              const Icon = section.icon;
+              const isActive = section.value === activeSection.value;
+              return (
+                <button
+                  key={section.value}
+                  type="button"
+                  onClick={() => handleSectionChange(section.value)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "group flex min-w-0 flex-1 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
+                    isActive
+                      ? "border-primary/40 bg-primary/10 text-foreground shadow-sm"
+                      : "border-border/70 bg-background/50 text-muted-foreground hover:border-border-strong hover:bg-muted/50 hover:text-foreground",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-md border",
+                      isActive
+                        ? "border-primary/30 bg-primary text-primary-foreground"
+                        : "border-border bg-card",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold">
+                        {section.label}
+                      </span>
+                      {section.adminOnly && (
+                        <ShieldCheck
+                          className="size-3.5 shrink-0 text-muted-foreground"
+                          aria-label="Sólo administradores"
+                        />
+                      )}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {section.description}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
 
-          <TabsContent value="appearance" className="mt-4">
-            <AppearanceSettingsTab />
-          </TabsContent>
-
-          <TabsContent value="timezone" className="mt-4">
-            <TimezoneSettingsTab />
-          </TabsContent>
-
-          <TabsContent value="system" className="mt-4">
-            <SystemSettingsTab
-              settings={systemSettings}
-              saving={systemSaving}
-              onSave={handleSystemSave}
-              onUpdateSettings={updateSystemSettings}
-              isAdmin={isAdmin}
-            />
-          </TabsContent>
-
-          <TabsContent value="payment-terms" className="mt-4">
-            <PaymentTermsSettings />
-          </TabsContent>
-
-          <TabsContent value="notifications" className="mt-4">
-            <div className="space-y-6">
-              <NotificationSettingsTab />
-              <InvoiceAlertSettings />
-              <EmailNotificationSettingsSection />
-              <WhatsAppSettingsSection />
-            </div>
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="users" className="mt-4">
-              <UserManagementTab />
-            </TabsContent>
-          )}
-
-          <TabsContent value="categories" className="mt-4">
-            <CategoriesTab />
-          </TabsContent>
-
-          <TabsContent value="inspection-equipment" className="mt-4">
-            <InspectionEquipmentTab />
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="audit" className="mt-4">
-              <AuditTab />
-            </TabsContent>
-          )}
-
-          {isAdmin && (
-            <TabsContent value="recovery" className="mt-4">
-              <RecoveryCenterTab />
-            </TabsContent>
-          )}
-
-          {isAdmin && (
-            <TabsContent value="liberation" className="mt-4">
-              <AdminEmergencyPanel />
-            </TabsContent>
-          )}
-        </Tabs>
-      </SectionCard>
+      <main className="min-w-0">
+        <div key={activeSection.value} className="animate-fade-in">
+          {renderActiveSection()}
+        </div>
+      </main>
     </div>
   );
 };

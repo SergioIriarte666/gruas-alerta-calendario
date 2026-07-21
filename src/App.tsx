@@ -39,14 +39,12 @@ const routeImports = {
   Clients: () => import('@/pages/Clients'),
   Operators: () => import('@/pages/Operators'),
   Cranes: () => import('@/pages/Cranes'),
-  ServiceTypes: () => import('@/pages/ServiceTypes'),
   Vehicles: () => import('@/pages/Vehicles'),
   Closures: () => import('@/pages/Closures'),
   Invoices: () => import('@/pages/Invoices'),
   IncomeProjections: () => import('@/pages/IncomeProjections'),
   Costs: () => import('@/pages/Costs'),
   AccountsPayable: () => import('@/pages/AccountsPayable'),
-  CostCenters: () => import('@/pages/CostCenters'),
   Inventory: () => import('@/pages/Inventory'),
   DocumentLibrary: () => import('@/pages/DocumentLibrary'),
   Reports: () => import('@/pages/Reports'),
@@ -67,7 +65,6 @@ const routeImports = {
   NotFound: () => import('@/pages/NotFound'),
   DailyReport: () => import('@/pages/DailyReport'),
   Historical: () => import('@/pages/Historical'),
-  ServiceRates: () => import('@/pages/ServiceRates'),
   ResetPassword: () => import('@/pages/ResetPassword'),
   TrackService: () => import('@/pages/TrackService'),
   TripCalculator: () => import('@/pages/TripCalculator'),
@@ -91,14 +88,12 @@ const Services = lazy(routeImports.Services);
 const Clients = lazy(routeImports.Clients);
 const Operators = lazy(routeImports.Operators);
 const Cranes = lazy(routeImports.Cranes);
-const ServiceTypes = lazy(routeImports.ServiceTypes);
 const Vehicles = lazy(routeImports.Vehicles);
 const Closures = lazy(routeImports.Closures);
 const Invoices = lazy(routeImports.Invoices);
 const IncomeProjections = lazy(routeImports.IncomeProjections);
 const Costs = lazy(routeImports.Costs);
 const AccountsPayable = lazy(routeImports.AccountsPayable);
-const CostCenters = lazy(routeImports.CostCenters);
 const Inventory = lazy(routeImports.Inventory);
 const DocumentLibrary = lazy(routeImports.DocumentLibrary);
 const Reports = lazy(routeImports.Reports);
@@ -120,7 +115,6 @@ const NotFound = lazy(routeImports.NotFound);
 const DailyReport = lazy(routeImports.DailyReport);
 const Historical = lazy(routeImports.Historical);
 const LibrosSii = lazy(routeImports.LibrosSii);
-const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
 const TrackService = lazy(routeImports.TrackService);
 const TripCalculator = lazy(routeImports.TripCalculator);
@@ -258,11 +252,11 @@ function AppContent() {
 
           {/* Admin-only routes */}
           <Route path="/operators" element={<AdminOnlyRoute><Operators /></AdminOnlyRoute>} />
-          <Route path="/service-types" element={<AdminOnlyRoute><ServiceTypes /></AdminOnlyRoute>} />
-          <Route path="/service-rates" element={<AdminOnlyRoute><ServiceRates /></AdminOnlyRoute>} />
+          <Route path="/service-types" element={<Navigate to="/settings#service-types" replace />} />
+          <Route path="/service-rates" element={<Navigate to="/settings#service-rates" replace />} />
           <Route path="/vehicles" element={<AdminOnlyRoute><Vehicles /></AdminOnlyRoute>} />
           <Route path="/commissions" element={<AdminOnlyRoute><Commissions /></AdminOnlyRoute>} />
-          <Route path="/cost-centers" element={<AdminOnlyRoute><CostCenters /></AdminOnlyRoute>} />
+          <Route path="/cost-centers" element={<Navigate to="/settings#cost-centers" replace />} />
           <Route path="/settings" element={<AdminOnlyRoute><Settings /></AdminOnlyRoute>} />
           <Route path="/quick-entries" element={<AdminOnlyRoute><QuickEntries /></AdminOnlyRoute>} />
           <Route path="/backup" element={<AdminOnlyRoute><BackupPage /></AdminOnlyRoute>} />

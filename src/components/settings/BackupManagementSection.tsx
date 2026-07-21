@@ -1,15 +1,14 @@
-
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Database, AlertTriangle, RefreshCw } from 'lucide-react';
-import { useBackupManager } from '@/hooks/useBackupManager';
-import { BackupStatusSection } from './backup/BackupStatusSection';
-import { BackupControlsSection } from './backup/BackupControlsSection';
-import { BackupHistorySection } from './backup/BackupHistorySection';
-import { BackupEmailSchedulerSection } from './backup/BackupEmailSchedulerSection';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Database, AlertTriangle, RefreshCw } from "lucide-react";
+import { useBackupManager } from "@/hooks/useBackupManager";
+import { BackupStatusSection } from "./backup/BackupStatusSection";
+import { BackupControlsSection } from "./backup/BackupControlsSection";
+import { BackupHistorySection } from "./backup/BackupHistorySection";
+import { BackupEmailSchedulerSection } from "./backup/BackupEmailSchedulerSection";
 
 export const BackupManagementSection = () => {
   const {
@@ -17,37 +16,35 @@ export const BackupManagementSection = () => {
     backupLogs,
     generateAndDownloadBackup,
     error: hookError,
-    refetchLogs
+    refetchLogs,
   } = useBackupManager();
 
-  const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
+  const lastSuccessfulBackup = backupLogs?.find(
+    (log) => log.status === "completed",
+  );
 
   return (
-    <Card id="respaldos" className="bg-card border mt-6 scroll-mt-24">
+    <Card id="respaldos" className="border bg-card scroll-mt-24">
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
           <div className="flex items-center gap-x-2">
             <Database className="size-5 text-primary" />
             <span className="text-lg sm:text-xl">Gestión de Respaldos</span>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => refetchLogs()} 
-          >
+          <Button variant="ghost" size="sm" onClick={() => refetchLogs()}>
             <RefreshCw className="size-4" />
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
-        <BackupStatusSection 
+        <BackupStatusSection
           lastSuccessfulBackup={lastSuccessfulBackup}
           hookError={hookError}
         />
 
         <Separator />
 
-        <BackupControlsSection 
+        <BackupControlsSection
           progress={progress}
           onGenerateBackup={generateAndDownloadBackup}
         />
@@ -60,8 +57,9 @@ export const BackupManagementSection = () => {
         <Alert className="border-info/30 bg-info-soft">
           <AlertTriangle className="size-4 text-info" />
           <AlertDescription className="text-sm text-foreground">
-            <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema.
-            {' '}Los respaldos completos permiten restauración total en caso de emergencia.
+            <strong>Importante:</strong> Almacene los respaldos en ubicaciones
+            seguras y externas al sistema. Los respaldos completos permiten
+            restauración total en caso de emergencia.
           </AlertDescription>
         </Alert>
       </CardContent>

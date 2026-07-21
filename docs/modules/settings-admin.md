@@ -1,36 +1,44 @@
 # settings-admin
 
 ## Resumen
+
 Modulo de **settings admin** para configuracion general del sistema, usuarios, notificaciones, categorias, herramientas administrativas y respaldos embebidos.
 
-La pagina actual esta estructurada por tabs y centraliza varias capacidades que en otros momentos vivieron separadas.
+La página usa una navegación superior de dos niveles: primero el área y luego únicamente sus secciones. En pantallas medianas y móviles se reemplaza por un selector agrupado. Esta estructura conserva el ancho completo para tablas, formularios y herramientas operativas.
 
 ## Entrypoints vigentes
-- Pagina: [Settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Settings.tsx)
-- Componentes: [src/components/settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/settings)
-- Herramientas admin: [src/components/admin](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/admin)
+
+- Página: [Settings](../../src/pages/Settings.tsx)
+- Componentes: [src/components/settings](../../src/components/settings)
+- Herramientas admin: [src/components/admin](../../src/components/admin)
 
 ## Ruta
+
 - `/settings`
 
 ## Arquitectura actual
-Tabs vigentes de la pagina:
-- `appearance`
-- `company`
-- `timezone`
-- `system`
-- `payment-terms`
-- `notifications`
-- `users`
-- `categories`
-- `liberation`
+
+Áreas vigentes de la página:
+
+- **Experiencia**: `appearance`.
+- **Organización**: `company`, `timezone`, `payment-terms`.
+- **Catálogos y costos**: `service-types`, `service-rates`, `cost-centers` (solo administradores).
+- **Operación**: `notifications`, `categories`, `inspection-equipment`.
+- **Acceso y trazabilidad**: `users`, `audit` (solo administradores).
+- **Sistema e integridad**: `system`, `recovery`, `liberation`; las dos últimas son solo para administradores.
+
+Cada sección conserva un hash navegable. `/settings#respaldos` abre Sistema directamente en la subsección de Gestión de Respaldos.
+
+Las rutas históricas `/service-types`, `/service-rates` y `/cost-centers` redirigen a sus secciones dentro de Configuración. El sidebar mantiene `/settings#respaldos` como acceso directo a la vista de respaldos, sin duplicar el módulo.
 
 ### Preferencias visuales
+
 - La pestaña `appearance` controla tema, densidad, escala de lectura, reducción de movimiento y estado del menú lateral.
 - Los cambios se aplican inmediatamente, se respaldan en el navegador y se sincronizan por usuario en `user_settings`.
 - Las reglas y límites de personalización se definen únicamente en [la guía visual](../design-system.md).
 
 ## Componentes y flujos clave
+
 - `CompanySettingsTab`
 - `TimezoneSettingsTab`
 - `SystemSettingsTab`
@@ -42,6 +50,7 @@ Tabs vigentes de la pagina:
 - `AdminEmergencyPanel`
 
 ## Datos y dependencias principales
+
 - configuracion de compania y zona horaria
 - terminos de pago
 - notificaciones generales y alertas de facturas
@@ -49,20 +58,28 @@ Tabs vigentes de la pagina:
 - backups embebidos dentro de system
 
 ## Flujos vigentes
+
 ### 1. Notificaciones
-- En la tab `notifications` conviven configuraciones generales y alertas de facturas.
+
+- `notifications` se divide en cuatro vistas internas: generales, facturas, correo y WhatsApp.
+- Sólo se monta visualmente el canal activo, evitando una página vertical excesivamente extensa.
 
 ### 2. Usuarios y permisos
+
 - La gestion de usuarios incluye permisos por modulo.
 - `ProtectedRoute` usa esos permisos para filtrar acceso a rutas.
 
 ### 3. System
-- La tab de sistema ya integra gestion de respaldos embebida.
-- Tambien conviven herramientas administrativas complementarias.
+
+- `system` se divide en cuatro vistas internas: general, reporte diario, respaldos y reportes PDF.
+- El hash histórico `#respaldos` se conserva y activa la vista interna correspondiente.
 
 ### 4. Herramientas de emergencia
+
 - `AdminEmergencyPanel` incluye varias herramientas, entre ellas `PurchaseVoidTool`.
 
 ## Consideraciones de mantenimiento
-- Mantener alineada la documentacion con las tabs reales de `Settings.tsx`.
+
+- Mantener alineada la documentación con las áreas y secciones reales de `Settings.tsx`.
+- No añadir una segunda barra lateral dentro de Configuración: el contenido debe conservar el ancho completo disponible.
 - No separar backups y alertas de facturas como si no vivieran tambien dentro de settings.

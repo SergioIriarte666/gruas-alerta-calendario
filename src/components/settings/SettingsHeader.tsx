@@ -15,7 +15,7 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
       <div>
         <span className="dashboard-section-kicker"><SlidersHorizontal className="size-3.5" />Administración central</span>
         <h1 className="dashboard-section-title">Configuración del Sistema</h1>
-        <p className="dashboard-section-description">Empresa, usuarios, respaldos e integridad del sistema.</p>
+        <p className="dashboard-section-description">Ajustes organizados por experiencia, operación, acceso e integridad.</p>
       </div>
         <Button
           variant="outline"

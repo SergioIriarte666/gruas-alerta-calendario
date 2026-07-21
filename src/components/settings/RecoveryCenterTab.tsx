@@ -20,6 +20,8 @@ import { changedFields, recoveryConfirmationPhrase } from './recovery/recoveryHe
 const defaultFilters: RecoveryFilters = { search: '', module: 'all', source: 'all', userId: '', status: 'all', dateFrom: '', dateTo: '' };
 const moduleLabels = { invoices: 'Facturas', services: 'Servicios', costs: 'Costos', inventory: 'Bodega' } as const;
 const sourceLabels = { individual: 'Individual', batch: 'Masiva', import: 'Importación', automation: 'Automatización', reversal: 'Reversión' } as const;
+const surfaceClassName = 'border-border/70 bg-card/80 shadow-sm';
+const inputClassName = 'border-border/70 bg-background/60';
 
 function StatusBadge({ operation }: { operation: RecoveryOperation }) {
   if (operation.status === 'reverted') return <Badge variant="outline" className="gap-1 border-info/30 bg-info-soft text-info"><CheckCircle2 className="size-3" />Revertida</Badge>;
@@ -75,23 +77,59 @@ export const RecoveryCenterTab = () => {
 
   return (
     <div className="space-y-5">
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-foreground px-5 py-6 text-background shadow-lg sm:px-7">
-        <div className="absolute -right-12 -top-20 size-52 rounded-full bg-warning/20 blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div><div className="mb-3 flex size-11 items-center justify-center rounded-xl border border-warning/30 bg-warning/10"><ArchiveRestore className="size-5 text-warning" /></div><h2 className="text-2xl font-semibold tracking-tight">Centro de recuperación</h2><p className="mt-1 max-w-2xl text-sm text-background/75">Revise, simule y revierta operaciones con validaciones de seguridad y trazabilidad completa.</p></div>
-          <Badge className="w-fit border-warning/30 bg-warning/10 text-warning hover:bg-warning/10">Retención · 90 días</Badge>
-        </div>
-      </div>
+      <Card className={surfaceClassName}>
+        <CardHeader className="border-b border-border/70 p-4 sm:p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary">
+                <ArchiveRestore className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-lg text-foreground sm:text-xl">Centro de recuperación</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Revise, simule y revierta operaciones con validaciones de seguridad y trazabilidad completa.
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="w-fit shrink-0 border-warning/30 bg-warning-soft text-warning">
+              Retención · 90 días
+            </Badge>
+          </div>
+        </CardHeader>
+      </Card>
 
-      <Card><CardContent className="grid gap-3 pt-5 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="relative sm:col-span-2"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input aria-label="Buscar operaciones" className="pl-9" placeholder="Folio, descripción…" value={filters.search} onChange={(event) => updateFilter('search', event.target.value)} /></div>
-        <Select value={filters.module} onValueChange={(value) => updateFilter('module', value as RecoveryFilters['module'])}><SelectTrigger><SelectValue placeholder="Módulo" /></SelectTrigger><SelectContent><SelectItem value="all">Todos los módulos</SelectItem><SelectItem value="invoices">Facturas</SelectItem><SelectItem value="services">Servicios</SelectItem><SelectItem value="costs">Costos</SelectItem><SelectItem value="inventory">Bodega</SelectItem></SelectContent></Select>
-        <Select value={filters.source} onValueChange={(value) => updateFilter('source', value as RecoveryFilters['source'])}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="all">Todos los tipos</SelectItem>{Object.entries(sourceLabels).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
-        <Select value={filters.status} onValueChange={(value) => updateFilter('status', value as RecoveryFilters['status'])}><SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger><SelectContent><SelectItem value="all">Todos los estados</SelectItem><SelectItem value="reversible">Reversible</SelectItem><SelectItem value="reverted">Revertida</SelectItem><SelectItem value="blocked">No reversible</SelectItem></SelectContent></Select>
-        <Select value={filters.userId || 'all'} onValueChange={(value) => updateFilter('userId', value === 'all' ? '' : value)}><SelectTrigger><SelectValue placeholder="Usuario" /></SelectTrigger><SelectContent><SelectItem value="all">Todos los usuarios</SelectItem>{users.map(([id,name])=><SelectItem key={id} value={id}>{name}</SelectItem>)}</SelectContent></Select>
-        <div><Label className="sr-only" htmlFor="recovery-from">Desde</Label><Input id="recovery-from" type="date" value={filters.dateFrom} onChange={(event)=>updateFilter('dateFrom',event.target.value)} /></div>
-        <div><Label className="sr-only" htmlFor="recovery-to">Hasta</Label><Input id="recovery-to" type="date" value={filters.dateTo} onChange={(event)=>updateFilter('dateTo',event.target.value)} /></div>
-      </CardContent></Card>
+      <Card className={surfaceClassName}>
+        <CardContent className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-6">
+          <div className="relative sm:col-span-2">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Buscar operaciones"
+              className={`${inputClassName} pl-9`}
+              placeholder="Folio, descripción…"
+              value={filters.search}
+              onChange={(event) => updateFilter('search', event.target.value)}
+            />
+          </div>
+          <Select value={filters.module} onValueChange={(value) => updateFilter('module', value as RecoveryFilters['module'])}>
+            <SelectTrigger className={inputClassName}><SelectValue placeholder="Módulo" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todos los módulos</SelectItem><SelectItem value="invoices">Facturas</SelectItem><SelectItem value="services">Servicios</SelectItem><SelectItem value="costs">Costos</SelectItem><SelectItem value="inventory">Bodega</SelectItem></SelectContent>
+          </Select>
+          <Select value={filters.source} onValueChange={(value) => updateFilter('source', value as RecoveryFilters['source'])}>
+            <SelectTrigger className={inputClassName}><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todos los tipos</SelectItem>{Object.entries(sourceLabels).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={filters.status} onValueChange={(value) => updateFilter('status', value as RecoveryFilters['status'])}>
+            <SelectTrigger className={inputClassName}><SelectValue placeholder="Estado" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todos los estados</SelectItem><SelectItem value="reversible">Reversible</SelectItem><SelectItem value="reverted">Revertida</SelectItem><SelectItem value="blocked">No reversible</SelectItem></SelectContent>
+          </Select>
+          <Select value={filters.userId || 'all'} onValueChange={(value) => updateFilter('userId', value === 'all' ? '' : value)}>
+            <SelectTrigger className={inputClassName}><SelectValue placeholder="Usuario" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todos los usuarios</SelectItem>{users.map(([id,name])=><SelectItem key={id} value={id}>{name}</SelectItem>)}</SelectContent>
+          </Select>
+          <div><Label className="sr-only" htmlFor="recovery-from">Desde</Label><Input className={inputClassName} id="recovery-from" type="date" value={filters.dateFrom} onChange={(event)=>updateFilter('dateFrom',event.target.value)} /></div>
+          <div><Label className="sr-only" htmlFor="recovery-to">Hasta</Label><Input className={inputClassName} id="recovery-to" type="date" value={filters.dateTo} onChange={(event)=>updateFilter('dateTo',event.target.value)} /></div>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground"><span>{center.total.toLocaleString('es-CL')} registros auditados</span><span>Página {page} de {totalPages}</span></div>
       {center.error && <Alert variant="destructive"><AlertTriangle className="size-4" /><AlertDescription>{center.error}</AlertDescription></Alert>}

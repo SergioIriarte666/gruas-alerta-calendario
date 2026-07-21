@@ -42,7 +42,8 @@ Se define un diccionario de imports dinámicos (`routeImports`) y se ejecuta una
 La “API” pública del módulo se expresa como rutas en React Router:
 - Público: `/`, `/auth`, `/reset-password`, `/performance-test`, `/debug-freeze`, `/connection-test`.
 - Administrativas: `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/inventory`, `/reports`, `/suppliers`, `/daily-report`, etc.
-- Admin-only: `/operators`, `/service-types`, `/service-rates`, `/vehicles`, `/commissions`, `/cost-centers`, `/settings`, `/quick-entries`, `/backup`.
+- Admin-only: `/operators`, `/vehicles`, `/commissions`, `/settings`, `/quick-entries`, `/backup`.
+- Redirecciones administrativas retrocompatibles: `/service-types` → `/settings#service-types`, `/service-rates` → `/settings#service-rates` y `/cost-centers` → `/settings#cost-centers`.
 - Operador: `/operator` (index), `/operator/service/:id/inspection`.
 - Portal: `/portal/*` (`dashboard`, `services`, `request-service`, `invoices`).
 - Referencia: [Routes](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/App.tsx#L136-L208).

@@ -188,17 +188,17 @@ export const manualChapters: ManualChapter[] = [
       {
         id: 'cap7-1',
         title: 'Tipos de Servicio',
-        content: `Catálogo de categorías operativas disponibles al crear un servicio.\n\nCrear: botón "Nuevo Tipo" → nombre, descripción opcional y categoría → guardar.\n\nDesactivar: clic en el ícono de estado en la fila. El tipo queda inactivo y no aparece en el formulario de servicios, pero sus registros históricos se mantienen.\n\nAcceso: menú lateral → Tipos de Servicio.`,
+        content: `Catálogo de categorías operativas disponibles al crear un servicio.\n\nCrear: botón "Nuevo Tipo" → nombre, descripción opcional y categoría → guardar.\n\nDesactivar: clic en el ícono de estado en la fila. El tipo queda inactivo y no aparece en el formulario de servicios, pero sus registros históricos se mantienen.\n\nAcceso: Configuración → Catálogos y costos → Tipos de servicio.`,
       },
       {
         id: 'cap7-2',
         title: 'Tarifas',
-        content: `Pre-configura el precio de un tipo de servicio para un cliente y ruta específicos. Cuando se crea un servicio con esa combinación, el precio se completa automáticamente.\n\nCrear: botón "Nueva Tarifa" → seleccionar cliente, tipo de servicio, origen, destino y monto → guardar.\n\nLas tarifas pueden activarse o desactivarse individualmente. El precio pre-rellenado puede modificarse manualmente en el formulario de servicio.\n\nAcceso: menú lateral → Tarifas.`,
+        content: `Pre-configura el precio de un tipo de servicio para un cliente y ruta específicos. Cuando se crea un servicio con esa combinación, el precio se completa automáticamente.\n\nCrear: botón "Nueva Tarifa" → seleccionar cliente, tipo de servicio, origen, destino y monto → guardar.\n\nLas tarifas pueden activarse o desactivarse individualmente. El precio pre-rellenado puede modificarse manualmente en el formulario de servicio.\n\nAcceso: Configuración → Catálogos y costos → Tarifas de servicio.`,
       },
       {
         id: 'cap7-3',
         title: 'Centros de Costo',
-        content: `Organiza los gastos en grupos jerárquicos con presupuesto asignable por período.\n\nEstructura jerárquica: árbol de centros con sub-centros expandibles/colapsables.\n\nCentros fijos del sistema (no eliminables): OPER, MANT, SEG, SAL, ADM, IMP.\n\nSemáforo de presupuesto: verde (bajo 80%), amarillo (80–100%), rojo (sobre 100%). Clic en una fila navega al módulo de Costos filtrado por ese centro.\n\nManual de costos: botón que genera PDF con la estructura completa de centros, categorías y subcategorías.\n\nAcceso: menú lateral → Centros de Costo.`,
+        content: `Organiza los gastos en grupos jerárquicos con presupuesto asignable por período.\n\nEstructura jerárquica: árbol de centros con sub-centros expandibles/colapsables.\n\nCentros fijos del sistema (no eliminables): OPER, MANT, SEG, SAL, ADM, IMP.\n\nSemáforo de presupuesto: verde (bajo 80%), amarillo (80–100%), rojo (sobre 100%). Clic en una fila navega al módulo de Costos filtrado por ese centro.\n\nManual de costos: botón que genera PDF con la estructura completa de centros, categorías y subcategorías.\n\nAcceso: Configuración → Catálogos y costos → Centros de costo.`,
       },
       {
         id: 'cap7-4',
