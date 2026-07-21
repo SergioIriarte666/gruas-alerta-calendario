@@ -23,6 +23,7 @@ import {
   buildHistoricalGlosaSuggestion,
   getDocumentStateKey,
 } from '@/utils/xml/xmlGlosaHelpers';
+import { computeSelectedTotal } from '@/utils/xml/xmlInventoryHelpers';
 
 const logger = createLogger('useXmlCostUpload');
 
@@ -56,6 +57,9 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
   const [historicalGlosaSuggestions, setHistoricalGlosaSuggestions] = useState<Record<string, HistoricalGlosaSuggestion>>({});
   const [craneIdByDocument, setCraneIdByDocument] = useState<Record<string, string | null>>({});
   const [paidByDocument, setPaidByDocument] = useState<Record<string, EntityKey>>({});
+  // Índices de líneas del DTE incluidas en cada gasto. Ausente = todas seleccionadas
+  // (default), preservando el comportamiento actual de "1 gasto = total del documento".
+  const [selectedLineIndices, setSelectedLineIndices] = useState<Record<string, Set<number>>>({});
 
   const batchProgress = useBatchProgress();
   const { mutate: addCost } = useAddCost();
@@ -88,7 +92,65 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const getSupplierCondition = (rut: string) => supplierPaymentCondition[rut] ?? 'none';
 
-  const buildSuggestedGlosa = buildCompactXmlDescription;
+  // --- Selección de líneas del DTE (subconjunto de ítems por gasto) ---
+  const getDocItems = (doc: XMLDocumentData) => doc.items ?? [];
+
+  const getSelectedLineSet = (doc: XMLDocumentData): Set<number> => {
+    const stored = selectedLineIndices[getDocumentStateKey(doc)];
+    if (stored) return stored;
+    // Default: todas las líneas seleccionadas.
+    return new Set(getDocItems(doc).map((_, index) => index));
+  };
+
+  const getSelectedLineCount = (doc: XMLDocumentData) => {
+    const items = getDocItems(doc);
+    if (items.length === 0) return 0;
+    const stored = selectedLineIndices[getDocumentStateKey(doc)];
+    return stored ? stored.size : items.length;
+  };
+
+  // Documentos sin líneas de detalle no admiten selección parcial: se tratan como
+  // "todas seleccionadas" y usan el total del documento (sin regresión).
+  const hasSelectedLines = (doc: XMLDocumentData) => {
+    if (getDocItems(doc).length === 0) return true;
+    return getSelectedLineCount(doc) > 0;
+  };
+
+  const isLineSelected = (doc: XMLDocumentData, index: number) => getSelectedLineSet(doc).has(index);
+
+  const getDocumentAmount = (doc: XMLDocumentData) =>
+    computeSelectedTotal(getDocItems(doc), getSelectedLineSet(doc), doc.total_amount);
+
+  const toggleLineSelection = (doc: XMLDocumentData, index: number) => {
+    const key = getDocumentStateKey(doc);
+    setSelectedLineIndices(prev => {
+      const current = prev[key] ?? new Set(getDocItems(doc).map((_, i) => i));
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return { ...prev, [key]: next };
+    });
+  };
+
+  const toggleAllLines = (doc: XMLDocumentData, selectAll: boolean) => {
+    const key = getDocumentStateKey(doc);
+    setSelectedLineIndices(prev => ({
+      ...prev,
+      [key]: selectAll ? new Set(getDocItems(doc).map((_, i) => i)) : new Set<number>(),
+    }));
+  };
+
+  // La glosa sugerida se regenera solo con las líneas seleccionadas; con todas
+  // seleccionadas el resultado es idéntico al comportamiento actual.
+  const buildSuggestedGlosa = (doc: XMLDocumentData) => {
+    const items = getDocItems(doc);
+    if (items.length === 0) return buildCompactXmlDescription(doc);
+    const selected = getSelectedLineSet(doc);
+    const selectedItems = items.filter((_, index) => selected.has(index));
+    // 0 seleccionadas → estado inválido transitorio: mostramos la glosa completa.
+    if (selectedItems.length === 0) return buildCompactXmlDescription(doc);
+    return buildCompactXmlDescription({ ...doc, items: selectedItems });
+  };
 
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
     const key = getDocumentStateKey(doc);
@@ -395,7 +457,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       return;
     }
 
-    const docsToImport = parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut));
+    const docsToImport = parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut) && hasSelectedLines(d));
     if (docsToImport.length === 0) { toast.error('No hay documentos seleccionados para importar'); return; }
 
     const selectedSupplierRuts = Array.from(new Set(docsToImport.map(d => d.supplier_rut)));
@@ -486,7 +548,17 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       for (let i = 0; i < docsToImport.length; i++) {
         const doc = docsToImport[i];
         const documentKey = getDocumentStateKey(doc);
-        const effectiveGlosa = getEffectiveGlosa(doc);
+        // Monto y glosa se calculan solo con las líneas seleccionadas del DTE.
+        const docItems = doc.items ?? [];
+        const selectedLineCount = getSelectedLineCount(doc);
+        const isPartialSelection = docItems.length > 0 && selectedLineCount > 0 && selectedLineCount < docItems.length;
+        const recalculatedAmount = getDocumentAmount(doc);
+        const amountFactor = doc.total_amount > 0 ? recalculatedAmount / doc.total_amount : 1;
+        const baseGlosa = getEffectiveGlosa(doc);
+        // Sufijo de trazabilidad contra el DTE completo solo cuando la selección es parcial.
+        const effectiveGlosa = isPartialSelection
+          ? `${baseGlosa} (${selectedLineCount} de ${docItems.length} ítems del doc ${doc.folio || 's/folio'})`
+          : baseGlosa;
         batchProgress.update(i + 1, `${doc.folio} - ${effectiveGlosa.substring(0, 30)}`);
         let createdCostId: string | null = null;
 
@@ -506,7 +578,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
               continue;
             }
             const computedDueDate = getComputedDueDate(doc) || emissionDate;
-            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: doc.total_amount, netAmount: doc.net_amount, taxAmount: doc.vat_amount, description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' } });
+            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: recalculatedAmount, netAmount: Math.round(doc.net_amount * amountFactor), taxAmount: Math.round(doc.vat_amount * amountFactor), description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' } });
             successCount++;
             continue;
           }
@@ -516,7 +588,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           // Salvaguarda: "Peajes" nunca para montos > $1.000.000 (ej. compra de semiremolque
           // mal categorizada por la palabra "carretera" en el giro del emisor).
           const resolvedCategoryName = activeCategories.find(c => c.id === categoryId)?.name?.toLowerCase();
-          if (resolvedCategoryName === 'peajes' && doc.total_amount > 1_000_000) {
+          if (resolvedCategoryName === 'peajes' && recalculatedAmount > 1_000_000) {
             const otrosId = resolveCategoryId('otros') || activeCategories.find(c => c.name.toLowerCase() === 'otros')?.id;
             if (otrosId) categoryId = otrosId;
           }
@@ -548,7 +620,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           const costData: CostFormData = {
             date: emissionDate,
             description: effectiveGlosa,
-            amount: doc.total_amount,
+            amount: recalculatedAmount,
             category_id: categoryId,
             subcategory: subcatName,
             notes: [
@@ -567,7 +639,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
             dte_rut_emisor: doc.supplier_rut || null,
             ...(effectiveSyncToInventory && {
               purchase_quantity: 1,
-              purchase_unit_cost: doc.total_amount,
+              purchase_unit_cost: recalculatedAmount,
               immediate_consumption: isLowboyImmediateConsumption,
             }),
           };
@@ -596,14 +668,14 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                         costId: costRecord.id,
                         itemName: effectiveGlosa,
                         quantity: 1,
-                        unitCost: doc.total_amount,
+                        unitCost: recalculatedAmount,
                         date: emissionDate,
                         craneId: lowboyCraneId!,
                         supplierId,
                         entity: docEntity,
                       });
                     } else {
-                      await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: doc.total_amount, date: emissionDate, supplierId, entity: docEntity });
+                      await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: recalculatedAmount, date: emissionDate, supplierId, entity: docEntity });
                     }
                   }
                   catch (invErr) { logger.warn('[useXmlCostUpload] Inventory sync failed for cost:', costRecord.id, invErr); }
@@ -661,6 +733,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       setSelectedDocuments(new Set());
       setExpandedDocumentDetails({});
       setHistoricalGlosaSuggestions({});
+      setSelectedLineIndices({});
     },
     onParsed: initAfterParse,
   });
@@ -723,11 +796,15 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setSyncToInventory(false);
     setCraneIdByDocument({});
     setPaidByDocument({});
+    setSelectedLineIndices({});
   };
 
-  const selectedTotal = parseResult
-    ? parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d))).reduce((sum, d) => sum + d.total_amount, 0)
-    : 0;
+  // Documentos realmente cargables: seleccionados y con al menos una línea del DTE.
+  const uploadableDocuments = parseResult
+    ? parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && hasSelectedLines(d))
+    : [];
+  const uploadableCount = uploadableDocuments.length;
+  const selectedTotal = uploadableDocuments.reduce((sum, d) => sum + getDocumentAmount(d), 0);
 
   return {
     // Parsing
@@ -737,7 +814,10 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     // Status
     isCheckingDuplicates, isSearchingMatches, showDuplicateWarning, setShowDuplicateWarning,
     // Selections
-    selectedSuppliers, selectedDocuments, selectedTotal,
+    selectedSuppliers, selectedDocuments, selectedTotal, uploadableCount,
+    // Selección de líneas del DTE (subconjunto de ítems por gasto)
+    getSelectedLineSet, getSelectedLineCount, hasSelectedLines, isLineSelected,
+    getDocumentAmount, toggleLineSelection, toggleAllLines,
     // Per-item state
     supplierCategoryMapping, supplierSubcategoryMapping,
     supplierPaymentCondition, setSupplierPaymentCondition,

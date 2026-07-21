@@ -54,6 +54,38 @@ export const computeLineTotal = (line: XMLDocumentItem) => {
   return computeLineSubtotal(line) + computeLineTaxAmount(line);
 };
 
+/**
+ * Monto de un gasto cuando se selecciona un subconjunto de líneas del DTE.
+ *
+ * Aritmética verificada contra el parser (xmlSupplierParser): cada línea guarda
+ * `MontoItem` como NETO (`subtotal`) y el IVA se aplica por línea según `IndExe`
+ * (`tax_amount`, 19% salvo exentas). Por eso `computeLineTotal` ya devuelve el
+ * BRUTO por línea y la suma de los brutos de todas las líneas coincide con el
+ * `MntTotal` del documento (`total_amount`). Esto cubre ambos escenarios sin
+ * ramas especiales: documentos afectos (IVA repartido por línea, respetando
+ * líneas exentas mezcladas) y documentos exentos (tax_rate 0 → bruto = neto,
+ * suma directa de MontoItem == total).
+ *
+ * - Todas las líneas seleccionadas → se retorna `docTotal` exacto, evitando
+ *   drift de redondeo por línea frente a `MntTotal` (sin regresión con el
+ *   comportamiento actual: 1 gasto = total del documento).
+ * - Subconjunto → suma de los brutos por línea (cada uno redondeado a peso, para
+ *   que el total cuadre exactamente con lo que muestra la tabla de detalle).
+ */
+export const computeSelectedTotal = (
+  items: XMLDocumentItem[] | undefined,
+  selectedIndices: Set<number>,
+  docTotal: number,
+): number => {
+  if (!items || items.length === 0) return docTotal;
+  const allSelected = items.every((_, index) => selectedIndices.has(index));
+  if (allSelected) return docTotal;
+  return items.reduce(
+    (sum, item, index) => (selectedIndices.has(index) ? sum + Math.round(computeLineTotal(item)) : sum),
+    0,
+  );
+};
+
 export const buildProductDescription = (doc: XMLDocumentData) => {
   const base = (doc.items || [])
     .slice(0, 8)

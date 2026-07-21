@@ -31,7 +31,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive, triggerAnalyze,
     isUploading, uploadProgress,
     isCheckingDuplicates, isSearchingMatches, showDuplicateWarning, setShowDuplicateWarning,
-    selectedSuppliers, selectedDocuments, selectedTotal,
+    selectedSuppliers, selectedDocuments, selectedTotal, uploadableCount,
+    getSelectedLineSet, getSelectedLineCount, hasSelectedLines, getDocumentAmount, toggleLineSelection, toggleAllLines,
     supplierCategoryMapping, supplierSubcategoryMapping,
     supplierPaymentCondition: _supplierPaymentCondition, setSupplierPaymentCondition,
     supplierCreditDate, setSupplierCreditDate,
@@ -46,7 +47,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     syncToInventory, setSyncToInventory,
     defaultDaysToAdd,
     activeCategories, paymentTerms, loadingTerms, batchProgress,
-    getSupplierCondition, getEffectiveGlosa, getDuplicateInfoForDocument,
+    getSupplierCondition, getDuplicateInfoForDocument,
     buildSuggestedGlosa, applyConditionToSupplierDocuments, resolveCategoryId,
     handleUploadCosts, reset,
     handleCategoryChange, handleSubcategoryChange,
@@ -277,7 +278,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             descriptionValue={Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey) ? documentDescriptionOverrides[documentKey] : buildSuggestedGlosa(document)}
                             onDescriptionChange={val => setDocumentDescriptionOverrides(prev => ({ ...prev, [documentKey]: val }))}
                             historicalSuggestion={historicalGlosaSuggestions[documentKey]}
-                            effectiveGlosa={getEffectiveGlosa(document)}
                             paymentCondition={getSupplierCondition(document.supplier_rut)}
                             creditDate={supplierCreditDate[document.supplier_rut] || ''}
                             onPaymentConditionChange={val => setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }))}
@@ -289,6 +289,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             paymentTerms={paymentTerms}
                             loadingTerms={loadingTerms}
                             applyCondition={applyConditionToSupplierDocuments}
+                            documentAmount={getDocumentAmount(document)}
+                            selectedLineSet={getSelectedLineSet(document)}
+                            selectedLineCount={getSelectedLineCount(document)}
+                            hasSelectedLines={hasSelectedLines(document)}
+                            onToggleLine={index => toggleLineSelection(document, index)}
+                            onToggleAllLines={selectAll => toggleAllLines(document, selectAll)}
                           />
                         );
                       })}
@@ -301,13 +307,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               <div className="sticky bottom-0 z-10 -mx-3 flex flex-col gap-4 border-t border-border/70 bg-card/95 px-3 py-4 shadow-lg backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="text-sm text-muted-foreground">
-                  {selectedDocuments.size > 0 && <div className="space-y-1"><span className="block">{selectedDocuments.size} documento(s) seleccionados</span><span className="block">Total seleccionado: ${selectedTotal.toLocaleString('es-CL')}</span></div>}
+                  {uploadableCount > 0 && <div className="space-y-1"><span className="block">{uploadableCount} documento(s) seleccionados</span><span className="block">Total seleccionado: ${selectedTotal.toLocaleString('es-CL')}</span></div>}
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
                   <Button variant="outline" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
-                  <Button onClick={handleUploadCosts} disabled={isUploading || selectedDocuments.size === 0}>
+                  <Button onClick={handleUploadCosts} disabled={isUploading || uploadableCount === 0}>
                     {isUploading ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Database className="size-4 mr-2" />}
-                    Confirmar carga{selectedDocuments.size > 0 && ` (${selectedDocuments.size})`}
+                    Confirmar carga{uploadableCount > 0 && ` (${uploadableCount})`}
                   </Button>
                 </div>
               </div>
