@@ -24,6 +24,11 @@ const TOWING_METERS = 500;
 // Multidestino: radio para marcar una parada como alcanzada (sticky via
 // reached_at, mismo patron que on_site_reached_at).
 const STOP_GEOFENCE_METERS = 300;
+// Guard de "armado": una parada solo puede marcarse si el movil estuvo antes
+// a mas de esta distancia (armed_at sticky). Evita marcar paradas al crear el
+// servicio con el movil ya dentro del geofence. Espejo del trigger
+// mark_reached_service_stops.
+const STOP_ARMING_METERS = 1000;
 const ETA_CACHE_MS = 60 * 1000;
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
@@ -41,15 +46,18 @@ type ServiceStop = {
   lng: number | null;
   stop_type: "pickup" | "dropoff" | "waypoint" | "final";
   reached_at: string | null;
+  armed_at: string | null;
 };
 
-// Shape publico de cada parada: sin notes ni ids internos.
+// Shape publico de cada parada: sin notes ni ids internos. Una parada sin
+// coordenadas no participa del motor (no se geofencea ni se rutea): su
+// "reached" es null = no verificable, nunca true/false.
 const toPublicStop = (stop: ServiceStop) => ({
   label: stop.label,
   lat: stop.lat,
   lng: stop.lng,
   stop_type: stop.stop_type,
-  reached: stop.reached_at !== null,
+  reached: stop.lat != null && stop.lng != null ? stop.reached_at !== null : null,
   order: stop.stop_order,
 });
 
@@ -228,11 +236,19 @@ Deno.serve(async (req: Request) => {
   // Paradas del servicio multidestino. Sin paradas -> flujo original intacto.
   const { data: stopRows } = await supabase
     .from("service_stops")
-    .select("id, stop_order, label, lat, lng, stop_type, reached_at")
+    .select("id, stop_order, label, lat, lng, stop_type, reached_at, armed_at")
     .eq("service_id", link.service_id)
     .order("stop_order", { ascending: true });
   const stops: ServiceStop[] = (stopRows as ServiceStop[] | null) ?? [];
   const hasStops = stops.length > 0;
+
+  // Solo las paradas CON coordenadas participan del motor (geofence, ETA,
+  // journey_stage). Una parada sin lat/lng se lista pero jamas bloquea ni
+  // completa el viaje: si ninguna es navegable, el motor cae al modo legacy
+  // (ETA al origen, on_site/towing) y NUNCA reporta "arrived" por esa via
+  // (bug SRV-6853: "sin destino navegable" se confundia con "viaje terminado").
+  const engineStops = stops.filter((s) => s.lat != null && s.lng != null);
+  const hasNavigableStops = engineStops.length > 0;
 
   // Proxima parada objetivo: primera no alcanzada con coordenadas (una parada
   // sin lat/lng no puede ser geofenceada ni ruteada, se salta).
@@ -323,13 +339,39 @@ Deno.serve(async (req: Request) => {
   let journeyStage: "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived" = "en_route";
   let nextStop: ServiceStop | null = null;
 
-  if (hasStops) {
+  if (hasNavigableStops) {
+    // Armado (espejo del trigger mark_reached_service_stops, sticky): una
+    // parada pendiente se arma cuando el movil esta a mas de 1 km de ella.
+    const toArm = engineStops.filter(
+      (s) =>
+        s.reached_at === null &&
+        s.armed_at === null &&
+        haversineMeters(point.latitude, point.longitude, s.lat as number, s.lng as number) > STOP_ARMING_METERS,
+    );
+    if (toArm.length > 0) {
+      const armedAt = new Date().toISOString();
+      toArm.forEach((s) => {
+        s.armed_at = armedAt;
+      });
+      try {
+        await supabase
+          .from("service_stops")
+          .update({ armed_at: armedAt })
+          .in("id", toArm.map((s) => s.id));
+      } catch {
+        // no-op: el armado es un hito, nunca debe romper el seguimiento publico
+      }
+    }
+
     // Geofence por parada: si el ultimo punto GPS quedo dentro del radio de la
-    // proxima parada, se marca alcanzada (sticky, error swallowed) y el
+    // proxima parada ARMADA, se marca alcanzada (sticky, error swallowed) y el
     // objetivo avanza. Loop por si varias paradas caen dentro del mismo radio.
+    // Una parada sin armar dentro del radio NO se marca: primero hay que
+    // haber estado lejos de ella (viaje real).
     nextStop = findNextStop();
     while (
       nextStop &&
+      nextStop.armed_at !== null &&
       haversineMeters(point.latitude, point.longitude, nextStop.lat as number, nextStop.lng as number) < STOP_GEOFENCE_METERS
     ) {
       nextStop.reached_at = new Date().toISOString();
@@ -345,11 +387,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!nextStop) {
-      // Todas alcanzadas: "arrived" sin cortar el tracking — el link sigue
-      // vivo hasta que el servicio salga de ACTIVE_TRACKING_STATUSES.
+      // Todas las paradas NAVEGABLES alcanzadas: "arrived" sin cortar el
+      // tracking — el link sigue vivo hasta que el servicio salga de
+      // ACTIVE_TRACKING_STATUSES. Las paradas sin coordenadas no cuentan.
       journeyStage = "arrived";
     } else {
-      const pending = stops.filter((s) => s.reached_at === null);
+      const pending = engineStops.filter((s) => s.reached_at === null);
       journeyStage = pending.every((s) => s.stop_type === "final") ? "last_leg" : "en_route";
     }
   } else {
@@ -381,16 +424,16 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // Destino del ETA: la proxima parada pendiente (multidestino) o el origen
-  // del servicio (flujo original de rescate).
-  const etaTarget = hasStops
+  // Destino del ETA: la proxima parada NAVEGABLE pendiente (multidestino) o
+  // el origen del servicio (flujo original y paradas sin coordenadas).
+  const etaTarget = hasNavigableStops
     ? nextStop
       ? { lat: nextStop.lat as number, lng: nextStop.lng as number }
       : null
     : hasOrigin
       ? { lat: origin.lat as number, lng: origin.lng as number }
       : null;
-  const etaTargetStopId = hasStops ? (nextStop?.id ?? null) : null;
+  const etaTargetStopId = hasNavigableStops ? (nextStop?.id ?? null) : null;
 
   let eta: Eta = null;
   // true cuando el destino existe pero Google no puede rutear la zona (p. ej.

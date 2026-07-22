@@ -195,42 +195,124 @@ const createOriginMarkerElement = () => {
 
 const STOP_MARKER_SIZE = 26;
 
+// Bandera de meta (lucide Flag) para la parada stop_type 'final'.
+const FLAG_ICON_PATHS = `
+  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+  <line x1="4" x2="4" y1="22" y2="15" />
+`;
+
 // Marcador numerado de parada (multidestino). Elemento DOM crudo, igual que
-// el resto de los marcadores de Mapbox.
+// el resto de los marcadores de Mapbox: circulo con número/check + anillo de
+// pulso (solo la próxima) + bandera para la parada final + label en
+// hover (desktop) o tap (móvil).
 const createStopMarkerElement = () => {
-  const el = document.createElement('div');
-  el.style.width = `${STOP_MARKER_SIZE}px`;
-  el.style.height = `${STOP_MARKER_SIZE}px`;
-  el.style.borderRadius = '9999px';
-  el.style.display = 'flex';
-  el.style.alignItems = 'center';
-  el.style.justifyContent = 'center';
-  el.style.fontSize = '12px';
-  el.style.fontWeight = '700';
-  el.style.border = '2px solid hsl(var(--signature-surface))';
-  el.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.3)';
-  return el;
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.width = `${STOP_MARKER_SIZE}px`;
+  wrapper.style.height = `${STOP_MARKER_SIZE}px`;
+  wrapper.style.cursor = 'pointer';
+
+  const ring = document.createElement('div');
+  ring.style.position = 'absolute';
+  ring.style.inset = '0';
+  ring.style.borderRadius = '9999px';
+
+  const circle = document.createElement('div');
+  circle.style.position = 'absolute';
+  circle.style.inset = '0';
+  circle.style.borderRadius = '9999px';
+  circle.style.display = 'flex';
+  circle.style.alignItems = 'center';
+  circle.style.justifyContent = 'center';
+  circle.style.fontSize = '12px';
+  circle.style.fontWeight = '700';
+  circle.style.border = '2px solid hsl(var(--signature-surface))';
+  circle.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.3)';
+
+  const flag = document.createElement('div');
+  flag.style.position = 'absolute';
+  flag.style.top = '-8px';
+  flag.style.right = '-8px';
+  flag.style.width = '16px';
+  flag.style.height = '16px';
+  flag.style.borderRadius = '9999px';
+  flag.style.backgroundColor = 'hsl(var(--signature-surface))';
+  flag.style.boxShadow = '0 1px 3px hsl(var(--overlay) / 0.3)';
+  flag.style.display = 'none';
+  flag.style.alignItems = 'center';
+  flag.style.justifyContent = 'center';
+  flag.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--signature-ink))" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${FLAG_ICON_PATHS}</svg>`;
+
+  const label = document.createElement('div');
+  label.style.position = 'absolute';
+  label.style.top = `${STOP_MARKER_SIZE + 6}px`;
+  label.style.left = '50%';
+  label.style.transform = 'translateX(-50%)';
+  label.style.display = 'none';
+  label.style.whiteSpace = 'nowrap';
+  label.style.backgroundColor = 'hsl(var(--signature-surface))';
+  label.style.borderRadius = '9999px';
+  label.style.padding = '2px 8px';
+  label.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.25)';
+  label.style.fontSize = '11px';
+  label.style.fontWeight = '600';
+  label.style.color = 'hsl(var(--signature-ink))';
+  label.style.pointerEvents = 'none';
+
+  // hover en desktop, tap (click) en móvil; el click no debe llegar al mapa.
+  wrapper.addEventListener('mouseenter', () => {
+    label.style.display = 'block';
+  });
+  wrapper.addEventListener('mouseleave', () => {
+    label.style.display = 'none';
+  });
+  wrapper.addEventListener('click', (event) => {
+    event.stopPropagation();
+    label.style.display = label.style.display === 'block' ? 'none' : 'block';
+  });
+
+  wrapper.appendChild(ring);
+  wrapper.appendChild(circle);
+  wrapper.appendChild(flag);
+  wrapper.appendChild(label);
+
+  return { wrapper, ring, circle, flag, label };
 };
 
-// Alcanzada: atenuada con check. Próxima: destacada en color primario.
-// Pendiente: neutra con el número de orden.
-const updateStopMarkerElement = (el: HTMLDivElement, stop: TrackingStop, isNext: boolean) => {
+// Alcanzada: atenuada con check. Próxima (next_stop): destacada en color
+// primario con pulso coherente con el del móvil. Futuras: estilo neutro.
+// visualNumber = orden 1..n SOLO entre paradas con coordenadas.
+const updateStopMarkerElement = (
+  refs: ReturnType<typeof createStopMarkerElement>,
+  stop: TrackingStop,
+  isNext: boolean,
+  visualNumber: number,
+) => {
+  const { ring, circle, flag, label } = refs;
+
   if (stop.reached) {
-    el.style.backgroundColor = 'hsl(var(--muted-foreground))';
-    el.style.color = 'hsl(var(--signature-surface))';
-    el.style.opacity = '0.55';
-    el.textContent = '✓';
+    circle.style.backgroundColor = 'hsl(var(--muted-foreground))';
+    circle.style.color = 'hsl(var(--signature-surface))';
+    circle.style.opacity = '0.55';
+    circle.textContent = '✓';
   } else if (isNext) {
-    el.style.backgroundColor = 'hsl(var(--primary))';
-    el.style.color = 'hsl(var(--signature-surface))';
-    el.style.opacity = '1';
-    el.textContent = String(stop.order);
+    circle.style.backgroundColor = 'hsl(var(--primary))';
+    circle.style.color = 'hsl(var(--signature-surface))';
+    circle.style.opacity = '1';
+    circle.textContent = String(visualNumber);
   } else {
-    el.style.backgroundColor = 'hsl(var(--signature-surface))';
-    el.style.color = 'hsl(var(--signature-ink))';
-    el.style.opacity = '1';
-    el.textContent = String(stop.order);
+    circle.style.backgroundColor = 'hsl(var(--signature-surface))';
+    circle.style.color = 'hsl(var(--signature-ink))';
+    circle.style.opacity = '1';
+    circle.textContent = String(visualNumber);
   }
+
+  const animate = isNext && !stop.reached && !prefersReducedMotion();
+  ring.style.backgroundColor = animate ? 'hsl(var(--primary))' : 'transparent';
+  ring.style.animation = animate ? 'tm-pulse-ring 2s ease-out infinite' : 'none';
+
+  flag.style.display = stop.stop_type === 'final' ? 'flex' : 'none';
+  label.textContent = stop.label;
 };
 
 const haversineDistanceKm = (a: [number, number], b: [number, number]): number => {
@@ -382,11 +464,24 @@ const JourneyStepper = ({ stage }: { stage: JourneyStage }) => {
 
 // Variante del stepper para servicios multidestino: un punto por parada,
 // alcanzadas atenuadas, la próxima con pulso; el label muestra la parada
-// objetivo (o el cierre del recorrido).
-const StopsStepper = ({ stops, nextStopOrder }: { stops: TrackingStop[]; nextStopOrder: number | null }) => {
-  const currentLabel = nextStopOrder !== null
-    ? stops.find((stop) => stop.order === nextStopOrder)?.label ?? 'En ruta'
-    : 'Recorrido completado';
+// objetivo. "Recorrido completado" SOLO llega vía `completed` (journey_stage
+// arrived en estado activo): sin próxima parada por otra razón (waiting,
+// paradas sin coordenadas) se muestra la fase preparatoria — nunca inferir
+// "completado" desde la ausencia de next_stop (bug SRV-6853).
+const StopsStepper = ({
+  stops,
+  nextStopOrder,
+  completed,
+}: {
+  stops: TrackingStop[];
+  nextStopOrder: number | null;
+  completed: boolean;
+}) => {
+  const currentLabel = completed
+    ? 'Recorrido completado'
+    : nextStopOrder !== null
+      ? stops.find((stop) => stop.order === nextStopOrder)?.label ?? 'En ruta'
+      : 'Preparando el recorrido';
 
   return (
     <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card/95 px-3.5 py-2 shadow-md backdrop-blur-md">
@@ -422,7 +517,8 @@ interface TrackingStop {
   lat: number | null;
   lng: number | null;
   stop_type: 'pickup' | 'dropoff' | 'waypoint' | 'final';
-  reached: boolean;
+  /** null = parada sin coordenadas: no verificable, no participa del motor. */
+  reached: boolean | null;
   order: number;
 }
 
@@ -530,8 +626,14 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   const craneElRefs = useRef<ReturnType<typeof createCraneMarkerElement> | null>(null);
   const originMarkerRef = useRef<import('mapbox-gl').Marker | null>(null);
   const originElRefs = useRef<ReturnType<typeof createOriginMarkerElement> | null>(null);
-  // Marcadores de paradas (multidestino), indexados por stop_order.
-  const stopMarkersRef = useRef<Map<number, { marker: import('mapbox-gl').Marker; el: HTMLDivElement }>>(new Map());
+  // Marcadores de paradas (multidestino), indexados por stop_order. Se crean
+  // una vez y se MUTAN en cada poll (check de alcanzadas, cambio de destacada)
+  // sin recrearlos.
+  const stopMarkersRef = useRef<Map<number, { marker: import('mapbox-gl').Marker; refs: ReturnType<typeof createStopMarkerElement> }>>(new Map());
+  // Encuadre: solo se recalcula cuando cambia la parada objetivo (o aparece la
+  // primera posición del móvil), no en cada poll — no pelear con el usuario
+  // que movió el mapa a mano.
+  const lastFitKeyRef = useRef<string | null>(null);
   const [mapboxReady, setMapboxReady] = useState(false);
   const [styleLoaded, setStyleLoaded] = useState(false);
 
@@ -684,51 +786,63 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     }
 
     // Marcadores numerados de paradas: alcanzadas atenuadas con check, la
-    // próxima destacada. Se actualizan en cada poll (reached avanza solo).
+    // próxima destacada con pulso. Las paradas SIN coordenadas no van al mapa;
+    // la numeración visual es 1..n entre las que sí tienen, en su orden real.
+    // Los marcadores se crean una vez y se mutan en cada poll.
     const nextStopOrder = data.next_stop?.order ?? null;
-    for (const stop of stops) {
-      if (stop.lat == null || stop.lng == null) continue;
+    const coordStops = stops.filter((stop) => stop.lat != null && stop.lng != null);
+    coordStops.forEach((stop, index) => {
       let entry = stopMarkersRef.current.get(stop.order);
       if (!entry) {
-        const el = createStopMarkerElement();
-        const marker = new mapboxgl.default.Marker({ element: el, anchor: 'center' })
-          .setLngLat([stop.lng, stop.lat])
+        const refs = createStopMarkerElement();
+        const marker = new mapboxgl.default.Marker({ element: refs.wrapper, anchor: 'center' })
+          .setLngLat([stop.lng as number, stop.lat as number])
           .addTo(map);
-        entry = { marker, el };
+        entry = { marker, refs };
         stopMarkersRef.current.set(stop.order, entry);
       } else {
-        entry.marker.setLngLat([stop.lng, stop.lat]);
+        entry.marker.setLngLat([stop.lng as number, stop.lat as number]);
       }
-      updateStopMarkerElement(entry.el, stop, stop.order === nextStopOrder);
-    }
+      updateStopMarkerElement(entry.refs, stop, stop.order === nextStopOrder, index + 1);
+    });
 
     try {
       // Encuadre: posición del móvil + paradas pendientes (multidestino) o
       // posición + origen (flujo original). padding extra abajo/arriba: el
       // bottom sheet y el header flotantes tapan parte del mapa en mobile.
-      const boundsCoords: [number, number][] = [];
-      if (craneCoords) boundsCoords.push(craneCoords);
-      if (hasStops) {
-        for (const stop of stops) {
-          if (!stop.reached && stop.lat != null && stop.lng != null) {
-            boundsCoords.push([stop.lng, stop.lat]);
-          }
-        }
-      } else if (originCoords) {
-        boundsCoords.push(originCoords);
-      }
+      // Con paradas, el encuadre SOLO se recalcula cuando cambia la parada
+      // objetivo o aparece la primera posición del móvil — nunca en cada
+      // poll, para no pelear con un usuario que movió el mapa a mano.
+      const fitKey = hasStops ? `stops:${nextStopOrder ?? 'done'}:${craneCoords ? 'pos' : 'nopos'}` : null;
+      const shouldFit = hasStops ? lastFitKeyRef.current !== fitKey : true;
 
-      if (boundsCoords.length > 1) {
-        map.fitBounds(
-          boundsCoords.reduce(
-            (bounds, coord) => bounds.extend(coord),
-            new mapboxgl.default.LngLatBounds(boundsCoords[0], boundsCoords[0]),
-          ),
-          { padding: { top: 140, bottom: 260, left: 40, right: 40 }, maxZoom: 15, duration: 0 },
-        );
-      } else if (boundsCoords.length === 1) {
-        // Sin segundo punto (waiting o recorrido completo): centrar en lo que haya.
-        map.jumpTo({ center: boundsCoords[0], zoom: DEFAULT_ZOOM });
+      if (shouldFit) {
+        const boundsCoords: [number, number][] = [];
+        if (craneCoords) boundsCoords.push(craneCoords);
+        if (hasStops) {
+          for (const stop of coordStops) {
+            if (!stop.reached) {
+              boundsCoords.push([stop.lng as number, stop.lat as number]);
+            }
+          }
+        } else if (originCoords) {
+          boundsCoords.push(originCoords);
+        }
+
+        if (boundsCoords.length > 1) {
+          map.fitBounds(
+            boundsCoords.reduce(
+              (bounds, coord) => bounds.extend(coord),
+              new mapboxgl.default.LngLatBounds(boundsCoords[0], boundsCoords[0]),
+            ),
+            { padding: { top: 150, bottom: 270, left: 48, right: 48 }, maxZoom: 15, duration: 0 },
+          );
+          lastFitKeyRef.current = fitKey;
+        } else if (boundsCoords.length === 1) {
+          // Sin segundo punto (waiting o recorrido completo): centrar en lo que haya.
+          map.jumpTo({ center: boundsCoords[0], zoom: DEFAULT_ZOOM });
+          lastFitKeyRef.current = fitKey;
+        }
       }
     } catch (error) {
       logger.warn('No se pudo ajustar el mapa a los marcadores', error);
@@ -795,12 +909,16 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
   const stops = data.stops ?? [];
 
   // Flujo multidestino: el ETA apunta a la próxima parada pendiente, no al
-  // origen. El nombre de la parada acompaña siempre al número.
-  if (stops.length > 0) {
-    if (!data.next_stop) {
-      return <p className="text-2xl font-bold leading-tight text-foreground">Llegamos al destino final</p>;
-    }
+  // origen. Solo aplica si hay una parada objetivo o llegada real confirmada
+  // (journey_stage arrived en estado activo): con paradas sin coordenadas o
+  // en waiting, el backend opera en modo legacy y se cae al render original.
+  // El estado (waiting/active) SIEMPRE manda sobre journey_stage.
+  const arrivedConfirmed = data.journey_stage === 'arrived' && data.state !== 'waiting';
+  if (stops.length > 0 && arrivedConfirmed) {
+    return <p className="text-2xl font-bold leading-tight text-foreground">Llegamos al destino final</p>;
+  }
 
+  if (stops.length > 0 && data.next_stop) {
     if (data.eta) {
       return (
         <div>
@@ -967,7 +1085,11 @@ const TrackService = () => {
     );
   }
 
-  const stage = data.journey_stage ?? 'assigned';
+  // Precedencia: state (waiting/active/no_signal) manda sobre journey_stage.
+  // En waiting la página SIEMPRE está en fase inicial, sin importar lo que
+  // diga journey_stage — nunca convivir "Preparando tu servicio" con una
+  // tarjeta de fase final (bug SRV-6853).
+  const stage: JourneyStage = data.state === 'waiting' ? 'assigned' : (data.journey_stage ?? 'assigned');
   const trackingStops = data.stops ?? [];
   const hasStops = trackingStops.length > 0;
   // Con paradas, el título nombra la parada objetivo ("En ruta a Vallenar");
@@ -998,7 +1120,11 @@ const TrackService = () => {
 
         <div className="pointer-events-auto">
           {hasStops ? (
-            <StopsStepper stops={trackingStops} nextStopOrder={data.next_stop?.order ?? null} />
+            <StopsStepper
+              stops={trackingStops}
+              nextStopOrder={data.next_stop?.order ?? null}
+              completed={stage === 'arrived'}
+            />
           ) : (
             <JourneyStepper stage={stage} />
           )}
