@@ -309,6 +309,34 @@ export interface ServiceItemDraft {
   inventory_item_id?: string | null;
 }
 
+// ── Paradas de servicios multidestino ────────────────────────────────────────
+
+export type ServiceStopType = 'pickup' | 'dropoff' | 'waypoint' | 'final';
+
+export interface ServiceStop {
+  id: string;
+  service_id: string;
+  stop_order: number;
+  label: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  stop_type: ServiceStopType;
+  /** Seteado por el edge function service-tracking al entrar al geofence. */
+  reached_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ServiceStopDraft {
+  id: string;
+  label: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  stopType: ServiceStopType;
+}
+
 // ── Documentos de Operadores ──────────────────────────────────────────────────
 
 export type DocumentType =

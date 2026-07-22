@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
-import { Service, ServiceSnakeCase, ServiceItemDraft } from '@/types';
+import { Service, ServiceSnakeCase, ServiceItemDraft, ServiceStopDraft } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -32,6 +32,8 @@ import { useResourceCompliance, formatComplianceIssueMessage } from '@/hooks/ser
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
 import { useServiceItems } from '@/hooks/services/useServiceItems';
+import { useServiceStops } from '@/hooks/services/useServiceStops';
+import { ServiceStopsSection } from './form/ServiceStopsSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -83,6 +85,7 @@ export const EnhancedServiceForm = React.memo(({
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
   const { items: existingServiceItems, isLoading: loadingServiceItems, saveItems } = useServiceItems(service?.id);
+  const { stops: existingServiceStops, isLoading: loadingServiceStops, saveStops } = useServiceStops(service?.id);
   
   // Step navigation state
   const [currentStep, setCurrentStep] = useState(1);
@@ -103,6 +106,29 @@ export const EnhancedServiceForm = React.memo(({
   const [isEmptyItemsConfirmSubmitting, setIsEmptyItemsConfirmSubmitting] = useState(false);
   const [pendingEmptyItemsCount, setPendingEmptyItemsCount] = useState(0);
   const [pendingSaveOptions, setPendingSaveOptions] = useState<{ complianceOverrideReason?: string } | null>(null);
+
+  // Paradas del recorrido (multidestino). Fuera de formData: se sincronizan
+  // como colección hija (delete + insert) tras crear/actualizar el servicio,
+  // mismo patrón que serviceItems.
+  const [serviceStops, setServiceStops] = useState<ServiceStopDraft[]>([]);
+  const stopsHydratedRef = useRef(false);
+
+  // Hidratar paradas existentes al editar, una sola vez (no clobberear
+  // ediciones del usuario si la query se refresca).
+  useEffect(() => {
+    if (!service?.id || loadingServiceStops || stopsHydratedRef.current) return;
+    stopsHydratedRef.current = true;
+    if (existingServiceStops.length > 0) {
+      setServiceStops(existingServiceStops.map((stop) => ({
+        id: stop.id,
+        label: stop.label,
+        address: stop.address ?? '',
+        lat: stop.lat,
+        lng: stop.lng,
+        stopType: stop.stop_type,
+      })));
+    }
+  }, [service?.id, loadingServiceStops, existingServiceStops]);
 
   const handleCreationFlowComplete = useCallback((createdService: Service) => {
     logger.debug('📞 Calling onSubmit callback...');
@@ -858,6 +884,15 @@ export const EnhancedServiceForm = React.memo(({
     }
   };
 
+  // Sincroniza las paradas del recorrido (multidestino) tras crear/actualizar.
+  // Reemplazo completo delete + insert; si nunca hubo ni hay paradas, no-op.
+  const syncServiceStops = async (resultId: string) => {
+    if (serviceStops.length === 0 && (existingServiceStops || []).length === 0) {
+      return;
+    }
+    await saveStops.mutateAsync({ serviceId: resultId, drafts: serviceStops });
+  };
+
   // Handler único de guardado: usado por el submit del form (fase 4)
   // y por el botón "Guardar" persistente disponible en todas las fases
   const performSave = async (options?: {
@@ -875,7 +910,7 @@ export const EnhancedServiceForm = React.memo(({
       // todavía se están trayendo desde la BD, el reemplazo "delete all +
       // insert" de más abajo vería un estado vacío y borraría todo sin poder
       // reinsertar lo real. No permitir guardar hasta que termine de cargar.
-      if (service?.id && (loadingEnhancedService || loadingServiceItems)) {
+      if (service?.id && (loadingEnhancedService || loadingServiceItems || loadingServiceStops)) {
         playRetroErrorSound();
         toast.error('Cargando los datos completos del servicio. Intenta guardar nuevamente en un momento.');
         return;
@@ -1015,6 +1050,7 @@ export const EnhancedServiceForm = React.memo(({
         }
 
         await syncServiceItems(result.id);
+        await syncServiceStops(result.id);
       } else {
         logger.debug('🔄 Creating new service...');
         result = await createService(finalData);
@@ -1060,6 +1096,7 @@ export const EnhancedServiceForm = React.memo(({
         }
 
         await syncServiceItems(result.id);
+        await syncServiceStops(result.id);
       }
 
       const action = service ? 'actualizado' : 'creado';
@@ -1355,6 +1392,15 @@ export const EnhancedServiceForm = React.memo(({
                     destinationError={isFieldInvalid('destination')}
                   />
                 </ColoredSectionCard>
+
+                {/* Paradas del recorrido (multidestino): disponible para
+                    cualquier tipo de servicio, sin condicionar por categoría */}
+                <ServiceStopsSection
+                  stops={serviceStops}
+                  onStopsChange={setServiceStops}
+                  department={selectedClient?.department}
+                  disabled={false}
+                />
               </div>
             )}
 

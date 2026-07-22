@@ -671,7 +671,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   Duplicar
                 </Button>
               )}
-              {isAdmin && (serviceData.status === 'pending' || serviceData.status === 'in_progress' || serviceData.status === 'inspection_completed') && (
+              {/* Visible ⟺ estado operacional activo + operador asignado.
+                  Nunca condicionar por categoría del tipo de servicio: el
+                  edge function service-tracking soporta cualquier servicio
+                  (incl. in_situ como Taxi) en estos estados. isAdmin se
+                  mantiene porque create_service_tracking_link exige admin. */}
+              {isAdmin
+                && (serviceData.status === 'pending' || serviceData.status === 'in_progress' || serviceData.status === 'inspection_completed')
+                && !!primaryOperator?.id && (
                 <Button
                   variant="outline"
                   size="sm"

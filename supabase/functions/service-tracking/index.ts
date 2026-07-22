@@ -21,11 +21,37 @@ const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 // es "sticky" via on_site_reached_at: una vez detectado no vuelve a en_route.
 const ON_SITE_METERS = 300;
 const TOWING_METERS = 500;
+// Multidestino: radio para marcar una parada como alcanzada (sticky via
+// reached_at, mismo patron que on_site_reached_at).
+const STOP_GEOFENCE_METERS = 300;
 const ETA_CACHE_MS = 60 * 1000;
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
 type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
+
+// Paradas de un servicio multidestino. Si el servicio no tiene paradas, todo
+// el flujo multi-stop se salta y el comportamiento original (ETA al origen,
+// on_site/towing) queda intacto.
+type ServiceStop = {
+  id: string;
+  stop_order: number;
+  label: string;
+  lat: number | null;
+  lng: number | null;
+  stop_type: "pickup" | "dropoff" | "waypoint" | "final";
+  reached_at: string | null;
+};
+
+// Shape publico de cada parada: sin notes ni ids internos.
+const toPublicStop = (stop: ServiceStop) => ({
+  label: stop.label,
+  lat: stop.lat,
+  lng: stop.lng,
+  stop_type: stop.stop_type,
+  reached: stop.reached_at !== null,
+  order: stop.stop_order,
+});
 
 const jsonResponse = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -118,7 +144,7 @@ Deno.serve(async (req: Request) => {
     .select(`
       id, service_id, revoked_at, expires_at, access_count,
       eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
-      on_site_reached_at
+      eta_target_stop_id, on_site_reached_at
     `)
     .eq("token", token)
     .maybeSingle();
@@ -199,6 +225,30 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(req, { error: "invalid_link" }, 404);
   }
 
+  // Paradas del servicio multidestino. Sin paradas -> flujo original intacto.
+  const { data: stopRows } = await supabase
+    .from("service_stops")
+    .select("id, stop_order, label, lat, lng, stop_type, reached_at")
+    .eq("service_id", link.service_id)
+    .order("stop_order", { ascending: true });
+  const stops: ServiceStop[] = (stopRows as ServiceStop[] | null) ?? [];
+  const hasStops = stops.length > 0;
+
+  // Proxima parada objetivo: primera no alcanzada con coordenadas (una parada
+  // sin lat/lng no puede ser geofenceada ni ruteada, se salta).
+  const findNextStop = (): ServiceStop | null =>
+    stops.find((s) => s.reached_at === null && s.lat != null && s.lng != null) ?? null;
+
+  // Campos extra de la respuesta solo cuando hay paradas: un servicio sin
+  // paradas responde exactamente igual que antes.
+  const stopsPayload = (nextStop: ServiceStop | null) =>
+    hasStops
+      ? {
+          stops: stops.map(toPublicStop),
+          next_stop: nextStop ? { label: nextStop.label, order: nextStop.stop_order } : null,
+        }
+      : {};
+
   let session: { id: string } | null = null;
 
   const { data: serviceSession } = await supabase
@@ -237,6 +287,7 @@ Deno.serve(async (req: Request) => {
       eta: null,
       eta_unavailable: false,
       support_phone: supportPhone,
+      ...stopsPayload(findNextStop()),
     });
   }
 
@@ -260,6 +311,7 @@ Deno.serve(async (req: Request) => {
       eta: null,
       eta_unavailable: false,
       support_phone: supportPhone,
+      ...stopsPayload(findNextStop()),
     });
   }
 
@@ -267,42 +319,92 @@ Deno.serve(async (req: Request) => {
   const state = isStale ? "no_signal" : "active";
 
   const hasOrigin = origin.lat != null && origin.lng != null;
-  const distanceToOriginM = hasOrigin
-    ? haversineMeters(point.latitude, point.longitude, origin.lat as number, origin.lng as number)
-    : null;
 
-  let journeyStage: "assigned" | "en_route" | "on_site" | "towing" = "en_route";
-  let onSiteReachedAt = link.on_site_reached_at as string | null;
+  let journeyStage: "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived" = "en_route";
+  let nextStop: ServiceStop | null = null;
 
-  if (distanceToOriginM !== null) {
-    if (onSiteReachedAt && distanceToOriginM > TOWING_METERS) {
-      journeyStage = "towing";
-    } else if (distanceToOriginM < ON_SITE_METERS) {
-      journeyStage = "on_site";
-      if (!onSiteReachedAt) {
-        onSiteReachedAt = new Date().toISOString();
-        try {
-          await supabase
-            .from("service_tracking_links")
-            .update({ on_site_reached_at: onSiteReachedAt })
-            .eq("id", link.id);
-        } catch {
-          // no-op: el hito es informativo, nunca debe romper el seguimiento publico
-        }
+  if (hasStops) {
+    // Geofence por parada: si el ultimo punto GPS quedo dentro del radio de la
+    // proxima parada, se marca alcanzada (sticky, error swallowed) y el
+    // objetivo avanza. Loop por si varias paradas caen dentro del mismo radio.
+    nextStop = findNextStop();
+    while (
+      nextStop &&
+      haversineMeters(point.latitude, point.longitude, nextStop.lat as number, nextStop.lng as number) < STOP_GEOFENCE_METERS
+    ) {
+      nextStop.reached_at = new Date().toISOString();
+      try {
+        await supabase
+          .from("service_stops")
+          .update({ reached_at: nextStop.reached_at })
+          .eq("id", nextStop.id);
+      } catch {
+        // no-op: el hito es informativo, nunca debe romper el seguimiento publico
       }
-    } else if (onSiteReachedAt) {
-      journeyStage = "on_site";
+      nextStop = findNextStop();
+    }
+
+    if (!nextStop) {
+      // Todas alcanzadas: "arrived" sin cortar el tracking — el link sigue
+      // vivo hasta que el servicio salga de ACTIVE_TRACKING_STATUSES.
+      journeyStage = "arrived";
+    } else {
+      const pending = stops.filter((s) => s.reached_at === null);
+      journeyStage = pending.every((s) => s.stop_type === "final") ? "last_leg" : "en_route";
+    }
+  } else {
+    const distanceToOriginM = hasOrigin
+      ? haversineMeters(point.latitude, point.longitude, origin.lat as number, origin.lng as number)
+      : null;
+
+    let onSiteReachedAt = link.on_site_reached_at as string | null;
+
+    if (distanceToOriginM !== null) {
+      if (onSiteReachedAt && distanceToOriginM > TOWING_METERS) {
+        journeyStage = "towing";
+      } else if (distanceToOriginM < ON_SITE_METERS) {
+        journeyStage = "on_site";
+        if (!onSiteReachedAt) {
+          onSiteReachedAt = new Date().toISOString();
+          try {
+            await supabase
+              .from("service_tracking_links")
+              .update({ on_site_reached_at: onSiteReachedAt })
+              .eq("id", link.id);
+          } catch {
+            // no-op: el hito es informativo, nunca debe romper el seguimiento publico
+          }
+        }
+      } else if (onSiteReachedAt) {
+        journeyStage = "on_site";
+      }
     }
   }
 
+  // Destino del ETA: la proxima parada pendiente (multidestino) o el origen
+  // del servicio (flujo original de rescate).
+  const etaTarget = hasStops
+    ? nextStop
+      ? { lat: nextStop.lat as number, lng: nextStop.lng as number }
+      : null
+    : hasOrigin
+      ? { lat: origin.lat as number, lng: origin.lng as number }
+      : null;
+  const etaTargetStopId = hasStops ? (nextStop?.id ?? null) : null;
+
   let eta: Eta = null;
-  // true cuando el origen existe pero Google no puede rutear la zona (p. ej.
-  // C-13 Termas de Juncal): el cliente muestra el fallback de distancia en linea
-  // recta en vez de "Calculando..." permanente.
+  // true cuando el destino existe pero Google no puede rutear la zona (p. ej.
+  // C-13 Termas de Juncal o el tramo cordillerano a Mantos de Oro): el cliente
+  // muestra el fallback de distancia en linea recta en vez de "Calculando..."
+  // permanente.
   let etaUnavailable = false;
-  if (state === "active" && hasOrigin) {
+  if (state === "active" && etaTarget) {
     const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
-    const cacheFresh = now - cachedAt < ETA_CACHE_MS;
+    // El cache (positivo o negativo) solo vale si apunta a la MISMA parada
+    // objetivo: al alcanzar una parada, el ETA cacheado hacia ella es invalido
+    // aunque el TTL siga fresco. Sin paradas ambos lados son null.
+    const targetMatches = ((link.eta_target_stop_id as string | null) ?? null) === etaTargetStopId;
+    const cacheFresh = targetMatches && now - cachedAt < ETA_CACHE_MS;
     if (cacheFresh && link.eta_polyline) {
       // Cache positivo vigente.
       eta = {
@@ -315,7 +417,7 @@ Deno.serve(async (req: Request) => {
       // no es ruteable. No se re-llama a Routes hasta que expire el TTL de 60 s.
       etaUnavailable = true;
     } else {
-      eta = await fetchEta(point.latitude, point.longitude, origin.lat as number, origin.lng as number);
+      eta = await fetchEta(point.latitude, point.longitude, etaTarget.lat, etaTarget.lng);
       if (eta) {
         try {
           await supabase
@@ -325,6 +427,7 @@ Deno.serve(async (req: Request) => {
               eta_distance_meters: eta.distance_meters,
               eta_polyline: eta.polyline,
               eta_cached_at: new Date().toISOString(),
+              eta_target_stop_id: etaTargetStopId,
             })
             .eq("id", link.id);
         } catch {
@@ -332,7 +435,7 @@ Deno.serve(async (req: Request) => {
         }
       } else {
         // Cachear tambien el resultado NEGATIVO (mismo TTL 60 s) para no reintentar
-        // Routes en cada poll de cada viewer sobre un origen no ruteable: el
+        // Routes en cada poll de cada viewer sobre un destino no ruteable: el
         // servicio real acumulo decenas de llamadas inutiles por esto.
         etaUnavailable = true;
         try {
@@ -343,6 +446,7 @@ Deno.serve(async (req: Request) => {
               eta_distance_meters: null,
               eta_polyline: null,
               eta_cached_at: new Date().toISOString(),
+              eta_target_stop_id: etaTargetStopId,
             })
             .eq("id", link.id);
         } catch {
@@ -369,5 +473,6 @@ Deno.serve(async (req: Request) => {
     eta,
     eta_unavailable: etaUnavailable,
     support_phone: supportPhone,
+    ...stopsPayload(nextStop),
   });
 });

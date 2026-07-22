@@ -4400,8 +4400,29 @@ export type Database = {
             foreignKeyName: "operator_activity_events_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_activity_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_activity_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_activity_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }
@@ -5838,7 +5859,7 @@ export type Database = {
         Row: {
           admin_name: string
           admin_signature: string
-          admin_user_id: string
+          admin_user_id: string | null
           closed_at: string
           closure_notes: string | null
           created_at: string
@@ -5856,7 +5877,7 @@ export type Database = {
         Insert: {
           admin_name: string
           admin_signature: string
-          admin_user_id: string
+          admin_user_id?: string | null
           closed_at?: string
           closure_notes?: string | null
           created_at?: string
@@ -5874,7 +5895,7 @@ export type Database = {
         Update: {
           admin_name?: string
           admin_signature?: string
-          admin_user_id?: string
+          admin_user_id?: string | null
           closed_at?: string
           closure_notes?: string | null
           created_at?: string
@@ -5932,7 +5953,7 @@ export type Database = {
           notes: string | null
           service_id: string
           uploaded_at: string
-          uploaded_by: string
+          uploaded_by: string | null
         }
         Insert: {
           created_at?: string
@@ -5945,7 +5966,7 @@ export type Database = {
           notes?: string | null
           service_id: string
           uploaded_at?: string
-          uploaded_by: string
+          uploaded_by?: string | null
         }
         Update: {
           created_at?: string
@@ -5958,7 +5979,7 @@ export type Database = {
           notes?: string | null
           service_id?: string
           uploaded_at?: string
-          uploaded_by?: string
+          uploaded_by?: string | null
         }
         Relationships: [
           {
@@ -6293,6 +6314,77 @@ export type Database = {
           },
         ]
       }
+      service_stops: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          label: string
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          reached_at: string | null
+          service_id: string
+          stop_order: number
+          stop_type: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          reached_at?: string | null
+          service_id: string
+          stop_order: number
+          stop_type?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          reached_at?: string | null
+          service_id?: string
+          stop_order?: number
+          stop_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_stops_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stops_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stops_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stops_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_tracking_links: {
         Row: {
           access_count: number
@@ -6302,6 +6394,7 @@ export type Database = {
           eta_distance_meters: number | null
           eta_polyline: string | null
           eta_seconds: number | null
+          eta_target_stop_id: string | null
           expires_at: string
           id: string
           last_accessed_at: string | null
@@ -6318,6 +6411,7 @@ export type Database = {
           eta_distance_meters?: number | null
           eta_polyline?: string | null
           eta_seconds?: number | null
+          eta_target_stop_id?: string | null
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
@@ -6334,6 +6428,7 @@ export type Database = {
           eta_distance_meters?: number | null
           eta_polyline?: string | null
           eta_seconds?: number | null
+          eta_target_stop_id?: string | null
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
@@ -6343,6 +6438,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_tracking_links_eta_target_stop_id_fkey"
+            columns: ["eta_target_stop_id"]
+            isOneToOne: false
+            referencedRelation: "service_stops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_tracking_links_service_id_fkey"
             columns: ["service_id"]
@@ -7510,9 +7612,14 @@ export type Database = {
       user_invitations: {
         Row: {
           accepted_at: string | null
+          client_id: string | null
           created_at: string
           email: string
+          expires_at: string
           id: string
+          invited_by: string | null
+          operator_id: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
           sent_at: string | null
           status: string
           updated_at: string
@@ -7520,9 +7627,14 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          client_id?: string | null
           created_at?: string
           email: string
+          expires_at?: string
           id?: string
+          invited_by?: string | null
+          operator_id?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"]
           sent_at?: string | null
           status?: string
           updated_at?: string
@@ -7530,15 +7642,34 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          client_id?: string | null
           created_at?: string
           email?: string
+          expires_at?: string
           id?: string
+          invited_by?: string | null
+          operator_id?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"]
           sent_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invitations_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_invitations_user_id_fkey"
             columns: ["user_id"]
@@ -8431,6 +8562,7 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: string
       }
+      current_operator_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
       debug_service_states: {
         Args: never
@@ -8440,6 +8572,10 @@ export type Database = {
           service_folio: string
           should_be_invoiced: boolean
         }[]
+      }
+      delete_account_permanently: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
       delete_service_cascade: {
         Args: { p_service_id: string }
@@ -8474,6 +8610,18 @@ export type Database = {
         Returns: string
       }
       final_security_check: { Args: never; Returns: Json }
+      finalize_user_invitation: {
+        Args: {
+          invitation_creator_id?: string
+          requested_role: Database["public"]["Enums"]["app_role"]
+          target_client_id?: string
+          target_email: string
+          target_full_name: string
+          target_operator_id?: string
+          target_user_id: string
+        }
+        Returns: string
+      }
       find_duplicate_suppliers: {
         Args: never
         Returns: {
@@ -8930,6 +9078,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      insert_operator_activity_event: {
+        Args: {
+          p_created_at?: string
+          p_dedupe_key: string
+          p_description: string
+          p_event_type: string
+          p_metadata: Json
+          p_operator_id: string
+          p_service_id: string
+          p_severity: string
+          p_title: string
+        }
+        Returns: undefined
+      }
       is_admin_user:
         | { Args: never; Returns: boolean }
         | { Args: { check_user_id: string }; Returns: boolean }
@@ -9011,10 +9173,6 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
-      record_operator_sync_completed: {
-        Args: { p_synced_count: number }
-        Returns: string
-      }
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }
         Returns: boolean
@@ -9046,6 +9204,10 @@ export type Database = {
       purge_expired_recovery_audit: { Args: never; Returns: number }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
+      record_operator_sync_completed: {
+        Args: { p_synced_count: number }
+        Returns: string
+      }
       recovery_assert_admin: { Args: never; Returns: undefined }
       recovery_current_organization_id: { Args: never; Returns: string }
       recovery_redact: { Args: { payload: Json }; Returns: Json }
@@ -9054,6 +9216,10 @@ export type Database = {
         Returns: undefined
       }
       remove_duplicate_payment_applications: { Args: never; Returns: Json }
+      repair_operator_invitation: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       repair_payment_application: {
         Args: { p_invoice_id: string; p_payment_id: string }
         Returns: Json

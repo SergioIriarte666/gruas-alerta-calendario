@@ -193,6 +193,46 @@ const createOriginMarkerElement = () => {
   return { anchor, label };
 };
 
+const STOP_MARKER_SIZE = 26;
+
+// Marcador numerado de parada (multidestino). Elemento DOM crudo, igual que
+// el resto de los marcadores de Mapbox.
+const createStopMarkerElement = () => {
+  const el = document.createElement('div');
+  el.style.width = `${STOP_MARKER_SIZE}px`;
+  el.style.height = `${STOP_MARKER_SIZE}px`;
+  el.style.borderRadius = '9999px';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.style.fontSize = '12px';
+  el.style.fontWeight = '700';
+  el.style.border = '2px solid hsl(var(--signature-surface))';
+  el.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.3)';
+  return el;
+};
+
+// Alcanzada: atenuada con check. Próxima: destacada en color primario.
+// Pendiente: neutra con el número de orden.
+const updateStopMarkerElement = (el: HTMLDivElement, stop: TrackingStop, isNext: boolean) => {
+  if (stop.reached) {
+    el.style.backgroundColor = 'hsl(var(--muted-foreground))';
+    el.style.color = 'hsl(var(--signature-surface))';
+    el.style.opacity = '0.55';
+    el.textContent = '✓';
+  } else if (isNext) {
+    el.style.backgroundColor = 'hsl(var(--primary))';
+    el.style.color = 'hsl(var(--signature-surface))';
+    el.style.opacity = '1';
+    el.textContent = String(stop.order);
+  } else {
+    el.style.backgroundColor = 'hsl(var(--signature-surface))';
+    el.style.color = 'hsl(var(--signature-ink))';
+    el.style.opacity = '1';
+    el.textContent = String(stop.order);
+  }
+};
+
 const haversineDistanceKm = (a: [number, number], b: [number, number]): number => {
   const [lngA, latA] = a;
   const [lngB, latB] = b;
@@ -287,7 +327,7 @@ const useTick = (intervalMs: number) => {
   }, [intervalMs]);
 };
 
-type JourneyStage = 'assigned' | 'en_route' | 'on_site' | 'towing' | 'finished';
+type JourneyStage = 'assigned' | 'en_route' | 'on_site' | 'towing' | 'last_leg' | 'arrived' | 'finished';
 
 const JOURNEY_STEPS: { key: JourneyStage; label: string }[] = [
   { key: 'assigned', label: 'Asignado' },
@@ -302,6 +342,9 @@ const STAGE_TITLES: Record<JourneyStage, string> = {
   en_route: 'Tu grúa va en camino',
   on_site: 'Tu grúa llegó al punto de origen',
   towing: 'Trasladando tu vehículo',
+  // Etapas exclusivas de servicios multidestino (con paradas).
+  last_leg: 'En la última etapa del recorrido',
+  arrived: 'Llegamos al destino final',
   finished: 'Servicio finalizado',
 };
 
@@ -337,7 +380,51 @@ const JourneyStepper = ({ stage }: { stage: JourneyStage }) => {
   );
 };
 
+// Variante del stepper para servicios multidestino: un punto por parada,
+// alcanzadas atenuadas, la próxima con pulso; el label muestra la parada
+// objetivo (o el cierre del recorrido).
+const StopsStepper = ({ stops, nextStopOrder }: { stops: TrackingStop[]; nextStopOrder: number | null }) => {
+  const currentLabel = nextStopOrder !== null
+    ? stops.find((stop) => stop.order === nextStopOrder)?.label ?? 'En ruta'
+    : 'Recorrido completado';
+
+  return (
+    <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card/95 px-3.5 py-2 shadow-md backdrop-blur-md">
+      <div className="flex items-center gap-1.5">
+        {stops.map((stop) => {
+          const isCurrent = nextStopOrder !== null && stop.order === nextStopOrder;
+          const isDone = stop.reached;
+          return (
+            <span key={stop.order} className="relative flex size-2.5 items-center justify-center">
+              {isCurrent && (
+                <span className="motion-safe:animate-ping absolute inline-flex size-2.5 rounded-full bg-primary opacity-60" />
+              )}
+              <span
+                className={cn(
+                  'relative inline-block rounded-full transition-all',
+                  isCurrent ? 'size-2.5 bg-primary' : isDone ? 'size-2 bg-primary/50' : 'size-2 bg-muted-foreground/30',
+                )}
+              />
+            </span>
+          );
+        })}
+      </div>
+      <span className="text-xs font-semibold text-foreground">{currentLabel}</span>
+    </div>
+  );
+};
+
 type TrackingState = 'active' | 'no_signal' | 'waiting' | 'finished';
+
+// Parada de un servicio multidestino tal como la expone service-tracking.
+interface TrackingStop {
+  label: string;
+  lat: number | null;
+  lng: number | null;
+  stop_type: 'pickup' | 'dropoff' | 'waypoint' | 'final';
+  reached: boolean;
+  order: number;
+}
 
 interface TrackingResponse {
   state: TrackingState;
@@ -358,6 +445,10 @@ interface TrackingResponse {
   // muestra distancia en línea recta en vez de "Calculando..." permanente.
   eta_unavailable?: boolean;
   support_phone?: string | null;
+  // Solo presentes en servicios multidestino: sin paradas, la respuesta es
+  // idéntica al flujo original.
+  stops?: TrackingStop[];
+  next_stop?: { label: string; order: number } | null;
 }
 
 type PageStatus = 'loading' | 'ready' | 'invalid' | 'error';
@@ -439,6 +530,8 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   const craneElRefs = useRef<ReturnType<typeof createCraneMarkerElement> | null>(null);
   const originMarkerRef = useRef<import('mapbox-gl').Marker | null>(null);
   const originElRefs = useRef<ReturnType<typeof createOriginMarkerElement> | null>(null);
+  // Marcadores de paradas (multidestino), indexados por stop_order.
+  const stopMarkersRef = useRef<Map<number, { marker: import('mapbox-gl').Marker; el: HTMLDivElement }>>(new Map());
   const [mapboxReady, setMapboxReady] = useState(false);
   const [styleLoaded, setStyleLoaded] = useState(false);
 
@@ -486,6 +579,8 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
       originElRefs.current = null;
+      stopMarkersRef.current.forEach(({ marker }) => marker.remove());
+      stopMarkersRef.current.clear();
       localMap?.remove();
       mapRef.current = null;
     };
@@ -563,7 +658,12 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       }
     }
 
-    if (originCoords) {
+    const stops = data.stops ?? [];
+    const hasStops = stops.length > 0;
+
+    // Con paradas, el itinerario reemplaza al marcador de origen: el punto de
+    // partida (base) no aporta al viaje y solo ensucia el encuadre.
+    if (originCoords && !hasStops) {
       if (!originMarkerRef.current) {
         const refs = createOriginMarkerElement();
         originElRefs.current = refs;
@@ -583,22 +683,52 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       originElRefs.current = null;
     }
 
+    // Marcadores numerados de paradas: alcanzadas atenuadas con check, la
+    // próxima destacada. Se actualizan en cada poll (reached avanza solo).
+    const nextStopOrder = data.next_stop?.order ?? null;
+    for (const stop of stops) {
+      if (stop.lat == null || stop.lng == null) continue;
+      let entry = stopMarkersRef.current.get(stop.order);
+      if (!entry) {
+        const el = createStopMarkerElement();
+        const marker = new mapboxgl.default.Marker({ element: el, anchor: 'center' })
+          .setLngLat([stop.lng, stop.lat])
+          .addTo(map);
+        entry = { marker, el };
+        stopMarkersRef.current.set(stop.order, entry);
+      } else {
+        entry.marker.setLngLat([stop.lng, stop.lat]);
+      }
+      updateStopMarkerElement(entry.el, stop, stop.order === nextStopOrder);
+    }
+
     try {
-      if (craneCoords && originCoords) {
-        // padding extra abajo/arriba: el bottom sheet y el header flotantes
-        // tapan parte del mapa en mobile.
+      // Encuadre: posición del móvil + paradas pendientes (multidestino) o
+      // posición + origen (flujo original). padding extra abajo/arriba: el
+      // bottom sheet y el header flotantes tapan parte del mapa en mobile.
+      const boundsCoords: [number, number][] = [];
+      if (craneCoords) boundsCoords.push(craneCoords);
+      if (hasStops) {
+        for (const stop of stops) {
+          if (!stop.reached && stop.lat != null && stop.lng != null) {
+            boundsCoords.push([stop.lng, stop.lat]);
+          }
+        }
+      } else if (originCoords) {
+        boundsCoords.push(originCoords);
+      }
+
+      if (boundsCoords.length > 1) {
         map.fitBounds(
-          [craneCoords, originCoords].reduce(
+          boundsCoords.reduce(
             (bounds, coord) => bounds.extend(coord),
-            new mapboxgl.default.LngLatBounds(craneCoords, craneCoords),
+            new mapboxgl.default.LngLatBounds(boundsCoords[0], boundsCoords[0]),
           ),
           { padding: { top: 140, bottom: 260, left: 40, right: 40 }, maxZoom: 15, duration: 0 },
         );
-      } else if (craneCoords) {
-        map.jumpTo({ center: craneCoords, zoom: DEFAULT_ZOOM });
-      } else if (originCoords) {
-        // Sin posicion de la grua aun (waiting): centrar en el origen si existe.
-        map.jumpTo({ center: originCoords, zoom: DEFAULT_ZOOM });
+      } else if (boundsCoords.length === 1) {
+        // Sin segundo punto (waiting o recorrido completo): centrar en lo que haya.
+        map.jumpTo({ center: boundsCoords[0], zoom: DEFAULT_ZOOM });
       }
     } catch (error) {
       logger.warn('No se pudo ajustar el mapa a los marcadores', error);
@@ -662,6 +792,63 @@ const CallButton = ({ phone }: { phone?: string | null }) => (
 );
 
 const EtaHero = ({ data }: { data: TrackingResponse }) => {
+  const stops = data.stops ?? [];
+
+  // Flujo multidestino: el ETA apunta a la próxima parada pendiente, no al
+  // origen. El nombre de la parada acompaña siempre al número.
+  if (stops.length > 0) {
+    if (!data.next_stop) {
+      return <p className="text-2xl font-bold leading-tight text-foreground">Llegamos al destino final</p>;
+    }
+
+    if (data.eta) {
+      return (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            En ruta a {data.next_stop.label} · llega en
+          </p>
+          <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
+            {formatDurationLabel(data.eta.seconds)}
+          </p>
+        </div>
+      );
+    }
+
+    // Tramo no ruteable por Google (p. ej. cordillera hacia Mantos de Oro):
+    // distancia en línea recta hacia la próxima parada pendiente.
+    const nextPending = stops.find((stop) => !stop.reached && stop.lat != null && stop.lng != null);
+    if (data.position && data.eta_unavailable && nextPending) {
+      const straightLineKm = haversineDistanceKm(
+        [data.position.lng, data.position.lat],
+        [nextPending.lng as number, nextPending.lat as number],
+      );
+      const kmLabel = straightLineKm >= 10
+        ? Math.round(straightLineKm)
+        : Math.round(straightLineKm * 10) / 10;
+      return (
+        <div>
+          <p className="text-2xl font-bold leading-tight text-foreground">
+            A ~{kmLabel} km de {nextPending.label}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tiempo estimado no disponible en esta zona
+          </p>
+        </div>
+      );
+    }
+
+    if (data.position) {
+      return <p className="text-lg font-semibold text-muted-foreground">Calculando tiempo de llegada…</p>;
+    }
+
+    return (
+      <div className="space-y-2">
+        <div className="h-3 w-28 rounded-full bg-muted motion-safe:animate-pulse" />
+        <div className="h-8 w-40 rounded-full bg-muted motion-safe:animate-pulse" />
+      </div>
+    );
+  }
+
   // on_site primero: una vez que la grua llego, el ETA-al-origen cacheado
   // (hasta 60s de antiguedad) queda semanticamente obsoleto y contradice el
   // titulo — "en el lugar" no debe convivir con un numero de minutos.
@@ -781,7 +968,13 @@ const TrackService = () => {
   }
 
   const stage = data.journey_stage ?? 'assigned';
-  const stageTitle = STAGE_TITLES[stage];
+  const trackingStops = data.stops ?? [];
+  const hasStops = trackingStops.length > 0;
+  // Con paradas, el título nombra la parada objetivo ("En ruta a Vallenar");
+  // sin paradas se mantienen los títulos por etapa del flujo original.
+  const stageTitle = hasStops && data.next_stop && stage !== 'assigned'
+    ? `En ruta a ${data.next_stop.label}`
+    : STAGE_TITLES[stage];
   const relativeLabel = data.position ? formatRelativeShort(data.position.recorded_at, Date.now()) : null;
 
   return (
@@ -804,7 +997,11 @@ const TrackService = () => {
         </div>
 
         <div className="pointer-events-auto">
-          <JourneyStepper stage={stage} />
+          {hasStops ? (
+            <StopsStepper stops={trackingStops} nextStopOrder={data.next_stop?.order ?? null} />
+          ) : (
+            <JourneyStepper stage={stage} />
+          )}
         </div>
       </div>
 
