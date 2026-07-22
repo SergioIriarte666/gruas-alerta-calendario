@@ -21,7 +21,7 @@ export const AuthBackground: React.FC<AuthBackgroundProps> = ({ children, varian
       <div className="absolute left-1/2 top-1/2 size-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-auth-background/35 blur-3xl" />
 
       <div className="operator-auth-content relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12">
-        <div className="w-full max-w-md">
+        <div className={variant === 'operator' ? 'operator-auth-frame w-full' : 'w-full max-w-md'}>
           {children}
         </div>
       </div>

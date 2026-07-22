@@ -1813,6 +1813,10 @@ html.reduce-motion *::after {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
 }
 
+.operator-auth-concept .operator-auth-frame {
+  max-width: 28rem;
+}
+
 .operator-auth-concept .operator-auth-panel {
   animation: operator-panel-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -1856,8 +1860,60 @@ html.reduce-motion *::after {
 }
 
 @media (min-width: 768px) {
+  .operator-auth-concept .operator-auth-content {
+    align-items: center;
+    padding: max(3rem, env(safe-area-inset-top, 0px)) 3rem
+      max(3rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .operator-auth-concept .operator-auth-frame {
+    width: min(100%, 64rem);
+    max-width: 64rem;
+  }
+
+  .operator-auth-concept .operator-auth-panel {
+    display: grid;
+    grid-template-columns: minmax(16rem, 0.9fr) minmax(26rem, 1.1fr);
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+  }
+
+  .operator-auth-concept .operator-auth-intro {
+    text-align: left;
+  }
+
+  .operator-auth-concept .operator-auth-logo {
+    width: auto;
+    height: 6rem;
+    margin-inline: 0;
+  }
+
+  .operator-auth-concept .operator-auth-intro h1 {
+    font-size: clamp(2.75rem, 5vw, 4.5rem);
+    line-height: 0.96;
+    text-wrap: balance;
+  }
+
+  .operator-auth-concept .operator-auth-intro p {
+    max-width: 28rem;
+    margin-inline: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .operator-auth-concept .operator-auth-form {
+    width: 100%;
+    max-width: 30rem;
+  }
+
   .operator-vehicle-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (orientation: portrait) {
+  .operator-auth-concept .operator-auth-content {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12rem);
   }
 }
 

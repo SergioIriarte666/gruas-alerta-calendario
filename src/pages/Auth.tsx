@@ -291,7 +291,7 @@ const Auth = () => {
   return (
     <AuthBackground variant={isOperatorMobile ? 'operator' : 'default'}>
       <div className={`space-y-4 ${isOperatorMobile ? 'operator-auth-panel' : ''}`}>
-        <div className="space-y-2 text-center">
+        <div className={`space-y-2 text-center ${isOperatorMobile ? 'operator-auth-intro' : ''}`}>
           <Badge
             variant="outline"
             className="border-auth-border/15 bg-auth-surface/10 px-3 py-1 text-auth-muted"
@@ -300,7 +300,7 @@ const Auth = () => {
             {isOperatorMobile ? 'Acceso de terreno' : 'Acceso seguro'}
           </Badge>
           {isOperatorMobile && (
-            <img src="/logo-gruas-5-norte.png" alt="Grúas 5 Norte" className="mx-auto h-16 w-auto object-contain" />
+            <img src="/logo-gruas-5-norte.png" alt="Grúas 5 Norte" className="operator-auth-logo mx-auto h-16 w-auto object-contain" />
           )}
           <h1 className={`${isOperatorMobile ? 'operator-native-display text-4xl font-bold' : 'text-3xl font-semibold tracking-tight'} text-auth-foreground drop-shadow-md`}>
             {isOperatorMobile ? 'Tu jornada empieza aquí' : 'Towing Manager Software'}
@@ -312,7 +312,7 @@ const Auth = () => {
           </p>
         </div>
 
-      <div className="w-full max-w-md mx-auto">
+      <div className={`w-full max-w-md mx-auto ${isOperatorMobile ? 'operator-auth-form' : ''}`}>
         {isInvited && !needsPasswordSetup && (
           <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 p-4">
             <h3 className="mb-2 font-semibold text-primary">¡Has sido invitado!</h3>
