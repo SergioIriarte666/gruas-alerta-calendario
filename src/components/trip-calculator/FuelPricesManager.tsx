@@ -67,12 +67,12 @@ const formatWeekLabel = (mondayStr: string): string => {
 
 const NUM_WEEKS = 10;
 
-interface WeeklyPivot {
+export interface WeeklyPivot {
   weeks: string[]; // monday date strings, newest first
   matrix: Record<string, Record<string, FuelPrice | undefined>>; // fuel_type -> week -> price
 }
 
-function buildWeeklyPivot(history: FuelPrice[]): WeeklyPivot {
+export function buildWeeklyPivot(history: FuelPrice[]): WeeklyPivot {
   // Collect all weeks
   const weekSet = new Set<string>();
   const byTypeAndWeek: Record<string, Record<string, FuelPrice>> = {};
@@ -94,7 +94,14 @@ function buildWeeklyPivot(history: FuelPrice[]): WeeklyPivot {
   for (const { value } of FUEL_TYPES) {
     matrix[value] = {};
     for (const w of weeks) {
-      matrix[value][w] = byTypeAndWeek[value]?.[w];
+      const pricesByWeek = byTypeAndWeek[value] ?? {};
+      const effectiveWeek = Object.keys(pricesByWeek)
+        .filter((priceWeek) => priceWeek <= w)
+        .sort((a, b) => b.localeCompare(a))[0];
+
+      // If the station did not report a new price this week, keep showing the
+      // latest price that was already in effect instead of leaving a gap.
+      matrix[value][w] = effectiveWeek ? pricesByWeek[effectiveWeek] : undefined;
     }
   }
 
@@ -289,6 +296,9 @@ export const FuelPricesManager = () => {
                         const fp = pivot.matrix[value]?.[week];
                         const prevWeek = pivot.weeks[weekIdx + 1];
                         const prevFp = prevWeek ? pivot.matrix[value]?.[prevWeek] : undefined;
+                        const isCarriedForward = fp
+                          ? getWeekMonday(fp.price_date) < week
+                          : false;
                         const variation = fp && prevFp
                           ? ((fp.price_per_liter - prevFp.price_per_liter) / prevFp.price_per_liter) * 100
                           : null;
@@ -315,6 +325,11 @@ export const FuelPricesManager = () => {
                                           <TrendingDown className="size-3" />
                                         )}
                                         {Math.abs(variation).toFixed(1)}%
+                                      </span>
+                                    )}
+                                    {(isCarriedForward || variation === 0) && (
+                                      <span className="block text-xs text-muted-foreground mt-0.5">
+                                        Sin variación
                                       </span>
                                     )}
                                   </button>
