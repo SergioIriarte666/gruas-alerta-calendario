@@ -242,9 +242,9 @@ export const useUserManagement = () => {
       setCreating(true);
       // Call the edge function which handles everything:
       // 1. Creates user in Supabase Auth via admin.inviteUserByEmail
-      // 2. Creates profile with matching ID
-      // 3. Links operator if applicable
-      // 4. Creates invitation record
+      // 2. Records the invitation in an atomic backend transaction
+      // 3. Auto-approves and links only invited operators
+      // 4. Leaves every other role pending for manual approval
       // 5. Sends invitation email via Supabase native email
       const { data: invitationData, error: invitationError } = await supabase.functions.invoke('send-user-invitation', {
         body: {
@@ -266,7 +266,11 @@ export const useUserManagement = () => {
         throw new Error(invitationData.error);
       }
 
-      toast.success('Usuario creado e invitación enviada por email');
+      if (invitationData?.approvalStatus === 'auto_approved') {
+        toast.success('Operador invitado y aprobado automáticamente');
+      } else {
+        toast.success('Invitación enviada; la cuenta requiere aprobación');
+      }
 
       await fetchUsers();
       await fetchInvitations();

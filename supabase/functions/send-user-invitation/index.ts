@@ -1,220 +1,202 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
 
+type AppRole = "admin" | "operator" | "viewer" | "client";
+
 interface InviteUserRequest {
-  email: string;
-  fullName: string;
-  role: 'admin' | 'operator' | 'viewer' | 'client';
+  email?: string;
+  fullName?: string;
+  role?: AppRole;
   clientId?: string | null;
   operatorId?: string | null;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log('🚀 send-user-invitation function called');
+const VALID_ROLES = new Set<AppRole>(["admin", "operator", "viewer", "client"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const jsonResponse = (
+  req: Request,
+  body: Record<string, unknown>,
+  status: number,
+) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
+  });
+
+const resolveRedirectOrigin = (req: Request) => {
+  const requestedOrigin = req.headers.get("origin") ?? "";
+  const configuredOrigin = Deno.env.get("ALLOWED_ORIGIN") ?? "https://gruas5norte.cl";
+  const isLocalDevelopment = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestedOrigin);
+
+  return requestedOrigin === configuredOrigin || isLocalDevelopment
+    ? requestedOrigin
+    : configuredOrigin;
+};
+
+serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
+  if (req.method !== "POST") {
+    return jsonResponse(req, { error: "Metodo no permitido" }, 405);
+  }
+
+  let createdUserId: string | null = null;
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    
-    if (!supabaseServiceKey) {
-      throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error("Supabase environment variables are not configured");
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse(req, { error: "Sesion no valida" }, 401);
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Verify caller is admin
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
+    const token = authHeader.slice("Bearer ".length);
+    const { data: { user: callerUser }, error: authError } =
+      await supabaseAdmin.auth.getUser(token);
     if (authError || !callerUser) {
-      throw new Error('Invalid authentication');
+      return jsonResponse(req, { error: "Sesion no valida" }, 401);
     }
 
-    // Check if caller is admin via user_roles (authoritative source matching RLS)
-    const { data: callerRole } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', callerUser.id)
-      .eq('role', 'admin')
+    const { data: callerRole, error: callerRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerUser.id)
+      .eq("role", "admin")
       .maybeSingle();
-
+    if (callerRoleError) throw callerRoleError;
     if (!callerRole) {
-      throw new Error('Only admins can invite users');
+      return jsonResponse(req, { error: "Solo un administrador puede invitar usuarios" }, 403);
     }
 
-    const { email, fullName, role, clientId, operatorId }: InviteUserRequest = await req.json();
+    const body = await req.json().catch(() => ({})) as InviteUserRequest;
+    const email = body.email?.trim().toLowerCase() ?? "";
+    const fullName = body.fullName?.trim() ?? "";
+    const role = body.role;
+    const clientId = body.clientId || null;
+    const operatorId = body.operatorId || null;
 
-    console.log('📧 Processing invitation for:', { email, fullName, role, clientId, operatorId });
-
-    // Validate email
-    if (!email || !email.includes('@')) {
-      throw new Error('Invalid email address');
+    if (!EMAIL_PATTERN.test(email)) {
+      return jsonResponse(req, { error: "Email invalido" }, 400);
+    }
+    if (fullName.length < 3) {
+      return jsonResponse(req, { error: "Nombre completo requerido" }, 400);
+    }
+    if (!role || !VALID_ROLES.has(role)) {
+      return jsonResponse(req, { error: "Rol invalido" }, 400);
     }
 
-    // Get company data for redirect URL
-    const { data: companyData } = await supabaseAdmin
-      .from('company_data')
-      .select('business_name')
-      .single();
-
-    const _businessName = companyData?.business_name || 'TMS Grúas';
-
-    // Build redirect URL - user will be redirected here after accepting invitation
-    const origin = req.headers.get('origin') || 'https://gruas5norte.cl';
-    const redirectTo = `${origin}/auth?invited=true&setup_password=true`;
-
-    console.log('🔗 Inviting user via Supabase Auth Admin API with redirect:', redirectTo);
-
-    // Use Supabase Admin API to invite user
-    // This creates the user in auth.users AND sends the invitation email via Supabase's built-in email system
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: {
-        full_name: fullName,
-        role: role,
-        invited: true
+    if (role === "operator") {
+      if (!operatorId) {
+        return jsonResponse(
+          req,
+          { error: "Debes seleccionar una ficha de operador para habilitar la autoaprobacion" },
+          400,
+        );
       }
-    });
+
+      const { data: operator, error: operatorError } = await supabaseAdmin
+        .from("operators")
+        .select("id, user_id, is_active")
+        .eq("id", operatorId)
+        .maybeSingle();
+      if (operatorError) throw operatorError;
+      if (!operator || !operator.is_active) {
+        return jsonResponse(req, { error: "La ficha de operador no existe o esta inactiva" }, 400);
+      }
+      if (operator.user_id) {
+        return jsonResponse(req, { error: "La ficha de operador ya esta vinculada" }, 409);
+      }
+    } else if (operatorId) {
+      return jsonResponse(req, { error: "Solo el rol operator puede vincular una ficha de operador" }, 400);
+    }
+
+    if (role === "client") {
+      if (!clientId) {
+        return jsonResponse(req, { error: "Debes seleccionar un cliente activo" }, 400);
+      }
+      const { data: client, error: clientError } = await supabaseAdmin
+        .from("clients")
+        .select("id, is_active")
+        .eq("id", clientId)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (clientError) throw clientError;
+      if (!client) {
+        return jsonResponse(req, { error: "El cliente seleccionado no esta activo" }, 400);
+      }
+    } else if (clientId) {
+      return jsonResponse(req, { error: "El cliente asociado solo corresponde al rol client" }, 400);
+    }
+
+    const redirectOrigin = resolveRedirectOrigin(req);
+    const redirectTo = `${redirectOrigin}/auth?invited=true&setup_password=true`;
+    const { data: inviteData, error: inviteError } =
+      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+        data: {
+          full_name: fullName,
+          requested_role: role,
+          invited: true,
+        },
+      });
 
     if (inviteError) {
-      console.error('❌ Error inviting user:', inviteError);
-      
-      // Handle specific error cases
-      if (inviteError.message.includes('already been registered')) {
-        throw new Error('Este email ya está registrado en el sistema');
+      if (inviteError.message.includes("already been registered")) {
+        return jsonResponse(req, { error: "Este email ya esta registrado en el sistema" }, 409);
       }
-      
-      throw new Error(`Error al invitar usuario: ${inviteError.message}`);
+      throw inviteError;
     }
-
     if (!inviteData.user) {
-      throw new Error('No user returned from invite');
+      throw new Error("Supabase Auth no devolvio el usuario invitado");
     }
 
-    const newUserId = inviteData.user.id;
-    console.log('✅ User invited successfully with ID:', newUserId);
+    createdUserId = inviteData.user.id;
+    const { data: approvalStatus, error: finalizeError } = await supabaseAdmin.rpc(
+      "finalize_user_invitation",
+      {
+        target_user_id: createdUserId,
+        target_email: email,
+        target_full_name: fullName,
+        requested_role: role,
+        target_client_id: clientId,
+        target_operator_id: operatorId,
+        invitation_creator_id: callerUser.id,
+      },
+    );
 
-    // Create profile with the same ID as the auth user
-    console.log('📝 Creating profile for invited user...');
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .upsert({
-        id: newUserId,
-        email: email,
-        full_name: fullName,
-        role: role,
-        status: 'approved',
-        client_id: clientId || null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id'
-      });
-
-    if (profileError) {
-      console.error('❌ Error creating profile:', profileError);
-      // Don't fail the whole operation, user is created
-    } else {
-      console.log('✅ Profile created successfully');
+    if (finalizeError) {
+      // La llamada Auth no comparte transaccion con Postgres. Si el bloque
+      // atomico falla, compensamos eliminando el usuario recien creado para no
+      // dejar cuentas parciales o sin invitacion valida.
+      console.error("finalize_user_invitation failed", finalizeError.code, finalizeError.message);
+      await supabaseAdmin.auth.admin.deleteUser(createdUserId);
+      await supabaseAdmin.from("profiles").delete().eq("id", createdUserId);
+      createdUserId = null;
+      throw new Error("No se pudo completar la invitacion de forma segura");
     }
 
-    // Sync the role into the authoritative user_roles table so RLS works for the new user
-    const { error: roleUpsertError } = await supabaseAdmin
-      .from('user_roles')
-      .upsert({ user_id: newUserId, role }, { onConflict: 'user_id,role' });
-    if (roleUpsertError) {
-      console.error('❌ Error upserting user_role:', roleUpsertError);
-    } else {
-      console.log('✅ user_roles entry created');
-    }
-
-    // If role is operator and operatorId provided, link the operator record
-    if (role === 'operator' && operatorId) {
-      console.log('🔗 Linking operator record:', operatorId, 'to user:', newUserId);
-      const { error: linkError } = await supabaseAdmin
-        .from('operators')
-        .update({ user_id: newUserId })
-        .eq('id', operatorId);
-
-      if (linkError) {
-        console.error('❌ Error linking operator:', linkError);
-      } else {
-        console.log('✅ Operator linked successfully');
-      }
-    }
-
-    // Create/update invitation record for tracking
-    console.log('📊 Creating invitation record...');
-    const { error: invitationError } = await supabaseAdmin
-      .from('user_invitations')
-      .upsert({
-        user_id: newUserId,
-        email: email,
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (invitationError) {
-      console.error('❌ Error creating invitation record:', invitationError);
-    } else {
-      console.log('✅ Invitation record created');
-    }
-
-    const successResponse = {
+    return jsonResponse(req, {
       success: true,
-      userId: newUserId,
-      message: `Invitación enviada a ${email}`,
-      timestamp: new Date().toISOString()
-    };
-
-    console.log('🎉 Function completed successfully:', successResponse);
-
-    return new Response(
-      JSON.stringify(successResponse),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      }
-    );
-
-  } catch (error: any) {
-    console.error("💥 Error in send-user-invitation function:", {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Error enviando invitación'
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      }
-    );
+      userId: createdUserId,
+      approvalStatus,
+      message: role === "operator"
+        ? `Operador invitado y aprobado automaticamente: ${email}`
+        : `Invitacion enviada; la cuenta quedara pendiente de aprobacion: ${email}`,
+    }, 200);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error interno";
+    console.error("Error in send-user-invitation", { message, createdUserId });
+    return jsonResponse(req, { error: message }, 500);
   }
-};
-
-serve(handler);
+});

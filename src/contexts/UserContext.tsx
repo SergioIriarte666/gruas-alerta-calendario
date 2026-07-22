@@ -21,8 +21,11 @@ interface UserProfile {
   operator_name?: string | null;
 }
 
+type AccountStatus = 'pending' | 'approved' | 'rejected' | null;
+
 interface UserContextType {
   user: UserProfile | null;
+  accountStatus: AccountStatus;
   loading: boolean;
   /** @deprecated Usa `signOut()` de `useAuth()` en su lugar. Este método ahora solo limpia estado local y delega a AuthContext. */
   logout: () => Promise<void>;
@@ -56,6 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user: authUser, loading: authLoading, signOut } = useAuth();
   const profileCacheRef = useRef<{ profile: UserProfile; userId: string } | null>(readCachedProfile());
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
   const attemptedPendingRepairRef = useRef<string | null>(null);
@@ -79,6 +83,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!authUser || fetchingRef.current) {
       if (!authUser && !navigator.onLine && profileCacheRef.current?.profile?.role === 'operator') {
         setUser(profileCacheRef.current.profile);
+        setAccountStatus('approved');
       }
       setLoading(false);
       return;
@@ -87,6 +92,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Use cached profile if available
     if (profileCacheRef.current?.userId === authUser.id && profileCacheRef.current?.profile) {
       setUser(profileCacheRef.current.profile);
+      setAccountStatus('approved');
       setLoading(false);
       return;
     }
@@ -126,7 +132,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } else {
-        if (profileData.status === 'pending' && attemptedPendingRepairRef.current !== authUser.id) {
+        if (authUser.user_metadata?.invited === true && attemptedPendingRepairRef.current !== authUser.id) {
           attemptedPendingRepairRef.current = authUser.id;
           const repaired = await tryRepairPendingInvitedProfile();
           if (repaired) {
@@ -158,15 +164,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logger.error('UserContext - Error fetching operator profile:', operatorException);
         }
 
-        const status = profileData.status
-        if (status && status !== 'approved') {
-          logger.warn('UserContext - Profile status not approved:', status)
-          await signOut()
-          setUser(null)
-          setLoading(false)
-          fetchingRef.current = false
-          window.location.href = status === 'rejected' ? '/auth?error=rejected' : '/pending'
-          return
+        const status = profileData.status as AccountStatus;
+        setAccountStatus(status);
+
+        if (status === 'pending') {
+          logger.warn('UserContext - Profile pending approval');
+          profileCacheRef.current = null;
+          writeCachedProfile(null);
+          setUser(null);
+          setLoading(false);
+          fetchingRef.current = false;
+          if (window.location.pathname !== '/pending') {
+            window.location.replace('/pending');
+          }
+          return;
+        }
+
+        if (status === 'rejected') {
+          logger.warn('UserContext - Profile rejected');
+          setUser(null);
+          setLoading(false);
+          fetchingRef.current = false;
+          await signOut();
+          return;
+        }
+
+        if (status !== 'approved') {
+          logger.warn('UserContext - Unknown profile status:', status);
+          setUser(null);
+          return;
         }
 
         const userProfile: UserProfile = {
@@ -181,6 +207,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         profileCacheRef.current = { profile: userProfile, userId: authUser.id };
         writeCachedProfile(profileCacheRef.current);
+        setAccountStatus('approved');
         setUser(userProfile);
       }
     } catch (error) {
@@ -198,6 +225,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       setUser(null);
+      setAccountStatus(null);
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -239,6 +267,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profileCacheRef.current = null;
       writeCachedProfile(null);
       setUser(null);
+      setAccountStatus(null);
       setLoading(false);
       fetchingRef.current = false;
       await signOut();
@@ -247,6 +276,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profileCacheRef.current = null;
       writeCachedProfile(null);
       setUser(null);
+      setAccountStatus(null);
       setLoading(false);
       fetchingRef.current = false;
     }
@@ -258,6 +288,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!authUser) {
       if (!navigator.onLine && profileCacheRef.current?.profile?.role === 'operator') {
         setUser(profileCacheRef.current.profile);
+        setAccountStatus('approved');
         setLoading(false);
         fetchingRef.current = false;
         return;
@@ -266,6 +297,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       writeCachedProfile(null);
       attemptedPendingRepairRef.current = null;
       setUser(null);
+      setAccountStatus(null);
       setLoading(false);
       fetchingRef.current = false;
       return;
@@ -274,6 +306,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // If we already have a cached profile for this user, use it immediately
     if (profileCacheRef.current?.userId === authUser.id && profileCacheRef.current?.profile) {
       setUser(profileCacheRef.current.profile);
+      setAccountStatus('approved');
       setLoading(false);
       return;
     }
@@ -284,6 +317,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <UserContext.Provider value={{
       user,
+      accountStatus,
       loading,
       logout,
       updateUser,
@@ -301,6 +335,7 @@ export const useUser = () => {
     logger.warn('useUser called outside UserProvider (likely HMR). Returning defaults.');
     return {
       user: null,
+      accountStatus: null,
       loading: true,
       logout: async () => {},
       updateUser: async () => {},

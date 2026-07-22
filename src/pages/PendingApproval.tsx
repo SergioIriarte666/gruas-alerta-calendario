@@ -1,18 +1,36 @@
 import { supabase } from '@/integrations/supabase/client'
 import { AuthBackground } from '@/components/auth/AuthBackground'
+import { DeleteAccountSection } from '@/components/account/DeleteAccountSection'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { isOperatorMobileVariant } from '@/lib/appVariant'
+import { Navigate } from 'react-router-dom'
+import { Clock, Loader2 } from 'lucide-react'
 
 export default function PendingApproval() {
+  const { user, loading } = useAuth()
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/auth'
   }
 
+  if (loading) {
+    return (
+      <AuthBackground variant={isOperatorMobileVariant() ? 'operator' : 'default'}>
+        <Loader2 className="size-8 animate-spin text-auth-foreground" />
+      </AuthBackground>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />
+  }
+
   return (
-    <AuthBackground>
-      <div className="w-full max-w-md">
+    <AuthBackground variant={isOperatorMobileVariant() ? 'operator' : 'default'}>
+      <div className="w-full max-w-md space-y-4">
         <Card className="border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <Clock className="mx-auto size-12 text-auth-warning" />
@@ -31,6 +49,8 @@ export default function PendingApproval() {
             </Button>
           </CardContent>
         </Card>
+
+        <DeleteAccountSection />
       </div>
     </AuthBackground>
   )

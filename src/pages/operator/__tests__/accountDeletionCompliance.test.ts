@@ -17,6 +17,22 @@ describe('eliminación de cuenta del Portal Operador', () => {
     expect(profileSource).toContain('<DeleteAccountSection />');
   });
 
+  it('permite eliminar una cuenta mientras espera aprobación', () => {
+    const pendingSource = readWorkspaceFile('src/pages/PendingApproval.tsx');
+    const userContextSource = readWorkspaceFile('src/contexts/UserContext.tsx');
+
+    expect(pendingSource).toContain('<DeleteAccountSection />');
+    expect(pendingSource).toContain('if (!user)');
+    expect(userContextSource).toContain("if (status === 'pending')");
+    expect(userContextSource).toContain("window.location.replace('/pending')");
+
+    const pendingBranch = userContextSource.slice(
+      userContextSource.indexOf("if (status === 'pending')"),
+      userContextSource.indexOf("if (status === 'rejected')"),
+    );
+    expect(pendingBranch).not.toContain('signOut');
+  });
+
   it('deriva la identidad de la sesión y exige confirmación explícita', () => {
     const componentSource = readWorkspaceFile('src/components/account/DeleteAccountSection.tsx');
     const functionSource = readWorkspaceFile('supabase/functions/delete-my-account/index.ts');

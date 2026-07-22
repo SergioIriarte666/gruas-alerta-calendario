@@ -51,7 +51,7 @@ const getOfflineCachedRole = (): string | null => {
 
 const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading, signOut } = useAuth();
-  const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
+  const { user: profileUser, accountStatus, loading: profileLoading, forceRefreshProfile } = useUser();
   const { hasModuleAccess, loadingCurrentUser } = useUserModulePermissions();
   const location = useLocation();
   const [hasTriedRefresh, setHasTriedRefresh] = React.useState(false);
@@ -101,6 +101,14 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
       return <>{children}</>;
     }
     return <Navigate to="/auth" replace />;
+  }
+
+  if (accountStatus === 'pending') {
+    return <Navigate to="/pending" replace />;
+  }
+
+  if (accountStatus === 'rejected') {
+    return <Navigate to="/auth?error=rejected" replace />;
   }
 
   if (profileLoading || (waitingForProfile && !giveUp)) {

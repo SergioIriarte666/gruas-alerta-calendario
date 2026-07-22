@@ -86,8 +86,19 @@ Nota:
 
 ## Mensaje para App Review
 
-### Notas para revision
-`Aplicacion de uso interno para operadores de Gruas 5 Norte. Requiere credenciales de acceso para ingresar. La app permite visualizar servicios asignados, revisar su detalle operativo, capturar evidencias operativas y compartir ubicacion asociada a atenciones en curso.`
+### Notas para revision de la build 1.0.1 (5)
+
+Texto sugerido para pegar en `App Review Information > Notes`:
+
+`Aplicación de uso interno para operadores autorizados de Grúas 5 Norte. La build iOS no ofrece ni utiliza inicio de sesión de Google ni otro proveedor social: el acceso se realiza exclusivamente con correo y contraseña administrados por la empresa, por lo que Guideline 4.8 no resulta aplicable a esta build.`
+
+`La ubicación persistente es una función esencial y visible. Un operador inicia su jornada o un servicio activo y habilita el uso compartido desde la pantalla principal. La posición se actualiza en segundo plano para que el centro de operaciones pueda coordinar el servicio mientras el operador usa navegación u otra aplicación. El operador puede detener el seguimiento desde la misma pantalla. Se adjunta una grabación realizada en un dispositivo físico que muestra la activación, el paso de la app a segundo plano, la actualización en la plataforma administrativa y la detención.`
+
+`La app no utiliza Bluetooth Low Energy. Se eliminó bluetooth-peripheral de UIBackgroundModes; el único modo declarado es location.`
+
+`La eliminación definitiva está disponible dentro de la app en Perfil > Eliminar mi cuenta. También está disponible para una cuenta que todavía espera aprobación. El usuario confirma escribiendo ELIMINAR; se borran inmediatamente la identidad de acceso, sesiones, preferencias, avatar e historial personal. Los registros operativos de la empresa que deban conservarse quedan desvinculados de las credenciales y del perfil identificable. Se adjunta una grabación en dispositivo físico del flujo completo.`
+
+Antes de enviar, reemplazar en App Store Connect los campos de acceso de demostración con una cuenta de operador vigente y restringida a datos de muestra.
 
 ### Si Apple solicita acceso de prueba
 Preparar y mantener:
@@ -98,7 +109,20 @@ Preparar y mantener:
 
 Texto sugerido si Apple pide instrucciones:
 
-`Despues de iniciar sesion con la cuenta de prueba, la aplicacion muestra los servicios asignados al operador. Desde la pantalla principal se puede abrir el detalle del servicio y activar el uso compartido de ubicacion para pruebas operativas.`
+`Después de iniciar sesión con la cuenta de prueba, la aplicación muestra los servicios asignados al operador. Desde la pantalla principal se puede abrir el detalle del servicio y activar el uso compartido de ubicación. La eliminación de cuenta se encuentra en Perfil > Eliminar mi cuenta.`
+
+### Grabaciones obligatorias para este reenvío
+
+Grabar en un iPhone físico, sin mostrar datos reales de clientes:
+
+1. `ubicacion-segundo-plano.mov`: iniciar sesión, abrir un servicio de muestra, activar ubicación, enviar la app a segundo plano, demostrar que la posición continúa actualizándose en el panel administrativo y detener el seguimiento.
+2. `eliminacion-cuenta.mov`: crear o iniciar sesión con una cuenta QA, ir a Perfil, abrir `Eliminar mi cuenta`, escribir `ELIMINAR`, confirmar y demostrar que el siguiente inicio de sesión falla.
+
+Subir ambos videos a una URL accesible para Apple y pegar los enlaces en `App Review Information > Notes`.
+
+### Retención de registros operativos
+
+La cuenta Auth y el perfil identificable se eliminan de inmediato. La ficha laboral y los registros de servicios se desvinculan de la cuenta porque pueden formar parte de los antecedentes operacionales de la empresa. Antes del reenvío, el responsable legal debe confirmar qué campos de la ficha laboral (por ejemplo, nombre o RUT) deben conservarse y por cuánto tiempo; si no existe una obligación aplicable, deben anonimizarse también.
 
 ## Privacidad y datos
 

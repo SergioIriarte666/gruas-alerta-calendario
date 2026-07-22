@@ -80,9 +80,17 @@ Regla practica:
 ## Publicacion en iPhone
 
 ### Estado actual
-La app ya fue subida a App Store Connect y enviada a revision con:
+La build rechazada fue:
 - version `1.0.1`
 - build `4`
+
+La correccion preparada para reenvio es:
+- version `1.0.1`
+- build `5`
+- bundle iOS sincronizado con la variante `operator-mobile`
+- inicio de sesion Google ausente en la variante iOS
+- `UIBackgroundModes` limitado a `location`
+- eliminacion de cuenta disponible tambien mientras la cuenta esta pendiente
 
 ### Bundle identifier oficial
 `cl.gruas5norte.tmsoperador`
@@ -149,11 +157,15 @@ Apple exigio capturas de iPad de 13" para poder completar el envio.
 Se generaron versiones adaptadas en:
 - [/Users/sergioiriartevasquez/Desktop/appstore-ipad-13in](</Users/sergioiriartevasquez/Desktop/appstore-ipad-13in>)
 
-### Estado recomendado mientras Apple revisa
-Mientras el build esta pendiente de revision:
-- no hace falta subir nada nuevo salvo que corrijas algo importante
-- si haces cambios nativos o funcionales relevantes, corresponde nueva build
-- si solo haces cambios web OTA, revisar si el cambio realmente evita nueva build o no
+### Pendientes antes de reenviar la build 5
+
+- confirmar con legal la retencion de datos de la ficha laboral del operador
+- probar en un iPhone fisico permisos `While In Use` y `Always`
+- grabar la ubicacion persistente en segundo plano y su detencion
+- grabar el flujo completo de eliminacion de cuenta
+- crear una cuenta de revision estable, restringida y con datos de muestra
+- generar `Product > Archive`, validar y subir la build 5
+- pegar en App Review las notas y enlaces preparados en `app-store-listing-tms-operador.md`
 
 ## Publicacion en Android
 
@@ -235,11 +247,12 @@ Seguir asi:
 ## Checklist rapido de salida
 
 ### iPhone
-- build correcta seleccionada en App Store Connect
+- build `1.0.1 (5)` seleccionada en App Store Connect
 - ficha completada
 - privacidad publicada
 - screenshots iPhone e iPad cargados
 - notas de revision con cuenta de prueba
+- videos fisicos de ubicacion y eliminacion accesibles para Apple
 
 ### Android
 - APK debug probado en equipo real
