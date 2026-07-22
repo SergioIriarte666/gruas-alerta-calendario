@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Route, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,8 @@ const STOP_TYPE_LABELS: Record<ServiceStopType, string> = {
 
 interface ServiceStopsSectionProps {
   stops: ServiceStopDraft[];
-  onStopsChange: (stops: ServiceStopDraft[]) => void;
+  /** Setter de estado del padre (updates funcionales, ver updateStop). */
+  onStopsChange: Dispatch<SetStateAction<ServiceStopDraft[]>>;
   /** Departamento del cliente: acota la búsqueda híbrida de direcciones. */
   department?: string | null;
   disabled?: boolean;
@@ -41,13 +42,17 @@ export const ServiceStopsSection = ({
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(stops.length > 0);
 
+  // SIEMPRE updates funcionales: OriginLocationField dispara onChange +
+  // onCoordsChange en el MISMO evento de tecleo; con updates derivados de la
+  // prop `stops` (stale dentro del evento), el segundo set pisaba al primero
+  // y el input de dirección quedaba mudo (bug real de producción).
   const updateStop = (id: string, patch: Partial<ServiceStopDraft>) => {
-    onStopsChange(stops.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop)));
+    onStopsChange((prev) => prev.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop)));
   };
 
   const addStop = () => {
-    onStopsChange([
-      ...stops,
+    onStopsChange((prev) => [
+      ...prev,
       {
         id: crypto.randomUUID(),
         label: '',
@@ -60,15 +65,17 @@ export const ServiceStopsSection = ({
   };
 
   const removeStop = (id: string) => {
-    onStopsChange(stops.filter((stop) => stop.id !== id));
+    onStopsChange((prev) => prev.filter((stop) => stop.id !== id));
   };
 
   const moveStop = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= stops.length) return;
-    const reordered = [...stops];
-    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-    onStopsChange(reordered);
+    onStopsChange((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const reordered = [...prev];
+      [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+      return reordered;
+    });
   };
 
   return (
