@@ -86,7 +86,7 @@ Nota:
 
 ## Mensaje para App Review
 
-### Notas para revision de la build 1.0.1 (5)
+### Notas para revision de la build 1.0.1 (6)
 
 Texto sugerido para pegar en `App Review Information > Notes`:
 
@@ -96,16 +96,23 @@ Texto sugerido para pegar en `App Review Information > Notes`:
 
 `La app no utiliza Bluetooth Low Energy. Se eliminó bluetooth-peripheral de UIBackgroundModes; el único modo declarado es location.`
 
-`La eliminación definitiva está disponible dentro de la app en Perfil > Eliminar mi cuenta. También está disponible para una cuenta que todavía espera aprobación. El usuario confirma escribiendo ELIMINAR; se borran inmediatamente la identidad de acceso, sesiones, preferencias, avatar e historial personal. Los registros operativos de la empresa que deban conservarse quedan desvinculados de las credenciales y del perfil identificable. Se adjunta una grabación en dispositivo físico del flujo completo.`
+`La eliminación definitiva está disponible dentro de la app en Perfil > Eliminar mi cuenta. También está disponible para una cuenta que todavía espera aprobación. El usuario confirma escribiendo ELIMINAR; se borran inmediatamente la identidad de acceso, sesiones, preferencias, avatar e historial personal. La ficha laboral y los registros operativos que la empresa debe conservar permanecen desvinculados de las credenciales y del perfil de acceso. Se adjunta una grabación en dispositivo físico del flujo completo.`
 
-Antes de enviar, reemplazar en App Store Connect los campos de acceso de demostración con una cuenta de operador vigente y restringida a datos de muestra.
+Cuenta de demostración preparada:
+
+- nombre: `Apple Review Operador`
+- usuario: `apple.review.operator@gruas5norte.cl`
+- servicio asignado: `SRV-6820`
+- estado verificado: cuenta aprobada, activa y vinculada al operador
+
+La contraseña debe registrarse únicamente en el campo protegido de acceso para revisión de App Store Connect; no debe incluirse en este repositorio ni en las notas públicas.
 
 ### Si Apple solicita acceso de prueba
 Preparar y mantener:
 
-- un usuario operador de prueba
-- una cuenta con al menos un servicio asignado
-- si es posible, un servicio de muestra visible al iniciar sesion
+- usuario operador: `apple.review.operator@gruas5norte.cl`
+- servicio de muestra asignado: `SRV-6820`
+- comprobar que ambos continúen activos antes de cada reenvío
 
 Texto sugerido si Apple pide instrucciones:
 
@@ -122,7 +129,7 @@ Subir ambos videos a una URL accesible para Apple y pegar los enlaces en `App Re
 
 ### Retención de registros operativos
 
-La cuenta Auth y el perfil identificable se eliminan de inmediato. La ficha laboral y los registros de servicios se desvinculan de la cuenta porque pueden formar parte de los antecedentes operacionales de la empresa. Antes del reenvío, el responsable legal debe confirmar qué campos de la ficha laboral (por ejemplo, nombre o RUT) deben conservarse y por cuánto tiempo; si no existe una obligación aplicable, deben anonimizarse también.
+La cuenta Auth y el perfil identificable se eliminan de inmediato. Se confirmó como requisito de la empresa conservar la ficha laboral —incluidos nombre y RUT— y los registros de servicios. Estos datos permanecen en los antecedentes laborales y operacionales, pero quedan desvinculados de las credenciales, sesiones y perfil de acceso eliminado.
 
 ## Privacidad y datos
 

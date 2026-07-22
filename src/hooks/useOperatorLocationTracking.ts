@@ -303,6 +303,22 @@ export const useOperatorLocationTracking = ({
   ) => {
     lastNativePersistAtRef.current = 0;
 
+    // El watcher nativo respeta distanceFilter y, si el equipo permanece
+    // quieto, iOS puede no emitir un primer evento. Capturamos una lectura
+    // inicial explícita para que la central reciba señal desde el momento en
+    // que comienza o se reanuda el rastreo; el watcher queda a cargo de las
+    // actualizaciones posteriores, incluso con la app en segundo plano.
+    void getCurrentLocationPoint()
+      .then(async (point) => {
+        lastNativePersistAtRef.current = Date.now();
+        setLastPoint(point);
+        await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
+        setErrorMessage(null);
+      })
+      .catch((initialPointError) => {
+        logger.warn('Could not capture initial native location point', initialPointError);
+      });
+
     BackgroundGeolocation.addWatcher(
       {
         backgroundMessage: 'Compartiendo ubicación con la central',

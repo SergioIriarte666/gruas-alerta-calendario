@@ -83,7 +83,8 @@ export const DeleteAccountSection = () => {
           <div className="space-y-1">
             <CardTitle className="text-foreground">Eliminar mi cuenta</CardTitle>
             <CardDescription>
-              Borra definitivamente tus credenciales y datos personales asociados a la app.
+              Borra definitivamente tus credenciales y los datos personales que no estén sujetos
+              a una obligación de conservación.
             </CardDescription>
           </div>
         </div>
@@ -97,8 +98,8 @@ export const DeleteAccountSection = () => {
                 Se eliminarán tu acceso, perfil, avatar, preferencias, sesiones e historial personal.
               </p>
               <p>
-                Los servicios, inspecciones y documentos operativos que la empresa deba conservar
-                permanecerán sin vínculo con tu cuenta ni con tus datos de acceso.
+                La ficha laboral, los servicios, inspecciones y documentos operativos que la empresa
+                deba conservar permanecerán sin vínculo con tu cuenta ni con tus datos de acceso.
               </p>
             </div>
           </div>

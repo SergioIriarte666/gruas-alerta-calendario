@@ -157,15 +157,26 @@ Apple exigio capturas de iPad de 13" para poder completar el envio.
 Se generaron versiones adaptadas en:
 - [/Users/sergioiriartevasquez/Desktop/appstore-ipad-13in](</Users/sergioiriartevasquez/Desktop/appstore-ipad-13in>)
 
-### Pendientes antes de reenviar la build 5
+### Estado antes de reenviar la build 6
 
-- confirmar con legal la retencion de datos de la ficha laboral del operador
-- probar en un iPhone fisico permisos `While In Use` y `Always`
-- grabar la ubicacion persistente en segundo plano y su detencion
-- grabar el flujo completo de eliminacion de cuenta
-- crear una cuenta de revision estable, restringida y con datos de muestra
-- generar `Product > Archive`, validar y subir la build 5
+Completados:
+
+- prueba en un iPhone fisico de los permisos y el rastreo de ubicación
+- grabación de la ubicación persistente con la app en segundo plano
+- grabación del flujo completo de eliminación de cuenta
+- build `1.0.1 (6)` firmada, instalada y probada en un iPhone físico
+
+Pendientes en App Store Connect:
+
+- generar `Product > Archive`, validar y subir la build 6
 - pegar en App Review las notas y enlaces preparados en `app-store-listing-tms-operador.md`
+
+También confirmados:
+
+- la ficha laboral, nombre y RUT deben conservarse después de eliminar las credenciales
+- cuenta de revisión: `apple.review.operator@gruas5norte.cl`
+- operador vinculado: `Apple Review Operador`
+- servicio de muestra asignado: `SRV-6820`
 
 ## Publicacion en Android
 
@@ -233,9 +244,9 @@ Mientras eso no termine:
 
 ### iPhone
 Seguir asi:
-1. esperar la respuesta de Apple para build `1.0.1 (4)`
-2. si Apple pide cambios, corregir y subir build nueva
-3. si Apple aprueba, decidir si publicar de inmediato o controlar rollout
+1. archivar, validar y subir la build `1.0.1 (6)`
+2. incorporar las credenciales y los enlaces de evidencia en App Review Information
+3. reenviar a revisión y responder cualquier observación de Apple
 
 ### Android
 Seguir asi:
@@ -247,7 +258,7 @@ Seguir asi:
 ## Checklist rapido de salida
 
 ### iPhone
-- build `1.0.1 (5)` seleccionada en App Store Connect
+- build `1.0.1 (6)` seleccionada en App Store Connect
 - ficha completada
 - privacidad publicada
 - screenshots iPhone e iPad cargados
