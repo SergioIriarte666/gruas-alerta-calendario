@@ -13,6 +13,7 @@ import { useOperators } from '@/hooks/useOperators';
 import { useCranes } from '@/hooks/useCranes';
 import { safeParseDateOnly, toLocalDateString } from '@/utils/timezoneUtils';
 import { EntityKey } from '@/lib/entities';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 export interface CostFilters {
   category: string;
@@ -164,7 +165,7 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
                   <SelectItem value="all">Todos</SelectItem>
                   {operators.map((operator) => (
                     <SelectItem key={operator.id} value={operator.id}>
-                      {operator.name}
+                      <OperatorSelectLabel operator={operator} />
                     </SelectItem>
                   ))}
                 </SelectContent>

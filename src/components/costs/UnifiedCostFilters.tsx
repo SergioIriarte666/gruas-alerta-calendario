@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { ENTITIES } from '@/lib/entities';
 
 import { safeDateToDisplay, CostPeriod } from '@/utils/timezoneUtils';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 interface UnifiedCostFiltersProps {
   filters: CostFilters;
@@ -419,7 +420,7 @@ export const UnifiedCostFilters = ({
                         <SelectItem value="all">Todos los operadores</SelectItem>
                         {operators.map((op) => (
                           <SelectItem key={op.id} value={op.id}>
-                            {op.name}
+                            <OperatorSelectLabel operator={op} />
                           </SelectItem>
                         ))}
                       </SelectContent>

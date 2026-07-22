@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CostSubcategory } from '@/types/costs';
 import { useOperators } from '@/hooks/useOperators';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 import { createLogger } from "@/lib/logger";
 
 
@@ -617,7 +618,7 @@ export const ServiceCostDetailsSection = ({
                             <SelectItem value="none">Sin operador</SelectItem>
                             {operators.map((operator) => (
                               <SelectItem key={operator.id} value={operator.id}>
-                                {operator.name}
+                                <OperatorSelectLabel operator={operator} />
                               </SelectItem>
                             ))}
                           </SelectContent>

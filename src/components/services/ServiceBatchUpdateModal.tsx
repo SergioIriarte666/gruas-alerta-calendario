@@ -26,6 +26,7 @@ import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-prog
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 import { toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
@@ -385,7 +386,7 @@ export const ServiceBatchUpdateModal = ({
                           </SelectItem>
                           {activeOperators.map((op) => (
                             <SelectItem key={op.id} value={op.id}>
-                              {op.name}
+                              <OperatorSelectLabel operator={op} />
                             </SelectItem>
                           ))}
                         </SelectContent>

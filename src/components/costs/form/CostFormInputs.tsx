@@ -18,6 +18,7 @@ import { InventoryPurchaseFields } from './InventoryPurchaseFields';  // FASE 3
 import { SupplierSelector } from './SupplierSelector';
 import { Package, Phone, Hash, DollarSign, Gauge, Calendar, FileText, Tag, Building2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 interface CostFormInputsProps {
     form: UseFormReturn<CostFormValues>;
@@ -419,7 +420,9 @@ export const CostFormInputs = ({
                                     <SelectContent>
                                         <SelectItem value="none">Sin asociar</SelectItem>
                                         {operators.map(op => (
-                                            <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>
+                                            <SelectItem key={op.id} value={op.id}>
+                                                <OperatorSelectLabel operator={op} />
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

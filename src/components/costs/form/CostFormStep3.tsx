@@ -14,6 +14,7 @@ import { ServiceSelector } from './ServiceSelector';
 import { SupplierSelector } from './SupplierSelector';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 interface CostFormStep3Props {
   form: UseFormReturn<CostFormValues>;
@@ -171,7 +172,9 @@ export const CostFormStep3 = ({
                   <SelectContent>
                     <SelectItem value="none">Sin asociar</SelectItem>
                     {operators.map(op => (
-                      <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>
+                      <SelectItem key={op.id} value={op.id}>
+                        <OperatorSelectLabel operator={op} />
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

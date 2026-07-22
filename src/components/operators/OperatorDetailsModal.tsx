@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { OperatorDocumentsSection } from './OperatorDocumentsSection';
+import { OperatorAppAccessBadge } from './OperatorAppAccessBadge';
 import {
   useOperatorDocuments,
   getDocumentStatus,
@@ -134,6 +135,7 @@ const OperatorDetailsModalInner = ({
                 {operator.isActive ? 'Activo' : 'Inactivo'}
               </Badge>
               {operator.isActive && <CheckCircle className="size-4 text-success" />}
+              <OperatorAppAccessBadge operator={operator} />
             </div>
 
             {/* Información de Contacto */}

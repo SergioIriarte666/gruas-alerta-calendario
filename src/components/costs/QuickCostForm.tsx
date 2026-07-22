@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 import { useAutoClassify } from '@/hooks/useAutoClassify';
 import { AiCategorySuggestion } from '@/components/costs/form/AiCategorySuggestion';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 const quickCostSchema = z.object({
   date: z.string().min(1, 'La fecha es requerida'),
@@ -371,7 +372,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
                       <SelectItem value="none">Sin asignar</SelectItem>
                       {operators.map((op) => (
                         <SelectItem key={op.id} value={op.id}>
-                          {op.name}
+                          <OperatorSelectLabel operator={op} />
                         </SelectItem>
                       ))}
                     </SelectContent>

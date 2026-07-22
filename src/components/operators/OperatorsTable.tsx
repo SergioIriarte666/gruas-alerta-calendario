@@ -8,6 +8,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { OperatorsMobileView } from './OperatorsMobileView';
 import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
 import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
+import { OperatorAppAccessBadge } from './OperatorAppAccessBadge';
 
 export type OperatorSortField = 'operatorType' | 'name' | 'rut' | 'phone' | 'license' | 'examExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -209,8 +210,9 @@ export const OperatorsTable = ({
                     </Badge>
                   </td>
                   <td className="py-3 px-4 text-foreground font-medium">
-                    <span className="flex items-center gap-2">
+                    <span className="flex flex-wrap items-center gap-2">
                       {operator.name}
+                      <OperatorAppAccessBadge operator={operator} />
                       {operatorsWithDocumentAlerts?.has(operator.id) && (
                         <span title="Documentos por vencer o vencidos">
                           <AlertTriangle className="size-4 text-warning flex-shrink-0" />

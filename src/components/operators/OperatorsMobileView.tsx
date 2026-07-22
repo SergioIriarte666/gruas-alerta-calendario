@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
 import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
+import { OperatorAppAccessBadge } from './OperatorAppAccessBadge';
 
 interface OperatorsMobileViewProps {
   operators: Operator[];
@@ -137,6 +138,7 @@ export const OperatorsMobileView = ({
                     Sin rastreo
                   </Badge>
                 )}
+                <OperatorAppAccessBadge operator={operator} />
               </div>
             </div>
 

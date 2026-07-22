@@ -26,6 +26,7 @@ const Auth = () => {
   const tabParam = searchParams.get('tab');
   const isInvited = searchParams.get('invited') === 'true';
   const isRegistered = searchParams.get('registered') === 'true';
+  const wasAccountDeleted = searchParams.get('account_deleted') === 'true';
   const needsPasswordSetup = searchParams.get('setup_password') === 'true';
   
   const [email, setEmail] = useState(emailParam || '');
@@ -72,6 +73,14 @@ const Auth = () => {
       toast.success('¡Cuenta confirmada exitosamente!');
     }
   }, [isInvited, isRegistered, emailParam, needsPasswordSetup]);
+
+  useEffect(() => {
+    if (wasAccountDeleted) {
+      toast.success('Cuenta eliminada definitivamente', {
+        description: 'Tus credenciales y datos personales ya no están activos.',
+      });
+    }
+  }, [wasAccountDeleted]);
 
   // Redirigir usuarios autenticados - pero solo si no necesitan configurar contraseña
   useEffect(() => {
@@ -318,6 +327,15 @@ const Auth = () => {
             <h3 className="mb-2 font-semibold text-auth-success">¡Cuenta confirmada!</h3>
             <p className="text-sm text-auth-foreground/95">
               Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.
+            </p>
+          </div>
+        )}
+
+        {wasAccountDeleted && (
+          <div className="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4">
+            <h3 className="mb-2 font-semibold text-auth-success">Cuenta eliminada</h3>
+            <p className="text-sm text-auth-foreground/95">
+              La eliminación se completó correctamente y el acceso fue cerrado en todos tus dispositivos.
             </p>
           </div>
         )}

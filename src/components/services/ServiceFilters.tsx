@@ -7,6 +7,7 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { useOperators } from '@/hooks/useOperators';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { cn } from '@/lib/utils';
+import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 
 interface ServiceFiltersProps {
   searchTerm: string;
@@ -99,7 +100,9 @@ export const ServiceFilters = React.memo(({
         <SelectContent>
           <SelectItem value="all">Todos los operadores</SelectItem>
           {operators.map(op => (
-            <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>
+            <SelectItem key={op.id} value={op.id}>
+              <OperatorSelectLabel operator={op} />
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>

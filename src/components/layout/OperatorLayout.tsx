@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { RefreshCw, LogOut, Truck } from 'lucide-react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { RefreshCw, LogOut, Truck, UserRound } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -75,6 +75,16 @@ export const OperatorLayout = () => {
 
           <div className="flex items-center gap-1">
             <ThemeSelector />
+            <Link
+              to="/operator/profile"
+              aria-label="Abrir Mi perfil"
+              title="Mi perfil"
+              className={`operator-native-icon-button flex size-11 items-center justify-center ${
+                pathname === '/operator/profile' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <UserRound className="size-4" />
+            </Link>
             <button
               onClick={handleLogout}
               aria-label={`Cerrar sesión de ${user?.name || user?.email || 'operador'}`}

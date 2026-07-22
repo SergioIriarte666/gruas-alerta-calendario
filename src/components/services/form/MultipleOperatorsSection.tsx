@@ -8,6 +8,7 @@ import { Trash2, Plus, Users, DollarSign, AlertTriangle } from 'lucide-react';
 import { Operator } from '@/types';
 import { ServiceOperator } from '@/types/serviceDetails';
 import { ComplianceIssue, formatComplianceIssueMessage } from '@/hooks/services/useResourceCompliance';
+import { OperatorAppAccessBadge } from '@/components/operators/OperatorAppAccessBadge';
 
 interface MultipleOperatorsSectionProps {
   operators: ServiceOperator[];
@@ -130,6 +131,7 @@ export const MultipleOperatorsSection = ({
                     {getAvailableOperatorsForSelect(operator.operatorId).map(op => <SelectItem key={op.id} value={op.id}>
                         <span className="flex items-center gap-2">
                           {op.name}
+                          <OperatorAppAccessBadge operator={op} />
                           {op.commissionExempt && (
                             <span className="rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary" title="Exento de comisiones">
                               E
