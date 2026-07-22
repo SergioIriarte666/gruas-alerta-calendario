@@ -39,6 +39,15 @@ const activityKeys = {
   unread: (operatorId?: string | null) => ['operator-activity', 'unread', operatorId ?? null] as const,
 };
 
+const toActivityError = (error: unknown): Error | null => {
+  if (!error) return null;
+  if (error instanceof Error) return error;
+  if (typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return new Error(error.message);
+  }
+  return new Error('No se pudo consultar la actividad del operador');
+};
+
 export const OperatorActivityProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -169,6 +178,8 @@ export const OperatorActivityProvider = ({ children }: { children: ReactNode }) 
     });
   }, [feedQuery.data]);
 
+  const activityError = toActivityError(feedQuery.error ?? operatorLookup.error);
+
   const value = useMemo<OperatorActivityContextValue>(() => ({
     activities,
     recentActivities: activities.slice(0, 3),
@@ -177,9 +188,7 @@ export const OperatorActivityProvider = ({ children }: { children: ReactNode }) 
     isLoading: feedQuery.isLoading || operatorLookup.isLoading,
     isFetchingNextPage: feedQuery.isFetchingNextPage,
     hasNextPage: Boolean(feedQuery.hasNextPage),
-    error: feedQuery.error instanceof Error
-      ? feedQuery.error
-      : operatorLookup.error instanceof Error ? operatorLookup.error : null,
+    error: activityError,
     fetchNextPage: feedQuery.fetchNextPage,
     refresh,
     markAllRead: async () => { await markReadMutation.mutateAsync(); },
@@ -187,7 +196,7 @@ export const OperatorActivityProvider = ({ children }: { children: ReactNode }) 
   }), [
     activities, connection, feedQuery.error, feedQuery.fetchNextPage, feedQuery.hasNextPage,
     feedQuery.isFetchingNextPage, feedQuery.isLoading, markReadMutation, refresh, unreadQuery.data,
-    operatorLookup.error, operatorLookup.isLoading,
+    activityError, operatorLookup.isLoading,
   ]);
 
   return <OperatorActivityContext.Provider value={value}>{children}</OperatorActivityContext.Provider>;
