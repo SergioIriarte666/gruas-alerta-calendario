@@ -70,7 +70,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
   };
 
   return (
-    <Card className="border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
+    <Card className="auth-native-card rounded-3xl border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
       <CardHeader>
         <CardTitle className="text-center text-2xl text-auth-foreground">Recuperar Contraseña</CardTitle>
         <CardDescription className="text-center text-auth-foreground/70">
@@ -109,7 +109,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                 required
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border"
+                className="h-12 rounded-2xl border-auth-input-border bg-auth-input px-4 text-base text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border"
               />
             </div>
             {isTurnstileEnabled ? (
@@ -127,7 +127,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
             <Button
               type="submit"
               disabled={loading || (isTurnstileEnabled && !captchaToken)}
-              className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90"
             >
               {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
             </Button>

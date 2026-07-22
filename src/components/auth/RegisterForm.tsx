@@ -23,9 +23,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onGoogleLogin
 }) => {
-  return <Card className="border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl text-auth-foreground">
+  return <Card className="auth-native-card rounded-3xl border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl text-auth-foreground">
           Registrarse
         </CardTitle>
         <CardDescription className="text-auth-muted">
@@ -36,14 +36,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-register" className="text-auth-muted">Email</Label>
-            <Input id="email-register" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
+            <Input id="email-register" type="email" inputMode="email" autoComplete="email" placeholder="nombre@empresa.cl" required value={email} onChange={e => setEmail(e.target.value)} className="h-12 rounded-2xl border-auth-input-border bg-auth-input px-4 text-base text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password-register" className="text-auth-muted">Contraseña</Label>
-            <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
+            <Input id="password-register" type="password" autoComplete="new-password" required value={password} onChange={e => setPassword(e.target.value)} className="h-12 rounded-2xl border-auth-input-border bg-auth-input px-4 text-base text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
             <PasswordStrengthIndicator password={password} />
           </div>
-          <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button type="submit" disabled={loading} className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90">
             {loading ? 'Registrando...' : 'Registrar'}
           </Button>
         </form>

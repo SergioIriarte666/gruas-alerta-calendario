@@ -1,6 +1,6 @@
 import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarClock, MapPin, Truck, Clock } from 'lucide-react';
+import { CalendarClock, MapPin, Truck, Clock, ArrowRight } from 'lucide-react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
@@ -39,19 +39,24 @@ export const NextServiceCard = ({ service }: NextServiceCardProps) => {
 
   return (
     <Card className={cn(
-      'border transition-colors',
+      'operator-next-service overflow-hidden border transition-colors',
       urgent
         ? 'border-primary/35 bg-primary/10'
         : 'bg-card border-border'
     )}>
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="relative space-y-3 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CalendarClock className={cn('size-4', urgent ? 'text-primary' : 'text-muted-foreground')} />
-            <span className="text-sm font-medium text-foreground">Próximo servicio</span>
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+              <CalendarClock className={cn('size-4', urgent ? 'text-primary' : 'text-muted-foreground')} />
+            </span>
+            <div>
+              <p className="operator-native-eyebrow">Siguiente parada</p>
+              <span className="text-sm font-semibold text-foreground">Próximo servicio</span>
+            </div>
           </div>
           <span className={cn(
-            'text-xs font-bold px-2.5 py-1 rounded-full',
+            'rounded-full px-3 py-1.5 text-xs font-bold',
             urgent
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground'
@@ -64,13 +69,14 @@ export const NextServiceCard = ({ service }: NextServiceCardProps) => {
           <div className="flex items-center gap-2 text-sm">
             <Truck className="size-3.5 text-muted-foreground shrink-0" />
             <span className="text-foreground font-medium truncate">{service.serviceType?.name ?? 'Servicio'}</span>
-            <span className="text-muted-foreground shrink-0">· Folio {service.folio}</span>
+            <span className="shrink-0 text-muted-foreground">· {service.folio}</span>
           </div>
 
           <div className="flex items-start gap-2 text-sm">
             <MapPin className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-muted-foreground truncate">
+            <p className="flex min-w-0 flex-1 items-center gap-2 truncate text-muted-foreground">
               <span className="font-medium text-foreground">Destino:</span> {service.destination}
+              <ArrowRight className="ml-auto size-3.5 shrink-0 text-primary" />
             </p>
           </div>
 

@@ -1,6 +1,6 @@
 
 import { Suspense, lazy, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -25,6 +25,8 @@ import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { isOperatorMobileVariant } from '@/lib/appVariant';
 import { startLiveUpdateService } from '@/services/liveUpdate';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -52,6 +54,7 @@ const routeImports = {
   Settings: () => import('@/pages/Settings'),
   OperatorDashboard: () => import('@/pages/OperatorDashboard'),
   ServiceInspection: () => import('@/pages/operator/ServiceInspection'),
+  OperatorActivity: () => import('@/pages/operator/OperatorActivity'),
   PortalDashboard: () => import('@/pages/portal/PortalDashboard'),
   PortalServices: () => import('@/pages/portal/PortalServices'),
   PortalInvoices: () => import('@/pages/portal/PortalInvoices'),
@@ -101,6 +104,7 @@ const Commissions = lazy(routeImports.Commissions);
 const Settings = lazy(routeImports.Settings);
 const OperatorDashboard = lazy(routeImports.OperatorDashboard);
 const ServiceInspection = lazy(routeImports.ServiceInspection);
+const OperatorActivity = lazy(routeImports.OperatorActivity);
 const PortalDashboard = lazy(routeImports.PortalDashboard);
 const PortalServices = lazy(routeImports.PortalServices);
 const PortalInvoices = lazy(routeImports.PortalInvoices);
@@ -192,8 +196,32 @@ function MobileAppRouteGuard() {
 }
 
 function AppContent() {
+  const navigate = useNavigate();
   // Activar triggers de notificaciones
   useNotificationTriggers();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const openWidgetUrl = (url?: string | null) => {
+      if (!url) return;
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'tmsoperador:' || parsed.hostname !== 'operator') return;
+        navigate(parsed.pathname === '/active' ? '/operator?tab=activos' : '/operator');
+      } catch {
+        return;
+      }
+    };
+
+    let removeListener: (() => Promise<void>) | undefined;
+    void CapacitorApp.addListener('appUrlOpen', ({ url }) => openWidgetUrl(url)).then((handle) => {
+      removeListener = () => handle.remove();
+    });
+    void CapacitorApp.getLaunchUrl().then(({ url }) => openWidgetUrl(url));
+
+    return () => { void removeListener?.(); };
+  }, [navigate]);
 
   useEffect(() => {
     void startLiveUpdateService();
@@ -273,6 +301,7 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<OperatorDashboard />} />
+          <Route path="activity" element={<OperatorActivity />} />
           <Route path="service/:id/inspection" element={<ServiceInspection />} />
         </Route>
 

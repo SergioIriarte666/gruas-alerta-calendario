@@ -103,23 +103,24 @@ export const LocationSharingCard = ({
           : null;
 
   return (
-    <div className="rounded-2xl border border-info/30 bg-info-soft p-4">
+    <section className="operator-location-card rounded-3xl border border-info/30 bg-info-soft p-5" aria-label="Estado de ubicación">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-info-soft text-info-text">
-              <MapPin className="size-4" />
+            <span className="operator-location-pulse flex size-11 items-center justify-center rounded-2xl bg-info-soft text-info-text">
+              <MapPin className="size-5" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-info-text">Ubicacion del operador</p>
-              <p className="text-xs text-info-text/70">{permissionLabel}</p>
+              <p className="operator-native-eyebrow text-info-text/70">Seguimiento en directo</p>
+              <p className="text-base font-semibold text-info-text">Ubicación activa</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-info-text/80">
+          <p className="mt-3 text-xs font-medium text-info-text/80">
             {serviceLabel
               ? `Se asociara a ${serviceLabel}.`
               : scheduleLabel || 'Rastreo automatico segun tu jornada laboral.'}
           </p>
+          <p className="mt-1 text-xs text-info-text/60">{permissionLabel}</p>
         </div>
 
         {isTracking && !isPaused ? (
@@ -129,7 +130,7 @@ export const LocationSharingCard = ({
             size="sm"
             onClick={() => void pauseTracking()}
             disabled={isBusy}
-            className="border-warning/30 bg-warning-soft text-warning-text hover:bg-warning-soft"
+            className="min-h-11 rounded-xl border-warning/30 bg-warning-soft px-3 text-warning-text hover:bg-warning-soft"
           >
             {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Pause className="mr-2 size-4" />}
             Pausar
@@ -140,7 +141,7 @@ export const LocationSharingCard = ({
             size="sm"
             onClick={() => void resumeTracking()}
             disabled={isBusy}
-            className="bg-info text-info-foreground hover:bg-info/90"
+            className="min-h-11 rounded-xl bg-info px-3 text-info-foreground hover:bg-info/90"
           >
             {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Play className="mr-2 size-4" />}
             Reanudar
@@ -148,22 +149,22 @@ export const LocationSharingCard = ({
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border bg-card/70 p-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Ultima lectura</p>
-          <p className="mt-1 text-sm font-medium text-foreground">{formatTimestamp(lastPoint?.recordedAt ?? null)}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{formatAccuracy(lastPoint?.accuracyMeters ?? null)}</p>
+      <div className="operator-location-metrics mt-4 grid grid-cols-2 gap-2">
+        <div className="rounded-2xl bg-card/70 p-3.5">
+          <p className="operator-native-eyebrow">Última lectura</p>
+          <p className="operator-native-display mt-1 text-xl font-bold text-foreground">{formatTimestamp(lastPoint?.recordedAt ?? null)}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Precisión {formatAccuracy(lastPoint?.accuracyMeters ?? null)}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card/70 p-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Sincronizacion</p>
-          <p className={`mt-1 text-sm font-medium ${hasStaleReading ? 'text-warning-text' : 'text-foreground'}`}>
+        <div className="rounded-2xl bg-card/70 p-3.5">
+          <p className="operator-native-eyebrow">Sincronización</p>
+          <p className={`mt-1 text-sm font-bold ${hasStaleReading ? 'text-warning-text' : 'text-foreground'}`}>
             {hasStaleReading
               ? 'Sin lecturas recientes'
               : lastSyncAt
                 ? formatTimestamp(lastSyncAt)
                 : pendingCount > 0 ? 'Pendiente' : 'Sin envios'}
           </p>
-          <p className={`mt-1 text-xs ${hasStaleReading ? 'text-warning-text/80' : 'text-muted-foreground'}`}>
+          <p className={`mt-0.5 text-xs ${hasStaleReading ? 'text-warning-text/80' : 'text-muted-foreground'}`}>
             {hasStaleReading
               ? 'Verifica la conexion o el GPS del dispositivo'
               : pendingCount > 0 ? `${pendingCount} punto(s) en cola` : 'Todo al dia'}
@@ -210,6 +211,6 @@ export const LocationSharingCard = ({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };

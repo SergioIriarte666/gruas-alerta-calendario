@@ -25,7 +25,7 @@ export const DocumentStatusBanner = ({ operatorId }: DocumentStatusBannerProps) 
 
   if (expiredDocuments.length > 0) {
     return (
-      <Alert variant="destructive" className="rounded-2xl border-danger/30 bg-danger-soft">
+      <Alert variant="destructive" className="rounded-3xl border-danger/30 bg-danger-soft">
         <AlertTriangle className="size-4" />
         <AlertTitle>Tienes {expiredDocuments.length} documento(s) vencido(s)</AlertTitle>
         <AlertDescription className="space-y-2">
@@ -49,7 +49,7 @@ export const DocumentStatusBanner = ({ operatorId }: DocumentStatusBannerProps) 
   }
 
   return (
-    <Alert variant="warning" className="rounded-2xl">
+    <Alert variant="warning" className="rounded-3xl">
       <AlertTriangle className="size-4" />
       <AlertTitle>Documentos por vencer</AlertTitle>
       <AlertDescription className="space-y-2">

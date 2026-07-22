@@ -128,15 +128,16 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
       onSignatureChange(signatureData);
     }
   };
-  return <div className="space-y-4">
-        <div className="text-center">
-          <h4 className="text-lg font-semibold text-foreground">{label}</h4>
+  return <div className="operator-signature-block space-y-4 rounded-2xl bg-muted/50 p-4">
+        <div>
+          <p className="operator-native-eyebrow">Firma requerida</p>
+          <h4 className="mt-1 text-base font-semibold text-foreground">{label}</h4>
           {personName && <p className="text-sm mt-1 text-muted-foreground">
               Nombre: <span className="font-medium text-primary">{personName}</span>
             </p>}
         </div>
 
-        <div className="relative rounded-lg border-2 border-border bg-signature-surface">
+        <div className="relative overflow-hidden rounded-2xl border-2 border-border bg-signature-surface">
           <SignatureCanvas ref={sigCanvasRef} canvasProps={{
         className: 'signature-canvas w-full h-32',
         style: {
@@ -155,7 +156,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
         </div>
 
         <div className="flex justify-center">
-          <Button type="button" onClick={handleClear} variant="outline" size="sm">
+          <Button type="button" onClick={handleClear} variant="outline" size="sm" className="min-h-10 rounded-xl">
             <RotateCcw className="size-4 mr-2" />
             Limpiar Firma
           </Button>

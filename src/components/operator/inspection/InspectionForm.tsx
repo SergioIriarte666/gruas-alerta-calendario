@@ -419,8 +419,8 @@ export const InspectionForm = ({
 
   if (isCheckingExisting) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-        Verificando inspecciones existentes...
+      <div className="operator-inspection-card rounded-3xl p-6 text-sm text-muted-foreground">
+        Preparando la inspección…
       </div>
     );
   }
@@ -490,7 +490,7 @@ export const InspectionForm = ({
 
       <InspectionProgressBar form={form} phase={currentPhase} />
 
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <InspectionFormSections
           form={form}
           phase={currentPhase}
@@ -503,11 +503,12 @@ export const InspectionForm = ({
           operatorName={service.operator?.name || ''}
         />
 
-        <div className="flex justify-end gap-2">
+        <div className="operator-inspection-submit -mx-4 flex justify-end gap-2 px-4 py-3">
           {currentPhase === 'initial' && (
             <Button 
               type="submit" 
               disabled={isProcessing || isUpdatingStatus || isGeneratingPDF}
+              className="min-h-12 w-full rounded-2xl text-sm font-bold"
             >
               <Download className="size-4 mr-2" />
               {isGeneratingPDF ? 'Generando PDF...' :
@@ -521,6 +522,7 @@ export const InspectionForm = ({
             <Button 
               type="submit" 
               disabled={isProcessing || isUpdatingStatus || isGeneratingPDF}
+              className="min-h-12 w-full rounded-2xl text-sm font-bold"
             >
               <CheckCircle className="size-4 mr-2" />
               {isGeneratingPDF ? 'Generando PDF Final...' : 

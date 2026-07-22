@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { operatorServicesKeys } from './operatorServicesQueryKeys';
 import { cacheOperatorServices, getCachedOperatorServices } from '@/utils/operatorOffline';
+import { syncOperatorWidgets } from '@/native/operatorWidget';
 
 const logger = createLogger('useOperatorServices');
 
@@ -189,6 +190,7 @@ export const useOperatorServices = (userId?: string) => {
             logger.warn('Could not cache operator services', error);
           });
         }
+        void syncOperatorWidgets(services);
         return services;
       } catch (error) {
         logger.error('Error transforming operator services:', error);

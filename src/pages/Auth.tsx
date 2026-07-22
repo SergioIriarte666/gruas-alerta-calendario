@@ -14,8 +14,9 @@ import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { validatePassword } from '@/utils/passwordValidation';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 import { createLogger } from "@/lib/logger";
+import { isOperatorMobileVariant } from '@/lib/appVariant';
 
 
 const logger = createLogger("Auth");
@@ -41,7 +42,8 @@ const Auth = () => {
   const { user: profileUser, loading: profileLoading } = useUser();
   const { isBlocked, remainingSeconds, recordFailedAttempt, resetAttempts } = useLoginRateLimit();
   const navigate = useNavigate();
-  const showSocialLogin = import.meta.env.VITE_APP_VARIANT !== 'operator-mobile';
+  const isOperatorMobile = isOperatorMobileVariant();
+  const showSocialLogin = !isOperatorMobile;
 
   // Check if user needs to set password (invited user who just clicked the link)
   useEffect(() => {
@@ -259,7 +261,7 @@ const Auth = () => {
   // Show set password form for invited users
   if (showSetPassword) {
     return (
-      <AuthBackground>
+      <AuthBackground variant={isOperatorMobile ? 'operator' : 'default'}>
         <div className="w-full max-w-md">
           <SetPasswordForm onSuccess={handlePasswordSetupSuccess} />
         </div>
@@ -269,7 +271,7 @@ const Auth = () => {
 
   if (showForgotPassword) {
     return (
-      <AuthBackground>
+      <AuthBackground variant={isOperatorMobile ? 'operator' : 'default'}>
         <div className="w-full max-w-md">
           <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
         </div>
@@ -278,21 +280,26 @@ const Auth = () => {
   }
 
   return (
-    <AuthBackground>
-      <div className="space-y-4">
+    <AuthBackground variant={isOperatorMobile ? 'operator' : 'default'}>
+      <div className={`space-y-4 ${isOperatorMobile ? 'operator-auth-panel' : ''}`}>
         <div className="space-y-2 text-center">
           <Badge
             variant="outline"
             className="border-auth-border/15 bg-auth-surface/10 px-3 py-1 text-auth-muted"
           >
-            <Sparkles className="mr-1 size-3.5" />
-            Acceso seguro
+            {isOperatorMobile ? <ShieldCheck className="mr-1 size-3.5" /> : <Sparkles className="mr-1 size-3.5" />}
+            {isOperatorMobile ? 'Acceso de terreno' : 'Acceso seguro'}
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight text-auth-foreground drop-shadow-md">
-            Towing Manager Software
+          {isOperatorMobile && (
+            <img src="/logo-gruas-5-norte.png" alt="Grúas 5 Norte" className="mx-auto h-16 w-auto object-contain" />
+          )}
+          <h1 className={`${isOperatorMobile ? 'operator-native-display text-4xl font-bold' : 'text-3xl font-semibold tracking-tight'} text-auth-foreground drop-shadow-md`}>
+            {isOperatorMobile ? 'Tu jornada empieza aquí' : 'Towing Manager Software'}
           </h1>
-          <p className="text-sm text-auth-muted drop-shadow-sm">
-            Accede a la operación, clientes y facturación desde una interfaz unificada.
+          <p className="mx-auto max-w-sm text-sm text-auth-muted drop-shadow-sm">
+            {isOperatorMobile
+              ? 'Servicios, inspecciones y ruta en una sola aplicación.'
+              : 'Accede a la operación, clientes y facturación desde una interfaz unificada.'}
           </p>
         </div>
 

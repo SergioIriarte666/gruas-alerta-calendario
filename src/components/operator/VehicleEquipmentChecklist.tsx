@@ -33,20 +33,23 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground">Inventario del Vehículo</h3>
+    <section className="operator-inspection-card space-y-4 rounded-3xl p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="operator-native-eyebrow">Paso 2</p>
+          <h3 className="mt-1 text-lg font-semibold text-foreground">Equipamiento</h3>
+        </div>
         <div className="flex gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={handleSelectAll}>
-            Marcar Todo
+          <Button type="button" size="sm" variant="outline" onClick={handleSelectAll} className="rounded-xl">
+            Todo
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={handleDeselectAll}>
-            Desmarcar Todo
+          <Button type="button" size="sm" variant="outline" onClick={handleDeselectAll} className="rounded-xl">
+            Limpiar
           </Button>
         </div>
       </div>
       
-      <div className="bg-card border border-border rounded-md p-4">
+      <div>
         <FormField
           control={form.control}
           name="equipment"
@@ -57,7 +60,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
               <FormItem>
                 <div className="space-y-4">
                   {/* Tabla de equipamiento con 3 columnas */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                     {isLoading ? (
                       <div className="col-span-full py-4 text-sm text-muted-foreground">
                         Cargando inventario...
@@ -69,7 +72,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                           <div
                             key={item.id}
                             onClick={() => handleItemToggle(item.id)}
-                            className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="flex min-h-12 cursor-pointer items-center justify-between rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/50"
                           >
                             <span className="text-foreground text-sm font-medium flex-1">
                               {item.name}
@@ -97,6 +100,6 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
           }}
         />
       </div>
-    </div>
+    </section>
   );
 };

@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { RefreshCw, LogOut, Truck } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
@@ -10,12 +10,15 @@ import { OperatorBottomNav } from '@/components/operator/OperatorBottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOperatorOfflineSync } from '@/hooks/useOperatorOfflineSync';
 import { ThemeSelector } from '@/components/layout/ThemeSelector';
+import { OperatorActivityProvider } from '@/contexts/OperatorActivityContext';
 
 export const OperatorLayout = () => {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { pathname } = useLocation();
   useOperatorOfflineSync();
+  const isInspection = pathname.includes('/inspection');
 
   const { data: companyData } = useQuery({
     queryKey: ['company-data-operator'],
@@ -41,54 +44,53 @@ export const OperatorLayout = () => {
   };
 
   return (
-      <div className="operator-shell-concept flex min-h-screen flex-col bg-background text-foreground">
+    <OperatorActivityProvider>
+      <div className="operator-shell-concept operator-native-shell flex min-h-screen flex-col bg-background text-foreground">
 
         {/* ── Header ── */}
         <header
-          className="flex flex-shrink-0 items-center justify-between border-b border-border/70 bg-card/95 px-4 shadow-sm backdrop-blur-xl"
+          className="operator-native-topbar flex flex-shrink-0 items-center justify-between px-4"
           style={{
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
             paddingBottom: '10px',
           }}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
             {companyData?.logo_url ? (
               <img
                 src={companyData.logo_url}
-                alt="Logo"
-                className="size-8 rounded-lg object-contain flex-shrink-0"
+                alt={companyData.business_name || 'Grúas 5 Norte'}
+                className="operator-native-brandmark size-10 flex-shrink-0 object-contain"
               />
             ) : (
-              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary shadow-sm shadow-primary/20">
-                <Truck className="size-4 text-primary-foreground" />
+              <div className="operator-native-brandmark flex size-10 flex-shrink-0 items-center justify-center">
+                <Truck className="size-5 text-primary-foreground" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="mb-0.5 text-xs leading-none text-muted-foreground">Portal Operador</p>
-              <p className="truncate text-sm font-semibold leading-none text-foreground">
-                {user?.name || user?.email}
-              </p>
+              <p className="operator-native-eyebrow">Grúas 5 Norte</p>
+              <p className="truncate text-base font-semibold leading-tight text-foreground">TMS Operador</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <ThemeSelector />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              aria-label={`Cerrar sesión de ${user?.name || user?.email || 'operador'}`}
+              className="operator-native-icon-button flex size-11 items-center justify-center text-muted-foreground"
             >
-              <LogOut className="size-3.5" />
-              <span className="hidden sm:inline">Salir</span>
+              <LogOut className="size-4" />
             </button>
           </div>
         </header>
 
         {/* ── Contenido ── */}
         <main
-          className="flex-1 overflow-y-auto"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+          className="operator-native-main flex-1 overflow-y-auto"
+          style={{ paddingBottom: isInspection ? 'env(safe-area-inset-bottom, 0px)' : 'calc(env(safe-area-inset-bottom, 0px) + 76px)' }}
         >
-          <div className="px-4 py-4">
+          <div className={isInspection ? 'operator-native-content operator-native-content--inspection' : 'operator-native-content'}>
             <ErrorBoundary name="Portal Operador">
               <Suspense fallback={
                 <div className="flex items-center justify-center py-20">
@@ -102,7 +104,8 @@ export const OperatorLayout = () => {
         </main>
 
         {/* ── Bottom nav ── */}
-        <OperatorBottomNav />
+        {!isInspection && <OperatorBottomNav />}
       </div>
+    </OperatorActivityProvider>
   );
 };

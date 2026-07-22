@@ -10,7 +10,7 @@ import { PhotographicSet } from '@/components/operator/PhotographicSet';
 import { SignaturePad, SignaturePadRef } from '@/components/operator/SignaturePad';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useUser } from '@/contexts/UserContext';
-import { Gauge, Fuel, Key, FileText, Check, X } from 'lucide-react';
+import { Gauge, Fuel, Key, FileText } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface InspectionFormSectionsProps {
@@ -24,6 +24,14 @@ interface InspectionFormSectionsProps {
   clientName?: string;
   operatorName?: string;
 }
+
+const FUEL_LEVELS = [
+  { value: '0', label: 'Vacío', filledBars: 0 },
+  { value: '1/4', label: '¼', filledBars: 1 },
+  { value: '1/2', label: '½', filledBars: 2 },
+  { value: '3/4', label: '¾', filledBars: 3 },
+  { value: 'full', label: 'Lleno', filledBars: 4 },
+] as const;
 
 export const InspectionFormSections = ({
   form,
@@ -44,20 +52,25 @@ export const InspectionFormSections = ({
   return (
     <>
       {/* Sección de Kilometraje y Combustible */}
-      {requiresDetail && <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Gauge className="size-5" />
-            Registro del Vehículo
+      {requiresDetail && <Card className="operator-inspection-card rounded-3xl bg-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-foreground">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Gauge className="size-5" />
+            </span>
+            <div>
+              <p className="operator-native-eyebrow">Paso 1</p>
+              <p className="text-lg">Registro del vehículo</p>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="operator-vehicle-fields grid gap-5">
             <FormField
               control={form.control}
               name="kilometraje"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="operator-vehicle-field operator-vehicle-field--mileage">
                   <FormLabel className="flex items-center gap-2 text-foreground">
                     <Gauge className="size-4" />
                     Kilometraje Actual
@@ -67,7 +80,7 @@ export const InspectionFormSections = ({
                       type="number"
                       placeholder="Ej: 125000" 
                       {...field} 
-                      className="bg-background border-input focus:border-primary"
+                      className="min-h-12 rounded-xl bg-background text-base"
                     />
                   </FormControl>
                   <FormMessage />
@@ -79,7 +92,7 @@ export const InspectionFormSections = ({
               control={form.control}
               name="combustible"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="operator-vehicle-field operator-vehicle-field--fuel">
                   <FormLabel className="flex items-center gap-2 text-foreground">
                     <Fuel className="size-4" />
                     Nivel de Combustible
@@ -89,19 +102,24 @@ export const InspectionFormSections = ({
                       type="single" 
                       value={field.value} 
                       onValueChange={(value) => value && field.onChange(value)}
-                      className="flex flex-wrap gap-1"
+                      className="operator-fuel-selector"
                     >
-                      {['0', '1/4', '1/2', '3/4', 'full'].map((level) => (
+                      {FUEL_LEVELS.map((level) => (
                         <ToggleGroupItem
-                          key={level}
-                          value={level}
-                          className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${
-                            field.value === level
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'bg-background border-border text-foreground hover:bg-muted'
-                          }`}
+                          key={level.value}
+                          value={level.value}
+                          aria-label={`${level.label}, nivel ${level.value === 'full' ? 'completo' : level.value}`}
+                          className="operator-fuel-option"
                         >
-                          {level === 'full' ? 'Full' : level}
+                          <span className="operator-fuel-gauge" aria-hidden="true">
+                            {[0, 1, 2, 3].map((barIndex) => (
+                              <span
+                                key={barIndex}
+                                className={barIndex < level.filledBars ? 'is-filled' : undefined}
+                              />
+                            ))}
+                          </span>
+                          <span className="operator-fuel-label">{level.label}</span>
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
@@ -115,7 +133,7 @@ export const InspectionFormSections = ({
               control={form.control}
               name="llaves"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="operator-vehicle-field operator-vehicle-field--binary">
                   <FormLabel className="flex items-center gap-2 text-foreground">
                     <Key className="size-4" />
                     Llaves del Vehículo
@@ -125,28 +143,26 @@ export const InspectionFormSections = ({
                       type="single" 
                       value={field.value} 
                       onValueChange={(value) => value && field.onChange(value)}
-                      className="flex gap-2"
+                      className="operator-binary-selector grid grid-cols-2 gap-1.5"
                     >
                       <ToggleGroupItem
                         value="si"
-                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                        className={`operator-binary-option flex min-h-11 items-center justify-center rounded-xl border px-2 py-2 text-xs font-bold transition-colors ${
                           field.value === 'si'
                             ? 'border-success/30 bg-success text-success-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <Check className="size-4" />
                         SÍ
                       </ToggleGroupItem>
                       <ToggleGroupItem
                         value="no"
-                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                        className={`operator-binary-option flex min-h-11 items-center justify-center rounded-xl border px-2 py-2 text-xs font-bold transition-colors ${
                           field.value === 'no'
                             ? 'border-danger/30 bg-danger text-danger-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <X className="size-4" />
                         NO
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -160,7 +176,7 @@ export const InspectionFormSections = ({
               control={form.control}
               name="documentacion"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="operator-vehicle-field operator-vehicle-field--binary">
                   <FormLabel className="flex items-center gap-2 text-foreground">
                     <FileText className="size-4" />
                     Documentación del Vehículo
@@ -170,28 +186,26 @@ export const InspectionFormSections = ({
                       type="single" 
                       value={field.value} 
                       onValueChange={(value) => value && field.onChange(value)}
-                      className="flex gap-2"
+                      className="operator-binary-selector grid grid-cols-2 gap-1.5"
                     >
                       <ToggleGroupItem
                         value="si"
-                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                        className={`operator-binary-option flex min-h-11 items-center justify-center rounded-xl border px-2 py-2 text-xs font-bold transition-colors ${
                           field.value === 'si'
                             ? 'border-success/30 bg-success text-success-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <Check className="size-4" />
                         SÍ
                       </ToggleGroupItem>
                       <ToggleGroupItem
                         value="no"
-                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                        className={`operator-binary-option flex min-h-11 items-center justify-center rounded-xl border px-2 py-2 text-xs font-bold transition-colors ${
                           field.value === 'no'
                             ? 'border-danger/30 bg-danger text-danger-foreground'
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <X className="size-4" />
                         NO
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -232,8 +246,13 @@ export const InspectionFormSections = ({
         />
       )}
 
-      <Card className="bg-card border-border">
-        <CardHeader><CardTitle className="text-foreground">Observaciones y Firmas</CardTitle></CardHeader>
+      <Card className="operator-inspection-card rounded-3xl bg-card">
+        <CardHeader>
+          <CardTitle className="text-foreground">
+            <p className="operator-native-eyebrow">Último paso</p>
+            <p className="mt-1 text-lg">Observaciones y firmas</p>
+          </CardTitle>
+        </CardHeader>
         <CardContent className="space-y-6">
           <FormField
             control={form.control}
@@ -245,7 +264,7 @@ export const InspectionFormSections = ({
                   <Textarea 
                     placeholder="Añade cualquier observación sobre el estado del vehículo..." 
                     {...field} 
-                    className="bg-background border-input focus:border-primary"
+                    className="min-h-28 rounded-2xl bg-background text-base"
                   />
                 </FormControl>
                 <FormMessage />
@@ -255,8 +274,8 @@ export const InspectionFormSections = ({
 
           {/* Sección de Firmas Digitales */}
           <div className="space-y-8">
-            <h4 className="text-lg font-semibold text-foreground border-b border-border pb-2">
-              Firmas Digitales
+            <h4 className="border-b border-border pb-3 text-base font-semibold text-foreground">
+              Firmas digitales
             </h4>
             
             <div className={phase === 'final' ? 'max-w-xl' : 'grid md:grid-cols-2 gap-6'}>
@@ -269,7 +288,7 @@ export const InspectionFormSections = ({
                     <FormField control={form.control} name="operatorName" render={({ field: nameField }) => (
                       <FormItem>
                         <FormLabel>Nombre del operador</FormLabel>
-                        <FormControl><Input {...nameField} placeholder="Nombre del operador" /></FormControl>
+                        <FormControl><Input {...nameField} placeholder="Nombre del operador" className="min-h-12 rounded-xl text-base" /></FormControl>
                       </FormItem>
                     )} />
                     <SignaturePad
@@ -294,7 +313,7 @@ export const InspectionFormSections = ({
                     <FormField control={form.control} name="clientName" render={({ field: nameField }) => (
                       <FormItem>
                         <FormLabel>Nombre del cliente</FormLabel>
-                        <FormControl><Input {...nameField} placeholder="Nombre del cliente" /></FormControl>
+                        <FormControl><Input {...nameField} placeholder="Nombre del cliente" className="min-h-12 rounded-xl text-base" /></FormControl>
                       </FormItem>
                     )} />
                     <SignaturePad
@@ -319,7 +338,7 @@ export const InspectionFormSections = ({
                     <FormField control={form.control} name="receptionPersonName" render={({ field: nameField }) => (
                       <FormItem>
                         <FormLabel>Nombre de quien recibe el vehículo</FormLabel>
-                        <FormControl><Input {...nameField} placeholder="Nombre de quien recibe el vehículo" /></FormControl>
+                        <FormControl><Input {...nameField} placeholder="Nombre de quien recibe el vehículo" className="min-h-12 rounded-xl text-base" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

@@ -4348,6 +4348,63 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_activity_events: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          operator_id: string
+          read_at: string | null
+          service_id: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          operator_id: string
+          read_at?: string | null
+          service_id?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          operator_id?: string
+          read_at?: string | null
+          service_id?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_activity_events_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_activity_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operator_documents: {
         Row: {
           content_type: string | null
@@ -8945,6 +9002,7 @@ export type Database = {
         Returns: undefined
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_all_operator_activity_read: { Args: never; Returns: number }
       mark_costs_paid_batch: {
         Args: { p_cost_ids: string[]; p_payment_date?: string }
         Returns: Json
@@ -8952,6 +9010,10 @@ export type Database = {
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean
+      }
+      record_operator_sync_completed: {
+        Args: { p_synced_count: number }
+        Returns: string
       }
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }

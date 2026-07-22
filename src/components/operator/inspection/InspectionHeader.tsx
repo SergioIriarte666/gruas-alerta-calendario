@@ -3,21 +3,27 @@ import { ArrowLeft } from 'lucide-react';
 
 interface InspectionHeaderProps {
   onBack: () => void;
+  folio?: string;
+  phase?: 'initial' | 'final';
 }
 
-export const InspectionHeader = ({ onBack }: InspectionHeaderProps) => {
+export const InspectionHeader = ({ onBack, folio, phase = 'initial' }: InspectionHeaderProps) => {
   return (
-    <div className="flex items-center gap-3 mb-2">
+    <div className="operator-inspection-header -mx-4 flex items-center gap-3 px-4 py-3">
       <button
         onClick={onBack}
-        className="flex size-9 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:bg-accent hover:text-foreground active:scale-95"
+        aria-label="Volver a servicios"
+        className="operator-native-icon-button flex size-11 flex-shrink-0 items-center justify-center text-foreground active:scale-95"
       >
         <ArrowLeft className="size-5" />
       </button>
-      <div>
-        <h1 className="text-lg font-bold leading-tight text-foreground">Inspección</h1>
-        <p className="text-xs text-muted-foreground">Pre-servicio</p>
+      <div className="min-w-0 flex-1">
+        <p className="operator-native-eyebrow">{phase === 'final' ? 'Cierre de servicio' : 'Control pre-servicio'}</p>
+        <h1 className="truncate text-lg font-bold leading-tight text-foreground">Inspección {folio ? `· ${folio}` : ''}</h1>
       </div>
+      <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
+        {phase === 'final' ? 'Entrega' : 'Inicial'}
+      </span>
     </div>
   );
 };

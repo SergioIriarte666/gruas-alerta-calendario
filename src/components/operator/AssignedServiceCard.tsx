@@ -1,6 +1,6 @@
 import React from 'react';
 import { Service } from '@/types';
-import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car } from 'lucide-react';
+import { Truck, Calendar, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
@@ -57,52 +57,66 @@ const StatusBadge = ({ status }: { status: Service['status'] }) => {
 // ── contenido común ────────────────────────────────────────────────────────
 
 const CardBody = ({ service, showNavigation = false }: { service: Service; showNavigation?: boolean }) => (
-  <div className="space-y-2 mt-2">
-    <div className="flex items-center gap-2 text-sm text-foreground">
-      <Truck className="size-3.5 flex-shrink-0 text-muted-foreground" />
-      <span className="truncate">{service.serviceType?.name ?? 'Servicio no especificado'}</span>
+  <div className="mt-4 space-y-3">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 space-y-1.5">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Truck className="size-4 flex-shrink-0 text-primary" />
+          <span className="truncate">{service.serviceType?.name ?? 'Servicio no especificado'}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <User className="size-4 flex-shrink-0" />
+          <span className="truncate">{service.client?.name ?? 'Cliente no especificado'}</span>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-muted px-2.5 py-2 text-xs font-semibold text-muted-foreground">
+        <Calendar className="size-3.5" />
+        <span>{format(parseISO(service.serviceDate), 'd MMM', { locale: es })}</span>
+      </div>
     </div>
-    <div className="flex items-center gap-2 text-sm text-foreground">
-      <User className="size-3.5 flex-shrink-0 text-muted-foreground" />
-      <span className="truncate">{service.client?.name ?? 'Cliente no especificado'}</span>
-    </div>
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Calendar className="size-3.5 flex-shrink-0 text-muted-foreground" />
-      <span>{format(parseISO(service.serviceDate), "eee d 'de' MMM", { locale: es })}</span>
-    </div>
-    <div className="flex items-start gap-2">
-      <MapPin className="mt-0.5 size-3.5 flex-shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-        <p className="truncate"><span className="text-foreground/80">Origen:</span> {service.origin}</p>
-        <p className="truncate"><span className="text-foreground/80">Destino:</span> {service.destination}</p>
+    <div className="operator-route-line relative ml-1.5 space-y-2.5 pl-6">
+      <div className="relative min-w-0 text-xs text-muted-foreground">
+        <span className="operator-route-dot operator-route-dot--origin" />
+        <p className="operator-native-eyebrow">Origen</p>
+        <p className="truncate text-sm font-medium text-foreground">{service.origin}</p>
+      </div>
+      <div className={cn('relative min-w-0 text-xs text-muted-foreground', showNavigation && 'pr-16')}>
+        <span className="operator-route-dot operator-route-dot--destination" />
+        <p className="operator-native-eyebrow">Destino</p>
+        <p className="truncate text-sm font-medium text-foreground">{service.destination}</p>
       </div>
       {showNavigation && service.destination && (
         <button
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); openNavigation(service.destination); }}
-          className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-medium text-primary transition-all active:scale-95"
+          aria-label={`Abrir navegación a ${service.destination}`}
+          className="operator-navigation-button absolute bottom-0 right-0 flex min-h-10 flex-shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-primary transition-all active:scale-95"
         >
-          <Navigation className="size-3" />
-          Nav
+          <Navigation className="size-3.5" />
+          Ir
         </button>
       )}
     </div>
     {(service.vehicleBrand || service.vehicleModel || service.licensePlate) && (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Car className="size-3.5 flex-shrink-0 text-muted-foreground" />
-        <span className="truncate">
+      <div className="flex items-center gap-2 rounded-xl bg-muted/70 px-3 py-2.5 text-sm text-muted-foreground">
+        <Car className="size-4 flex-shrink-0" />
+        <span className="min-w-0 flex-1 truncate">
           {[service.vehicleBrand, service.vehicleModel].filter(Boolean).join(' ')}
-          {service.licensePlate && ` · ${service.licensePlate.toUpperCase()}`}
         </span>
+        {service.licensePlate && (
+          <span className="operator-license-plate shrink-0 rounded-md bg-card px-2 py-1 text-xs font-bold tracking-wider text-foreground">
+            {service.licensePlate.toUpperCase()}
+          </span>
+        )}
       </div>
     )}
   </div>
 );
 
 const CardHeader = ({ service, rightSlot }: { service: Service; rightSlot?: React.ReactNode }) => (
-  <div className="flex items-start justify-between gap-2">
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-sm font-bold text-foreground">Folio {service.folio}</span>
+  <div className="flex items-start justify-between gap-3">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="operator-native-display text-2xl font-bold leading-none text-foreground">{service.folio}</span>
       <StatusBadge status={service.status} />
       <UrgencyBadge serviceDate={service.serviceDate} status={service.status} />
     </div>
@@ -115,7 +129,7 @@ const CardHeader = ({ service, rightSlot }: { service: Service; rightSlot?: Reac
 export const AssignedServiceCard = ({ service, showDeliveryAction = false }: AssignedServiceCardProps) => {
   const { status } = service;
   const borderClass = getUrgencyBorder(service.serviceDate, status);
-  const baseCard = cn('rounded-2xl border border-l-2 border-border bg-card px-4 py-3 shadow-sm', borderClass);
+  const baseCard = cn('operator-service-card rounded-3xl border border-l-2 border-border bg-card p-5', borderClass);
 
   const navigate = useNavigate();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(service.id);
@@ -132,7 +146,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   // COMPLETADO
   if (status === 'completed') {
     return (
-      <div className={cn(baseCard, 'opacity-60')}>
+      <div className={cn(baseCard, 'opacity-70')}>
         <CardHeader service={service} rightSlot={<CheckCircle className="size-4 text-success-text flex-shrink-0" />} />
         <CardBody service={service} />
       </div>
@@ -143,11 +157,11 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   if (status === 'in_progress') {
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
-        <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
+        <div className={cn(baseCard, 'transition-transform active:scale-[0.99]')}>
           <CardHeader service={service} rightSlot={<Play className="size-4 text-info-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text">
-            Toca para continuar con la inspección inicial
+          <div className="operator-service-action mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-info-soft px-4 text-center text-sm font-bold text-info-text">
+            Continuar inspección inicial
           </div>
         </div>
       </Link>
@@ -158,11 +172,11 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   if (status === 'inspection_completed' && showDeliveryAction) {
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
-        <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
+        <div className={cn(baseCard, 'transition-transform active:scale-[0.99]')}>
           <CardHeader service={service} rightSlot={<Package className="size-4 text-warning-text flex-shrink-0" />} />
           <CardBody service={service} showNavigation />
-          <div className="mt-3 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-center text-xs font-medium text-warning-text">
-            Toca para completar la entrega
+          <div className="operator-service-action mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-warning-soft px-4 text-center text-sm font-bold text-warning-text">
+            Completar entrega
           </div>
         </div>
       </Link>
@@ -179,7 +193,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           type="button"
           onClick={handleStartService}
           disabled={updateServiceStatusMutation.isPending}
-          className="mt-3 w-full rounded-xl border border-info/30 bg-info-soft px-3 py-2 text-center text-xs font-medium text-info-text transition-transform active:scale-[0.99] disabled:opacity-60"
+          className="operator-service-action mt-4 min-h-12 w-full rounded-2xl bg-primary px-4 text-center text-sm font-bold text-primary-foreground transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
         </button>

@@ -73,7 +73,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
   const allDone = completedCount === totalCount;
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+    <section className="operator-progress-card space-y-4 rounded-3xl p-5" aria-label={`Avance de inspección: ${completedCount} de ${totalCount}`}>
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -84,13 +84,13 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
               <span className="size-1.5 rounded-full bg-primary" />
             </span>
           )}
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-sm font-semibold text-foreground">
             {phase === 'initial' ? 'Inspección inicial' : 'Fase de entrega'}
           </span>
         </div>
         <span
           className={cn(
-            'text-sm font-semibold tabular-nums',
+            'operator-native-display text-xl font-bold tabular-nums',
             allDone ? 'text-success-text' : 'text-primary'
           )}
         >
@@ -99,7 +99,7 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
       </div>
 
       {/* Progress track */}
-      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={cn(
             'h-full rounded-full transition-all duration-500 ease-out',
@@ -118,16 +118,16 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
             <div key={section.id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
               <div
                 className={cn(
-                  'size-7 rounded-full flex items-center justify-center border-2 transition-colors duration-300',
+                  'flex size-9 items-center justify-center rounded-xl border transition-colors duration-300',
                   done
                     ? 'border-success/30 bg-success text-success-foreground'
                     : 'bg-muted border-border text-muted-foreground'
                 )}
               >
                 {done ? (
-                  <CheckCircle className="size-3.5" />
+                  <CheckCircle className="size-4" />
                 ) : (
-                  <Icon className="size-3.5" />
+                  <Icon className="size-4" />
                 )}
               </div>
               <span
@@ -144,10 +144,10 @@ export const InspectionProgressBar = ({ form, phase }: InspectionProgressBarProp
       </div>
 
       {allDone && (
-        <p className="text-xs text-center text-success-text font-medium">
-          ✓ Todo completo — listo para enviar
+        <p className="rounded-xl bg-success-soft px-3 py-2 text-center text-xs font-semibold text-success-text">
+          Todo completo · listo para enviar
         </p>
       )}
-    </div>
+    </section>
   );
 };

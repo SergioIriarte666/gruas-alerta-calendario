@@ -4,4 +4,8 @@
     <string name="title_activity_main">TMS Operador</string>
     <string name="package_name">cl.gruas5norte.tmsoperador</string>
     <string name="custom_url_scheme">cl.gruas5norte.tmsoperador</string>
+    <string name="widget_next_service_name">Próximo servicio</string>
+    <string name="widget_next_service_description">Muestra el próximo servicio asignado.</string>
+    <string name="widget_active_service_name">Servicio activo</string>
+    <string name="widget_active_service_description">Muestra el servicio actualmente en curso.</string>
 </resources>

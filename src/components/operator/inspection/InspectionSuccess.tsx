@@ -16,13 +16,14 @@ export const InspectionSuccess = ({
   onBackToList,
 }: InspectionSuccessProps) => (
   <div className="mx-auto max-w-xl py-6">
-    <Card className="overflow-hidden border-success/30 bg-success-soft shadow-lg">
+    <Card className="operator-inspection-card overflow-hidden rounded-3xl border-success/30 bg-success-soft shadow-lg">
       <div className="h-1.5 bg-success" />
       <CardHeader className="items-center text-center">
         <div className="mb-2 rounded-full bg-success/15 p-3">
           <CheckCircle2 className="size-10 text-success-text" />
         </div>
-        <CardTitle>Inspección guardada</CardTitle>
+        <p className="operator-native-eyebrow text-success-text">Proceso completado</p>
+        <CardTitle className="operator-native-display text-3xl">Inspección guardada</CardTitle>
         <p className="text-sm text-muted-foreground">
           {queuedOffline
             ? `El servicio ${folio} quedó guardado en este dispositivo y se sincronizará cuando vuelva la conexión.`
@@ -36,7 +37,7 @@ export const InspectionSuccess = ({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <Button className="w-full" onClick={onDownload} disabled={queuedOffline}>
+        <Button className="min-h-12 w-full rounded-2xl font-bold" onClick={onDownload} disabled={queuedOffline}>
           <Download className="mr-2 size-4" />
           {queuedOffline ? 'PDF disponible al sincronizar' : 'Descargar PDF'}
         </Button>
@@ -59,7 +60,7 @@ export const InspectionSuccess = ({
           </p>
         )}
 
-        <Button variant="ghost" className="w-full" onClick={onBackToList}>
+        <Button variant="ghost" className="min-h-11 w-full rounded-xl" onClick={onBackToList}>
           <List className="mr-2 size-4" />
           Volver al listado
         </Button>

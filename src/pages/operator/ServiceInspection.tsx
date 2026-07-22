@@ -96,7 +96,7 @@ const ServiceInspection = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="operator-inspection-flow space-y-5">
       <PDFProgress
         isGenerating={isGeneratingPDF}
         progress={pdfProgress}
@@ -105,7 +105,11 @@ const ServiceInspection = () => {
         downloadUrl={pdfDownloadUrl}
       />
 
-      <InspectionHeader onBack={handleBack} />
+      <InspectionHeader
+        onBack={handleBack}
+        folio={service.folio}
+        phase={service.status === 'inspection_completed' ? 'final' : 'initial'}
+      />
 
       <ServiceDetailsCard service={service} />
 

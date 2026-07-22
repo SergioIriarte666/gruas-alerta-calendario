@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 import { queryClient, resetAuthErrorHandling } from '@/lib/queryClient';
 import { createLogger } from '@/lib/logger';
+import { clearOperatorWidgets } from '@/native/operatorWidget';
 
 const logger = createLogger('AuthContext');
 
@@ -56,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           resetAuthErrorHandling();
         }
         if (event === 'SIGNED_OUT') {
+          void clearOperatorWidgets();
           const wasManual = manualSignOutRef.current;
           manualSignOutRef.current = false;
           resetAuthErrorHandling();
@@ -116,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await logActivity({ userId: user.id, eventType: 'logout', path: window.location.pathname });
       }
       cleanupAuthState();
+      await clearOperatorWidgets();
       await performGlobalSignOut(supabase);
       setSession(null);
       setUser(null);

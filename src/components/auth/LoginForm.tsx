@@ -31,9 +31,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onForgotPassword,
   onGoogleLogin
 }) => {
-  return <Card className="border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl text-auth-foreground">
+  return <Card className="auth-native-card rounded-3xl border-auth-border/15 bg-auth-surface/10 shadow-2xl backdrop-blur-xl">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-center text-xl text-auth-foreground">
           Iniciar Sesión
         </CardTitle>
         <CardDescription className="text-center text-auth-muted">
@@ -44,24 +44,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-login" className="text-auth-muted">Email</Label>
-            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
+            <Input id="email-login" type="email" inputMode="email" autoComplete="email" placeholder="nombre@empresa.cl" required value={email} onChange={e => setEmail(e.target.value)} className="h-12 rounded-2xl border-auth-input-border bg-auth-input px-4 text-base text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password-login" className="text-auth-muted">Contraseña</Label>
-            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-auth-input-border bg-auth-input text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
+            <Input id="password-login" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} className="h-12 rounded-2xl border-auth-input-border bg-auth-input px-4 text-base text-auth-input-foreground placeholder:text-auth-input-muted focus:border-auth-input-border" />
           </div>
           {onForgotPassword && (
             <div className="text-right">
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="text-sm text-auth-muted underline underline-offset-2 transition-colors hover:text-auth-foreground"
+                className="inline-flex min-h-11 items-center px-1 text-sm text-auth-muted underline underline-offset-2 transition-colors hover:text-auth-foreground"
               >
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
           )}
-          <Button type="submit" disabled={loading || isBlocked} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button type="submit" disabled={loading || isBlocked} className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90">
             {isBlocked ? `Espera ${remainingSeconds}s...` : loading ? 'Ingresando...' : 'Ingresar'}
           </Button>
           {isBlocked && (

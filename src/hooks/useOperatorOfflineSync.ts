@@ -9,6 +9,7 @@ import {
 import { submitInspectionPipeline } from '@/utils/inspectionSubmission';
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('useOperatorOfflineSync');
 
@@ -25,6 +26,7 @@ export const useOperatorOfflineSync = () => {
       try {
         const pending = await listPendingInspections();
         if (pending.length === 0) return;
+        let syncedCount = 0;
 
         toast.info(`Sincronizando ${pending.length} inspección(es) pendiente(s)...`);
 
@@ -44,6 +46,7 @@ export const useOperatorOfflineSync = () => {
             });
 
             await removePendingInspection(item.id);
+            syncedCount += 1;
             if (item.phase === 'final') {
               item.values.photographicSet?.forEach((photo) => {
                 localStorage.removeItem(`photo-${photo.fileName}`);
@@ -64,6 +67,13 @@ export const useOperatorOfflineSync = () => {
           queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
           queryClient.invalidateQueries({ queryKey: operatorServiceKeys.all }),
         ]);
+
+        if (syncedCount > 0) {
+          const { error: activityError } = await supabase.rpc('record_operator_sync_completed', {
+            p_synced_count: syncedCount,
+          });
+          if (activityError) logger.warn('No se pudo registrar la sincronización en la actividad', activityError);
+        }
 
         toast.success('Sincronización de terreno completada');
       } finally {

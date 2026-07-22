@@ -185,17 +185,20 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
   const getCategoryCount = () => new Set(photos.map(p => p.category)).size;
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="operator-inspection-card rounded-3xl bg-card">
       <CardHeader>
-        <CardTitle className="text-foreground flex items-center justify-between">
-          <span>
+        <CardTitle className="flex items-start justify-between gap-3 text-foreground">
+          <span className="min-w-0">
+            <span className="operator-native-eyebrow block">Paso 3</span>
+            <span className="mt-1 block text-lg">
             {isOptional
               ? 'Fotografías del Servicio (opcional)'
               : phase === 'final'
                 ? 'Foto de entrega'
                 : 'Set Fotográfico'}
+            </span>
           </span>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="shrink-0 rounded-full">
             {photos.length} foto(s)
             {isOptional
               ? ' • opcional'
@@ -207,14 +210,14 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-muted h-auto p-1">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-2xl bg-muted p-1 sm:grid-cols-6">
             {PHOTO_CATEGORIES.map((category) => {
               const hasPhoto = getPhotoForCategory(category.id);
               return (
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className={`flex flex-col items-center gap-1 p-2 text-xs h-auto min-h-16 ${
+                  className={`flex h-auto min-h-14 flex-col items-center gap-1 rounded-xl p-2 text-xs ${
                     hasPhoto ? 'bg-success text-success-foreground' : 'text-muted-foreground'
                   }`}
                 >
@@ -246,7 +249,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                       <img
                         src={photoData.previewUrl}
                         alt={`Vista ${category.label}`}
-                        className="w-full max-w-md h-64 object-cover rounded-lg border border-border"
+                        className="h-64 w-full max-w-md rounded-2xl border border-border object-cover"
                       />
                       <div className="absolute top-2 right-2 flex gap-2">
                         <Button
@@ -290,7 +293,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                       </div>
                     </div>
                   ) : (
-                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                    <div className="rounded-2xl border-2 border-dashed border-border bg-muted/30 p-8 text-center">
                       <CameraIcon className="size-12 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground mb-4">
                         Toma una foto de la vista {category.label.toLowerCase()}
@@ -299,6 +302,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                         variant="outline"
                         onClick={() => handleCapture(category.id)}
                         disabled={isCapturing}
+                        className="min-h-11 rounded-xl"
                       >
                         <CameraIcon className="size-4 mr-2" />
                         {isCapturing ? 'Procesando...' : 'Tomar Fotografía'}
