@@ -6,7 +6,9 @@ import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('UserContext');
-const PROFILE_CACHE_KEY = 'offline-user-profile-cache-v1';
+// v2 fuerza a perfiles anteriores a volver a resolver operator_id. Sin ese dato,
+// la bitácora quedaba deshabilitada silenciosamente después de una actualización.
+const PROFILE_CACHE_KEY = 'offline-user-profile-cache-v2';
 
 interface UserProfile {
   id: string;

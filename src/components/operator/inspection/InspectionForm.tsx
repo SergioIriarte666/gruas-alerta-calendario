@@ -246,7 +246,7 @@ export const InspectionForm = ({
         const validPhotos = [];
         for (const photo of savedData.photographicSet) {
           const photoExists = await PhotoStorage.exists(photo.fileName);
-          if (!photoExists) {
+          if (!photoExists && !photo.storageUrl) {
             logger.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
             continue;
           }

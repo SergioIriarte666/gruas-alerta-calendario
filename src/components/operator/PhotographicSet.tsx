@@ -10,6 +10,7 @@ import { PhotoProcessor } from '@/utils/photoProcessor';
 import { PhotoStorage } from '@/utils/photoStorage';
 import { PhotoData } from '@/types/photo';
 import { uploadInspectionPhoto, deleteInspectionPhoto } from '@/utils/photoUpload';
+import { getPhotoBlobForPdf } from '@/utils/pdf/photos/photoStorage';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('InspectionPhotos');
@@ -57,7 +58,20 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
 
       for (const photo of photos) {
         try {
-          const photoData = await PhotoStorage.load(photo.fileName);
+          let photoData = await PhotoStorage.load(photo.fileName);
+          if (!photoData && photo.storageUrl) {
+            const remoteBlob = await getPhotoBlobForPdf(photo.fileName, photo.storageUrl);
+            if (remoteBlob) {
+              photoData = {
+                name: photo.fileName,
+                blob: remoteBlob,
+                previewUrl: URL.createObjectURL(remoteBlob),
+              };
+              await PhotoStorage.save({ name: photo.fileName, blob: remoteBlob }).catch((error) => {
+                logger.warn(`No se pudo restaurar ${photo.fileName} en la caché local`, error);
+              });
+            }
+          }
           if (photoData) {
             photoDataMap[photo.fileName] = photoData;
             loadedCount++;
@@ -111,14 +125,41 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
       }
 
       const response = await fetch(photo.webPath);
+      if (!response.ok) {
+        throw new Error(`No se pudo leer la captura de cámara (${response.status})`);
+      }
       const rawBlob = await response.blob();
+      if (rawBlob.size === 0) {
+        throw new Error('La cámara devolvió una fotografía vacía');
+      }
       logger.debug(`Foto capturada para ${category}: ${Math.round(rawBlob.size / 1024)} KB`);
 
       const processedPhoto = await PhotoProcessor.processImage(rawBlob, `Set_Fotografico_${category}`);
       logger.debug(`Foto comprimida para ${category}: ${processedPhoto.name} (${Math.round(processedPhoto.blob.size / 1024)} KB)`);
 
-      // Guardar en IndexedDB (caché local inmediata, nunca base64 en localStorage)
-      await PhotoStorage.save(processedPhoto);
+      // Safari puede negar IndexedDB por cuota o privacidad. La captura sigue siendo
+      // válida si logra respaldarse en Storage; sólo fallamos cuando ambos destinos fallan.
+      let savedLocally = true;
+      try {
+        await PhotoStorage.save(processedPhoto);
+      } catch (storageError) {
+        savedLocally = false;
+        logger.warn(`No se pudo guardar ${processedPhoto.name} en IndexedDB`, storageError);
+      }
+
+      let storageUrl: string | undefined;
+      if (navigator.onLine) {
+        try {
+          storageUrl = await uploadInspectionPhoto(processedPhoto.name, processedPhoto.blob, serviceId);
+        } catch (uploadError) {
+          logger.warn(`No se pudo respaldar ${processedPhoto.name} en Storage`, uploadError);
+          if (!savedLocally) {
+            throw new Error('El dispositivo no permitió guardar la foto y tampoco fue posible respaldarla en línea');
+          }
+        }
+      } else if (!savedLocally) {
+        throw new Error('Sin conexión y sin almacenamiento local disponible para guardar la foto');
+      }
 
       const previewUrl = URL.createObjectURL(processedPhoto.blob);
       setLoadedPhotoData(prev => ({
@@ -129,34 +170,28 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
       const newPhoto: PhotographicSetPhoto = {
         fileName: processedPhoto.name,
         category: category as PhotographicSetPhoto['category'],
+        storageUrl,
       };
 
+      const replacedPhoto = photos.find(p => p.category === category);
       const filteredPhotos = photos.filter(p => p.category !== category);
       const updatedPhotos = [...filteredPhotos, newPhoto];
 
       onPhotosChange(updatedPhotos);
-      toast.success(`Foto ${category} agregada`);
+      toast.success(storageUrl ? `Foto ${category} guardada` : `Foto ${category} guardada en el dispositivo`);
 
-      // Subir a Supabase Storage en segundo plano
-      uploadInspectionPhoto(processedPhoto.name, processedPhoto.blob, serviceId)
-        .then((url) => {
-          logger.debug(`Foto subida a Supabase: ${processedPhoto.name}`);
-          // Actualizar el array con la storageUrl para que quede registrada en la inspección
-          onPhotosChange(
-            updatedPhotos.map(p =>
-              p.fileName === processedPhoto.name ? { ...p, storageUrl: url } : p
-            )
-          );
-        })
-        .catch((uploadErr) => {
-          logger.warn(`Foto sin backup en Supabase: ${processedPhoto.name} (se reintentará al enviar la inspección)`, uploadErr);
-        });
+      if (replacedPhoto) {
+        void PhotoStorage.remove(replacedPhoto.fileName);
+        void deleteInspectionPhoto(replacedPhoto.fileName, serviceId);
+      }
     } catch (error) {
       if (isUserCancellation(error)) {
         logger.debug(`Captura cancelada por el usuario para categoría: ${category}`);
       } else {
         logger.error('Error capturando fotografía:', error);
-        toast.error('Error al procesar la fotografía');
+        toast.error('Error al guardar la fotografía', {
+          description: error instanceof Error ? error.message : 'Intenta tomarla nuevamente.',
+        });
       }
     } finally {
       setIsCapturing(false);

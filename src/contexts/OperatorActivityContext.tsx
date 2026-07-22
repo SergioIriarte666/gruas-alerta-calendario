@@ -42,7 +42,21 @@ const activityKeys = {
 export const OperatorActivityProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const operatorId = user?.operator_id;
+  const operatorLookup = useQuery({
+    queryKey: ['operator-activity', 'operator-link', user?.id ?? null],
+    enabled: Boolean(user?.id && user.role === 'operator' && !user.operator_id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('operators')
+        .select('id')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.id ?? null;
+    },
+    staleTime: 5 * 60_000,
+  });
+  const operatorId = user?.operator_id ?? operatorLookup.data;
   const [connection, setConnection] = useState<OperatorActivityConnection>(
     typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'connecting',
   );
@@ -160,10 +174,12 @@ export const OperatorActivityProvider = ({ children }: { children: ReactNode }) 
     recentActivities: activities.slice(0, 3),
     unreadCount: unreadQuery.data ?? 0,
     connection,
-    isLoading: feedQuery.isLoading,
+    isLoading: feedQuery.isLoading || operatorLookup.isLoading,
     isFetchingNextPage: feedQuery.isFetchingNextPage,
     hasNextPage: Boolean(feedQuery.hasNextPage),
-    error: feedQuery.error instanceof Error ? feedQuery.error : null,
+    error: feedQuery.error instanceof Error
+      ? feedQuery.error
+      : operatorLookup.error instanceof Error ? operatorLookup.error : null,
     fetchNextPage: feedQuery.fetchNextPage,
     refresh,
     markAllRead: async () => { await markReadMutation.mutateAsync(); },
@@ -171,6 +187,7 @@ export const OperatorActivityProvider = ({ children }: { children: ReactNode }) 
   }), [
     activities, connection, feedQuery.error, feedQuery.fetchNextPage, feedQuery.hasNextPage,
     feedQuery.isFetchingNextPage, feedQuery.isLoading, markReadMutation, refresh, unreadQuery.data,
+    operatorLookup.error, operatorLookup.isLoading,
   ]);
 
   return <OperatorActivityContext.Provider value={value}>{children}</OperatorActivityContext.Provider>;
