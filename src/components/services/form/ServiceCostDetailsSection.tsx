@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Plus, Receipt, Calculator, Info } from 'lucide-react';
+import { Trash2, Plus, Receipt, Calculator, Info, Building2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ENTITIES, LOWBOY_CRANE_IDS, type EntityKey } from '@/lib/entities';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { useAddCost, useUpdateCost, useDeleteCost } from '@/hooks/useCosts';
 import { toast } from 'sonner';
@@ -45,6 +47,8 @@ interface ServiceCostDetail {
   immediate_consumption?: boolean;
   date?: string;
   isExisting?: boolean;
+  entity?: EntityKey;
+  paid_by?: EntityKey;
 }
 
 interface ServiceCostDetailsSectionProps {
@@ -110,6 +114,13 @@ export const ServiceCostDetailsSection = ({
     staleTime: 60 * 1000,
   });
 
+  // Entidad por defecto según la grúa asignada al servicio: si es equipo LowBoy → 'lowboy',
+  // en caso contrario → 'gruas_5_norte'. Es solo el default; cada costo puede sobrescribirse abajo.
+  const craneDefaultEntity: EntityKey =
+    serviceMeta?.crane_id && (LOWBOY_CRANE_IDS as readonly string[]).includes(serviceMeta.crane_id)
+      ? 'lowboy'
+      : 'gruas_5_norte';
+
   // Track selected categories to load their subcategories dynamically
   const [subcategoriesCache, setSubcategoriesCache] = useState<Record<string, CostSubcategory[]>>({});
   // Filter out commission costs - these are handled by MultipleOperatorsSection
@@ -149,7 +160,9 @@ export const ServiceCostDetailsSection = ({
         purchase_unit_cost: cost.purchase_unit_cost || undefined,
         immediate_consumption: !!cost.immediate_consumption,
         date: cost.date, // Preserve original date
-        isExisting: true
+        isExisting: true,
+        entity: ((cost as any).entity as EntityKey) || undefined,
+        paid_by: ((cost as any).paid_by as EntityKey) || undefined,
       }));
       
       onCostDetailsChange(mappedCosts);
@@ -183,7 +196,9 @@ export const ServiceCostDetailsSection = ({
       notes: '',
       quantity: 1,
       unitPrice: 0,
-      isExisting: false
+      isExisting: false,
+      entity: craneDefaultEntity,
+      paid_by: craneDefaultEntity,
     };
     
     onCostDetailsChange([...costDetails, newCostDetail]);
@@ -356,6 +371,10 @@ export const ServiceCostDetailsSection = ({
       purchase_quantity: costDetail.purchase_quantity || null,
       purchase_unit_cost: costDetail.purchase_unit_cost || null,
       immediate_consumption: !!costDetail.immediate_consumption,
+      // Entidad/financiador del costo: por defecto se derivan de la grúa del servicio
+      // (LowBoy vs Grúas 5 Norte) y pueden sobrescribirse por costo con los selectores de abajo.
+      entity: costDetail.entity ?? craneDefaultEntity,
+      paid_by: costDetail.paid_by ?? craneDefaultEntity,
     };
 
     if (costDetail.isExisting) {
@@ -449,9 +468,15 @@ export const ServiceCostDetailsSection = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex flex-wrap items-center gap-2">
           <Receipt className="size-5" />
           Costos Detallados del Servicio
+          {/* Entidad por defecto derivada de la grúa del servicio; editable por costo abajo. */}
+          <Badge variant="secondary" className="ml-auto gap-1 font-normal">
+            <Building2 className="size-3.5" />
+            {craneDefaultEntity === 'lowboy' ? ENTITIES.LOWBOY.label : ENTITIES.GRUAS_5_NORTE.label}
+            <span className="text-muted-foreground">· por defecto</span>
+          </Badge>
         </CardTitle>
         {/* Información sobre comisiones */}
         <div className="flex items-start gap-2 p-3 bg-muted border border-border rounded-lg text-sm">
@@ -571,6 +596,42 @@ export const ServiceCostDetailsSection = ({
                   disabled={disabled}
                   className="font-semibold"
                 />
+              </div>
+
+              {/* Empresa (entidad a cargo del costo) */}
+              <div className="space-y-2">
+                <Label>Empresa</Label>
+                <Select
+                  value={cost.entity ?? craneDefaultEntity}
+                  onValueChange={(value) => updateCostDetail(cost.id, 'entity', value as EntityKey)}
+                  disabled={disabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ENTITIES.GRUAS_5_NORTE.key}>{ENTITIES.GRUAS_5_NORTE.label}</SelectItem>
+                    <SelectItem value={ENTITIES.LOWBOY.key}>{ENTITIES.LOWBOY.label}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Financiado por */}
+              <div className="space-y-2">
+                <Label>Financiado por</Label>
+                <Select
+                  value={cost.paid_by ?? craneDefaultEntity}
+                  onValueChange={(value) => updateCostDetail(cost.id, 'paid_by', value as EntityKey)}
+                  disabled={disabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ENTITIES.GRUAS_5_NORTE.key}>{ENTITIES.GRUAS_5_NORTE.label}</SelectItem>
+                    <SelectItem value={ENTITIES.LOWBOY.key}>{ENTITIES.LOWBOY.label}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {(() => {

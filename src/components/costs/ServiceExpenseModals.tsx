@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CostFormData } from '@/types/costs';
+import { LOWBOY_CRANE_IDS, type EntityKey } from '@/lib/entities';
 import { useAddCost } from '@/hooks/useCosts';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { toast } from 'sonner';
@@ -78,6 +79,14 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
     let successCount = 0;
     const totalAmount = validEntries.reduce((sum, [_, val]) => sum + parseFloat(val), 0);
 
+    // Entidad derivada de la grúa del servicio: LowBoy si el equipo pertenece a LowBoy,
+    // en caso contrario Grúas 5 Norte.
+    const effectiveCraneId = baseData.crane_id === 'none' ? undefined : baseData.crane_id;
+    const craneEntity: EntityKey =
+      effectiveCraneId && (LOWBOY_CRANE_IDS as readonly string[]).includes(effectiveCraneId)
+        ? 'lowboy'
+        : 'gruas_5_norte';
+
     const processNext = async (index: number) => {
       if (index >= validEntries.length) {
         setIsSubmitting(false);
@@ -112,6 +121,9 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
         subcategory: subcategoryName,
         notes: null,
         payment_date: baseData.date,
+        // Entidad/financiador derivados de la grúa del servicio (LowBoy vs Grúas 5 Norte).
+        entity: craneEntity,
+        paid_by: craneEntity,
       };
 
       addCost(costData, {
