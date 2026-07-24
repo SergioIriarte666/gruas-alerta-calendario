@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, Loader2, MapPin, Phone, TriangleAlert } from 'lucide-react';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
@@ -71,8 +71,20 @@ const MAP_PIN_ICON_PATH = `
   <circle cx="12" cy="10" r="3" />
 `;
 
+// Flecha de rumbo: apunta al norte sin rotar, la rotacion la aplica el
+// contenedor. Va RELLENA y con contorno blanco a proposito — el movil avanza
+// por la ruta, asi que la flecha siempre queda sobre la polyline morada; un
+// chevron de solo trazo en color primario desaparecia encima de ella.
+const HEADING_ARROW_PATH = `<path d="M12 3 L19.5 20 L12 15.5 L4.5 20 Z" />`;
+
 const CRANE_MARKER_SIZE = 48;
 const CRANE_ICON_SIZE = 28;
+// Logo dentro del circulo del movil: ~70% del diametro interior (48 - 2px de
+// borde a cada lado = 44), para que no toque el borde.
+const CRANE_LOGO_SIZE = 31;
+// Flecha de rumbo montada en el borde exterior del circulo. Es lo UNICO que
+// rota con heading_degrees: el logo va siempre derecho.
+const HEADING_ARROW_SIZE = 16;
 
 type TrackingColorToken =
   | '--primary'
@@ -113,18 +125,61 @@ const createCraneMarkerElement = () => {
   circle.style.alignItems = 'center';
   circle.style.justifyContent = 'center';
 
+  // Logo de la marca, mismo asset que el header de la pagina (LOGO_SRC): una
+  // <img> raster, sin canvas — Safari iOS corre esto dentro de WKWebView y un
+  // canvas por marcador es justamente lo que conviene evitar ahi.
+  const logo = document.createElement('img');
+  logo.src = LOGO_SRC;
+  logo.alt = '';
+  logo.decoding = 'async';
+  logo.style.width = `${CRANE_LOGO_SIZE}px`;
+  logo.style.height = `${CRANE_LOGO_SIZE}px`;
+  logo.style.objectFit = 'contain';
+  logo.style.display = 'block';
+  logo.style.pointerEvents = 'none';
+
+  // Fallback: si el asset no carga, se muestra el SVG de grua de siempre. Queda
+  // en el DOM oculto desde el inicio, no se construye a posteriori.
   const iconWrapper = document.createElement('div');
   iconWrapper.className = 'tm-crane-icon';
   iconWrapper.style.width = `${CRANE_ICON_SIZE}px`;
   iconWrapper.style.height = `${CRANE_ICON_SIZE}px`;
-  iconWrapper.style.transition = 'transform 0.3s ease';
+  iconWrapper.style.display = 'none';
   iconWrapper.innerHTML = `<svg width="${CRANE_ICON_SIZE}" height="${CRANE_ICON_SIZE}" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${TRUCK_ICON_PATHS}</svg>`;
 
+  logo.addEventListener('error', () => {
+    logo.style.display = 'none';
+    iconWrapper.style.display = 'block';
+  });
+
+  // Contenedor concentrico al circulo que SOLO existe para el rumbo: el chevron
+  // va montado en el borde superior, asi que rotar el contenedor lo hace
+  // orbitar hasta la direccion de avance (0deg = norte, igual que la brujula).
+  const headingWrapper = document.createElement('div');
+  headingWrapper.style.position = 'absolute';
+  headingWrapper.style.inset = '0';
+  headingWrapper.style.transition = 'transform 0.3s ease';
+  headingWrapper.style.pointerEvents = 'none';
+  headingWrapper.style.display = 'none';
+
+  const chevron = document.createElement('div');
+  chevron.style.position = 'absolute';
+  chevron.style.top = `-${Math.round(HEADING_ARROW_SIZE * 0.6)}px`;
+  chevron.style.left = '50%';
+  chevron.style.transform = 'translateX(-50%)';
+  chevron.style.lineHeight = '0';
+  chevron.style.filter = 'drop-shadow(0 1px 2px hsl(var(--overlay) / 0.35))';
+  chevron.innerHTML = `<svg width="${HEADING_ARROW_SIZE}" height="${HEADING_ARROW_SIZE}" viewBox="0 0 24 24" stroke="hsl(var(--signature-surface))" stroke-width="2.5" stroke-linejoin="round">${HEADING_ARROW_PATH}</svg>`;
+
+  headingWrapper.appendChild(chevron);
+
+  circle.appendChild(logo);
   circle.appendChild(iconWrapper);
   wrapper.appendChild(ring);
   wrapper.appendChild(circle);
+  wrapper.appendChild(headingWrapper);
 
-  return { wrapper, ring, circle, iconWrapper };
+  return { wrapper, ring, circle, iconWrapper, logo, headingWrapper, chevron };
 };
 
 const updateCraneMarkerElement = (
@@ -137,8 +192,18 @@ const updateCraneMarkerElement = (
   const svg = refs.iconWrapper.querySelector('svg');
   if (svg) svg.setAttribute('stroke', color);
 
+  // El logo va SIEMPRE derecho: el rumbo lo indica el chevron del borde, que es
+  // lo unico que rota. Sin heading el chevron se oculta en vez de quedar
+  // apuntando al norte por defecto (seria una direccion inventada).
+  // La flecha es rellena: el color de estado va en el fill, el contorno queda
+  // blanco para que se despegue de la polyline morada que hay debajo.
+  const chevronSvg = refs.chevron.querySelector('svg');
+  if (chevronSvg) chevronSvg.setAttribute('fill', color);
   if (typeof heading === 'number') {
-    refs.iconWrapper.style.transform = `rotate(${heading}deg)`;
+    refs.headingWrapper.style.display = 'block';
+    refs.headingWrapper.style.transform = `rotate(${heading}deg)`;
+  } else {
+    refs.headingWrapper.style.display = 'none';
   }
 
   const animate = isActive && !prefersReducedMotion();
@@ -193,7 +258,12 @@ const createOriginMarkerElement = () => {
   return { anchor, label };
 };
 
-const STOP_MARKER_SIZE = 26;
+// +38% sobre los 26px originales: a zoom alejado (ruta Copiapo-La Coipa entera
+// en pantalla de iPhone) el numero era ilegible. El movil sigue siendo el
+// elemento mas grande del mapa (48px) para no perder la jerarquia visual.
+const STOP_MARKER_SIZE = 36;
+const STOP_NUMBER_FONT_SIZE = 16;
+const STOP_FLAG_SIZE = 20;
 
 // Bandera de meta (lucide Flag) para la parada stop_type 'final'.
 const FLAG_ICON_PATHS = `
@@ -224,24 +294,24 @@ const createStopMarkerElement = () => {
   circle.style.display = 'flex';
   circle.style.alignItems = 'center';
   circle.style.justifyContent = 'center';
-  circle.style.fontSize = '12px';
+  circle.style.fontSize = `${STOP_NUMBER_FONT_SIZE}px`;
   circle.style.fontWeight = '700';
   circle.style.border = '2px solid hsl(var(--signature-surface))';
   circle.style.boxShadow = '0 2px 6px hsl(var(--overlay) / 0.3)';
 
   const flag = document.createElement('div');
   flag.style.position = 'absolute';
-  flag.style.top = '-8px';
-  flag.style.right = '-8px';
-  flag.style.width = '16px';
-  flag.style.height = '16px';
+  flag.style.top = '-7px';
+  flag.style.right = '-7px';
+  flag.style.width = `${STOP_FLAG_SIZE}px`;
+  flag.style.height = `${STOP_FLAG_SIZE}px`;
   flag.style.borderRadius = '9999px';
   flag.style.backgroundColor = 'hsl(var(--signature-surface))';
   flag.style.boxShadow = '0 1px 3px hsl(var(--overlay) / 0.3)';
   flag.style.display = 'none';
   flag.style.alignItems = 'center';
   flag.style.justifyContent = 'center';
-  flag.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--signature-ink))" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${FLAG_ICON_PATHS}</svg>`;
+  flag.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--signature-ink))" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${FLAG_ICON_PATHS}</svg>`;
 
   const label = document.createElement('div');
   label.style.position = 'absolute';
@@ -365,6 +435,19 @@ const decodePolyline = (encoded: string): [number, number][] => {
 const ROUTE_SOURCE_ID = 'tm-route-source';
 const ROUTE_CASING_LAYER_ID = 'tm-route-casing';
 const ROUTE_LINE_LAYER_ID = 'tm-route-line';
+// "Tramo fuera de ruta": Google rutea hasta el punto de red vial más cercano al
+// destino, no hasta las coordenadas exactas. Con pines fuera de camino (faenas
+// mineras en cordillera) el marcador quedaba visualmente despegado del final
+// del trazado. Sobre este umbral el marcador se dibuja en el último vértice de
+// la polyline (el punto navegable real) y un punteado gris lo une con las
+// coordenadas crudas, igual que hace Google Maps.
+const OFF_ROUTE_SNAP_METERS = 150;
+// Guarda de cordura: un hueco absurdo significa que la polyline no corresponde
+// al destino que creemos. Ahí NO se mueve nada — se degrada al comportamiento
+// actual (pin en las coordenadas crudas) en vez de teletransportar el marcador.
+const MAX_OFF_ROUTE_GAP_KM = 50;
+const OFF_ROUTE_SOURCE_ID = 'tm-offroute-source';
+const OFF_ROUTE_LAYER_ID = 'tm-offroute-line';
 // Mapbox GL usa csscolorparser internamente, que solo entiende la sintaxis
 // legacy "hsl(h, s%, l%)" con comas — la sintaxis moderna sin comas que usan
 // los tokens del tema ("271 81% 56%") hace que addLayer falle en silencio
@@ -472,16 +555,21 @@ const StopsStepper = ({
   stops,
   nextStopOrder,
   completed,
+  routeArmed = true,
 }: {
   stops: TrackingStop[];
   nextStopOrder: number | null;
   completed: boolean;
+  /** false = servicio aún no iniciado: paradas informativas, sin objetivo. */
+  routeArmed?: boolean;
 }) => {
-  const currentLabel = completed
-    ? 'Recorrido completado'
-    : nextStopOrder !== null
-      ? stops.find((stop) => stop.order === nextStopOrder)?.label ?? 'En ruta'
-      : 'Preparando el recorrido';
+  const currentLabel = !routeArmed
+    ? 'Servicio no iniciado'
+    : completed
+      ? 'Recorrido completado'
+      : nextStopOrder !== null
+        ? stops.find((stop) => stop.order === nextStopOrder)?.label ?? 'En ruta'
+        : 'Preparando el recorrido';
 
   return (
     <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card/95 px-3.5 py-2 shadow-md backdrop-blur-md">
@@ -545,6 +633,10 @@ interface TrackingResponse {
   // idéntica al flujo original.
   stops?: TrackingStop[];
   next_stop?: { label: string; order: number } | null;
+  // false = servicio con recorrido pero aún no iniciado por el operador: las
+  // paradas se muestran como pines informativos, sin guía ni ETA (SRV-6853).
+  // Ausente en servicios sin paradas navegables (flujo original).
+  route_armed?: boolean;
 }
 
 type PageStatus = 'loading' | 'ready' | 'invalid' | 'error';
@@ -637,6 +729,44 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   const [mapboxReady, setMapboxReady] = useState(false);
   const [styleLoaded, setStyleLoaded] = useState(false);
 
+  // La polyline se decodifica UNA vez por cadena recibida: mientras el backend
+  // sirva el mismo trazado (caché de 60 s + polls de 15 s) el resultado es
+  // idéntico por identidad, así que el marcador ajustado no se recoloca ni
+  // parpadea entre polls.
+  const routeCoords = useMemo(
+    () => (data.eta?.polyline ? decodePolyline(data.eta.polyline) : []),
+    [data.eta?.polyline],
+  );
+
+  // Solo la parada OBJETIVO del ETA se ajusta: es la única cuyo destino Google
+  // realmente ruteó. El resto conserva sus coordenadas crudas.
+  const targetStop = data.next_stop
+    ? (data.stops ?? []).find(
+        (stop) => stop.order === data.next_stop?.order && stop.lat != null && stop.lng != null,
+      ) ?? null
+    : null;
+  const targetOrder = targetStop?.order ?? null;
+  const targetLng = targetStop?.lng ?? null;
+  const targetLat = targetStop?.lat ?? null;
+
+  // Dependencias primitivas a propósito: `data.stops` es un array nuevo en cada
+  // poll, memorizar sobre él reintroduciría el parpadeo que esto evita.
+  const offRouteTail = useMemo(() => {
+    const routeEnd = routeCoords.length > 1 ? routeCoords[routeCoords.length - 1] : null;
+    if (!routeEnd || targetLng == null || targetLat == null) return null;
+
+    const rawStop: [number, number] = [targetLng, targetLat];
+    const gapKm = haversineDistanceKm(routeEnd, rawStop);
+    if (gapKm * 1000 <= OFF_ROUTE_SNAP_METERS) return null;
+    if (gapKm > MAX_OFF_ROUTE_GAP_KM) {
+      logger.warn('Fin de ruta implausiblemente lejos de la parada objetivo, se ignora el ajuste', {
+        gapKm: Math.round(gapKm),
+      });
+      return null;
+    }
+    return { anchor: routeEnd, rawStop };
+  }, [routeCoords, targetLng, targetLat]);
+
   useEffect(() => {
     if (!containerRef.current || !MAPBOX_TOKEN) return;
 
@@ -697,17 +827,16 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     // color primario ancho 4.5 encima, ambas bajo los marcadores (los
     // marcadores son elementos DOM, no layers del mapa GL).
     if (styleLoaded) {
-      const polylineCoords = data.eta?.polyline ? decodePolyline(data.eta.polyline) : [];
       const routeData = {
         type: 'Feature' as const,
         properties: {},
-        geometry: { type: 'LineString' as const, coordinates: polylineCoords },
+        geometry: { type: 'LineString' as const, coordinates: routeCoords },
       };
 
       const existingSource = map.getSource(ROUTE_SOURCE_ID) as import('mapbox-gl').GeoJSONSource | undefined;
       if (existingSource) {
         existingSource.setData(routeData);
-      } else if (polylineCoords.length > 1) {
+      } else if (routeCoords.length > 1) {
         map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data: routeData });
         map.addLayer({
           id: ROUTE_CASING_LAYER_ID,
@@ -722,6 +851,37 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
           source: ROUTE_SOURCE_ID,
           layout: { 'line-join': 'round', 'line-cap': 'round' },
           paint: { 'line-color': resolvePrimaryColor(), 'line-width': 4.5 },
+        });
+      }
+
+      // Tramo fuera de ruta (punteado gris): del fin del trazado navegable a
+      // las coordenadas crudas de la parada objetivo. Sin ajuste aplicable la
+      // capa queda con geometría vacía en vez de eliminarse — así no hay que
+      // recrear source/layer cada vez que el destino vuelve a estar sobre camino.
+      const offRouteData = {
+        type: 'Feature' as const,
+        properties: {},
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: offRouteTail ? [offRouteTail.anchor, offRouteTail.rawStop] : [],
+        },
+      };
+
+      const existingOffRoute = map.getSource(OFF_ROUTE_SOURCE_ID) as import('mapbox-gl').GeoJSONSource | undefined;
+      if (existingOffRoute) {
+        existingOffRoute.setData(offRouteData);
+      } else if (offRouteTail) {
+        map.addSource(OFF_ROUTE_SOURCE_ID, { type: 'geojson', data: offRouteData });
+        map.addLayer({
+          id: OFF_ROUTE_LAYER_ID,
+          type: 'line',
+          source: OFF_ROUTE_SOURCE_ID,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': resolveTrackingColor('--muted-foreground'),
+            'line-width': 3,
+            'line-dasharray': [2, 2],
+          },
         });
       }
     }
@@ -792,16 +952,24 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     const nextStopOrder = data.next_stop?.order ?? null;
     const coordStops = stops.filter((stop) => stop.lat != null && stop.lng != null);
     coordStops.forEach((stop, index) => {
+      // La parada objetivo con destino fuera de la red vial se dibuja en el fin
+      // del trazado (punto navegable real) y el punteado la une con su pin
+      // original; las demás siempre en sus coordenadas crudas.
+      const markerCoords: [number, number] =
+        offRouteTail && stop.order === targetOrder
+          ? offRouteTail.anchor
+          : [stop.lng as number, stop.lat as number];
+
       let entry = stopMarkersRef.current.get(stop.order);
       if (!entry) {
         const refs = createStopMarkerElement();
         const marker = new mapboxgl.default.Marker({ element: refs.wrapper, anchor: 'center' })
-          .setLngLat([stop.lng as number, stop.lat as number])
+          .setLngLat(markerCoords)
           .addTo(map);
         entry = { marker, refs };
         stopMarkersRef.current.set(stop.order, entry);
       } else {
-        entry.marker.setLngLat([stop.lng as number, stop.lat as number]);
+        entry.marker.setLngLat(markerCoords);
       }
       updateStopMarkerElement(entry.refs, stop, stop.order === nextStopOrder, index + 1);
     });
@@ -847,7 +1015,7 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     } catch (error) {
       logger.warn('No se pudo ajustar el mapa a los marcadores', error);
     }
-  }, [data, mapboxReady, styleLoaded]);
+  }, [data, mapboxReady, styleLoaded, routeCoords, offRouteTail, targetOrder]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -907,6 +1075,20 @@ const CallButton = ({ phone }: { phone?: string | null }) => (
 
 const EtaHero = ({ data }: { data: TrackingResponse }) => {
   const stops = data.stops ?? [];
+
+  // Recorrido cargado pero servicio aún no iniciado: sin ETA ni guía. Va antes
+  // que cualquier otra rama para no caer al render legacy y quedar en
+  // "Calculando tiempo de llegada…" permanente (SRV-6853).
+  if (stops.length > 0 && data.route_armed === false) {
+    return (
+      <div>
+        <p className="text-2xl font-bold leading-tight text-foreground">Servicio no iniciado</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          El recorrido está programado; el seguimiento comienza cuando el operador inicia el servicio.
+        </p>
+      </div>
+    );
+  }
 
   // Flujo multidestino: el ETA apunta a la próxima parada pendiente, no al
   // origen. Solo aplica si hay una parada objetivo o llegada real confirmada
@@ -1092,11 +1274,16 @@ const TrackService = () => {
   const stage: JourneyStage = data.state === 'waiting' ? 'assigned' : (data.journey_stage ?? 'assigned');
   const trackingStops = data.stops ?? [];
   const hasStops = trackingStops.length > 0;
+  // Recorrido cargado pero servicio aún no iniciado por el operador: las
+  // paradas son pines informativos y no hay guía (SRV-6853).
+  const routeArmed = data.route_armed !== false;
   // Con paradas, el título nombra la parada objetivo ("En ruta a Vallenar");
   // sin paradas se mantienen los títulos por etapa del flujo original.
-  const stageTitle = hasStops && data.next_stop && stage !== 'assigned'
-    ? `En ruta a ${data.next_stop.label}`
-    : STAGE_TITLES[stage];
+  const stageTitle = !routeArmed
+    ? 'Servicio no iniciado'
+    : hasStops && data.next_stop && stage !== 'assigned'
+      ? `En ruta a ${data.next_stop.label}`
+      : STAGE_TITLES[stage];
   const relativeLabel = data.position ? formatRelativeShort(data.position.recorded_at, Date.now()) : null;
 
   return (
@@ -1124,6 +1311,7 @@ const TrackService = () => {
               stops={trackingStops}
               nextStopOrder={data.next_stop?.order ?? null}
               completed={stage === 'arrived'}
+              routeArmed={routeArmed}
             />
           ) : (
             <JourneyStepper stage={stage} />

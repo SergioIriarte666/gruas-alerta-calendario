@@ -14,6 +14,21 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 // partially_invoiced) o cualquiera futuro— responde "finished": un link viejo
 // abierto sobre un servicio facturado jamas debe exponer posicion.
 const ACTIVE_TRACKING_STATUSES = ["pending", "in_progress", "inspection_completed"];
+
+// "Servicio iniciado" = el operador pulso "Iniciar Servicio" (pending ->
+// in_progress) o ya paso por la inspeccion inicial. `pending` es "asignado
+// pero NO iniciado": el link de seguimiento puede existir desde mucho antes.
+//
+// Bug SRV-6853 (23/07): el motor multidestino ruteaba hacia la parada 1 desde
+// el instante en que existian link + paradas. El operador hizo un tramo previo
+// AJENO al servicio durante la mañana y el mapa le indicaba "devolverse" hacia
+// la parada 1 todo el rato. La guia de ruta (polyline + ETA) y el avance por
+// geofence solo tienen sentido una vez iniciado el servicio.
+//
+// OJO: armed_at NO sirve como criterio de "iniciado" — se setea por distancia
+// GPS (>1 km de la parada), asi que el tramo previo del 23/07 lo habria
+// activado igual. El criterio real es el estado del servicio.
+const STARTED_STATUSES = ["in_progress", "inspection_completed"];
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 
 // Journey stage (Fase 2): distancias del ultimo punto al origen que marcan
@@ -250,10 +265,23 @@ Deno.serve(async (req: Request) => {
   const engineStops = stops.filter((s) => s.lat != null && s.lng != null);
   const hasNavigableStops = engineStops.length > 0;
 
+  // Ruta "armada": el itinerario solo guia (polyline, ETA, avance por geofence)
+  // cuando el servicio esta iniciado. Se define sobre hasNavigableStops, no
+  // sobre hasStops: sin paradas navegables el motor multidestino no aplica y el
+  // flujo original queda intacto — la Fase 1/2 (ETA al origen mientras el
+  // servicio esta `pending`) es justamente el "tu grua va en camino" que ve el
+  // cliente, y no se toca.
+  const serviceStarted = STARTED_STATUSES.includes(service.status);
+  const routeArmed = hasNavigableStops ? serviceStarted : true;
+
   // Proxima parada objetivo: primera no alcanzada con coordenadas (una parada
   // sin lat/lng no puede ser geofenceada ni ruteada, se salta).
   const findNextStop = (): ServiceStop | null =>
     stops.find((s) => s.reached_at === null && s.lat != null && s.lng != null) ?? null;
+
+  // Con la ruta sin armar no hay parada objetivo publica: las paradas viajan
+  // como pines informativos y el cliente ve "Servicio no iniciado".
+  const publicNextStop = (): ServiceStop | null => (routeArmed ? findNextStop() : null);
 
   // Campos extra de la respuesta solo cuando hay paradas: un servicio sin
   // paradas responde exactamente igual que antes.
@@ -262,6 +290,7 @@ Deno.serve(async (req: Request) => {
       ? {
           stops: stops.map(toPublicStop),
           next_stop: nextStop ? { label: nextStop.label, order: nextStop.stop_order } : null,
+          route_armed: routeArmed,
         }
       : {};
 
@@ -303,7 +332,7 @@ Deno.serve(async (req: Request) => {
       eta: null,
       eta_unavailable: false,
       support_phone: supportPhone,
-      ...stopsPayload(findNextStop()),
+      ...stopsPayload(publicNextStop()),
     });
   }
 
@@ -327,7 +356,7 @@ Deno.serve(async (req: Request) => {
       eta: null,
       eta_unavailable: false,
       support_phone: supportPhone,
-      ...stopsPayload(findNextStop()),
+      ...stopsPayload(publicNextStop()),
     });
   }
 
@@ -339,7 +368,36 @@ Deno.serve(async (req: Request) => {
   let journeyStage: "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived" = "en_route";
   let nextStop: ServiceStop | null = null;
 
-  if (hasNavigableStops) {
+  if (hasNavigableStops && !routeArmed) {
+    // Servicio con recorrido pero AUN NO INICIADO: el motor multidestino queda
+    // completamente apagado. Ni se arman paradas, ni se marcan por geofence, ni
+    // hay parada objetivo — el tramo que el movil hace antes de "Iniciar
+    // Servicio" no pertenece a este servicio (SRV-6853). Los puntos GPS se
+    // siguen grabando y asociando igual: solo se apaga la GUIA.
+    journeyStage = "assigned";
+    nextStop = null;
+
+    // Cache de ETA pre-inicio: si quedo un ETA/polyline cacheado apuntando a
+    // una parada (de un deploy anterior o de un cambio de estado hacia atras),
+    // se limpia aqui para que al armar la ruta se recalcule desde cero en vez
+    // de servir una guia calculada antes del inicio.
+    if (link.eta_cached_at || link.eta_polyline || link.eta_target_stop_id) {
+      try {
+        await supabase
+          .from("service_tracking_links")
+          .update({
+            eta_seconds: null,
+            eta_distance_meters: null,
+            eta_polyline: null,
+            eta_cached_at: null,
+            eta_target_stop_id: null,
+          })
+          .eq("id", link.id);
+      } catch {
+        // no-op: limpiar el cache es higiene, nunca debe romper el seguimiento publico
+      }
+    }
+  } else if (hasNavigableStops) {
     // Armado (espejo del trigger mark_reached_service_stops, sticky): una
     // parada pendiente se arma cuando el movil esta a mas de 1 km de ella.
     const toArm = engineStops.filter(
@@ -425,7 +483,9 @@ Deno.serve(async (req: Request) => {
   }
 
   // Destino del ETA: la proxima parada NAVEGABLE pendiente (multidestino) o
-  // el origen del servicio (flujo original y paradas sin coordenadas).
+  // el origen del servicio (flujo original y paradas sin coordenadas). Con la
+  // ruta sin armar nextStop es null y no hay destino: ni polyline ni ETA hasta
+  // que el operador inicie el servicio.
   const etaTarget = hasNavigableStops
     ? nextStop
       ? { lat: nextStop.lat as number, lng: nextStop.lng as number }
