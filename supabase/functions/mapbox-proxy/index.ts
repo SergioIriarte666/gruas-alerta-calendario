@@ -2,6 +2,138 @@ import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 const allowedRoles = ["admin", "viewer", "operator", "client"] as const;
 
+// --- Map Matching (fase visual) — umbrales ajustables tras validar rutas reales ---
+const MATCH_ACCURACY_MAX_METERS = 50; // se descartan puntos con accuracy mayor
+const MATCH_MIN_CONFIDENCE = 0.5;     // por debajo de esto, el tramo cae a crudo
+const MATCH_MAX_CHUNK_COORDS = 100;   // límite duro de la Matching API de Mapbox
+const MATCH_RADIUS_MIN = 10;          // radius mínimo por punto (metros)
+const MATCH_RADIUS_MAX = 50;          // radius máximo por punto (metros)
+
+interface RawPoint {
+  latitude: number;
+  longitude: number;
+  accuracy_meters: number | null;
+  recorded_at: string;
+}
+
+interface MatchedSegment {
+  geometry: { type: "LineString"; coordinates: [number, number][] };
+  confidence: number;
+  matched: boolean;
+}
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+/**
+ * Filtrado previo al matching: descarta puntos imprecisos (accuracy > 50 m, o
+ * accuracy nula cuando hay vecinos válidos) y deduplica coordenadas
+ * consecutivas idénticas. Preserva el orden temporal.
+ */
+function filterPointsForMatching(points: RawPoint[]): RawPoint[] {
+  const hasAnyAccuracy = points.some(
+    (p) => typeof p.accuracy_meters === "number",
+  );
+
+  const kept: RawPoint[] = [];
+  for (const p of points) {
+    const acc = p.accuracy_meters;
+    if (typeof acc === "number") {
+      if (acc > MATCH_ACCURACY_MAX_METERS) continue;
+    } else if (hasAnyAccuracy) {
+      // Punto sin accuracy pero existen vecinos con accuracy válida → descartar.
+      continue;
+    }
+    const prev = kept[kept.length - 1];
+    if (prev && prev.latitude === p.latitude && prev.longitude === p.longitude) {
+      continue; // dedupe consecutivo con misma lat/lng
+    }
+    kept.push(p);
+  }
+  return kept;
+}
+
+/** Ventanas de máximo 100 coords con 1 punto de solape entre ventanas. */
+function chunkPoints(points: RawPoint[]): RawPoint[][] {
+  if (points.length <= MATCH_MAX_CHUNK_COORDS) return [points];
+  const chunks: RawPoint[][] = [];
+  let start = 0;
+  while (start < points.length) {
+    const end = Math.min(start + MATCH_MAX_CHUNK_COORDS, points.length);
+    chunks.push(points.slice(start, end));
+    if (end >= points.length) break;
+    start = end - 1; // solape de 1 punto con la ventana anterior
+  }
+  return chunks;
+}
+
+const rawLineString = (chunk: RawPoint[]): MatchedSegment["geometry"] => ({
+  type: "LineString",
+  coordinates: chunk.map((p) => [p.longitude, p.latitude] as [number, number]),
+});
+
+/**
+ * Matchea un chunk contra la Matching API de Mapbox. Nunca lanza: ante cualquier
+ * fallo (rate limit, 5xx, sin matching, confianza baja) devuelve el tramo crudo
+ * con matched:false para no reventar el pipeline por un solo chunk.
+ */
+async function matchChunk(
+  chunk: RawPoint[],
+  token: string,
+): Promise<{ segment: MatchedSegment; called: boolean }> {
+  if (chunk.length < 2) {
+    return {
+      segment: { geometry: rawLineString(chunk), confidence: 0, matched: false },
+      called: false,
+    };
+  }
+
+  const coords = chunk.map((p) => `${p.longitude},${p.latitude}`).join(";");
+  // La Matching API exige timestamps estrictamente crecientes. Los puntos ya
+  // vienen ordenados por recorded_at, pero dos lecturas en el mismo segundo
+  // (colisión de epoch) harían fallar el chunk entero → forzamos monotonía.
+  let prevTs = -Infinity;
+  const timestamps = chunk
+    .map((p) => {
+      let ts = Math.floor(new Date(p.recorded_at).getTime() / 1000);
+      if (ts <= prevTs) ts = prevTs + 1;
+      prevTs = ts;
+      return ts;
+    })
+    .join(";");
+  const radiuses = chunk
+    .map((p) => clamp(p.accuracy_meters ?? MATCH_RADIUS_MAX, MATCH_RADIUS_MIN, MATCH_RADIUS_MAX))
+    .join(";");
+
+  const url =
+    `https://api.mapbox.com/matching/v5/mapbox/driving/${coords}` +
+    `?access_token=${token}&geometries=geojson&overview=full&tidy=true` +
+    `&timestamps=${timestamps}&radiuses=${radiuses}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const matching = res.ok ? data?.matchings?.[0] : undefined;
+    const confidence = typeof matching?.confidence === "number" ? matching.confidence : 0;
+
+    if (matching?.geometry && confidence >= MATCH_MIN_CONFIDENCE) {
+      return {
+        segment: { geometry: matching.geometry, confidence, matched: true },
+        called: true,
+      };
+    }
+    return {
+      segment: { geometry: rawLineString(chunk), confidence, matched: false },
+      called: true,
+    };
+  } catch (_err) {
+    return {
+      segment: { geometry: rawLineString(chunk), confidence: 0, matched: false },
+      called: true,
+    };
+  }
+}
+
 function encodePolyline(coordinates: [number, number][]): string {
   let encoded = '';
   let prevLat = 0;
@@ -88,7 +220,112 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, origin, destination, query, geometry, mode = 'preview', proximity } = body;
+    const { action, origin, destination, query, geometry, mode = 'preview', proximity, session_id } = body;
+
+    // Map Matching — pega los puntos GPS crudos de una sesión a la red vial.
+    if (action === "map_matching") {
+      if (!session_id || typeof session_id !== "string") {
+        return new Response(
+          JSON.stringify({ error: "session_id is required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const supabaseAdmin = authContext.supabaseAdmin;
+
+      const { data: session, error: sessionError } = await supabaseAdmin
+        .from("operator_location_sessions")
+        .select("id, status, ended_at")
+        .eq("id", session_id)
+        .maybeSingle();
+
+      if (sessionError) {
+        return new Response(
+          JSON.stringify({ error: "Failed to load session" }),
+          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+      if (!session) {
+        return new Response(
+          JSON.stringify({ error: "Session not found" }),
+          { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const isClosed = session.status !== "active" || Boolean(session.ended_at);
+
+      // Cache hit: sesión cerrada con matching ya computado → devolver sin llamar a Mapbox.
+      if (isClosed) {
+        const { data: cached } = await supabaseAdmin
+          .from("matched_routes")
+          .select("segments, avg_confidence, points_input, points_used, api_requests, computed_at")
+          .eq("session_id", session_id)
+          .maybeSingle();
+        if (cached) {
+          return new Response(JSON.stringify({ ...cached, cached: true }), {
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const { data: rawPoints, error: pointsError } = await supabaseAdmin
+        .from("operator_location_points")
+        .select("latitude, longitude, accuracy_meters, recorded_at")
+        .eq("session_id", session_id)
+        .order("recorded_at", { ascending: true });
+
+      if (pointsError) {
+        return new Response(
+          JSON.stringify({ error: "Failed to load points" }),
+          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const pointsInput = (rawPoints ?? []).length;
+      const filtered = filterPointsForMatching((rawPoints ?? []) as RawPoint[]);
+      const pointsUsed = filtered.length;
+
+      const segments: MatchedSegment[] = [];
+      let apiRequests = 0;
+
+      if (pointsUsed >= 2) {
+        for (const chunk of chunkPoints(filtered)) {
+          const { segment, called } = await matchChunk(chunk, MAPBOX_TOKEN);
+          segments.push(segment);
+          if (called) apiRequests += 1;
+        }
+      }
+
+      const confidences = segments.map((s) => s.confidence);
+      const avgConfidence = confidences.length
+        ? confidences.reduce((sum, c) => sum + c, 0) / confidences.length
+        : null;
+
+      const result = {
+        segments,
+        avg_confidence: avgConfidence,
+        points_input: pointsInput,
+        points_used: pointsUsed,
+        api_requests: apiRequests,
+      };
+
+      // Cachear solo sesiones cerradas (una fila por sesión, upsert por session_id).
+      if (isClosed && segments.length > 0) {
+        const { error: upsertError } = await supabaseAdmin
+          .from("matched_routes")
+          .upsert(
+            { session_id, ...result, computed_at: new Date().toISOString() },
+            { onConflict: "session_id" },
+          );
+        if (upsertError) {
+          console.error("matched_routes upsert failed", upsertError.message);
+        }
+      }
+
+      return new Response(JSON.stringify({ ...result, cached: false }), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
 
     // Static map image with route
     if (action === "static_map") {
@@ -209,7 +446,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'geocode' or 'directions'" }),
+      JSON.stringify({ error: "Invalid action. Use 'geocode', 'directions', 'static_map' or 'map_matching'" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (_err) {

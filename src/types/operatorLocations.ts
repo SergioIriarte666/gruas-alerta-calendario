@@ -116,6 +116,23 @@ export interface OperatorRouteSession {
   ended_at: string | null;
 }
 
+/** Un tramo de ruta matcheada (pegada a calles) o crudo (GPS directo). */
+export interface MatchedRouteSegment {
+  geometry: { type: 'LineString'; coordinates: [number, number][] };
+  confidence: number;
+  matched: boolean;
+}
+
+/** Respuesta de la acción map_matching de mapbox-proxy. */
+export interface MatchedRouteResult {
+  segments: MatchedRouteSegment[];
+  avg_confidence: number | null;
+  points_input: number;
+  points_used: number;
+  api_requests: number;
+  cached?: boolean;
+}
+
 export interface OperatorIdleService {
   id: string;
   operator_id: string;

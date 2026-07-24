@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LocateFixed, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { useOperatorRouteHistory } from '@/hooks/operatorlocations/useOperatorLocations';
+import { useMatchedRoutes } from '@/hooks/ubicaciones/useMatchedRoute';
 import { businessClock } from '@/utils/businessClock';
-import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
+import type {
+  MatchedRouteResult,
+  OperatorRoutePoint,
+  OperatorRouteSession,
+} from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { resolveThemeColor } from '@/lib/themeColors';
@@ -42,9 +50,11 @@ const ENDED_REASON_LABELS: Record<string, string> = {
 interface RouteMapProps {
   points: OperatorRoutePoint[];
   autoFollow: boolean;
+  matchingEnabled: boolean;
+  matchedBySession: Map<string, MatchedRouteResult>;
 }
 
-function RouteMap({ points, autoFollow }: RouteMapProps) {
+function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const loadedRef = useRef(false);
@@ -123,24 +133,61 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
       const coordinates = sessionPoints.map((p) => [p.longitude, p.latitude] as [number, number]);
       const color = resolveThemeColor(containerRef.current, ROUTE_COLOR_TOKENS[colorIndex % ROUTE_COLOR_TOKENS.length]);
       colorIndex += 1;
-      const sourceId = `route-${sessionId}`;
+      const addLineLayer = (
+        id: string,
+        lineStrings: [number, number][][],
+        paint: Record<string, unknown>,
+      ) => {
+        if (lineStrings.length === 0) return;
+        map.addSource(id, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: lineStrings.map((coords) => ({
+              type: 'Feature',
+              properties: {},
+              geometry: { type: 'LineString', coordinates: coords },
+            })),
+          },
+        });
+        map.addLayer({
+          id,
+          type: 'line',
+          source: id,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint,
+        });
+        layerIdsRef.current.push(id);
+      };
 
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates },
-        },
-      });
-      map.addLayer({
-        id: sourceId,
-        type: 'line',
-        source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 'line-color': color, 'line-width': 4 },
-      });
-      layerIdsRef.current.push(sourceId);
+      const matched = matchingEnabled ? matchedBySession.get(sessionId) : undefined;
+
+      if (matched && matched.segments.length > 0) {
+        // Render híbrido: tramos matcheados sólidos, tramos crudos punteados.
+        const solid = matched.segments
+          .filter((segment) => segment.matched)
+          .map((segment) => segment.geometry.coordinates);
+        const dashed = matched.segments
+          .filter((segment) => !segment.matched)
+          .map((segment) => segment.geometry.coordinates);
+
+        addLineLayer(`route-${sessionId}-matched`, solid, {
+          'line-color': color,
+          'line-width': 4,
+        });
+        addLineLayer(`route-${sessionId}-raw`, dashed, {
+          'line-color': color,
+          'line-width': 3,
+          'line-opacity': 0.55,
+          'line-dasharray': [1, 2],
+        });
+      } else {
+        // Toggle OFF, sin matching aún o sin datos → polilínea cruda.
+        addLineLayer(`route-${sessionId}`, [coordinates], {
+          'line-color': color,
+          'line-width': 4,
+        });
+      }
 
       coordinates.forEach((coord) => bounds.extend(coord));
 
@@ -186,7 +233,7 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
   useEffect(() => {
     render();
-  }, [autoFollow, mapboxReady, points]);
+  }, [autoFollow, mapboxReady, points, matchingEnabled, matchedBySession]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -219,6 +266,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   const [operatorId, setOperatorId] = useState<string | null>(initialOperatorId ?? null);
   const [dateISO, setDateISO] = useState<string>(initialDate ?? businessClock.today());
   const [autoFollow, setAutoFollow] = useState(() => (initialDate ?? businessClock.today()) === businessClock.today());
+  const [matchingEnabled, setMatchingEnabled] = useState(true);
   const validOperatorIds = useMemo(() => new Set(operators.map((operator) => operator.id)), [operators]);
 
   useEffect(() => {
@@ -245,6 +293,34 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   for (const point of points) {
     sessionPointCounts.set(point.session_id, (sessionPointCounts.get(point.session_id) ?? 0) + 1);
   }
+
+  // Solo matcheamos sesiones que efectivamente tienen puntos en el rango del día.
+  const sessionIds = useMemo(
+    () => Array.from(new Set(points.map((point) => point.session_id))),
+    [points],
+  );
+  const { bySession: matchedBySession, isFetching: matchingFetching, allFailed: matchingFailed } =
+    useMatchedRoutes(sessionIds, matchingEnabled && sessionIds.length > 0);
+
+  const failureToastedRef = useRef(false);
+  useEffect(() => {
+    if (matchingFailed && !failureToastedRef.current) {
+      failureToastedRef.current = true;
+      toast.error('No se pudo ajustar la ruta a las calles. Mostrando GPS crudo.');
+    }
+    if (!matchingFailed) {
+      failureToastedRef.current = false;
+    }
+  }, [matchingFailed]);
+
+  const hasRawSegments = useMemo(
+    () =>
+      matchingEnabled &&
+      Array.from(matchedBySession.values()).some((result) =>
+        result.segments.some((segment) => !segment.matched),
+      ),
+    [matchingEnabled, matchedBySession],
+  );
 
   return (
     <div className="space-y-4">
@@ -277,6 +353,17 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
           <LocateFixed className="size-4" />
           {autoFollow ? 'Siguiendo ruta en vivo' : 'Seguir ruta en vivo'}
         </Button>
+
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <Switch
+            id="matched-route-toggle"
+            checked={matchingEnabled}
+            onCheckedChange={setMatchingEnabled}
+          />
+          <Label htmlFor="matched-route-toggle" className="cursor-pointer text-sm">
+            Ruta ajustada a calles
+          </Label>
+        </div>
       </div>
 
       {operatorId && (
@@ -305,9 +392,24 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
             {isLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Cargando ruta...</div>
             ) : (
-              <RouteMap points={points} autoFollow={autoFollow} />
+              <RouteMap
+                points={points}
+                autoFollow={autoFollow}
+                matchingEnabled={matchingEnabled}
+                matchedBySession={matchedBySession}
+              />
             )}
           </div>
+
+          {matchingEnabled && (
+            <p className="text-xs text-muted-foreground">
+              {matchingFetching
+                ? 'Ajustando ruta a las calles… mientras tanto se muestra el GPS crudo.'
+                : hasRawSegments
+                  ? 'Tramo punteado: GPS directo (camino no mapeado).'
+                  : 'Ruta ajustada a la red vial.'}
+            </p>
+          )}
 
           <div className="resources-panel overflow-x-auto">
             <Table>
