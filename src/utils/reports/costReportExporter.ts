@@ -2,7 +2,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { businessClock } from '@/utils/businessClock';
 import { ExportCostReportArgs } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 
 export const exportCostReport = async ({ format, costs, settings, appliedFilters, headerCompany, headerLogoUrl, serviceDetails = [] }: ExportCostReportArgs) => {
   const company = headerCompany || settings.company;
@@ -57,7 +62,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
         cost.notes ? (cost.notes.length > 15 ? cost.notes.substring(0, 15) + '...' : cost.notes) : ''
       ]),
       startY: lastY + 10,
-      headStyles: { fillColor: [220, 53, 69], fontSize: 8 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 8 },
       styles: { fontSize: 7, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
@@ -89,11 +94,12 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
           `$${service.value.toLocaleString('es-CL')}`,
         ]),
         startY: 22,
-        headStyles: { fillColor: [124, 58, 237], fontSize: 8 },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 8 },
         styles: { fontSize: 7, cellPadding: 1.2 },
       });
     }
     
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

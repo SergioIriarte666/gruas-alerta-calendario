@@ -4,7 +4,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Cost } from '@/types/costs';
 import { Settings } from '@/types/settings';
-import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import {
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from '@/utils/reports/reportUtils';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { getCreatorDisplayName } from '@/types/common';
@@ -16,10 +20,6 @@ const fmtDate = (d?: string | null) => {
   if (!d) return '—';
   try { return format(parseFromDatabase(d), 'dd/MM/yyyy', { locale: es }); } catch { return '—'; }
 };
-
-// Paleta de impresión: equivalente estático de los roles primary y muted.
-const DOCUMENT_PRIMARY_RGB: [number, number, number] = [139, 92, 246];
-const DOCUMENT_MUTED_RGB: [number, number, number] = [100, 100, 100];
 
 export interface GenerateCostDetailPdfArgs {
   cost: Cost;
@@ -43,7 +43,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
 
   // Amount badge right-aligned
   doc.setFontSize(14);
-  doc.setTextColor(...DOCUMENT_PRIMARY_RGB);
+  doc.setTextColor(...REPORT_PDF_COLORS.primaryDark);
   doc.text(formatCLP(Number(cost.amount)), pageWidth - marginX, y, { align: 'right' });
   doc.setTextColor(0, 0, 0);
   y += 6;
@@ -51,7 +51,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
   // Description subtitle
   doc.setFontSize(11);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(...DOCUMENT_MUTED_RGB);
+  doc.setTextColor(...REPORT_PDF_COLORS.muted);
   const descLines = doc.splitTextToSize(cost.description || '', contentWidth);
   doc.text(descLines, marginX, y);
   y += descLines.length * 5 + 2;
@@ -91,9 +91,10 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
     head: [['Información Básica', '']],
     body: basicRows,
     theme: 'grid',
-    headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-    styles: { fontSize: 9, cellPadding: 2 },
-    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 }, 1: { cellWidth: contentWidth - 50 } },
+    headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 10 },
+    styles: { fontSize: 9, cellPadding: 2, lineColor: REPORT_PDF_COLORS.line },
+    alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: REPORT_PDF_COLORS.muted }, 1: { cellWidth: contentWidth - 50 } },
     margin: { left: marginX, right: marginX },
   });
   y = (doc as any).lastAutoTable.finalY + 6;
@@ -139,9 +140,10 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Asociaciones', '']],
       body: assocRows,
       theme: 'grid',
-      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-      styles: { fontSize: 9, cellPadding: 2 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 }, 1: { cellWidth: contentWidth - 50 } },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 10 },
+      styles: { fontSize: 9, cellPadding: 2, lineColor: REPORT_PDF_COLORS.line },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: REPORT_PDF_COLORS.muted }, 1: { cellWidth: contentWidth - 50 } },
       margin: { left: marginX, right: marginX },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
@@ -162,8 +164,9 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
         p.kilometraje != null ? String(p.kilometraje) : '—',
       ]),
       theme: 'grid',
-      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontSize: 9 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontSize: 9 },
       styles: { fontSize: 8, cellPadding: 1.5 },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: marginX, right: marginX },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
@@ -200,12 +203,13 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       body: itemRows,
       theme: 'grid',
       headStyles: {
-        fillColor: DOCUMENT_PRIMARY_RGB,
-        textColor: 255,
-        fontStyle: 'bold',
+        fillColor: REPORT_PDF_COLORS.primary,
+        textColor: REPORT_PDF_COLORS.white,
+        fontStyle: 'normal',
         fontSize: 9,
       },
       styles: { fontSize: 8, cellPadding: 2 },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       columnStyles: {
         0: { cellWidth: 36 },
         1: { cellWidth: 36 },
@@ -228,7 +232,7 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Notas']],
       body: [[cost.notes]],
       theme: 'grid',
-      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 10 },
       styles: { fontSize: 9, cellPadding: 3 },
       margin: { left: marginX, right: marginX },
     });
@@ -242,29 +246,16 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       head: [['Observaciones del Servicio']],
       body: [[(cost.services as any).observations]],
       theme: 'grid',
-      headStyles: { fillColor: DOCUMENT_PRIMARY_RGB, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 10 },
       styles: { fontSize: 9, cellPadding: 3 },
       margin: { left: marginX, right: marginX },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // Footer on every page
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const ph = doc.internal.pageSize.height;
-    doc.setDrawColor(220);
-    doc.line(marginX, ph - 16, pageWidth - marginX, ph - 16);
-    doc.setFontSize(8);
-    doc.setTextColor(...DOCUMENT_MUTED_RGB);
-    const created = `Creado: ${formatForDisplayWithTime(cost.created_at)}${cost.creator ? ` por ${getCreatorDisplayName(cost.creator)}` : ''}`;
-    const updated = `Actualizado: ${formatForDisplayWithTime(cost.updated_at)}`;
-    doc.text(created, marginX, ph - 11);
-    doc.text(updated, marginX, ph - 7);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 7, { align: 'right' });
-    doc.setTextColor(0, 0, 0);
-  }
+  const created = `Creado: ${formatForDisplayWithTime(cost.created_at)}${cost.creator ? ` por ${getCreatorDisplayName(cost.creator)}` : ''}`;
+  const updated = `Actualizado: ${formatForDisplayWithTime(cost.updated_at)}`;
+  addStandardReportFooter(doc, { leftLines: [created, updated] });
 
   const safeDesc = (cost.description || 'costo').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const fileName = `costo-${safeDesc}-${cost.date}.pdf`;

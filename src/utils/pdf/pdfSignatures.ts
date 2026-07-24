@@ -1,12 +1,13 @@
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
+import { REPORT_PDF_COLORS } from './reportPdfTheme';
 
 const C = {
-  green:     [0, 130, 100]   as [number, number, number],
-  grayLight: [245, 245, 245] as [number, number, number],
+  green:     REPORT_PDF_COLORS.primary,
+  grayLight: REPORT_PDF_COLORS.soft,
   gray:      [120, 120, 120] as [number, number, number],
   black:     [20, 20, 20]    as [number, number, number],
-  white:     [255, 255, 255] as [number, number, number],
+  white:     REPORT_PDF_COLORS.white,
 };
 const MARGIN = 14;
 const PAGE_W = 210;

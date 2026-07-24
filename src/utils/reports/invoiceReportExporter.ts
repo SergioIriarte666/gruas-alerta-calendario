@@ -3,7 +3,12 @@ import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportInvoiceReportArgs } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 
 const getInvoiceFiscalNumber = (invoice: any): string | null => {
   return invoice.numero_fiscal ?? invoice.numeroFiscal ?? null;
@@ -118,7 +123,7 @@ export const exportInvoiceReport = async ({
       head: [['Cliente', 'Folio', 'N° Fiscal', 'Descripción', 'F. Emisión', 'F. Venc.', 'F. Pago', 'Subtotal', 'IVA', 'Total', 'Pagado', 'Saldo', 'Estado']],
       body: tableData,
       startY: startY + 4,
-      headStyles: { fillColor: [220, 53, 69], fontSize: 7 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 7 },
       styles: { fontSize: 6, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
@@ -164,6 +169,7 @@ export const exportInvoiceReport = async ({
       }
     });
 
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

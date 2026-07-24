@@ -12,6 +12,7 @@ import {
 } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { fetchServiceItemsBreakdown, ITEMS_SERVICE_TYPES } from './serviceItemsData';
+import { REPORT_PDF_COLORS } from './reportPdfTheme';
 
 interface ServiceDetailsPDFData {
   service: any;
@@ -20,8 +21,8 @@ interface ServiceDetailsPDFData {
   netProfit: number;
 }
 
-const TMS_GREEN = [0, 150, 136] as [number, number, number];
-const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
+const TMS_GREEN = REPORT_PDF_COLORS.primary;
+const LIGHT_GRAY = REPORT_PDF_COLORS.total;
 
 const addServiceItemsSection = async (
   doc: jsPDF,

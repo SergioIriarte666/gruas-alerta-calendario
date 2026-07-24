@@ -5,13 +5,14 @@ import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { EVIDENCE_TYPE_LABELS } from '@/types/externalServices';
 import type { ExternalClosure, ExternalEvidence } from '@/types/externalServices';
 import { createLogger } from '@/lib/logger';
+import { REPORT_PDF_COLORS } from './reportPdfTheme';
 
 const logger = createLogger('externalServicePdfGenerator');
 
-const GREEN: [number, number, number] = [0, 130, 100];
-const PURPLE: [number, number, number] = [120, 60, 180];
-const DARK: [number, number, number] = [20, 20, 20];
-const GRAY: [number, number, number] = [110, 110, 110];
+const GREEN = REPORT_PDF_COLORS.primary;
+const PURPLE = REPORT_PDF_COLORS.primary;
+const DARK = REPORT_PDF_COLORS.ink;
+const GRAY = REPORT_PDF_COLORS.muted;
 const BUCKET = 'external-evidence';
 
 const IMAGE_MIME_TYPES = [

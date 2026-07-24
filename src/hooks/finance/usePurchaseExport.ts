@@ -5,6 +5,11 @@ import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 import { businessClock } from '@/utils/businessClock';
+import {
+  addReportFooter,
+  addReportHeader,
+  REPORT_PDF_COLORS,
+} from '@/utils/pdf/reportPdfTheme';
 
 const logger = createLogger("usePurchaseExport");
 
@@ -86,19 +91,22 @@ export const usePurchaseExport = () => {
       const doc = new jsPDF();
 
       // Header
-      doc.setFontSize(18);
-      doc.text('Reporte de Compras Históricas', 14, 20);
+      const headerY = await addReportHeader(doc, { name: 'Grúas 5 Norte' });
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...REPORT_PDF_COLORS.ink);
+      doc.text('Reporte de compras históricas', 14, headerY);
 
       doc.setFontSize(10);
-      doc.text(`Período: ${meta?.periodLabel || 'Todos'}`, 14, 28);
-      doc.text(`Origen: ${meta?.sourceLabel || 'Todos'}`, 14, 34);
-      doc.text(`Generado el: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...REPORT_PDF_COLORS.muted);
+      doc.text(`Período: ${meta?.periodLabel || 'Todos'} · Origen: ${meta?.sourceLabel || 'Todos'}`, 14, headerY + 7);
 
       // Calculate totals
       const totalAmount = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
 
-      doc.text(`Total Registros: ${invoices.length}`, 14, 48);
-      doc.text(`Monto Total: ${formatCurrency(totalAmount)}`, 14, 53);
+      doc.setTextColor(...REPORT_PDF_COLORS.ink);
+      doc.text(`Total registros: ${invoices.length} · Monto total: ${formatCurrency(totalAmount)}`, 14, headerY + 15);
 
       // Table
       const tableData = invoices.map(inv => [
@@ -111,16 +119,17 @@ export const usePurchaseExport = () => {
       ]);
 
       autoTable(doc, {
-        startY: 60,
+        startY: headerY + 23,
         head: [['Folio', 'Proveedor', 'Fecha', 'Descripción', 'Estado', 'Total']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         styles: { fontSize: 8 },
         foot: [['', '', '', '', 'Total:', formatCurrency(totalAmount)]],
-        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+        footStyles: { fillColor: REPORT_PDF_COLORS.total, textColor: REPORT_PDF_COLORS.ink, fontStyle: 'bold' }
       });
 
+      addReportFooter(doc);
       doc.save(`${fileName}-${businessClock.today()}.pdf`);
 
       toast.success('Reporte PDF generado correctamente');

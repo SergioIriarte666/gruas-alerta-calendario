@@ -4,7 +4,12 @@ import autoTable from 'jspdf-autotable';
 import { businessClock } from '@/utils/businessClock';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { ExportServiceReportArgs } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 import { sendBlobToDownloadWindow } from './downloadWindow';
 import { getDisplayServiceValue, getServiceValueBreakdown } from '../serviceValueCalculations';
 import { isEquipmentRentalService } from '../serviceValueCalculations';
@@ -238,7 +243,7 @@ export const exportServiceReport = async ({
         head: [headers],
         body,
         startY: lastY + 10,
-        headStyles: { fillColor: [41, 128, 185], fontSize: 7 },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 7 },
         styles: { fontSize: 6, cellPadding: 1 },
         tableWidth: availableWidth,
         columnStyles
@@ -256,7 +261,7 @@ export const exportServiceReport = async ({
             head: [['Fecha', 'Folio', 'Tipo de Equipo', 'Inicio', 'Fin', 'Días', 'Tarifa Diaria', 'Total Arriendo']],
             body: rentalRows.map(row => row.pdfRow),
             startY: rentalStartY + 4,
-            headStyles: { fillColor: [139, 92, 246], fontSize: 8 },
+            headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 8 },
             styles: { fontSize: 7, cellPadding: 1.5 },
           });
         } catch (rentalSectionError) {
@@ -264,6 +269,7 @@ export const exportServiceReport = async ({
         }
       }
 
+      addStandardReportFooter(doc);
       logger.debug('✅ [PDF Export] PDF generado exitosamente');
       const pdfBlob = doc.output('blob');
       if (sendBlobToDownloadWindow(downloadWindow, pdfBlob, `${exportFileDefaultName}.pdf`)) {

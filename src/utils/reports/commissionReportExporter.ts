@@ -4,7 +4,12 @@ import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Commission } from '@/types/commissions';
 import { ExportCommissionReportArgs, AppliedCommissionFilters } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 import { Settings } from '@/types/settings';
 
 export const exportCommissionReport = async ({ 
@@ -91,7 +96,7 @@ export const exportCommissionReport = async ({
       body: tableData,
       startY: startY + 4,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [66, 139, 202] },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary },
       columnStyles: {
         5: { halign: 'right' }, // Valor Servicio
         6: { halign: 'right' }, // Comisión
@@ -99,6 +104,7 @@ export const exportCommissionReport = async ({
       }
     });
 
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

@@ -2,14 +2,19 @@ import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { fetchCompanyData } from './companyDataFetcher';
+import {
+  DEFAULT_REPORT_LOGO_URL,
+  LOCAL_REPORT_LOGO_URL,
+  REPORT_PDF_COLORS,
+} from './reportPdfTheme';
 
-const VIOLET: [number, number, number] = [139, 92, 246];
-const VIOLET_LIGHT: [number, number, number] = [237, 233, 254];
-const GREEN: [number, number, number] = [0, 130, 100];
-const MUTED: [number, number, number] = [100, 100, 100];
-const BLACK: [number, number, number] = [20, 20, 20];
-const WHITE: [number, number, number] = [255, 255, 255];
-const GRAY_BG: [number, number, number] = [248, 248, 248];
+const VIOLET = REPORT_PDF_COLORS.primary;
+const VIOLET_LIGHT = REPORT_PDF_COLORS.total;
+const GREEN = REPORT_PDF_COLORS.primary;
+const MUTED = REPORT_PDF_COLORS.muted;
+const BLACK = REPORT_PDF_COLORS.ink;
+const WHITE = REPORT_PDF_COLORS.white;
+const GRAY_BG = REPORT_PDF_COLORS.soft;
 const WARN: [number, number, number] = [186, 117, 23];
 const DANGER: [number, number, number] = [162, 45, 45];
 
@@ -38,18 +43,20 @@ const addHeader = async (doc: jsPDF, companyData: Awaited<ReturnType<typeof fetc
 
   let logoEndX = MARGIN;
   try {
-    const logoBase64 = companyData.logoUrl
-      ? await loadImageAsBase64(companyData.logoUrl)
-      : await loadImageAsBase64('/logo-gruas-5-norte.png');
+    const logoBase64 = (companyData.logoUrl ? await loadImageAsBase64(companyData.logoUrl) : null)
+      || await loadImageAsBase64(DEFAULT_REPORT_LOGO_URL)
+      || await loadImageAsBase64(LOCAL_REPORT_LOGO_URL);
     if (logoBase64) {
       const img = new Image();
       img.src = logoBase64;
       await new Promise(r => { img.onload = r; img.onerror = r; });
-      const maxH = 20;
-      const logoH = Math.min(maxH, (img as HTMLImageElement).height);
-      const logoW = ((img as HTMLImageElement).width / (img as HTMLImageElement).height) * logoH;
-      doc.addImage(logoBase64, 'PNG', MARGIN, 3, logoW, logoH);
-      logoEndX = MARGIN + logoW + 6;
+      const width = (img as HTMLImageElement).width;
+      const height = (img as HTMLImageElement).height;
+      const scale = Math.min(31 / width, 17 / height);
+      const logoW = width * scale;
+      const logoH = height * scale;
+      doc.addImage(logoBase64, 'PNG', MARGIN + 1.5, (26 - logoH) / 2, logoW, logoH);
+      logoEndX = MARGIN + 1.5 + logoW + 7;
     }
   } catch { /* sin logo */ }
 
@@ -88,7 +95,7 @@ const addFooter = (doc: jsPDF, pageNum: number, totalPages: number) => {
   doc.setTextColor(...MUTED);
   doc.text('Grúas 5 Norte · Uso interno · No distribuir', MARGIN, PAGE_H - 8);
   doc.text(`Página ${pageNum} de ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 8, { align: 'right' });
-  doc.setDrawColor(220, 220, 220);
+  doc.setDrawColor(...REPORT_PDF_COLORS.primaryDark);
   doc.line(MARGIN, PAGE_H - 12, PAGE_W - MARGIN, PAGE_H - 12);
 };
 

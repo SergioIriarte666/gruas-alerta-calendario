@@ -39,6 +39,11 @@ import { Service } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
+import {
+  addReportFooter,
+  addReportHeader,
+  REPORT_PDF_COLORS,
+} from '@/utils/pdf/reportPdfTheme';
 
 
 const logger = createLogger("ExecutiveReports");
@@ -219,23 +224,20 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
   const exportToPDF = async (metrics: ServiceMetrics, fileName: string) => {
     const doc = new jsPDF('portrait', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.width;
-    let yPosition = 20;
+    let yPosition = await addReportHeader(doc, { name: 'Grúas 5 Norte' });
 
     // Header
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text('REPORTE EJECUTIVO', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 10;
-
     doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Cliente: ${toTitleCase(clientName)}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 8;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...REPORT_PDF_COLORS.ink);
+    doc.text('Reporte ejecutivo', 14, yPosition);
+    yPosition += 7;
 
     doc.setFontSize(10);
-    doc.text(`Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...REPORT_PDF_COLORS.muted);
+    doc.text(`Cliente: ${toTitleCase(clientName)}`, 14, yPosition);
+    yPosition += 12;
 
     // Métricas principales
     doc.setFontSize(12);
@@ -255,7 +257,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       body: metricsData,
       startY: yPosition,
       theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185] },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary },
       styles: { fontSize: 10 }
     });
 
@@ -288,10 +290,11 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       body: statusData.slice(1),
       startY: yPosition,
       theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185] },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary },
       styles: { fontSize: 9 }
     });
 
+    addReportFooter(doc);
     doc.save(`${fileName}.pdf`);
   };
 

@@ -5,7 +5,11 @@ import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { MaintenanceReportData, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { Settings } from '@/types/settings';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+} from './reportUtils';
 
 export interface ExportMaintenanceReportArgs {
   format: 'pdf' | 'excel';
@@ -124,6 +128,7 @@ export const exportMaintenanceReport = async ({
       });
     }
 
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

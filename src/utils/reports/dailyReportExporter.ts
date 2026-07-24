@@ -5,7 +5,12 @@ import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { ExportDailyReportArgs } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 
 export const exportDailyReport = async ({ format, data, settings, appliedFilters }: ExportDailyReportArgs) => {
   const { company } = settings;
@@ -54,7 +59,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       startY: startY,
       theme: 'grid',
       styles: { fontSize: 10 },
-      headStyles: { fillColor: [0, 150, 136] }
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary }
     });
 
     let lastY = (doc as any).lastAutoTable.finalY + 15;
@@ -127,7 +132,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
         startY: lastY,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [255, 140, 0] }
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary }
       });
 
       lastY = (doc as any).lastAutoTable.finalY + 10;
@@ -294,7 +299,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
         startY: lastY,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [220, 53, 69] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         columnStyles: {
           2: { halign: 'right' }, // Monto alineado a la derecha
           3: { halign: 'center' }, // Fecha centrada
@@ -349,7 +354,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
         startY: lastY,
         theme: 'grid',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [220, 53, 69] }
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary }
       });
 
       lastY = (doc as any).lastAutoTable.finalY + 10;
@@ -365,6 +370,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     doc.setTextColor(100, 100, 100);
     doc.text(`Generado el ${businessClock.format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, doc.internal.pageSize.height - 10);
 
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

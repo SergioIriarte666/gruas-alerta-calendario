@@ -6,7 +6,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
-import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import {
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from '@/utils/reports/reportUtils';
 
 const isUuid = (value: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -193,12 +197,12 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
       cellPadding: 2,
     },
     headStyles: {
-      fillColor: [41, 128, 185],
+      fillColor: REPORT_PDF_COLORS.primary,
       textColor: 255,
       fontStyle: 'bold',
     },
     alternateRowStyles: {
-      fillColor: [245, 245, 245],
+      fillColor: REPORT_PDF_COLORS.total,
     },
     columnStyles: {
       3: { halign: 'right' }, // Amount column
@@ -208,6 +212,7 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
   
   // Save PDF
   const filename = `pagos_proveedores_${filters.reportType}_${businessClock.today()}.pdf`;
+  addStandardReportFooter(doc);
   doc.save(filename);
 };
 

@@ -4,39 +4,15 @@ import autoTable from 'jspdf-autotable';
 import { fetchCompanyData } from './companyDataFetcher';
 import { formatCurrency } from '@/utils/statusHelpers';
 import { VehicleFullHistoryData, VehicleHistoryRecord } from '@/hooks/useVehicleFullHistory';
-import { createLogger } from "@/lib/logger";
+import {
+  addReportFooter,
+  addReportHeader,
+  REPORT_PDF_COLORS,
+} from './reportPdfTheme';
 
-
-const logger = createLogger("vehicleHistoryPdfGenerator");
-const TMS_GREEN = [0, 150, 136] as [number, number, number];
-const _LIGHT_GRAY = [245, 245, 245] as [number, number, number];
-const WHITE = [255, 255, 255] as [number, number, number];
-const DARK_TEXT = [33, 33, 33] as [number, number, number];
-
-const loadImageAsBase64 = async (url: string): Promise<string | null> => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-};
-
-const getImageDimensions = (base64: string): Promise<{ width: number; height: number }> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve({ width: img.width, height: img.height });
-    img.onerror = () => resolve({ width: 100, height: 50 });
-    img.src = base64;
-  });
-};
+const TMS_GREEN = REPORT_PDF_COLORS.primary;
+const WHITE = REPORT_PDF_COLORS.white;
+const DARK_TEXT = REPORT_PDF_COLORS.ink;
 
 const formatDate = (dateStr: string): string => {
   try {
@@ -82,40 +58,21 @@ export const generateVehicleHistoryPDF = async (
   // 1. Obtener datos de la empresa
   const companyData = await fetchCompanyData();
   
-  let yPosition = margin;
-
-  // ============ HEADER ============
-  // Logo a la izquierda
-  try {
-    const logoBase64 = await loadImageAsBase64('/logo-gruas-5-norte.png');
-    if (logoBase64) {
-      const { width: origW, height: origH } = await getImageDimensions(logoBase64);
-      const maxH = 18;
-      const ratio = origW / origH;
-      const logoH = maxH;
-      const logoW = maxH * ratio;
-      doc.addImage(logoBase64, 'PNG', margin, yPosition, logoW, logoH);
-    }
-  } catch (e) {
-    logger.warn('No se pudo cargar el logo:', e);
-  }
+  let yPosition = await addReportHeader(doc, {
+    name: companyData.businessName,
+    taxId: companyData.rut,
+    address: companyData.address,
+    phone: companyData.phone,
+    email: companyData.email,
+    logo: companyData.logoUrl,
+  });
 
   // Título centrado
-  doc.setFontSize(16);
-  doc.setTextColor(...TMS_GREEN);
-  doc.setFont('helvetica', 'bold');
-  doc.text('HISTORIAL COMPLETO DEL VEHÍCULO', pageWidth / 2, yPosition + 8, { align: 'center' });
-  
-  // Datos empresa a la derecha
-  doc.setFontSize(8);
+  doc.setFontSize(14);
   doc.setTextColor(...DARK_TEXT);
-  doc.setFont('helvetica', 'normal');
-  doc.text(companyData.businessName, pageWidth - margin, yPosition + 3, { align: 'right' });
-  doc.text(`RUT: ${companyData.rut}`, pageWidth - margin, yPosition + 7, { align: 'right' });
-  doc.text(`Tel: ${companyData.phone}`, pageWidth - margin, yPosition + 11, { align: 'right' });
-  doc.text(companyData.email, pageWidth - margin, yPosition + 15, { align: 'right' });
-  
-  yPosition += 22;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Historial completo del vehículo', margin, yPosition);
+  yPosition += 7;
 
   // Línea separadora
   doc.setDrawColor(...TMS_GREEN);
@@ -272,36 +229,6 @@ export const generateVehicleHistoryPDF = async (
         8: { cellWidth: 22, halign: 'left' }       // Factura
       },
       margin: { left: margin, right: margin },
-      didDrawPage: (hookData) => {
-        // Footer en cada página
-        const pageCount = (doc as any).internal.getNumberOfPages();
-        doc.setFontSize(7);
-        doc.setTextColor(128, 128, 128);
-        doc.setFont('helvetica', 'normal');
-        
-        // Número de página
-        doc.text(
-          `Página ${hookData.pageNumber} de ${pageCount}`,
-          pageWidth - margin,
-          pageHeight - 8,
-          { align: 'right' }
-        );
-        
-        // Fecha de generación
-        doc.text(
-          `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`,
-          margin,
-          pageHeight - 8
-        );
-        
-        // Patente centrada
-        doc.text(
-          `Patente: ${data.licensePlate.toUpperCase()}`,
-          pageWidth / 2,
-          pageHeight - 8,
-          { align: 'center' }
-        );
-      }
     });
   }
 
@@ -320,5 +247,9 @@ export const generateVehicleHistoryPDF = async (
     );
   }
 
+  addReportFooter(doc, {
+    leftLines: [`Patente: ${data.licensePlate.toUpperCase()}`],
+    generatedAt: businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm'),
+  });
   return doc.output('blob');
 };

@@ -2,7 +2,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 import { Settings } from '@/types/settings';
 import { InventoryMovement } from '@/hooks/useInventory';
 import { createLogger } from "@/lib/logger";
@@ -119,7 +124,7 @@ export const exportInventoryMovementReport = async ({
         startY: lastY + 4,
         theme: 'striped',
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [59, 130, 246] }, // blue-500
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         columnStyles: {
           0: { cellWidth: 25 },
           1: { cellWidth: 20 },
@@ -138,6 +143,7 @@ export const exportInventoryMovementReport = async ({
     
     try {
       // Método 1: Usar el método estándar de jsPDF
+      addStandardReportFooter(doc);
       doc.save(`${exportFileDefaultName}.pdf`);
       logger.debug('PDF saved successfully using doc.save()');
     } catch (error) {

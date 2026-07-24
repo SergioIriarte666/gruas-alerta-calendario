@@ -4,7 +4,12 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { businessClock } from '@/utils/businessClock';
 import { ExportReportArgs } from './reportTypes';
-import { createExportFileName, addCompanyHeader } from './reportUtils';
+import {
+  createExportFileName,
+  addCompanyHeader,
+  addStandardReportFooter,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 
 export const exportOperationalReport = async ({ format, metrics, settings, appliedFilters, filterLabels }: ExportReportArgs) => {
   const { company } = settings;
@@ -105,11 +110,12 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
           `$${service.value.toLocaleString('es-CL')}`,
         ])),
         startY: 22,
-        headStyles: { fillColor: [124, 58, 237], fontSize: 8 },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 8 },
         styles: { fontSize: 7, cellPadding: 1.2 },
       });
     }
     
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {

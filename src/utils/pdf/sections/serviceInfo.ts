@@ -4,13 +4,14 @@ import { InspectionPDFData } from '../pdfTypes';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { REPORT_PDF_COLORS } from '../reportPdfTheme';
 
 
 const logger = createLogger("serviceInfo");
 const C = {
-  green:      [0, 130, 100]   as [number, number, number],
-  greenLight: [230, 248, 244] as [number, number, number],
-  grayLight:  [248, 248, 248] as [number, number, number],
+  green:      REPORT_PDF_COLORS.primary,
+  greenLight: REPORT_PDF_COLORS.total,
+  grayLight:  REPORT_PDF_COLORS.soft,
   black:      [20, 20, 20]    as [number, number, number],
 };
 const MARGIN = 14;
@@ -77,9 +78,10 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
         1: { cellWidth: colW - 38, fontSize: 8.5, textColor: [20, 20, 20] },
       },
       styles: { cellPadding: { top: 3, bottom: 3, left: 4, right: 4 } },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: MARGIN },
     });
+    const leftTableFinalY = (doc as any).lastAutoTable.finalY;
 
     autoTable(doc, {
       startY: yPosition,
@@ -92,11 +94,12 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
         1: { cellWidth: colW - 32, fontSize: 8.5, textColor: [20, 20, 20] },
       },
       styles: { cellPadding: { top: 3, bottom: 3, left: 4, right: 4 } },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: MARGIN + colW + 4 },
     });
+    const rightTableFinalY = (doc as any).lastAutoTable.finalY;
 
-    yPosition = (doc as any).lastAutoTable.finalY + 12;
+    yPosition = Math.max(leftTableFinalY, rightTableFinalY) + 12;
     return yPosition;
   } catch (error) {
     logger.error('Error en addServiceInfo:', error);

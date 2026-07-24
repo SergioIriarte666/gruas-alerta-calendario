@@ -11,6 +11,7 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
 import { isInSituService } from '@/utils/inspectionPhase';
 import { createLogger } from "@/lib/logger";
+import { addReportFooter } from './pdf/reportPdfTheme';
 
 
 const logger = createLogger("inspectionPdfGenerator");
@@ -114,15 +115,12 @@ export const generateInspectionPDF = async (data: {
     addObservationsAndSignatures(doc, pdfData, yPosition);
     logger.debug('Observaciones agregadas');
 
-    if (data.regenerationFooter) {
-      const pageCount = doc.getNumberOfPages();
-      for (let page = 1; page <= pageCount; page++) {
-        doc.setPage(page);
-        doc.setFontSize(7);
-        doc.setTextColor(120, 120, 120);
-        doc.text(data.regenerationFooter, 14, doc.internal.pageSize.height - 8);
-      }
-    }
+    addReportFooter(doc, {
+      leftLines: [
+        [companyData.businessName, companyData.phone].filter(Boolean).join(' · '),
+        data.regenerationFooter || companyData.email,
+      ].filter((line): line is string => Boolean(line)),
+    });
 
     logger.debug('PDF generado exitosamente');
     return doc.output('blob');

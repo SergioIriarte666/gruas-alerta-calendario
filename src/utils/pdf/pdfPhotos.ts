@@ -6,6 +6,7 @@ import { compressBlobForPDF } from './photos/photoProcessor';
 import { drawPhotoPlaceholder } from './photos/photoPlaceholder';
 import { getPhotoBlobForPdf } from './photos/photoStorage';
 import { createLogger } from "@/lib/logger";
+import { REPORT_PDF_COLORS } from './reportPdfTheme';
 
 
 const logger = createLogger("pdfPhotos");
@@ -36,10 +37,13 @@ export const addPhotographicSetSection = async (
     }
 
     // Título principal
-    doc.setFontSize(14);
-    doc.setTextColor(0, 150, 136);
-    doc.text(title, 20, yPosition);
-    yPosition += 15;
+    doc.setFillColor(...REPORT_PDF_COLORS.primary);
+    doc.rect(14, yPosition, 6, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...REPORT_PDF_COLORS.primaryDark);
+    doc.text(title, 24, yPosition + 7);
+    yPosition += 14;
 
     // Organizar fotos por categoría
     const categoryOrder = ['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'];
@@ -73,10 +77,13 @@ export const addPhotographicSetSection = async (
         yPosition = 20;
 
         // Repetir título en nueva página
-        doc.setFontSize(14);
-        doc.setTextColor(0, 150, 136);
-        doc.text('SET FOTOGRÁFICO (continuación)', 20, yPosition);
-        yPosition += 15;
+        doc.setFillColor(...REPORT_PDF_COLORS.primary);
+        doc.rect(14, yPosition, 6, 10, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(...REPORT_PDF_COLORS.primaryDark);
+        doc.text('SET FOTOGRÁFICO (CONTINUACIÓN)', 24, yPosition + 7);
+        yPosition += 14;
       }
 
       // Procesar fotos de la fila actual (una a la vez, secuencial: nunca Promise.all

@@ -6,9 +6,10 @@ import { fetchCompanyData } from './companyDataFetcher';
 import { addPDFHeader } from './pdfHeader';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
+import { addReportFooter, REPORT_PDF_COLORS } from './reportPdfTheme';
 
-const VIOLET: [number, number, number] = [139, 92, 246];
-const MUTED: [number, number, number] = [100, 100, 100];
+const VIOLET = REPORT_PDF_COLORS.primary;
+const MUTED = REPORT_PDF_COLORS.muted;
 
 const formatCLP = (n: number) =>
   new Intl.NumberFormat('es-CL', {
@@ -69,9 +70,9 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
     theme: 'grid',
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 38, textColor: 60, fillColor: [245, 245, 245] },
+      0: { fontStyle: 'bold', cellWidth: 38, textColor: REPORT_PDF_COLORS.muted, fillColor: REPORT_PDF_COLORS.soft },
       1: { cellWidth: contentWidth / 2 - 38 },
-      2: { fontStyle: 'bold', cellWidth: 38, textColor: 60, fillColor: [245, 245, 245] },
+      2: { fontStyle: 'bold', cellWidth: 38, textColor: REPORT_PDF_COLORS.muted, fillColor: REPORT_PDF_COLORS.soft },
       3: { cellWidth: contentWidth / 2 - 38 },
     },
     margin: { left: marginX, right: marginX },
@@ -179,18 +180,7 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
   doc.text(stamp, marginX, y);
   doc.setFont(undefined, 'normal');
 
-  // Footer
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const ph = doc.internal.pageSize.height;
-    doc.setDrawColor(220);
-    doc.line(marginX, ph - 14, pageWidth - marginX, ph - 14);
-    doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
-    doc.text(`Generado: ${formatForDisplayWithTime(businessClock.nowISO())}`, marginX, ph - 9);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 9, { align: 'right' });
-  }
+  addReportFooter(doc, { generatedAt: formatForDisplayWithTime(businessClock.nowISO()) });
 
   return doc.output('blob');
 };

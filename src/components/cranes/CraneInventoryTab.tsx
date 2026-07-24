@@ -37,6 +37,10 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { businessClock } from '@/utils/businessClock';
 import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 import { getCraneTypeLabel } from '@/utils/craneType';
+import {
+  addReportFooter,
+  REPORT_PDF_COLORS,
+} from '@/utils/pdf/reportPdfTheme';
 
 interface CraneInventoryTabProps {
   crane: Crane;
@@ -253,7 +257,6 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       const doc = new jsPDF({ orientation: 'landscape' });
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
 
       const logoUrl = company.logo || '/logo-gruas-5-norte.png';
       const logoImg = await loadImage(logoUrl);
@@ -263,10 +266,10 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       const craneLabel = `Grúa ${crane.licensePlate}${crane.brand || crane.model ? ` • ${crane.brand} ${crane.model}` : ''}${crane.type ? ` • ${getCraneTypeLabel(crane.type)}` : ''}`;
 
       const drawHeader = () => {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(0, 0, pageWidth, 26, 'F');
+        doc.setFillColor(...REPORT_PDF_COLORS.primary);
+        doc.rect(0, 0, pageWidth, 28, 'F');
 
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(...REPORT_PDF_COLORS.white);
         doc.setFontSize(13);
         doc.setFont(undefined, 'bold');
         doc.text(company.name || 'Grúas 5 Norte', 14, 9);
@@ -276,7 +279,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         doc.text('Reporte de Movimientos (Bodega y Mantenciones)', 14, 15);
 
         doc.setFontSize(9);
-        doc.setTextColor(71, 85, 105);
+        doc.setTextColor(...REPORT_PDF_COLORS.white);
         doc.text(craneLabel, 14, 20);
         doc.text(`Rango: ${rangeLabel}`, 14, 24);
         doc.text(`Generado: ${generatedAtLabel}`, pageWidth - 14, 24, { align: 'right' });
@@ -290,8 +293,6 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           doc.addImage(logoImg, logoFormat, pageWidth - 14 - w, 4, w, h);
         }
 
-        doc.setDrawColor(226, 232, 240);
-        doc.line(14, 27, pageWidth - 14, 27);
       };
 
       drawHeader();
@@ -407,8 +408,8 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         startY: cursorY,
         theme: 'striped',
         styles: { fontSize: 7.8, cellPadding: 2 },
-        headStyles: { fillColor: [156, 250, 36], textColor: [0, 0, 0], fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal' },
+        alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
         didDrawPage: () => drawHeader(),
         columnStyles: {
           0: { cellWidth: 26 },
@@ -450,8 +451,8 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         startY: cursorY,
         theme: 'striped',
         styles: { fontSize: 7.8, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal' },
+        alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
         didDrawPage: () => drawHeader(),
         columnStyles: {
           0: { cellWidth: 22 },
@@ -466,13 +467,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         margin: { left: 14, right: 14, top: 26, bottom: 14 },
       });
 
-      const pageCount = (doc as any).internal.getNumberOfPages();
-      for (let page = 1; page <= pageCount; page++) {
-        doc.setPage(page);
-        doc.setFontSize(9);
-        doc.setTextColor(100);
-        doc.text(`Página ${page} de ${pageCount}`, pageWidth - 14, pageHeight - 8, { align: 'right' });
-      }
+      addReportFooter(doc, { generatedAt: generatedAtLabel });
 
       const fileName = createExportFileName(
         'reporte-movimientos',

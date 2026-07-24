@@ -1,14 +1,20 @@
 import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
+import {
+  applyReportTableDefaults,
+  DEFAULT_REPORT_LOGO_URL,
+  LOCAL_REPORT_LOGO_URL,
+  REPORT_PDF_COLORS,
+} from './reportPdfTheme';
 
 const C = {
-  green:      [0, 130, 100]   as [number, number, number],
-  greenLight: [230, 248, 244] as [number, number, number],
+  green:      REPORT_PDF_COLORS.primary,
+  greenLight: REPORT_PDF_COLORS.soft,
   gray:       [80, 80, 80]    as [number, number, number],
   grayLight:  [245, 245, 245] as [number, number, number],
   black:      [20, 20, 20]    as [number, number, number],
-  white:      [255, 255, 255] as [number, number, number],
+  white:      REPORT_PDF_COLORS.white,
 };
 
 const PAGE_W = 210;
@@ -40,6 +46,7 @@ const getImageDimensions = (base64: string): Promise<{ width: number; height: nu
   });
 
 export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
+  applyReportTableDefaults(doc);
   const isFinal = data.isFinal ?? false;
   const isInSitu = data.isInSitu ?? false;
 
@@ -50,14 +57,18 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   // ── Logo en la banda ─────────────────────────────────────────────────────
   let logoEndX = MARGIN;
   try {
-    const logoBase64 = await loadImageAsBase64('/logo-gruas-5-norte.png');
+    const logoBase64 = (data.companyData.logoUrl
+      ? await loadImageAsBase64(data.companyData.logoUrl)
+      : null)
+      || await loadImageAsBase64(DEFAULT_REPORT_LOGO_URL)
+      || await loadImageAsBase64(LOCAL_REPORT_LOGO_URL);
     if (logoBase64) {
       const { width: w, height: h } = await getImageDimensions(logoBase64);
-      const maxH = 22;
-      const logoH = Math.min(maxH, h);
-      const logoW = (w / h) * logoH;
-      doc.addImage(logoBase64, 'PNG', MARGIN, 3, logoW, logoH);
-      logoEndX = MARGIN + logoW + 6;
+      const scale = Math.min(31 / w, 17 / h);
+      const logoW = w * scale;
+      const logoH = h * scale;
+      doc.addImage(logoBase64, 'PNG', MARGIN + 1.5, (28 - logoH) / 2, logoW, logoH);
+      logoEndX = MARGIN + 1.5 + logoW + 7;
     }
   } catch { /* sin logo */ }
 
@@ -103,7 +114,11 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.text(`Generado: ${now}`, PAGE_W / 2, y + 6.5, { align: 'center' });
 
   const badgeLabel = isInSitu ? 'SERVICIO COMPLETADO' : isFinal ? 'DOCUMENTO FINAL' : 'PRE-SERVICIO';
-  const badgeColor: [number, number, number] = isInSitu ? [0, 130, 100] : isFinal ? [0, 130, 100] : [180, 100, 0];
+  const badgeColor: [number, number, number] = isInSitu
+    ? REPORT_PDF_COLORS.primaryDark
+    : isFinal
+      ? REPORT_PDF_COLORS.primaryDark
+      : [180, 100, 0];
   doc.setFillColor(...badgeColor);
   doc.roundedRect(PAGE_W - MARGIN - 38, y + 1.5, 36, 7, 2, 2, 'F');
   doc.setTextColor(...C.white);

@@ -1,7 +1,12 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ExportOperatorReportArgs } from './reportTypes';
-import { addCompanyHeader, createExportFileName } from './reportUtils';
+import {
+  addCompanyHeader,
+  addStandardReportFooter,
+  createExportFileName,
+  REPORT_PDF_COLORS,
+} from './reportUtils';
 import { businessClock } from '@/utils/businessClock';
 
 const statusLabels: Record<string, string> = {
@@ -76,7 +81,7 @@ export const exportOperatorReport = async ({
       ],
       startY: lastY + 6,
       theme: 'grid',
-      headStyles: { fillColor: [124, 58, 237] },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary },
       styles: { fontSize: 9 },
     });
 
@@ -92,7 +97,7 @@ export const exportOperatorReport = async ({
       ])),
       startY: lastY + 8,
       theme: 'striped',
-      headStyles: { fillColor: [91, 33, 182] },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary },
       styles: { fontSize: 8.5 },
     });
 
@@ -108,7 +113,7 @@ export const exportOperatorReport = async ({
         ])),
         startY: lastY + 8,
         theme: 'grid',
-        headStyles: { fillColor: [55, 65, 81] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         styles: { fontSize: 8.5 },
       });
       lastY = (doc as any).lastAutoTable.finalY;
@@ -131,11 +136,12 @@ export const exportOperatorReport = async ({
         ])),
         startY: lastY + 8,
         theme: 'striped',
-        headStyles: { fillColor: [124, 58, 237] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         styles: { fontSize: 7.5, cellPadding: 1.2 },
       });
     }
 
+    addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
     return;
   }

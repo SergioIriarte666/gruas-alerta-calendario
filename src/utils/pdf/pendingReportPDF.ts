@@ -4,6 +4,11 @@ import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
+import {
+  addReportFooter,
+  addReportHeader,
+  REPORT_PDF_COLORS,
+} from '@/utils/pdf/reportPdfTheme';
 import { 
   getBusinessTimezone, 
   getTodayStringInTimezone, 
@@ -288,25 +293,25 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   // ──── GENERATE PDF ────
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  let y = 15;
+  let y = await addReportHeader(doc, {
+    name: companyData.businessName,
+    taxId: companyData.rut,
+    address: companyData.address,
+    phone: companyData.phone,
+    email: companyData.email,
+    logo: companyData.logoUrl,
+  });
 
   // Header
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(34, 197, 94);
-  doc.text(companyData.businessName, pageWidth / 2, y, { align: 'center' });
-  y += 8;
   doc.setFontSize(14);
-  doc.setTextColor(51, 51, 51);
-  doc.text('Reporte Diario de Pendientes', pageWidth / 2, y, { align: 'center' });
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...REPORT_PDF_COLORS.ink);
+  doc.text('Reporte diario de pendientes', 14, y);
   y += 7;
   doc.setFontSize(10);
-  doc.setTextColor(120, 120, 120);
-  doc.text(`Fecha: ${safeDateToDisplay(todayStr)} | TZ: ${businessTz}`, pageWidth / 2, y, { align: 'center' });
-  y += 3;
-  doc.setDrawColor(34, 197, 94);
-  doc.setLineWidth(0.8);
-  doc.line(14, y, pageWidth - 14, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...REPORT_PDF_COLORS.muted);
+  doc.text(`Fecha: ${safeDateToDisplay(todayStr)} · TZ: ${businessTz}`, 14, y);
   y += 8;
 
   // Helper: group rows by client column (index 1) with sub-headers
@@ -374,9 +379,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       head: [headers],
       body: bodyData,
       theme: 'striped',
-      headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: 14, right: 14 },
       columnStyles: colStyles || {},
       didParseCell: (hookData: any) => {
@@ -400,7 +405,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
           const cellH = hookData.cell.height;
           
           // Professional dark sub-header spanning full row
-          doc.setFillColor(124, 58, 237);
+          doc.setFillColor(...REPORT_PDF_COLORS.primaryDark);
           doc.rect(startX, cellY, endX - startX, cellH, 'F');
           
           // White text, left-aligned
@@ -437,9 +442,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       head: [['Folio', 'Cliente', 'Estado']],
       body: todayGrouped.rows,
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
-      alternateRowStyles: { fillColor: [239, 246, 255] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: 14, right: 14 },
       didParseCell: (hookData: any) => {
         if (hookData.section === 'body' && todayGrouped.clientRowIndices.has(hookData.row.index)) {
@@ -461,7 +466,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
           const cellY = hookData.cell.y;
           const cellH = hookData.cell.height;
           
-          doc.setFillColor(124, 58, 237);
+          doc.setFillColor(...REPORT_PDF_COLORS.primaryDark);
           doc.rect(startX, cellY, endX - startX, cellH, 'F');
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8);
@@ -492,9 +497,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       head: [['Cliente', 'Servicios del Mes']],
       body: monthlyClientRows,
       theme: 'striped',
-      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      headStyles: { fillColor: REPORT_PDF_COLORS.primary, textColor: REPORT_PDF_COLORS.white, fontStyle: 'normal', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
-      alternateRowStyles: { fillColor: [238, 242, 255] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       margin: { left: 14, right: 14 },
     });
     y = (doc as any).lastAutoTable.finalY + 10;
@@ -523,13 +528,13 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
   // Summary box
   if (y > doc.internal.pageSize.getHeight() - 55) { doc.addPage(); y = 15; }
-  doc.setDrawColor(34, 197, 94);
+  doc.setDrawColor(...REPORT_PDF_COLORS.primary);
   doc.setLineWidth(0.5);
   doc.roundedRect(14, y, pageWidth - 28, 45, 3, 3, 'S');
   y += 8;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(34, 197, 94);
+  doc.setTextColor(...REPORT_PDF_COLORS.primaryDark);
   doc.text('Resumen', pageWidth / 2, y, { align: 'center' });
   y += 7;
   doc.setFontSize(9);
@@ -549,21 +554,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   col1.forEach((item, i) => doc.text(`• ${item}`, 22, y + i * 6));
   col2.forEach((item, i) => doc.text(`• ${item}`, pageWidth / 2 + 5, y + i * 6));
 
-  // Footer on all pages
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(
-      `${companyData.businessName} | ${companyData.phone} | ${companyData.email}`,
-      pageWidth / 2, doc.internal.pageSize.getHeight() - 8, { align: 'center' }
-    );
-    doc.text(
-      `Página ${i} de ${pageCount}`,
-      pageWidth - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' }
-    );
-  }
+  addReportFooter(doc, {
+    leftLines: [[companyData.businessName, companyData.phone, companyData.email].filter(Boolean).join(' · ')],
+  });
 
   return doc;
 };

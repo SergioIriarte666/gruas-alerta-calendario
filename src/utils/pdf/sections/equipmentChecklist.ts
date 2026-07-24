@@ -3,13 +3,14 @@ import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
 import { createLogger } from "@/lib/logger";
+import { REPORT_PDF_COLORS } from '../reportPdfTheme';
 
 
 const logger = createLogger("equipmentChecklist");
 const C = {
-  green:     [0, 130, 100]   as [number, number, number],
-  grayLight: [248, 252, 250] as [number, number, number],
-  white:     [255, 255, 255] as [number, number, number],
+  green:     REPORT_PDF_COLORS.primary,
+  grayLight: REPORT_PDF_COLORS.soft,
+  white:     REPORT_PDF_COLORS.white,
   black:     [20, 20, 20]    as [number, number, number],
 };
 const MARGIN = 14;
@@ -80,18 +81,18 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       },
       styles: { cellPadding: 2.5, textColor: [20, 20, 20] },
       headStyles: {
-        fillColor: [0, 130, 100],
-        textColor: [255, 255, 255],
+        fillColor: REPORT_PDF_COLORS.primary,
+        textColor: REPORT_PDF_COLORS.white,
         fontStyle: 'bold',
         fontSize: 8,
         halign: 'center',
       },
-      alternateRowStyles: { fillColor: [248, 252, 250] },
+      alternateRowStyles: { fillColor: REPORT_PDF_COLORS.soft },
       didParseCell: (hookData) => {
         if ([1, 3, 5].includes(hookData.column.index) && hookData.section === 'body') {
           const val = String(hookData.cell.text[0] || '').toUpperCase();
           if (val === 'SI') {
-            hookData.cell.styles.textColor = [0, 130, 100];
+            hookData.cell.styles.textColor = REPORT_PDF_COLORS.primaryDark;
           } else if (val === 'NO') {
             hookData.cell.styles.textColor = [180, 50, 50];
           }
@@ -113,7 +114,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
 
     doc.setFillColor(220, 220, 220);
     doc.roundedRect(barX, barY, barW, barH, 2, 2, 'F');
-    doc.setFillColor(0, 130, 100);
+    doc.setFillColor(...REPORT_PDF_COLORS.primary);
     doc.roundedRect(barX, barY, barW * (pct / 100), barH, 2, 2, 'F');
 
     doc.setFontSize(8);
@@ -121,7 +122,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     doc.setFont('helvetica', 'normal');
     doc.text(`Elementos verificados: ${selectedCount} de ${totalCount}`, MARGIN, barY + 11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 130, 100);
+    doc.setTextColor(...REPORT_PDF_COLORS.primaryDark);
     doc.text(`${pct}% completado`, PAGE_W - MARGIN, barY + 11, { align: 'right' });
 
     yPosition = barY + 18;

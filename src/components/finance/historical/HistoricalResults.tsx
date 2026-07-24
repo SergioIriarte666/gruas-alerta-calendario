@@ -37,6 +37,11 @@ import {
 import { Info } from 'lucide-react';
 import { SourceFilter, SOURCE_FILTER_OPTIONS, matchesSource } from './useSourceFilter';
 import { HistoricalEmptyState } from './HistoricalEmptyState';
+import {
+  addReportFooter,
+  addReportHeader,
+  REPORT_PDF_COLORS,
+} from '@/utils/pdf/reportPdfTheme';
 
 type PeriodType = 'this_year' | 'last_year' | 'custom';
 
@@ -330,18 +335,20 @@ export const HistoricalResults: React.FC = () => {
       const { default: jsPDF } = await import('jspdf');
       const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text('Resultados Históricos', 14, 20);
+      const headerY = await addReportHeader(doc, { name: 'Grúas 5 Norte' });
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...REPORT_PDF_COLORS.ink);
+      doc.text('Resultados históricos', 14, headerY);
       doc.setFontSize(10);
-      doc.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`, 14, 30);
-      doc.text(`Origen: ${sourceLabel}`, 14, 36);
-      doc.text(`Generado: ${businessClock.format(businessClock.todayDate(), 'dd/MM/yyyy HH:mm')}`, 14, 42);
-      doc.text(`Total Ventas: ${formatCurrency(totalSales)}`, 14, 50);
-      doc.text(`Total Compras: ${formatCurrency(totalPurchases)}`, 14, 56);
-      doc.text(`Resultado (Ventas - Compras): ${formatCurrency(grossMargin)}`, 14, 62);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...REPORT_PDF_COLORS.muted);
+      doc.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')} · Origen: ${sourceLabel}`, 14, headerY + 7);
+      doc.setTextColor(...REPORT_PDF_COLORS.ink);
+      doc.text(`Ventas: ${formatCurrency(totalSales)} · Compras: ${formatCurrency(totalPurchases)} · Resultado: ${formatCurrency(grossMargin)}`, 14, headerY + 15);
 
       autoTable(doc, {
-        startY: 70,
+        startY: headerY + 23,
         head: [['Mes', 'Ventas', 'Compras', 'Resultado', 'Var. %']],
         body: monthlySummary.map(m => [
           m.month,
@@ -352,11 +359,12 @@ export const HistoricalResults: React.FC = () => {
         ]),
         foot: [['Total', formatCurrency(totalSales), formatCurrency(totalPurchases), formatCurrency(grossMargin), '']],
         theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: REPORT_PDF_COLORS.primary },
         styles: { fontSize: 8 },
-        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        footStyles: { fillColor: REPORT_PDF_COLORS.total, textColor: REPORT_PDF_COLORS.ink, fontStyle: 'bold' },
       });
 
+      addReportFooter(doc);
       doc.save(`resultados-historicos-${businessClock.today()}.pdf`);
       toast.success('PDF exportado correctamente');
     } catch { toast.error('Error al exportar PDF'); }

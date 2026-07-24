@@ -7,6 +7,12 @@ import { formatVehicleInfo } from '@/utils/statusHelpers';
 import { type Service } from '@/types';
 import { type Settings } from '@/types/settings';
 import { fetchCompanyData, type CompanyData } from './companyDataFetcher';
+import {
+  applyReportTableDefaults,
+  DEFAULT_REPORT_LOGO_URL,
+  LOCAL_REPORT_LOGO_URL,
+  REPORT_PDF_COLORS,
+} from './reportPdfTheme';
 
 export const IVA_RATE = 0.19;
 export const QUOTE_VALIDITY_DAYS = 15;
@@ -14,13 +20,13 @@ export const DEFAULT_COMMERCIAL_TERMS =
   'Forma de pago: según acuerdo comercial vigente con el cliente. Los valores están expresados en pesos chilenos y sujetos a confirmación operativa.';
 
 export const PDF_COLORS = {
-  ink: [34, 40, 49] as [number, number, number],
-  slate: [99, 115, 129] as [number, number, number],
-  line: [203, 213, 225] as [number, number, number],
-  panel: [248, 250, 252] as [number, number, number],
-  accent: [22, 78, 99] as [number, number, number],
-  accentSoft: [232, 244, 248] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
+  ink: REPORT_PDF_COLORS.ink,
+  slate: REPORT_PDF_COLORS.muted,
+  line: REPORT_PDF_COLORS.line,
+  panel: REPORT_PDF_COLORS.soft,
+  accent: REPORT_PDF_COLORS.primary,
+  accentSoft: REPORT_PDF_COLORS.total,
+  white: REPORT_PDF_COLORS.white,
 };
 
 export interface CommercialDocumentContext {
@@ -154,65 +160,60 @@ export const addLetterhead = async (
   context: CommercialDocumentContext,
   options: { title: string; documentNumber: string; secondaryLine?: string },
 ): Promise<number> => {
+  applyReportTableDefaults(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 16;
 
   doc.setFillColor(...PDF_COLORS.accent);
-  doc.rect(0, 0, pageWidth, 8, 'F');
+  doc.rect(0, 0, pageWidth, 28, 'F');
 
-  const logoDataUrl = context.company.logoUrl ? await loadImageAsDataUrl(context.company.logoUrl) : null;
+  const logoDataUrl = (context.company.logoUrl ? await loadImageAsDataUrl(context.company.logoUrl) : null)
+    || await loadImageAsDataUrl(DEFAULT_REPORT_LOGO_URL)
+    || await loadImageAsDataUrl(LOCAL_REPORT_LOGO_URL);
   let textStartX = marginX;
 
   if (logoDataUrl) {
     const { width, height } = await getImageDimensions(logoDataUrl);
-    const renderHeight = 18;
-    const renderWidth = (width / height) * renderHeight;
-    doc.addImage(logoDataUrl, 'PNG', marginX, 14, renderWidth, renderHeight);
-    textStartX = marginX + renderWidth + 8;
+    const scale = Math.min(31 / width, 17 / height);
+    const renderWidth = width * scale;
+    const renderHeight = height * scale;
+    const format = logoDataUrl.startsWith('data:image/jpeg') || logoDataUrl.startsWith('data:image/jpg') ? 'JPEG' : 'PNG';
+    doc.addImage(logoDataUrl, format, marginX + 1.5, (28 - renderHeight) / 2, renderWidth, renderHeight);
+    textStartX = marginX + 1.5 + renderWidth + 7;
   }
 
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...PDF_COLORS.ink);
+  doc.setTextColor(...PDF_COLORS.white);
   doc.setFontSize(15);
-  doc.text(formatText(context.company.businessName), textStartX, 18);
+  doc.text(formatText(context.company.businessName), textStartX, 13);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...PDF_COLORS.slate);
-  const companyLines = [
+  doc.setFontSize(7.5);
+  doc.setTextColor(...PDF_COLORS.white);
+  const companyLine = [
     `RUT: ${formatText(context.company.rut)}`,
     formatText(context.company.address),
-    [context.company.phone ? `Tel: ${context.company.phone}` : '', context.company.email ? `Email: ${context.company.email}` : '']
-      .filter(Boolean)
-      .join(' · '),
-  ].filter((line) => line && line !== '-');
-
-  let infoY = 23;
-  companyLines.forEach((line) => {
-    doc.text(line, textStartX, infoY);
-    infoY += 4.2;
-  });
+    context.company.phone ? `Tel: ${context.company.phone}` : '',
+  ].filter((line) => line && line !== '-').join(' · ');
+  doc.text(doc.splitTextToSize(companyLine, Math.max(40, pageWidth - textStartX - 76))[0], textStartX, 19);
 
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...PDF_COLORS.accent);
-  doc.setFontSize(16);
-  doc.text(options.title, pageWidth - marginX, 18, { align: 'right' });
+  doc.setTextColor(...PDF_COLORS.white);
+  doc.setFontSize(10);
+  doc.text(options.title, pageWidth - marginX, 10.5, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...PDF_COLORS.ink);
-  doc.setFontSize(9);
-  doc.text(options.documentNumber, pageWidth - marginX, 24, { align: 'right' });
-  doc.text(`Emisión: ${context.emissionDate}`, pageWidth - marginX, 28.5, { align: 'right' });
+  doc.setTextColor(...PDF_COLORS.white);
+  doc.setFontSize(7.5);
+  doc.text(options.documentNumber, pageWidth - marginX, 16, { align: 'right' });
+  doc.text(`Emisión: ${context.emissionDate}`, pageWidth - marginX, 20.5, { align: 'right' });
 
   if (options.secondaryLine) {
-    doc.setTextColor(...PDF_COLORS.slate);
-    doc.text(options.secondaryLine, pageWidth - marginX, 33, { align: 'right' });
+    doc.text(options.secondaryLine, pageWidth - marginX, 25, { align: 'right' });
   }
 
-  doc.setDrawColor(...PDF_COLORS.line);
-  doc.line(marginX, 39, pageWidth - marginX, 39);
-
-  return 45;
+  doc.setTextColor(...PDF_COLORS.ink);
+  return 36;
 };
 
 export const addSectionTable = (
