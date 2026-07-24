@@ -8936,6 +8936,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_client_service_tracking_token: {
+        Args: { p_service_id: string }
+        Returns: string
+      }
       get_or_create_tracking_token: {
         Args: { p_created_by?: string; p_service_id: string }
         Returns: string

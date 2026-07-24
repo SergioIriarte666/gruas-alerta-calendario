@@ -8,6 +8,7 @@ import {
   FileText,
   FileWarning as FileAlert,
   History,
+  MapPin,
   Navigation,
   PackageCheck,
   Plus,
@@ -24,6 +25,7 @@ import {
   getClientOverdueTotal,
 } from "@/hooks/portal/useClientInvoices";
 import { getDisplayServiceValue } from "@/utils/serviceValueCalculations";
+import { useClientTrackingToken } from "@/hooks/portal/useClientTrackingToken";
 import { useClientBranding } from "@/hooks/portal/useClientBranding";
 import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,9 @@ const PortalDashboard: React.FC = () => {
   const activeService = services?.find(
     (service) => service.status === "in_progress",
   );
+  // Token del tracker en vivo del servicio activo. Degrada a null si la RPC no
+  // está desplegada o el servicio no pertenece al cliente (ver hook).
+  const { data: trackingToken } = useClientTrackingToken(activeService?.id);
   const companyName = branding?.companyName || "Cliente";
   const companyGreeting = /[.!?]$/.test(companyName)
     ? companyName
@@ -265,12 +270,25 @@ const PortalDashboard: React.FC = () => {
                   </strong>
                 </p>
               </div>
-              <Button variant="outline" asChild>
-                <Link to="/portal/services">
-                  <Navigation />
-                  Ver seguimiento
-                </Link>
-              </Button>
+              {trackingToken ? (
+                <Button variant="outline" asChild>
+                  <a
+                    href={`/track/${trackingToken}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MapPin />
+                    Ver seguimiento en vivo
+                  </a>
+                </Button>
+              ) : (
+                <Button variant="outline" asChild>
+                  <Link to="/portal/services">
+                    <Navigation />
+                    Ver seguimiento
+                  </Link>
+                </Button>
+              )}
             </div>
           </article>
         ) : (
