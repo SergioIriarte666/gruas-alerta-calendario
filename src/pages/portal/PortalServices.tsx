@@ -53,6 +53,7 @@ import {
   getServiceDateKey,
   getServicesForMonth,
 } from "./portalServices.utils";
+import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 
 type ServiceSortField =
   | "folio"
@@ -292,7 +293,7 @@ const PortalServices = () => {
 
     return (
       <div className="space-y-4">
-        <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
+        <div className="portal-data-panel hidden md:block">
           <div className="grid grid-cols-7 border-b border-border bg-muted/40">
             {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(
               (dayLabel) => (
@@ -442,7 +443,7 @@ const PortalServices = () => {
     }
 
     return (
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div className="portal-data-panel overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -565,22 +566,18 @@ const PortalServices = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-            Mis Servicios
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Vista de listado por defecto con navegación mensual y filtros por
-            estado.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline" className="border-primary/25 text-primary">
+    <div className="portal-page portal-services-page space-y-6">
+      <PortalPageHeader
+        eyebrow="Historial operacional"
+        title="Mis servicios"
+        description="Consulta traslados, estados, vehículos y valores desde una vista unificada."
+        icon={History}
+        actions={
+          <>
+          <span className="portal-count-badge">
             {sortedServices.length} servicio
             {sortedServices.length !== 1 ? "s" : ""}
-          </Badge>
+          </span>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -628,10 +625,11 @@ const PortalServices = () => {
               Tarjetas
             </Button>
           </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="rounded-lg border border-border bg-card p-4">
+      <div className="portal-filter-panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2">
             <Button

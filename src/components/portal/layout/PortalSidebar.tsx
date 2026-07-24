@@ -15,6 +15,7 @@ import { usePortalOCCount } from "@/hooks/portal/usePortalOCCount";
 import { useClientBranding } from "@/hooks/portal/useClientBranding";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import PortalSupportDialog from "@/components/portal/PortalSupportDialog";
 
 interface PortalSidebarProps {
   onClose?: () => void;
@@ -35,17 +36,30 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({
   const displayName = branding?.companyName || companyName;
   const userName = user?.name || user?.email || "Cliente";
   const userInitials = userName.slice(0, 2).toUpperCase();
+  const supportEmail =
+    settings?.company?.email?.trim() || "soporte@gruas5norte.cl";
+  const supportPhone =
+    settings?.company?.operationalContactPhone?.trim() ||
+    settings?.company?.phone?.trim();
 
   const navigationItems = [
     {
       name: "Dashboard",
       href: "/portal/dashboard",
       icon: LayoutDashboard,
+      group: "Operación",
     },
     {
       name: "Mis Servicios",
       href: "/portal/services",
       icon: History,
+      group: "Operación",
+    },
+    {
+      name: "Solicitar Servicio",
+      href: "/portal/request-service",
+      icon: Plus,
+      group: "Operación",
     },
     {
       name: "Sin orden de compra",
@@ -53,18 +67,16 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({
       icon: FileAlert,
       badgeCount: ocCount,
       urgent: ocCount > 0,
-    },
-    {
-      name: "Solicitar Servicio",
-      href: "/portal/request-service",
-      icon: Plus,
+      group: "Administración",
     },
     {
       name: "Mis Facturas",
       href: "/portal/invoices",
       icon: FileText,
+      group: "Administración",
     },
   ];
+  const navigationGroups = ["Operación", "Administración"];
 
   const handleNavClick = () => {
     if (onClose) {
@@ -73,30 +85,25 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-border bg-card p-4">
-      <div className="mb-6 pb-4 border-b border-border/60">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+    <aside className="portal-client-sidebar">
+      <div className="portal-client-sidebar__brand">
+        <div className="portal-client-brand">
+          <div className="portal-client-brand__identity">
             {displayLogo ? (
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/40 p-1">
+              <div className="portal-client-brand__mark has-logo">
                 <img
                   src={displayLogo}
                   alt={displayName}
-                  className="max-h-full max-w-full object-contain"
                 />
               </div>
             ) : (
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
-                <Truck className="size-4 text-primary-foreground" />
+              <div className="portal-client-brand__mark">
+                <Truck />
               </div>
             )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">
-                {displayName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Portal de clientes
-              </p>
+            <div className="portal-client-brand__copy">
+              <strong>{displayName}</strong>
+              <small>Portal de clientes</small>
             </div>
           </div>
           {showCloseButton && (
@@ -104,66 +111,70 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+              className="portal-client-sidebar__close"
+              aria-label="Cerrar menú"
             >
-              <X className="size-5" />
+              <X />
             </Button>
           )}
         </div>
       </div>
-      <p className="mb-1 mt-2 px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground/50">
-        Menú
-      </p>
-      <nav className="flex flex-col gap-y-1">
-        {navigationItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={handleNavClick}
-              className={cn(
-                "flex items-center gap-2 rounded-md px-2.5 py-2 text-xs transition-colors",
-                isActive && !item.urgent
-                  ? "bg-accent font-medium text-primary"
-                  : "",
-                isActive && item.urgent
-                  ? "bg-warning-soft font-medium text-warning-text"
-                  : "",
-                !isActive
-                  ? "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                  : "",
-              )}
-            >
-              <item.icon className="size-3.5" />
-              <span>{item.name}</span>
-              {item.href === "/portal/purchase-orders" && ocCount > 0 && (
-                <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-warning px-1 text-xs font-medium text-warning-foreground">
-                  {ocCount}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+
+      <nav className="portal-client-nav" aria-label="Navegación principal">
+        {navigationGroups.map((group) => (
+          <div className="portal-client-nav__group" key={group}>
+            <p>{group}</p>
+            {navigationItems
+              .filter((item) => item.group === group)
+              .map((item) => {
+                const isActive =
+                  location.pathname === item.href ||
+                  (item.href === "/portal/dashboard" &&
+                    location.pathname === "/portal");
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={handleNavClick}
+                    className={cn(
+                      "portal-client-nav__item",
+                      isActive && "is-active",
+                      item.urgent && "is-urgent",
+                    )}
+                  >
+                    <item.icon />
+                    <span>{item.name}</span>
+                    {item.href === "/portal/purchase-orders" && ocCount > 0 && (
+                      <b>{ocCount}</b>
+                    )}
+                  </Link>
+                );
+              })}
+          </div>
+        ))}
       </nav>
-      <div className="mt-auto border-t border-border/60 pt-3">
-        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 p-2.5">
-          <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground">
-            {userInitials}
+
+      <div className="portal-client-sidebar__footer">
+        <PortalSupportDialog
+          companyName={branding?.companyName || "Cliente"}
+          clientEmail={user?.email}
+          email={supportEmail}
+          phone={supportPhone}
+          onAction={handleNavClick}
+        />
+        <Link
+          to="/portal/account"
+          onClick={handleNavClick}
+          className="portal-client-account"
+          aria-label="Abrir mi cuenta"
+        >
+          <span>{userInitials}</span>
+          <div>
+            <strong>{userName}</strong>
+            <small>{branding?.companyName || "Cliente"}</small>
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-foreground">
-              {userName}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {branding?.companyName || "Cliente"}
-            </p>
-          </div>
-          <div
-            className="ml-auto size-2 flex-shrink-0 rounded-full bg-success"
-            title="Conectado"
-          />
-        </div>
+          <i title="Conectado" />
+        </Link>
       </div>
     </aside>
   );

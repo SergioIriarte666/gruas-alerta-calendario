@@ -14,7 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import {
   AlertTriangle,
@@ -51,6 +50,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { createLogger } from "@/lib/logger";
+import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 
 const logger = createLogger("PortalInvoices");
 
@@ -237,7 +237,7 @@ const PortalInvoices = () => {
     }
 
     return (
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div className="portal-data-panel overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -331,50 +331,41 @@ const PortalInvoices = () => {
     .reduce((sum, invoice) => sum + invoice.total, 0);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-          Mis Facturas
-        </h1>
-        {invoices && (
-          <Badge variant="outline" className="border-primary/25 text-primary">
+    <div className="portal-page portal-invoices-page">
+      <PortalPageHeader
+        eyebrow="Estado financiero"
+        title="Mis facturas"
+        description="Consulta vencimientos, saldos y descarga tus documentos tributarios."
+        icon={FileText}
+        actions={
+          invoices ? (
+          <span className="portal-count-badge">
             {filteredInvoices.length} factura
             {filteredInvoices.length !== 1 ? "s" : ""}
-          </Badge>
-        )}
-      </div>
+          </span>
+          ) : undefined
+        }
+      />
 
       {/* Resumen de facturas */}
       {invoices && invoices.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-1 text-xs text-muted-foreground">
-              Total por pagar
-            </h3>
-            <p className="text-xl font-medium text-warning-text">
-              {formatCurrency(totalPorPagar)}
-            </p>
+        <div className="portal-invoice-metrics">
+          <div className="portal-invoice-metric is-warning">
+            <small>Total por pagar</small>
+            <strong>{formatCurrency(totalPorPagar)}</strong>
           </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-1 text-xs text-muted-foreground">
-              Total vencido
-            </h3>
-            <p className="text-xl font-medium text-danger-text">
-              {formatCurrency(totalVencido)}
-            </p>
+          <div className="portal-invoice-metric is-danger">
+            <small>Total vencido</small>
+            <strong>{formatCurrency(totalVencido)}</strong>
           </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-1 text-xs text-muted-foreground">
-              Total facturas
-            </h3>
-            <p className="text-xl font-medium text-foreground">
-              {filteredInvoices.length}
-            </p>
+          <div className="portal-invoice-metric">
+            <small>Facturas encontradas</small>
+            <strong>{filteredInvoices.length}</strong>
           </div>
         </div>
       )}
 
-      <div className="mb-6 rounded-lg border border-border bg-card p-4">
+      <div className="portal-filter-panel mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <h3 className="text-sm font-medium text-muted-foreground">
             Filtros:

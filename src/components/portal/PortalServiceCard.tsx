@@ -17,7 +17,7 @@ export const PortalServiceCard: React.FC<PortalServiceCardProps> = ({
   service,
 }) => {
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div className="portal-service-card p-6">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-semibold text-primary">{service.folio}</h3>
         <div className="flex items-center gap-2">

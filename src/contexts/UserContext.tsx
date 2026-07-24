@@ -6,9 +6,8 @@ import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('UserContext');
-// v2 fuerza a perfiles anteriores a volver a resolver operator_id. Sin ese dato,
-// la bitácora quedaba deshabilitada silenciosamente después de una actualización.
-const PROFILE_CACHE_KEY = 'offline-user-profile-cache-v2';
+// v3 fuerza a perfiles anteriores a resolver teléfono además de operator_id.
+const PROFILE_CACHE_KEY = 'offline-user-profile-cache-v3';
 
 interface UserProfile {
   id: string;
@@ -17,6 +16,7 @@ interface UserProfile {
   role: 'admin' | 'operator' | 'viewer' | 'client';
   client_id?: string;
   avatar_url?: string | null;
+  phone?: string | null;
   operator_id?: string | null;
   operator_name?: string | null;
 }
@@ -102,7 +102,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: initialProfileData, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, client_id, avatar_url, status')
+        .select('id, email, full_name, role, client_id, avatar_url, phone, status')
         .eq('id', authUser.id)
         .single();
       let profileData = initialProfileData;
@@ -138,7 +138,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (repaired) {
             const refreshedProfile = await supabase
               .from('profiles')
-              .select('id, email, full_name, role, client_id, avatar_url, status')
+              .select('id, email, full_name, role, client_id, avatar_url, phone, status')
               .eq('id', authUser.id)
               .single();
 
@@ -202,6 +202,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: profileData.role,
           client_id: profileData.client_id,
           avatar_url: profileData.avatar_url,
+          phone: profileData.phone,
           operator_id,
           operator_name,
         };
@@ -250,16 +251,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       full_name: updates.name,
       email: updates.email,
       avatar_url: updates.avatar_url,
+      phone: updates.phone,
       updated_at: businessClock.nowISO()
       })
       .eq('id', user.id);
 
-    if (!error) {
-      const updatedUser = { ...user, ...updates };
-      profileCacheRef.current = { profile: updatedUser, userId: user.id };
-      writeCachedProfile(profileCacheRef.current);
-      setUser(updatedUser);
-    }
+    if (error) throw error;
+
+    const updatedUser = { ...user, ...updates };
+    profileCacheRef.current = { profile: updatedUser, userId: user.id };
+    writeCachedProfile(profileCacheRef.current);
+    setUser(updatedUser);
   };
 
   const logout = async () => {

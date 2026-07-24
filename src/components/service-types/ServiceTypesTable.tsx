@@ -82,6 +82,12 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   >
                     {getServiceCategoryLabel(serviceType.serviceCategory)}
                   </Badge>
+                  <Badge
+                    variant={serviceType.availableInClientPortal ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {serviceType.availableInClientPortal ? 'Portal clientes' : 'Solo interno'}
+                  </Badge>
                 </div>
               </div>
               
@@ -140,6 +146,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
             <TableHead className="text-foreground">Descripción</TableHead>
             <TableHead className="text-foreground">Precio Base</TableHead>
             <TableHead className="text-foreground">Estado</TableHead>
+            <TableHead className="text-foreground">Portal Clientes</TableHead>
             <TableHead className="text-foreground">Campos Requeridos</TableHead>
             <TableHead className="text-foreground">Vehículo Opcional</TableHead>
             <TableHead className="text-foreground text-right">Acciones</TableHead>
@@ -170,6 +177,13 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   variant={serviceType.isActive ? "default" : "secondary"}
                 >
                   {serviceType.isActive ? 'Activo' : 'Inactivo'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant={serviceType.availableInClientPortal ? "default" : "secondary"}
+                >
+                  {serviceType.availableInClientPortal ? 'Disponible' : 'Oculto'}
                 </Badge>
               </TableCell>
               <TableCell className="text-foreground">

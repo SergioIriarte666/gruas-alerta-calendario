@@ -119,6 +119,15 @@ export function ServiceTypeDetailsModal({
                       {getServiceCategoryLabel(serviceType.serviceCategory)}
                     </Badge>
                   </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-muted-foreground">Portal Clientes</span>
+                    <Badge
+                      variant={serviceType.availableInClientPortal ? "default" : "secondary"}
+                    >
+                      {serviceType.availableInClientPortal ? "Disponible" : "Oculto"}
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning-soft p-4">

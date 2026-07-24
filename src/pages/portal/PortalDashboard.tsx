@@ -3,71 +3,36 @@ import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowRight,
-  Clock,
+  Check,
+  CircleDollarSign,
   FileText,
   FileWarning as FileAlert,
   History,
-  PlusCircle,
+  Navigation,
+  PackageCheck,
+  Plus,
   RefreshCw,
-  TrendingUp,
+  Route,
+  Truck,
 } from "lucide-react";
-import { useClientServices } from "@/hooks/portal/useClientServices";
-import { useClientInvoices } from "@/hooks/portal/useClientInvoices";
-import { useUser } from "@/contexts/UserContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useClientServices } from "@/hooks/portal/useClientServices";
+import { useClientInvoices } from "@/hooks/portal/useClientInvoices";
+import { useClientBranding } from "@/hooks/portal/useClientBranding";
+import { useUser } from "@/contexts/UserContext";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, getServiceStatusBadge } from "@/utils/statusHelpers";
-import {
-  getBusinessToday,
-  safeDaysSince,
-  safeParseDateOnly,
-} from "@/utils/timezoneUtils";
+import { safeParseDateOnly } from "@/utils/timezoneUtils";
 import { createLogger } from "@/lib/logger";
+import { businessClock } from "@/utils/businessClock";
 
 const logger = createLogger("PortalDashboard");
 
-const calculateDaysUntilDue = (
-  dueDate: string | null,
-  status: string,
-): JSX.Element => {
-  if (status === "paid") {
-    return <StatusBadge tone="paid">Pagada</StatusBadge>;
-  }
-
-  if (!dueDate) {
-    return <StatusBadge tone="neutral">Sin fecha</StatusBadge>;
-  }
-
-  try {
-    const todayStr = getBusinessToday();
-    const dueStr = dueDate.slice(0, 10);
-    const days = -safeDaysSince(dueStr, todayStr);
-
-    if (days > 7) {
-      return <StatusBadge tone="completed">+{days} dias</StatusBadge>;
-    }
-
-    if (days >= 1) {
-      return <StatusBadge tone="pending">+{days} dias</StatusBadge>;
-    }
-
-    if (days === 0) {
-      return <StatusBadge tone="pending">Hoy</StatusBadge>;
-    }
-
-    return <StatusBadge tone="overdue">{days} dias</StatusBadge>;
-  } catch (error) {
-    logger.error("Error calculating days until due:", error);
-    return <StatusBadge tone="neutral">Error</StatusBadge>;
-  }
-};
-
 const PortalDashboard: React.FC = () => {
   const { user } = useUser();
+  const { data: branding } = useClientBranding();
   const {
     data: services,
     isLoading: servicesLoading,
@@ -80,25 +45,38 @@ const PortalDashboard: React.FC = () => {
     error: invoicesError,
   } = useClientInvoices();
 
-  const totalServicios = services?.length || 0;
-  const serviciosSinOC =
+  const totalServices = services?.length || 0;
+  const purchaseOrdersPending =
     services?.filter((service) => service.needs_purchase_order).length || 0;
-  const facturasPendientes =
+  const pendingInvoices =
     invoices
       ?.filter((invoice) => invoice.status === "sent")
       .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
-  const facturasVencidas =
+  const overdueInvoices =
     invoices
       ?.filter((invoice) => invoice.status === "overdue")
       .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
-  const serviciosRecientes = services?.slice(0, 5) || [];
-  const facturasRecientes =
-    invoices
-      ?.filter(
-        (invoice) => invoice.status === "sent" || invoice.status === "overdue",
-      )
-      .slice(0, 3) || [];
-  const firstName = user?.name?.split(" ")[0] || "Cliente";
+  const openBalance = pendingInvoices + overdueInvoices;
+  const recentServices = services?.slice(0, 4) || [];
+  const overdueInvoice = invoices?.find(
+    (invoice) => invoice.status === "overdue",
+  );
+  const activeService = services?.find(
+    (service) => service.status === "in_progress",
+  );
+  const companyName = branding?.companyName || "Cliente";
+  const companyGreeting = /[.!?]$/.test(companyName)
+    ? companyName
+    : `${companyName}.`;
+  const currentHour = businessClock.now().getHours();
+  const greeting =
+    currentHour < 12
+      ? "Buenos días"
+      : currentHour < 20
+        ? "Buenas tardes"
+        : "Buenas noches";
+  const attentionCount =
+    purchaseOrdersPending + (overdueInvoice ? 1 : 0) + (servicesError ? 1 : 0);
 
   const handleRetryServices = () => {
     logger.debug("Retrying services fetch...");
@@ -107,356 +85,348 @@ const PortalDashboard: React.FC = () => {
 
   const metricCards = [
     {
-      label: "Total servicios",
-      value: servicesLoading ? "..." : totalServicios,
-      accentClass: "bg-primary",
-      iconBg: "bg-accent",
-      iconColor: "text-primary",
-      valueColor: "text-foreground",
-      delta:
-        totalServicios > 0
-          ? `+${Math.min(totalServicios, 3)} este mes`
-          : "Sin movimientos",
-      deltaColor:
-        totalServicios > 0 ? "text-success-text" : "text-muted-foreground",
-      icon: History,
+      label: "Servicios registrados",
+      value: servicesLoading ? "…" : totalServices.toLocaleString("es-CL"),
+      detail:
+        totalServices > 0
+          ? "Historial disponible"
+          : "Aún sin movimientos",
+      icon: Route,
+      tone: "primary",
     },
     {
-      label: "Sin orden de compra",
-      value: servicesLoading ? "..." : serviciosSinOC,
-      accentClass: "bg-warning",
-      iconBg: "bg-warning-soft",
-      iconColor: "text-warning-text",
-      valueColor:
-        serviciosSinOC > 0 ? "text-warning-text" : "text-muted-foreground",
-      delta: serviciosSinOC > 0 ? "Requieren OC" : "Al dia",
-      deltaColor:
-        serviciosSinOC > 0 ? "text-warning-text" : "text-success-text",
+      label: "Órdenes pendientes",
+      value: servicesLoading ? "…" : purchaseOrdersPending.toLocaleString("es-CL"),
+      detail:
+        purchaseOrdersPending > 0 ? "Requieren tu atención" : "Documentos al día",
       icon: FileAlert,
+      tone: purchaseOrdersPending > 0 ? "warning" : "success",
     },
     {
-      label: "Facturas pendientes",
-      value: invoicesLoading ? "..." : formatCurrency(facturasPendientes),
-      accentClass: "bg-warning",
-      iconBg: "bg-warning-soft",
-      iconColor: "text-warning-text",
-      valueColor: "text-warning-text",
-      delta: facturasPendientes > 0 ? "Por regularizar" : "Al dia",
-      deltaColor:
-        facturasPendientes > 0 ? "text-warning-text" : "text-success-text",
-      icon: Clock,
-    },
-    {
-      label: "Facturas vencidas",
-      value: invoicesLoading ? "..." : formatCurrency(facturasVencidas),
-      accentClass: "bg-danger",
-      iconBg: "bg-danger-soft",
-      iconColor: "text-danger-text",
-      valueColor: "text-danger-text",
-      delta: facturasVencidas > 0 ? "Requieren atencion" : "Sin atraso",
-      deltaColor:
-        facturasVencidas > 0 ? "text-danger-text" : "text-success-text",
-      icon: AlertTriangle,
+      label: "Saldo por pagar",
+      value: invoicesLoading ? "…" : formatCurrency(openBalance),
+      detail:
+        overdueInvoices > 0
+          ? `${formatCurrency(overdueInvoices)} vencido`
+          : "Sin facturas vencidas",
+      icon: CircleDollarSign,
+      tone: overdueInvoices > 0 ? "danger" : "success",
     },
   ];
 
   return (
-    <div>
-      <div className="mb-5">
-        <h1 className="text-lg font-medium text-foreground">
-          Buenos dias, {firstName}
-        </h1>
-        <p className="mb-5 text-xs text-muted-foreground">
-          Resumen de tu cuenta actualizado
-        </p>
-      </div>
-
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {metricCards.map((metric) => {
-          const Icon = metric.icon;
-
-          return (
-            <div
-              key={metric.label}
-              className="relative overflow-hidden rounded-lg border border-border bg-card p-3"
-            >
-              <div className={`absolute bottom-0 left-0 top-0 w-1 ${metric.accentClass}`} />
-              <div
-                className={`mb-2.5 flex h-7 w-7 items-center justify-center rounded-md ${metric.iconBg}`}
-              >
-                <Icon className={`size-3.5 ${metric.iconColor}`} />
-              </div>
-              <p
-                className={`mb-1 text-lg font-medium leading-none ${metric.valueColor}`}
-              >
-                {metric.value}
-              </p>
-              <p className="mb-1 text-xs text-muted-foreground">
-                {metric.label}
-              </p>
-              <p
-                className={`flex items-center gap-1 text-xs ${metric.deltaColor}`}
-              >
-                <TrendingUp className="size-3" />
-                {metric.delta}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-
-      {serviciosSinOC > 0 && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4">
-          <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-warning">
-            <FileAlert className="size-4 text-warning-foreground" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-warning-text">
-              {serviciosSinOC} servicio{serviciosSinOC !== 1 ? "s" : ""}{" "}
-              esperando orden de compra
-            </p>
-            <p className="mt-0.5 text-xs text-warning-text">
-              Envia tu OC para que podamos emitir la factura correspondiente
-            </p>
-            <div className="mt-3 space-y-2">
-              {services
-                ?.filter((service) => service.needs_purchase_order)
-                .slice(0, 2)
-                .map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between rounded-lg border border-warning/30 bg-card px-3 py-2"
-                  >
-                    <div>
-                      <span className="text-xs font-medium text-warning-text">
-                        {service.folio}
-                      </span>
-                      <span className="ml-2 text-xs text-warning-text">
-                        {service.origin} → {service.destination}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-warning-text">
-                        {formatCurrency(service.value)}
-                      </span>
-                      <Link to="/portal/purchase-orders">
-                        <button
-                          type="button"
-                          className="rounded-md bg-warning px-2 py-1 text-xs font-medium text-warning-foreground hover:bg-warning/90"
-                        >
-                          Enviar OC
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              {serviciosSinOC > 2 && (
-                <Link
-                  to="/portal/purchase-orders"
-                  className="text-xs text-warning-text underline"
-                >
-                  Ver los {serviciosSinOC - 2} restantes →
-                </Link>
-              )}
-            </div>
-          </div>
+    <div className="portal-page portal-dashboard">
+      <header className="portal-dashboard-heading">
+        <div>
+          <span className="portal-dashboard-heading__eyebrow">
+            Panel de operación
+          </span>
+          <h1>{greeting}, {companyGreeting}</h1>
+          {user?.email && (
+            <span className="portal-dashboard-heading__email">
+              {user.email}
+            </span>
+          )}
+          <p>
+            {attentionCount > 0
+              ? `Tu operación está activa. Hay ${attentionCount} elemento${attentionCount !== 1 ? "s" : ""} que requiere${attentionCount === 1 ? "" : "n"} atención.`
+              : "Tu operación y tus documentos se encuentran al día."}
+          </p>
         </div>
-      )}
+        <Button asChild className="portal-dashboard-heading__action">
+          <Link to="/portal/request-service">
+            <Plus />
+            Solicitar servicio
+          </Link>
+        </Button>
+      </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="border border-border bg-card shadow-none lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-foreground">
-              Servicios Recientes
-              <div className="flex items-center gap-2">
-                {servicesError && (
-                  <Button
-                    onClick={handleRetryServices}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    <RefreshCw className="size-3 mr-1" />
-                    Reintentar
-                  </Button>
-                )}
-                <Link
-                  to="/portal/services"
-                  className="text-sm text-primary hover:text-primary"
-                >
-                  <span className="text-sm">Ver todos</span>
+      <section className="portal-dashboard-overview">
+        {activeService ? (
+          <article className="portal-active-service">
+            <div className="portal-active-service__header">
+              <div>
+                <span className="portal-active-service__kicker">
+                  <i />
+                  Servicio en curso
+                </span>
+                <h2>
+                  <span>{activeService.origin || "Origen por confirmar"}</span>
+                  <ArrowRight />
+                  <span>{activeService.destination || "Destino por confirmar"}</span>
+                </h2>
+              </div>
+              <StatusBadge tone="in_progress">En traslado</StatusBadge>
+            </div>
+
+            <div className="portal-service-journey" aria-label="Progreso del servicio">
+              <div className="portal-service-journey__step is-complete">
+                <span><Check /></span>
+                <div>
+                  <strong>Servicio confirmado</strong>
+                  <small>{activeService.folio}</small>
+                </div>
+              </div>
+              <i className="is-complete" />
+              <div className="portal-service-journey__step is-complete">
+                <span><Check /></span>
+                <div>
+                  <strong>Vehículo retirado</strong>
+                  <small>{activeService.crane_license_plate || "Grúa asignada"}</small>
+                </div>
+              </div>
+              <i className="is-progress" />
+              <div className="portal-service-journey__step is-current">
+                <span><Truck /></span>
+                <div>
+                  <strong>En camino al destino</strong>
+                  <small>Operador {activeService.operator_name || "asignado"}</small>
+                </div>
+              </div>
+              <i />
+              <div className="portal-service-journey__step">
+                <span><PackageCheck /></span>
+                <div>
+                  <strong>Entrega en destino</strong>
+                  <small>Pendiente de confirmación</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="portal-active-service__footer">
+              <div>
+                <span className="portal-active-service__vehicle">
+                  <Truck />
+                </span>
+                <p>
+                  <small>Vehículo trasladado</small>
+                  <strong>
+                    {[activeService.vehicle_brand, activeService.vehicle_model]
+                      .filter(Boolean)
+                      .join(" ") || "Información no registrada"}
+                  </strong>
+                </p>
+              </div>
+              <Button variant="outline" asChild>
+                <Link to="/portal/services">
+                  <Navigation />
+                  Ver seguimiento
                 </Link>
+              </Button>
+            </div>
+          </article>
+        ) : (
+          <article className="portal-ready-state">
+            <div className="portal-ready-state__mark">
+              <Truck />
+            </div>
+            <div>
+              <span className="portal-ready-state__eyebrow">
+                Operación disponible
+              </span>
+              <h2>Listos para tu próximo traslado.</h2>
+              <p>
+                No tienes servicios en curso. Puedes revisar tu historial o
+                crear una nueva solicitud cuando lo necesites.
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link to="/portal/services">
+                Ver historial
+                <ArrowRight />
+              </Link>
+            </Button>
+          </article>
+        )}
+
+        <div className="portal-dashboard-metrics">
+          {metricCards.map((metric) => {
+            const Icon = metric.icon;
+
+            return (
+              <article
+                className={`portal-dashboard-metric is-${metric.tone}`}
+                key={metric.label}
+              >
+                <span className="portal-dashboard-metric__icon">
+                  <Icon />
+                </span>
+                <div>
+                  <strong>{metric.value}</strong>
+                  <small>{metric.label}</small>
+                </div>
+                <em>{metric.detail}</em>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="portal-dashboard-lower">
+        <article className="portal-dashboard-panel portal-dashboard-recent">
+          <div className="portal-section-heading">
+            <div>
+              <span className="portal-section-heading__eyebrow">
+                Actividad reciente
+              </span>
+              <h2>Últimos servicios</h2>
+            </div>
+            <Link to="/portal/services">
+              Ver todos
+              <ArrowRight />
+            </Link>
+          </div>
+
+          {servicesLoading ? (
+            <div className="portal-dashboard-loading">
+              Cargando servicios…
+            </div>
+          ) : servicesError ? (
+            <div className="portal-dashboard-error">
+              <AlertTriangle />
+              <div>
+                <strong>No pudimos cargar los servicios</strong>
+                <small>Comprueba tu conexión e inténtalo nuevamente.</small>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {servicesLoading ? (
-              <div className="text-muted-foreground">Cargando servicios...</div>
-            ) : servicesError ? (
-              <div className="text-center py-8">
-                <AlertTriangle className="size-12 mx-auto mb-4 text-danger-text" />
-                <p className="mb-2 text-danger-text">
-                  Error al cargar servicios
-                </p>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  No se pudieron cargar tus servicios
-                </p>
-                <Button
-                  onClick={handleRetryServices}
-                  variant="outline"
-                  size="sm"
-                >
-                  <RefreshCw className="size-4 mr-2" />
-                  Reintentar
-                </Button>
-              </div>
-            ) : serviciosRecientes.length > 0 ? (
-              <div className="space-y-1.5">
-                {serviciosRecientes.map((service) => (
-                  <div
-                    key={service.id}
-                    className={`flex items-center justify-between rounded-md border px-2.5 py-2 ${
-                      service.status === "in_progress"
-                        ? "border-primary/25 bg-accent"
-                        : "border-border/60 bg-muted/40"
-                    }`}
-                  >
-                    <div>
-                      <p className="text-xs font-medium text-primary">
-                        {service.folio}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {service.origin} → {service.destination}
-                      </p>
-                      <p className="text-xs text-muted-foreground/50">
-                        {format(
-                          safeParseDateOnly(service.service_date),
-                          "dd/MM/yyyy",
-                          { locale: es },
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-medium text-foreground">
-                        {formatCurrency(service.value)}
-                      </p>
-                      {service.is_portal_request ? (
-                        <div className="mt-1 flex justify-end gap-2">
-                          {getServiceStatusBadge(service.status)}
-                          <Badge className="border-warning/30 bg-warning-soft text-xs text-warning-text">
-                            Solicitud pendiente de asignacion
-                          </Badge>
-                        </div>
-                      ) : (
-                        getServiceStatusBadge(service.status)
-                      )}
-                    </div>
+              <Button variant="outline" size="sm" onClick={handleRetryServices}>
+                <RefreshCw />
+                Reintentar
+              </Button>
+            </div>
+          ) : recentServices.length > 0 ? (
+            <div className="portal-dashboard-service-list">
+              {recentServices.map((service) => (
+                <div className="portal-dashboard-service-row" key={service.id}>
+                  <span className="portal-dashboard-service-row__icon">
+                    <Truck />
+                  </span>
+                  <div className="portal-dashboard-service-row__route">
+                    <strong>
+                      {service.origin || "Origen por confirmar"} →{" "}
+                      {service.destination || "Destino por confirmar"}
+                    </strong>
+                    <small>
+                      {service.folio} ·{" "}
+                      {[service.vehicle_brand, service.vehicle_model]
+                        .filter(Boolean)
+                        .join(" ") || service.service_type_name}
+                    </small>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                <History className="mx-auto mb-4 size-12 opacity-50" />
-                <p>No hay servicios registrados</p>
+                  <div className="portal-dashboard-service-row__value">
+                    <strong>{formatCurrency(service.value)}</strong>
+                    <small>
+                      {format(
+                        safeParseDateOnly(service.service_date),
+                        "dd MMM yyyy",
+                        { locale: es },
+                      )}
+                    </small>
+                  </div>
+                  <div className="portal-dashboard-service-row__status">
+                    {getServiceStatusBadge(service.status)}
+                  </div>
+                  <ChevronLink />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="portal-dashboard-empty">
+              <History />
+              <strong>Aún no hay servicios registrados</strong>
+              <small>Tu actividad aparecerá aquí.</small>
+            </div>
+          )}
+        </article>
+
+        <article className="portal-dashboard-panel portal-dashboard-attention">
+          <div className="portal-section-heading">
+            <div>
+              <span className="portal-section-heading__eyebrow">
+                Bandeja de acción
+              </span>
+              <h2>Requiere tu atención</h2>
+            </div>
+            <span className="portal-dashboard-attention__count">
+              {attentionCount}
+            </span>
+          </div>
+
+          <div className="portal-dashboard-task-list">
+            {purchaseOrdersPending > 0 && (
+              <Link
+                to="/portal/purchase-orders"
+                className="portal-dashboard-task"
+              >
+                <span className="portal-dashboard-task__icon is-warning">
+                  <FileAlert />
+                </span>
+                <div>
+                  <strong>
+                    {purchaseOrdersPending} servicio
+                    {purchaseOrdersPending !== 1 ? "s" : ""} sin O.C.
+                  </strong>
+                  <small>Adjunta los documentos para continuar.</small>
+                </div>
+                <ArrowRight />
+              </Link>
+            )}
+            {overdueInvoice && (
+              <Link to="/portal/invoices" className="portal-dashboard-task">
+                <span className="portal-dashboard-task__icon is-danger">
+                  <FileText />
+                </span>
+                <div>
+                  <strong>Factura {overdueInvoice.folio} vencida</strong>
+                  <small>
+                    Saldo de {formatCurrency(overdueInvoice.total)}
+                  </small>
+                </div>
+                <ArrowRight />
+              </Link>
+            )}
+            {invoicesError && (
+              <div className="portal-dashboard-task">
+                <span className="portal-dashboard-task__icon is-danger">
+                  <AlertTriangle />
+                </span>
+                <div>
+                  <strong>No pudimos consultar tus facturas</strong>
+                  <small>Intenta nuevamente en unos minutos.</small>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="border border-border bg-card shadow-none">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-foreground">
-                Facturas Recientes
-                <Link
-                  to="/portal/invoices"
-                  className="text-sm text-primary hover:text-primary"
-                >
-                  <span className="text-sm">Ver todas</span>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {invoicesLoading ? (
-                <div className="text-muted-foreground">
-                  Cargando facturas...
+            {attentionCount === 0 && !invoicesError && (
+              <div className="portal-dashboard-clear">
+                <span><Check /></span>
+                <div>
+                  <strong>Todo al día</strong>
+                  <small>No tienes acciones pendientes.</small>
                 </div>
-              ) : invoicesError ? (
-                <div className="text-center py-6">
-                  <AlertTriangle className="size-10 mx-auto mb-3 text-danger-text" />
-                  <p className="text-sm text-danger-text">
-                    No se pudieron cargar las facturas
-                  </p>
-                </div>
-              ) : facturasRecientes.length > 0 ? (
-                <div className="space-y-3">
-                  {facturasRecientes.map((invoice) => (
-                    <div
-                      key={invoice.id}
-                      className="rounded-lg border border-border/60 bg-muted/40 p-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {invoice.folio}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Emision{" "}
-                            {format(
-                              safeParseDateOnly(invoice.issue_date),
-                              "dd/MM/yyyy",
-                              { locale: es },
-                            )}
-                          </p>
-                        </div>
-                        <p
-                          className={`font-bold ${invoice.status === "overdue" ? "text-danger-text" : "text-warning-text"}`}
-                        >
-                          {formatCurrency(invoice.total)}
-                        </p>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <StatusBadge tone={invoice.status === "overdue" ? "overdue" : "pending"}>
-                          {invoice.status === "overdue"
-                            ? "Vencida"
-                            : "Pendiente"}
-                        </StatusBadge>
-                        {calculateDaysUntilDue(
-                          invoice.due_date,
-                          invoice.status,
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-6 text-center text-muted-foreground">
-                  <FileText className="mx-auto mb-3 size-10 opacity-50" />
-                  <p>No hay facturas pendientes o vencidas</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </div>
 
           <Link
             to="/portal/request-service"
-            className="flex items-center gap-3 rounded-lg bg-gradient-primary p-3.5 transition-transform hover:-translate-y-0.5"
+            className="portal-dashboard-new-service"
           >
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-primary-foreground/15">
-              <PlusCircle className="size-4 text-primary-foreground" />
+            <span><Plus /></span>
+            <div>
+              <strong>Solicitar nuevo servicio</strong>
+              <small>Disponible las 24 horas</small>
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-primary-foreground">
-                Solicitar nuevo servicio
-              </p>
-              <p className="text-xs text-primary-foreground/70">Disponible las 24 horas</p>
-            </div>
-            <ArrowRight className="size-4 text-primary-foreground/75" />
+            <ArrowRight />
           </Link>
-        </div>
-      </div>
+        </article>
+      </section>
     </div>
   );
 };
+
+const ChevronLink = () => (
+  <span className="portal-dashboard-service-row__arrow">
+    <ArrowRight />
+  </span>
+);
 
 export default PortalDashboard;

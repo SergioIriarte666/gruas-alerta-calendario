@@ -21,6 +21,7 @@ const defaultFormData: ServiceTypeFormData = {
   description: '',
   basePrice: 0,
   isActive: true,
+  availableInClientPortal: false,
   vehicleInfoOptional: false,
   isOutsourced: false,
   serviceCategory: 'traslado',
@@ -45,6 +46,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         description: serviceType.description || '',
         basePrice: serviceType.basePrice || 0,
         isActive: serviceType.isActive,
+        availableInClientPortal: serviceType.availableInClientPortal,
         vehicleInfoOptional: serviceType.vehicleInfoOptional,
         isOutsourced: serviceType.isOutsourced || false,
         serviceCategory: serviceType.serviceCategory || 'traslado',
@@ -74,6 +76,17 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
 
   const updateField = (field: keyof ServiceTypeFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleServiceCategoryChange = (value: ServiceCategory) => {
+    setFormData((current) => ({
+      ...current,
+      serviceCategory: value,
+      availableInClientPortal:
+        value === 'externo_tercero' || value === 'excedente'
+          ? false
+          : current.availableInClientPortal,
+    }));
   };
 
   return (
@@ -127,6 +140,32 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
               <Label htmlFor="isActive" className="text-muted-foreground text-sm">Tipo de servicio activo</Label>
             </div>
 
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="min-w-0 flex-1">
+                <Label
+                  htmlFor="availableInClientPortal"
+                  className="cursor-pointer text-sm font-medium text-foreground"
+                >
+                  Ofrecer en Portal Clientes
+                </Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Permite que los clientes seleccionen este servicio al crear una solicitud.
+                  Los servicios tercerizados y excedentes permanecen ocultos.
+                </p>
+              </div>
+              <Switch
+                id="availableInClientPortal"
+                checked={formData.availableInClientPortal}
+                disabled={
+                  formData.serviceCategory === 'externo_tercero' ||
+                  formData.serviceCategory === 'excedente'
+                }
+                onCheckedChange={(checked) =>
+                  updateField('availableInClientPortal', checked)
+                }
+              />
+            </div>
+
             <div className="flex items-center justify-between gap-4 py-2">
               <div className="flex-1 min-w-0">
                 <Label htmlFor="vehicleInfoOptional" className="text-foreground text-sm font-medium cursor-pointer">
@@ -157,7 +196,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
               </Label>
               <Select
                 value={formData.serviceCategory}
-                onValueChange={(value: ServiceCategory) => updateField('serviceCategory', value)}
+                onValueChange={handleServiceCategoryChange}
               >
                 <SelectTrigger className="focus:border-primary">
                   <SelectValue placeholder="Selecciona una categoría" />

@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Bell,
+  ChevronDown,
   FileText,
   FileWarning as FileAlert,
   History,
   LayoutDashboard,
   LogOut,
+  Menu,
   Plus,
   Search,
+  UserRound,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
@@ -32,9 +35,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeSelector } from "@/components/layout/ThemeSelector";
+import { useUser } from "@/contexts/UserContext";
 
-const PortalHeader: React.FC = () => {
+interface PortalHeaderProps {
+  onMenuOpen: () => void;
+}
+
+const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
   const { signOut } = useAuth();
+  const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const ocCount = usePortalOCCount();
@@ -74,6 +84,12 @@ const PortalHeader: React.FC = () => {
         description: "Consulta facturas y saldos pendientes",
         href: "/portal/invoices",
         icon: FileText,
+      },
+      {
+        label: "Mi Cuenta",
+        description: "Perfil, empresa, preferencias y seguridad",
+        href: "/portal/account",
+        icon: UserRound,
       },
     ],
     [ocCount],
@@ -116,24 +132,46 @@ const PortalHeader: React.FC = () => {
     "EEEE d 'de' MMMM, yyyy",
     { locale: es },
   );
+  const userName = user?.name || user?.email || "Cliente";
+  const initials = userName.slice(0, 2).toUpperCase();
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
-        <span className="text-xs capitalize text-muted-foreground">
-          {dateLabel}
-        </span>
-        <div className="flex items-center gap-1.5">
+      <header className="portal-client-topbar">
+        <button
+          type="button"
+          className="portal-client-topbar__menu"
+          onClick={onMenuOpen}
+          aria-label="Abrir menú"
+        >
+          <Menu />
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="portal-client-search"
+          aria-label="Buscar en el portal"
+        >
+          <Search />
+          <span>Buscar servicio, factura o patente…</span>
+          <kbd>⌘ K</kbd>
+        </button>
+        <div className="portal-client-topbar__actions">
+          <span className="portal-client-online">
+            <i />
+            Operación en línea
+          </span>
+          <ThemeSelector />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="relative flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                className="portal-client-icon-button"
                 aria-label="Notificaciones"
               >
-                <Bell className="size-3.5" />
+                <Bell />
                 {ocCount > 0 && (
-                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="portal-client-notification-dot" />
                 )}
               </button>
             </DropdownMenuTrigger>
@@ -172,23 +210,31 @@ const PortalHeader: React.FC = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
-            aria-label="Buscar"
-            title="Buscar secciones del portal"
-          >
-            <Search className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/70"
-          >
-            <LogOut className="size-3.5" />
-            <span>Salir</span>
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="portal-client-user-menu">
+                <span>{initials}</span>
+                <div>
+                  <strong>{userName}</strong>
+                  <small className="capitalize">{dateLabel}</small>
+                </div>
+                <ChevronDown />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Cuenta de cliente</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/portal/account")}>
+                <UserRound className="mr-2 size-4" />
+                Mi cuenta
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 size-4" />
+                Cerrar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

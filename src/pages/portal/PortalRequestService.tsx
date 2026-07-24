@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,15 +17,11 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import DatePickerInput from "@/components/common/DatePickerInput";
 import { createLogger } from "@/lib/logger";
+import { Check, ClipboardList, Route, Send, Truck } from "lucide-react";
+import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import { PortalServiceTypeCombobox } from "@/components/portal/PortalServiceTypeCombobox";
 
 const logger = createLogger("PortalRequestService");
 const PortalRequestService = () => {
@@ -47,19 +42,9 @@ const PortalRequestService = () => {
     useServiceTypesForPortal();
 
   const selectedServiceTypeId = watch("service_type_id");
-  const [selectedServiceType, setSelectedServiceType] = useState<any>(null);
-
-  // Actualizar el tipo de servicio seleccionado cuando cambia
-  useEffect(() => {
-    if (selectedServiceTypeId && serviceTypes.length > 0) {
-      const serviceType = serviceTypes.find(
-        (st) => st.id === selectedServiceTypeId,
-      );
-      setSelectedServiceType(serviceType);
-    } else {
-      setSelectedServiceType(null);
-    }
-  }, [selectedServiceTypeId, serviceTypes]);
+  const selectedServiceType =
+    serviceTypes.find((serviceType) => serviceType.id === selectedServiceTypeId) ||
+    null;
 
   const onSubmit = (data: PortalRequestServiceSchema) => {
     logger.debug("Enviando solicitud con datos:", data);
@@ -80,21 +65,38 @@ const PortalRequestService = () => {
       selectedServiceType.vehicle_info_optional);
 
   return (
-    <div>
-      <h1 className="mb-6 text-xl font-bold text-foreground sm:text-2xl">
-        Solicitar Nuevo Servicio
-      </h1>
-      <Card className="bg-card border-border">
+    <div className="portal-page portal-request-page">
+      <PortalPageHeader
+        eyebrow="Nueva operación"
+        title="Solicitar servicio"
+        description="Cuéntanos qué necesitas trasladar. Revisaremos la solicitud y coordinaremos los recursos adecuados."
+        icon={Route}
+      />
+      <Card className="portal-form-shell border-0 bg-card">
         <CardHeader>
-          <CardTitle className="text-foreground">
-            Detalles de la Solicitud
-          </CardTitle>
+          <CardTitle className="text-foreground">Detalles de la solicitud</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Complete el formulario para solicitar un nuevo servicio de grúa. Su
-            solicitud será revisada y se asignarán los recursos necesarios.
+            Los campos se adaptan automáticamente al tipo de servicio
+            seleccionado.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="portal-request-steps" aria-label="Etapas de la solicitud">
+            <div className="is-current">
+              <span><ClipboardList /></span>
+              <p><strong>Datos del servicio</strong><small>Ruta y programación</small></p>
+            </div>
+            <i />
+            <div>
+              <span><Truck /></span>
+              <p><strong>Vehículo</strong><small>Información requerida</small></p>
+            </div>
+            <i />
+            <div>
+              <span><Check /></span>
+              <p><strong>Confirmación</strong><small>Revisión del equipo</small></p>
+            </div>
+          </div>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Tipo de Servicio */}
             <div>
@@ -104,27 +106,17 @@ const PortalRequestService = () => {
               >
                 Tipo de Servicio *
               </Label>
-              <Select
-                onValueChange={(value) => setValue("service_type_id", value)}
-                disabled={loadingServiceTypes}
-              >
-                <SelectTrigger className="border-border bg-muted/40 text-foreground">
-                  <SelectValue
-                    placeholder={
-                      loadingServiceTypes
-                        ? "Cargando..."
-                        : "Selecciona un tipo de servicio"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {serviceTypes.map((serviceType) => (
-                    <SelectItem key={serviceType.id} value={serviceType.id}>
-                      {serviceType.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PortalServiceTypeCombobox
+                serviceTypes={serviceTypes}
+                value={selectedServiceTypeId}
+                loading={loadingServiceTypes}
+                onValueChange={(value) =>
+                  setValue("service_type_id", value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
               {errors.service_type_id && (
                 <p className="text-danger-text text-sm mt-1">
                   {errors.service_type_id.message}
@@ -132,7 +124,7 @@ const PortalRequestService = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="portal-request-grid grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Columna Izquierda */}
               <div className="space-y-4">
                 <div>
@@ -380,9 +372,10 @@ const PortalRequestService = () => {
             <div className="flex justify-end">
               <Button
                 type="submit"
-                className="bg-primary font-medium text-primary-foreground hover:bg-primary/90"
+                className="portal-request-submit font-medium"
                 disabled={isPending || !selectedServiceTypeId}
               >
+                <Send className="mr-2 size-4" />
                 {isPending ? "Enviando..." : "Enviar Solicitud"}
               </Button>
             </div>

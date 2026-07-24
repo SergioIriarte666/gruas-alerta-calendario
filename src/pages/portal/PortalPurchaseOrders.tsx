@@ -32,6 +32,7 @@ import {
 import { safeParseDateOnly } from "@/utils/timezoneUtils";
 import { getPurchaseOrderPendingServices } from "./portalServices.utils";
 import { businessClock } from "@/utils/businessClock";
+import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 
 const daysPending = (serviceDate: string): number => {
   const svc = new Date(serviceDate);
@@ -182,7 +183,7 @@ const PortalPurchaseOrders: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="portal-page space-y-4">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -192,7 +193,7 @@ const PortalPurchaseOrders: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-danger/30 bg-danger-soft p-8 text-center">
+      <div className="portal-page flex flex-col items-center justify-center rounded-xl border border-danger/30 bg-danger-soft p-8 text-center">
         <AlertTriangle className="mb-4 size-12 text-danger-text" />
         <h2 className="text-lg font-semibold text-danger-text">
           Error al cargar las OC pendientes
@@ -205,24 +206,21 @@ const PortalPurchaseOrders: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-lg font-medium text-foreground">
-            Ordenes de compra pendientes
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Servicios cotizados que requieren tu OC para continuar el flujo
-            administrativo
-          </p>
-        </div>
-        <Badge className="w-fit border border-warning/30 bg-warning-soft text-warning-text">
+    <div className="portal-page portal-purchase-orders-page space-y-6">
+      <PortalPageHeader
+        eyebrow="Bandeja documental"
+        title="Órdenes de compra"
+        description="Regulariza los servicios cotizados que necesitan una O.C. para continuar su proceso administrativo."
+        icon={FileAlert}
+        actions={
+          <span className="portal-count-badge is-warning">
           {pendingPurchaseOrders.length} pendiente
           {pendingPurchaseOrders.length !== 1 ? "s" : ""}
-        </Badge>
-      </div>
+          </span>
+        }
+      />
 
-      <Card className="border border-warning/30 bg-warning-soft shadow-none">
+      <Card className="portal-oc-guide border-warning/30 bg-warning-soft shadow-none">
         <CardContent className="flex items-start gap-3 p-4">
           <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-xl bg-warning-soft">
             <FileAlert className="size-5 text-warning-text" />
@@ -249,7 +247,7 @@ const PortalPurchaseOrders: React.FC = () => {
           </p>
         </div>
       ) : (
-        <Card className="border border-border bg-card shadow-none">
+        <Card className="portal-data-panel border-0 bg-card shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-foreground">
               Servicios pendientes de OC

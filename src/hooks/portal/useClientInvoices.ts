@@ -68,6 +68,7 @@ export const useClientInvoices = () => {
           client:clients(id, name, rut, email)
         `)
         .eq('client_id', user.client_id)
+        .not('folio', 'ilike', 'HIST-%')
         .order('created_at', { ascending: false });
       
       if (error) throw error;

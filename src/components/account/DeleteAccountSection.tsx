@@ -112,19 +112,19 @@ export const DeleteAccountSection = () => {
               Eliminar mi cuenta definitivamente
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent className="max-w-md">
+          <AlertDialogContent className="portal-delete-account-dialog max-w-md">
             <AlertDialogHeader>
               <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertTriangle className="size-5" />
               </div>
               <AlertDialogTitle>Esta acción no se puede deshacer</AlertDialogTitle>
-              <AlertDialogDescription className="text-left">
+              <AlertDialogDescription className="portal-delete-account-dialog__description text-left">
                 Tu cuenta se eliminará inmediatamente y perderás el acceso en todos tus dispositivos.
                 Para confirmar, escribe <strong className="text-foreground">ELIMINAR</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            <div className="space-y-2 py-2">
+            <div className="portal-delete-account-dialog__confirmation space-y-2 py-2">
               <Label htmlFor="delete-account-confirmation">Confirmación</Label>
               <Input
                 id="delete-account-confirmation"
@@ -136,8 +136,10 @@ export const DeleteAccountSection = () => {
               />
             </div>
 
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Conservar mi cuenta</AlertDialogCancel>
+            <AlertDialogFooter className="portal-delete-account-dialog__actions !grid grid-cols-1 sm:!grid sm:grid-cols-1 sm:space-x-0">
+              <AlertDialogCancel disabled={deleting}>
+                Conservar mi cuenta
+              </AlertDialogCancel>
               <Button
                 type="button"
                 variant="destructive"

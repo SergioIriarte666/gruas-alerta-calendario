@@ -12,6 +12,7 @@ interface CreateServiceTypeData {
   description?: string;
   base_price?: number;
   is_active?: boolean;
+  available_in_client_portal?: boolean;
   vehicle_info_optional?: boolean;
   is_outsourced?: boolean;
   service_category?: 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente';
@@ -31,6 +32,7 @@ const SERVICE_TYPE_SELECT = `
   description,
   base_price,
   is_active,
+  available_in_client_portal,
   vehicle_info_optional,
   is_outsourced,
   service_category,
@@ -53,12 +55,17 @@ const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData =
   // de servicios (EnhancedServiceForm, useServiceManager) lo usa para activar los
   // campos de proveedor/costo subcontratado al crear un servicio.
   const isOutsourced = data.serviceCategory === 'externo_tercero';
+  const availableInClientPortal =
+    data.availableInClientPortal &&
+    !isOutsourced &&
+    data.serviceCategory !== 'excedente';
 
   return {
     name: data.name,
     description: data.description || undefined,
     base_price: data.basePrice || undefined,
     is_active: data.isActive,
+    available_in_client_portal: availableInClientPortal,
     vehicle_info_optional: data.vehicleInfoOptional,
     is_outsourced: isOutsourced,
     service_category: data.serviceCategory,
@@ -95,6 +102,7 @@ export const useServiceTypesManagement = () => {
         description: item.description || '',
         basePrice: item.base_price || 0,
         isActive: item.is_active,
+        availableInClientPortal: item.available_in_client_portal || false,
         vehicleInfoOptional: item.vehicle_info_optional || false,
         isOutsourced: item.is_outsourced || false,
         serviceCategory: (item.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') || 'traslado',
@@ -127,6 +135,7 @@ export const useServiceTypesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-types'] });
+      queryClient.invalidateQueries({ queryKey: ['serviceTypesForPortal'] });
       toast.success('Tipo de servicio creado exitosamente');
     },
     onError: (error: any) => {
@@ -152,6 +161,7 @@ export const useServiceTypesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-types'] });
+      queryClient.invalidateQueries({ queryKey: ['serviceTypesForPortal'] });
       toast.success('Tipo de servicio actualizado exitosamente');
     },
     onError: (error: any) => {
@@ -175,6 +185,7 @@ export const useServiceTypesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-types'] });
+      queryClient.invalidateQueries({ queryKey: ['serviceTypesForPortal'] });
       toast.success('Tipo de servicio eliminado exitosamente');
     },
     onError: (error: any) => {

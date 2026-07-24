@@ -5,6 +5,9 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useServiceTypesForPortal");
+
+const CLIENT_PORTAL_SERVICE_CATEGORIES = ['in_situ', 'traslado'] as const;
+
 interface ServiceType {
   id: string;
   name: string;
@@ -20,6 +23,9 @@ const fetchServiceTypesForPortal = async (): Promise<ServiceType[]> => {
     .from('service_types')
     .select('id, name, description, vehicle_info_optional, vehicle_brand_required, vehicle_model_required, license_plate_required')
     .eq('is_active', true)
+    .eq('available_in_client_portal', true)
+    .eq('is_outsourced', false)
+    .in('service_category', CLIENT_PORTAL_SERVICE_CATEGORIES)
     .order('name');
 
   if (error) {

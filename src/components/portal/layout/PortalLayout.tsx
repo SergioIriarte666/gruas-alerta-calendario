@@ -1,13 +1,10 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import PortalHeader from "./PortalHeader";
 import PortalSidebar from "./PortalSidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useClientNotifications } from "@/hooks/portal/useClientNotifications";
-import { useSettings } from "@/hooks/useSettings";
+import "@/styles/portal-client.css";
 
 interface PortalLayoutProps {
   children?: React.ReactNode;
@@ -16,72 +13,51 @@ interface PortalLayoutProps {
 export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
   useClientNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const { settings } = useSettings();
-  const companyName = settings?.company?.name || "Portal de Clientes";
-  const companyLogo = settings?.company?.logo;
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMobileMenuOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isMobileMenuOpen]);
 
   return (
-    <div className="flex h-screen bg-gradient-portal text-foreground">
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-overlay/50 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+    <div className="portal-client-shell">
+      <button
+        type="button"
+        className={`portal-client-backdrop ${isMobileMenuOpen ? "is-open" : ""}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-label="Cerrar menú"
+        tabIndex={isMobileMenuOpen ? 0 : -1}
+      />
 
-      {/* Sidebar - hidden on mobile by default, shown when menu is open */}
       <div
-        className={`
-        ${isMobile ? "fixed inset-y-0 left-0 z-50" : "relative"}
-        ${isMobile && !isMobileMenuOpen ? "-translate-x-full" : "translate-x-0"}
-        transition-transform duration-300 ease-in-out
-      `}
+        className={`portal-client-sidebar-frame ${isMobileMenuOpen ? "is-open" : ""}`}
       >
         <PortalSidebar
           onClose={() => setIsMobileMenuOpen(false)}
-          showCloseButton={isMobile}
+          showCloseButton
         />
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header with Menu Button */}
-        {isMobile && (
-          <div className="flex items-center border-b border-border bg-card px-4 py-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="hover:bg-muted/70"
-            >
-              <Menu className="size-6" />
-            </Button>
-            <div className="ml-3 flex items-center gap-3">
-              {companyLogo && (
-                <img
-                  src={companyLogo}
-                  alt="Logo empresa"
-                  className="size-8 object-contain"
-                />
-              )}
-              <div>
-                <div className="text-sm font-semibold text-foreground">
-                  {companyName}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Portal de Clientes
-                </div>
-              </div>
-            </div>
+      <div className="portal-client-workspace">
+        <PortalHeader onMenuOpen={() => setIsMobileMenuOpen(true)} />
+        <main className="portal-client-main">
+          <div className="portal-client-main__inner">
+            <ErrorBoundary name="Portal Cliente">
+              <Suspense fallback={null}>{children || <Outlet />}</Suspense>
+            </ErrorBoundary>
           </div>
-        )}
-
-        <PortalHeader />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 md:p-6 lg:p-8">
-          <ErrorBoundary name="Portal Cliente">
-            <Suspense fallback={null}>{children || <Outlet />}</Suspense>
-          </ErrorBoundary>
         </main>
       </div>
     </div>

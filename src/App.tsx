@@ -61,6 +61,7 @@ const routeImports = {
   PortalInvoices: () => import('@/pages/portal/PortalInvoices'),
   PortalPurchaseOrders: () => import('@/pages/portal/PortalPurchaseOrders'),
   PortalRequestService: () => import('@/pages/portal/PortalRequestService'),
+  PortalAccount: () => import('@/pages/portal/PortalAccount'),
   Calendar: () => import('@/pages/Calendar'),
   QuickEntries: () => import('@/pages/QuickEntries'),
   BackupPage: () => import('@/pages/BackupPage'),
@@ -112,6 +113,7 @@ const PortalServices = lazy(routeImports.PortalServices);
 const PortalInvoices = lazy(routeImports.PortalInvoices);
 const PortalPurchaseOrders = lazy(routeImports.PortalPurchaseOrders);
 const PortalRequestService = lazy(routeImports.PortalRequestService);
+const PortalAccount = lazy(routeImports.PortalAccount);
 const Calendar = lazy(routeImports.Calendar);
 const QuickEntries = lazy(routeImports.QuickEntries);
 const BackupPage = lazy(() => routeImports.BackupPage().then(m => ({ default: m.BackupPage })));
@@ -320,6 +322,7 @@ function AppContent() {
           <Route path="purchase-orders" element={<PortalPurchaseOrders />} />
           <Route path="request-service" element={<PortalRequestService />} />
           <Route path="invoices" element={<PortalInvoices />} />
+          <Route path="account" element={<PortalAccount />} />
         </Route>
 
         <Route path="*" element={<ErrorBoundary name="NotFound"><Suspense fallback={null}><NotFound /></Suspense></ErrorBoundary>} />

@@ -17,6 +17,7 @@ export interface ServiceTypeConfig extends ServiceTypeRequirements {
   description?: string;
   basePrice?: number;
   isActive: boolean;
+  availableInClientPortal: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
   serviceCategory: ServiceCategory;
@@ -29,6 +30,7 @@ export interface ServiceTypeFormData {
   description: string;
   basePrice: number;
   isActive: boolean;
+  availableInClientPortal: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
   serviceCategory: ServiceCategory;

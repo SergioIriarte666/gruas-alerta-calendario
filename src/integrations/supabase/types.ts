@@ -444,6 +444,50 @@ export type Database = {
           },
         ]
       }
+      client_portal_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          invoice_alerts: boolean
+          portal_enabled: boolean
+          purchase_order_alerts: boolean
+          request_updates: boolean
+          service_updates: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          invoice_alerts?: boolean
+          portal_enabled?: boolean
+          purchase_order_alerts?: boolean
+          request_updates?: boolean
+          service_updates?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          invoice_alerts?: boolean
+          portal_enabled?: boolean
+          purchase_order_alerts?: boolean
+          request_updates?: boolean
+          service_updates?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -6478,6 +6522,7 @@ export type Database = {
       service_types: {
         Row: {
           base_price: number | null
+          available_in_client_portal: boolean
           crane_required: boolean
           created_at: string | null
           created_by: string | null
@@ -6501,6 +6546,7 @@ export type Database = {
         }
         Insert: {
           base_price?: number | null
+          available_in_client_portal?: boolean
           crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -6524,6 +6570,7 @@ export type Database = {
         }
         Update: {
           base_price?: number | null
+          available_in_client_portal?: boolean
           crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
