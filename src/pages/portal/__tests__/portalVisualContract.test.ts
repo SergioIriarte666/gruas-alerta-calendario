@@ -59,7 +59,7 @@ describe("contrato visual del Portal", () => {
     expect(header).toContain("portal-client-search");
   });
 
-  it("conserva el recorrido guiado en el dashboard", () => {
+  it("deriva el recorrido del estado real del servicio, sin sub-etapas fijas", () => {
     const dashboard = readFileSync(
       resolve(workspaceRoot, "src/pages/portal/PortalDashboard.tsx"),
       "utf8",
@@ -68,9 +68,21 @@ describe("contrato visual del Portal", () => {
     expect(dashboard).toContain("portal-service-journey");
     expect(dashboard).toContain("useClientBranding");
     expect(dashboard).toContain("portal-dashboard-heading__email");
+
+    // El recorrido se construye desde un arreglo derivado (journeySteps) y se
+    // renderiza con .map, no como pasos fijos escritos a mano.
+    expect(dashboard).toContain("journeySteps");
+    expect(dashboard).toMatch(/journeySteps\.map/);
+    expect(dashboard).toContain('aria-current={step.state === "current"');
+
+    // Los extremos honestos del recorrido siguen presentes...
     expect(dashboard).toContain("Servicio confirmado");
-    expect(dashboard).toContain("En camino al destino");
     expect(dashboard).toContain("Entrega en destino");
+
+    // ...pero ya NO se afirma la sub-etapa GPS inventada ni el retiro fijo:
+    // el portal no recibe journey_stage, así que no debe hardcodearlos.
+    expect(dashboard).not.toContain("En camino al destino");
+    expect(dashboard).not.toContain("Vehículo retirado");
   });
 
   it("usa el encabezado común en las páginas operativas", () => {

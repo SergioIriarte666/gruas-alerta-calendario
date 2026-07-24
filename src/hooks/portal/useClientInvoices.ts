@@ -26,6 +26,25 @@ export interface ClientInvoice {
   } | null;
 }
 
+// Fuente única de verdad del dinero que el cliente adeuda. Una factura "por
+// pagar" es toda la que está emitida y sin pagar: eso incluye las vencidas
+// (una factura vencida es, por definición, por pagar). El dashboard y la
+// página de Facturas deben usar exactamente esta definición para no mostrar
+// dos cifras distintas bajo la misma etiqueta.
+export const getClientOpenBalance = (
+  invoices?: ClientInvoice[] | null,
+): number =>
+  (invoices ?? [])
+    .filter((invoice) => invoice.status === "sent" || invoice.status === "overdue")
+    .reduce((sum, invoice) => sum + invoice.total, 0);
+
+export const getClientOverdueTotal = (
+  invoices?: ClientInvoice[] | null,
+): number =>
+  (invoices ?? [])
+    .filter((invoice) => invoice.status === "overdue")
+    .reduce((sum, invoice) => sum + invoice.total, 0);
+
 // Check if an invoice should be marked as overdue
 const shouldBeOverdue = (status: string, dueDate: string): boolean => {
   if (status !== 'sent') return false;

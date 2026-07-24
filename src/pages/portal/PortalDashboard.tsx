@@ -18,10 +18,14 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useClientServices } from "@/hooks/portal/useClientServices";
-import { useClientInvoices } from "@/hooks/portal/useClientInvoices";
+import {
+  useClientInvoices,
+  getClientOpenBalance,
+  getClientOverdueTotal,
+} from "@/hooks/portal/useClientInvoices";
+import { getDisplayServiceValue } from "@/utils/serviceValueCalculations";
 import { useClientBranding } from "@/hooks/portal/useClientBranding";
 import { useUser } from "@/contexts/UserContext";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, getServiceStatusBadge } from "@/utils/statusHelpers";
 import { safeParseDateOnly } from "@/utils/timezoneUtils";
@@ -48,15 +52,8 @@ const PortalDashboard: React.FC = () => {
   const totalServices = services?.length || 0;
   const purchaseOrdersPending =
     services?.filter((service) => service.needs_purchase_order).length || 0;
-  const pendingInvoices =
-    invoices
-      ?.filter((invoice) => invoice.status === "sent")
-      .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
-  const overdueInvoices =
-    invoices
-      ?.filter((invoice) => invoice.status === "overdue")
-      .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
-  const openBalance = pendingInvoices + overdueInvoices;
+  const overdueInvoices = getClientOverdueTotal(invoices);
+  const openBalance = getClientOpenBalance(invoices);
   const recentServices = services?.slice(0, 4) || [];
   const overdueInvoice = invoices?.find(
     (invoice) => invoice.status === "overdue",
@@ -77,6 +74,71 @@ const PortalDashboard: React.FC = () => {
         : "Buenas noches";
   const attentionCount =
     purchaseOrdersPending + (overdueInvoice ? 1 : 0) + (servicesError ? 1 : 0);
+
+  // El portal conoce services.status con certeza, pero NO el journey_stage por
+  // GPS (eso lo computa el edge function de seguimiento y vive en el tracker en
+  // vivo). Derivamos los pasos solo de lo que el estado garantiza: confirmado,
+  // si ya hay grúa/operador asignados, y que está en curso. No afirmamos la
+  // sub-etapa "en camino al destino" que antes estaba fija e inventada.
+  const cranePlate =
+    activeService?.crane_license_plate &&
+    activeService.crane_license_plate !== "N/A"
+      ? activeService.crane_license_plate
+      : null;
+  const operatorName =
+    activeService?.operator_name && activeService.operator_name !== "N/A"
+      ? activeService.operator_name
+      : null;
+  const isAssigned = Boolean(cranePlate || operatorName);
+
+  type JourneyStepState = "complete" | "current" | "pending";
+  const journeySteps: {
+    key: string;
+    icon: typeof Check;
+    label: string;
+    detail: string;
+    state: JourneyStepState;
+  }[] = activeService
+    ? [
+        {
+          key: "confirmed",
+          icon: Check,
+          label: "Servicio confirmado",
+          detail: activeService.folio,
+          state: "complete",
+        },
+        {
+          key: "assigned",
+          icon: isAssigned ? Check : Truck,
+          label: "Grúa y operador asignados",
+          detail:
+            [cranePlate, operatorName].filter(Boolean).join(" · ") ||
+            "Por asignar",
+          state: isAssigned ? "complete" : "current",
+        },
+        {
+          key: "in_progress",
+          icon: Truck,
+          label: "Servicio en curso",
+          detail: operatorName ? `Operador ${operatorName}` : "En ejecución",
+          state: isAssigned ? "current" : "pending",
+        },
+        {
+          key: "delivered",
+          icon: PackageCheck,
+          label: "Entrega en destino",
+          detail: "Pendiente de confirmación",
+          state: "pending",
+        },
+      ]
+    : [];
+
+  const connectorClass = (state: JourneyStepState) =>
+    state === "complete"
+      ? "is-complete"
+      : state === "current"
+        ? "is-progress"
+        : "";
 
   const handleRetryServices = () => {
     logger.debug("Retrying services fetch...");
@@ -156,41 +218,37 @@ const PortalDashboard: React.FC = () => {
                   <span>{activeService.destination || "Destino por confirmar"}</span>
                 </h2>
               </div>
-              <StatusBadge tone="in_progress">En traslado</StatusBadge>
+              {getServiceStatusBadge(activeService.status)}
             </div>
 
             <div className="portal-service-journey" aria-label="Progreso del servicio">
-              <div className="portal-service-journey__step is-complete">
-                <span><Check /></span>
-                <div>
-                  <strong>Servicio confirmado</strong>
-                  <small>{activeService.folio}</small>
-                </div>
-              </div>
-              <i className="is-complete" />
-              <div className="portal-service-journey__step is-complete">
-                <span><Check /></span>
-                <div>
-                  <strong>Vehículo retirado</strong>
-                  <small>{activeService.crane_license_plate || "Grúa asignada"}</small>
-                </div>
-              </div>
-              <i className="is-progress" />
-              <div className="portal-service-journey__step is-current">
-                <span><Truck /></span>
-                <div>
-                  <strong>En camino al destino</strong>
-                  <small>Operador {activeService.operator_name || "asignado"}</small>
-                </div>
-              </div>
-              <i />
-              <div className="portal-service-journey__step">
-                <span><PackageCheck /></span>
-                <div>
-                  <strong>Entrega en destino</strong>
-                  <small>Pendiente de confirmación</small>
-                </div>
-              </div>
+              {journeySteps.map((step, index) => {
+                const StepIcon = step.icon;
+                const stepClass =
+                  step.state === "complete"
+                    ? "is-complete"
+                    : step.state === "current"
+                      ? "is-current"
+                      : "";
+
+                return (
+                  <React.Fragment key={step.key}>
+                    {index > 0 && <i className={connectorClass(step.state)} />}
+                    <div
+                      className={`portal-service-journey__step ${stepClass}`.trim()}
+                      aria-current={step.state === "current" ? "step" : undefined}
+                    >
+                      <span>
+                        <StepIcon />
+                      </span>
+                      <div>
+                        <strong>{step.label}</strong>
+                        <small>{step.detail}</small>
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             <div className="portal-active-service__footer">
@@ -313,7 +371,7 @@ const PortalDashboard: React.FC = () => {
                     </small>
                   </div>
                   <div className="portal-dashboard-service-row__value">
-                    <strong>{formatCurrency(service.value)}</strong>
+                    <strong>{formatCurrency(getDisplayServiceValue(service))}</strong>
                     <small>
                       {format(
                         safeParseDateOnly(service.service_date),

@@ -253,7 +253,7 @@ const PortalRequestService = () => {
                     htmlFor="contact_phone"
                     className="text-sm text-foreground"
                   >
-                    Telefono de contacto{" "}
+                    Teléfono de contacto{" "}
                     <span className="text-muted-foreground text-sm">
                       (Opcional)
                     </span>

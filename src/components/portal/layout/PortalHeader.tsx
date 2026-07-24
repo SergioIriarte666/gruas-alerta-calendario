@@ -40,9 +40,13 @@ import { useUser } from "@/contexts/UserContext";
 
 interface PortalHeaderProps {
   onMenuOpen: () => void;
+  menuTriggerRef?: React.Ref<HTMLButtonElement>;
 }
 
-const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
+const PortalHeader: React.FC<PortalHeaderProps> = ({
+  onMenuOpen,
+  menuTriggerRef,
+}) => {
   const { signOut } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -139,6 +143,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
     <>
       <header className="portal-client-topbar">
         <button
+          ref={menuTriggerRef}
           type="button"
           className="portal-client-topbar__menu"
           onClick={onMenuOpen}
@@ -153,7 +158,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
           aria-label="Buscar en el portal"
         >
           <Search />
-          <span>Buscar servicio, factura o patente…</span>
+          <span>Ir a una sección del portal…</span>
           <kbd>⌘ K</kbd>
         </button>
         <div className="portal-client-topbar__actions">
@@ -185,7 +190,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
                 <FileAlert className="mt-0.5 size-4 text-warning-text" />
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium text-foreground">
-                    Ordenes de compra pendientes
+                    Órdenes de compra pendientes
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {ocCount > 0
@@ -204,7 +209,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
                     Ir a Mis Servicios
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Revisa estados, fechas y vehiculos trasladados
+                    Revisa estados, fechas y vehículos trasladados
                   </p>
                 </div>
               </DropdownMenuItem>
@@ -242,9 +247,9 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({ onMenuOpen }) => {
         <CommandInput placeholder="Buscar secciones del portal..." />
         <CommandList>
           <CommandEmpty>
-            No encontramos una seccion con ese nombre.
+            No encontramos una sección con ese nombre.
           </CommandEmpty>
-          <CommandGroup heading="Navegacion">
+          <CommandGroup heading="Navegación">
             {quickLinks.map((link) => {
               const isCurrent = location.pathname === link.href;
               const Icon = link.icon;

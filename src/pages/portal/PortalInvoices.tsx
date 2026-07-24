@@ -3,6 +3,8 @@ import { businessClock } from "@/utils/businessClock";
 import { useMemo, useState } from "react";
 import {
   useClientInvoices,
+  getClientOpenBalance,
+  getClientOverdueTotal,
   type ClientInvoice,
 } from "@/hooks/portal/useClientInvoices";
 import {
@@ -323,12 +325,10 @@ const PortalInvoices = () => {
     );
   };
 
-  const totalPorPagar = filteredInvoices
-    .filter((invoice) => invoice.status === "sent")
-    .reduce((sum, invoice) => sum + invoice.total, 0);
-  const totalVencido = filteredInvoices
-    .filter((invoice) => invoice.status === "overdue")
-    .reduce((sum, invoice) => sum + invoice.total, 0);
+  // Misma definición que el dashboard: "por pagar" = emitidas sin pagar,
+  // incluyendo las vencidas. "vencido" es el subconjunto urgente de ese total.
+  const totalPorPagar = getClientOpenBalance(filteredInvoices);
+  const totalVencido = getClientOverdueTotal(filteredInvoices);
 
   return (
     <div className="portal-page portal-invoices-page">
