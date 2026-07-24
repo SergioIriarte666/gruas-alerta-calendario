@@ -156,11 +156,47 @@ const RouteMetricsSection = ({ serviceId, status, isOpen }: RouteMetricsSectionP
 
   const hasBreakdown = routeMetrics?.en_route_distance_km != null && routeMetrics?.towing_distance_km != null;
 
+  // Km por vía (Map Matching, Fase 2) acompañan al haversine (GPS), no lo
+  // reemplazan. Si el matching quedó con baja confianza se muestra atenuado y
+  // referencial. Si aún no se computó (NULL), solo se muestra el valor GPS.
+  const matchedKm = routeMetrics?.matched_total_distance_km ?? null;
+  const lowMatchConfidence = (routeMetrics?.matching_confidence ?? 1) < 0.5;
+  const distanceValue = routeMetrics ? (
+    matchedKm != null ? (
+      <span>
+        {formatKmCL(routeMetrics.total_distance_km)}{' '}
+        <span className="font-normal text-muted-foreground">(GPS)</span>
+        {' · '}
+        {lowMatchConfidence ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help italic text-muted-foreground/70">
+                  {formatKmCL(matchedKm)} (por vía)
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                Baja confianza de matching — referencial.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <span>
+            {formatKmCL(matchedKm)}{' '}
+            <span className="font-normal text-muted-foreground">(por vía)</span>
+          </span>
+        )}
+      </span>
+    ) : (
+      formatKmCL(routeMetrics.total_distance_km)
+    )
+  ) : null;
+
   return (
     <DetailSection title="Recorrido" icon={Route} color="cyan">
       {routeMetrics ? (
         <>
-          <DetailItem icon={Gauge} label="Distancia recorrida" value={formatKmCL(routeMetrics.total_distance_km)} />
+          <DetailItem icon={Gauge} label="Distancia recorrida" value={distanceValue} />
           <DetailItem icon={Timer} label="Tiempo en servicio" value={formatDurationHumanized(routeMetrics.total_duration_minutes)} />
           {hasBreakdown && (
             <p className="col-span-1 text-sm text-muted-foreground md:col-span-2">

@@ -6290,6 +6290,11 @@ export type Database = {
           gaps_count: number
           last_point_at: string
           low_confidence: boolean
+          matched_computed_at: string | null
+          matched_en_route_distance_km: number | null
+          matched_total_distance_km: number | null
+          matched_towing_distance_km: number | null
+          matching_confidence: number | null
           points_count: number
           service_id: string
           total_distance_km: number
@@ -6305,6 +6310,11 @@ export type Database = {
           gaps_count: number
           last_point_at: string
           low_confidence?: boolean
+          matched_computed_at?: string | null
+          matched_en_route_distance_km?: number | null
+          matched_total_distance_km?: number | null
+          matched_towing_distance_km?: number | null
+          matching_confidence?: number | null
           points_count: number
           service_id: string
           total_distance_km: number
@@ -6320,6 +6330,11 @@ export type Database = {
           gaps_count?: number
           last_point_at?: string
           low_confidence?: boolean
+          matched_computed_at?: string | null
+          matched_en_route_distance_km?: number | null
+          matched_total_distance_km?: number | null
+          matched_towing_distance_km?: number | null
+          matching_confidence?: number | null
           points_count?: number
           service_id?: string
           total_distance_km?: number

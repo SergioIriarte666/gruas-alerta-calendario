@@ -162,6 +162,11 @@ verify_jwt = false
 [functions.process-notification-outbox]
 verify_jwt = false
 
+# Cron (pg_cron) + admin manual: la función valida x-cron-secret o JWT admin
+# por su cuenta, así que el gateway no debe exigir JWT.
+[functions.compute-matched-route-metrics]
+verify_jwt = false
+
 [functions.get-archived-inspection-files]
 verify_jwt = true
 
