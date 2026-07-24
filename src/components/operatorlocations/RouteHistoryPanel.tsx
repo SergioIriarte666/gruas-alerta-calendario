@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { useOperatorRouteHistory } from '@/hooks/operatorlocations/useOperatorLocations';
 import { useMatchedRoutes } from '@/hooks/ubicaciones/useMatchedRoute';
+import { useReverseGeocodedLabels, type ReverseGeocodeLabel } from '@/hooks/ubicaciones/useReverseGeocode';
 import { businessClock } from '@/utils/businessClock';
 import type {
   MatchedRouteResult,
@@ -34,6 +35,12 @@ const ROUTE_COLOR_TOKENS: Array<`--${string}`> = [
   '--chart-6',
 ];
 
+// Anchos reactivos al zoom: la ruta se mantiene nítida de lejos y con cuerpo de
+// cerca, en vez de un grosor fijo que se ve fino al alejar y grueso al acercar.
+const ROUTE_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 3, 14, 4.5, 18, 6.5];
+const ROUTE_CASING_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 5.5, 14, 7.5, 18, 10];
+const RAW_DOT_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 2.5, 14, 3.5, 18, 5];
+
 const STARTED_REASON_LABELS: Record<string, string> = {
   manual: 'Manual',
   auto_schedule: 'Automático (jornada)',
@@ -52,9 +59,10 @@ interface RouteMapProps {
   autoFollow: boolean;
   matchingEnabled: boolean;
   matchedBySession: Map<string, MatchedRouteResult>;
+  pointLabels: Map<string, ReverseGeocodeLabel>;
 }
 
-function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: RouteMapProps) {
+function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, pointLabels }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const loadedRef = useRef(false);
@@ -127,12 +135,16 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
     }
 
     const bounds = new mapboxgl.default.LngLatBounds();
+    // Contorno claro que separa la ruta de las calles del mapa base (mismo token
+    // que ya usan los marcadores de inicio/fin como borde contra el mapa).
+    const casingColor = resolveThemeColor(containerRef.current, '--effect-highlight');
     let colorIndex = 0;
 
     for (const [sessionId, sessionPoints] of bySession.entries()) {
       const coordinates = sessionPoints.map((p) => [p.longitude, p.latitude] as [number, number]);
       const color = resolveThemeColor(containerRef.current, ROUTE_COLOR_TOKENS[colorIndex % ROUTE_COLOR_TOKENS.length]);
       colorIndex += 1;
+
       const addLineLayer = (
         id: string,
         lineStrings: [number, number][][],
@@ -160,6 +172,31 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
         layerIdsRef.current.push(id);
       };
 
+      // Tramo pegado a calles: contorno claro debajo + línea sólida del color de
+      // la sesión encima, para que resalte sobre el callejero.
+      const drawSolid = (idBase: string, lineStrings: [number, number][][]) => {
+        addLineLayer(`${idBase}-casing`, lineStrings, {
+          'line-color': casingColor,
+          'line-width': ROUTE_CASING_WIDTH,
+          'line-opacity': 0.9,
+        });
+        addLineLayer(idBase, lineStrings, {
+          'line-color': color,
+          'line-width': ROUTE_WIDTH,
+        });
+      };
+
+      // Tramo crudo (GPS directo): puntos redondos atenuados, visualmente
+      // distintos de la línea sólida sin fingir que sigue una calle.
+      const drawRaw = (idBase: string, lineStrings: [number, number][][]) => {
+        addLineLayer(idBase, lineStrings, {
+          'line-color': color,
+          'line-width': RAW_DOT_WIDTH,
+          'line-opacity': 0.75,
+          'line-dasharray': [0, 2],
+        });
+      };
+
       const matched = matchingEnabled ? matchedBySession.get(sessionId) : undefined;
 
       if (matched && matched.segments.length > 0) {
@@ -171,25 +208,54 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
           .filter((segment) => !segment.matched)
           .map((segment) => segment.geometry.coordinates);
 
-        addLineLayer(`route-${sessionId}-matched`, solid, {
-          'line-color': color,
-          'line-width': 4,
-        });
-        addLineLayer(`route-${sessionId}-raw`, dashed, {
-          'line-color': color,
-          'line-width': 3,
-          'line-opacity': 0.55,
-          'line-dasharray': [1, 2],
-        });
+        drawSolid(`route-${sessionId}-matched`, solid);
+        drawRaw(`route-${sessionId}-raw`, dashed);
       } else {
         // Toggle OFF, sin matching aún o sin datos → polilínea cruda.
-        addLineLayer(`route-${sessionId}`, [coordinates], {
-          'line-color': color,
-          'line-width': 4,
-        });
+        drawSolid(`route-${sessionId}`, [coordinates]);
       }
 
       coordinates.forEach((coord) => bounds.extend(coord));
+
+      // Envuelve el punto (dot) con una etiqueta opcional que flota a la derecha
+      // sin mover el ancla (posición absoluta dentro del contenedor). El origen
+      // 'catalog' es autoritativo (nombre operativo); 'mapbox' es aproximado y se
+      // marca con "≈" y estilo atenuado para no leerse como dato cierto.
+      const buildMarkerEl = (dot: HTMLDivElement, label?: ReverseGeocodeLabel) => {
+        if (!label?.name) return dot;
+        const approximate = label.source !== 'catalog';
+        const container = document.createElement('div');
+        container.style.position = 'relative';
+        container.style.width = dot.style.width;
+        container.style.height = dot.style.height;
+        container.appendChild(dot);
+
+        const labelEl = document.createElement('div');
+        labelEl.textContent = approximate ? `≈ ${label.name}` : label.name;
+        labelEl.style.position = 'absolute';
+        labelEl.style.left = 'calc(100% + 0.375rem)';
+        labelEl.style.top = '50%';
+        labelEl.style.transform = 'translateY(-50%)';
+        labelEl.style.maxWidth = '13rem';
+        labelEl.style.overflow = 'hidden';
+        labelEl.style.textOverflow = 'ellipsis';
+        labelEl.style.whiteSpace = 'nowrap';
+        labelEl.style.padding = '0.125rem 0.4375rem';
+        labelEl.style.borderRadius = '0.375rem';
+        labelEl.style.fontSize = '0.6875rem';
+        labelEl.style.fontWeight = approximate ? '400' : '500';
+        labelEl.style.fontStyle = approximate ? 'italic' : 'normal';
+        labelEl.style.lineHeight = '1.2';
+        labelEl.style.background = 'hsl(var(--popover))';
+        labelEl.style.color = approximate
+          ? 'hsl(var(--muted-foreground))'
+          : 'hsl(var(--popover-foreground))';
+        labelEl.style.border = '0.0625rem solid hsl(var(--border))';
+        labelEl.style.boxShadow = 'var(--shadow-sm)';
+        labelEl.style.pointerEvents = 'none';
+        container.appendChild(labelEl);
+        return container;
+      };
 
       const startEl = document.createElement('div');
       startEl.style.width = '0.875rem';
@@ -198,7 +264,11 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
       startEl.style.background = color;
       startEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
       startEl.style.boxShadow = 'var(--shadow-sm)';
-      markersRef.current.push(new mapboxgl.default.Marker({ element: startEl }).setLngLat(coordinates[0]).addTo(map));
+      markersRef.current.push(
+        new mapboxgl.default.Marker({ element: buildMarkerEl(startEl, pointLabels.get(`${sessionId}:start`)) })
+          .setLngLat(coordinates[0])
+          .addTo(map),
+      );
 
       if (coordinates.length > 1) {
         const endEl = document.createElement('div');
@@ -209,7 +279,9 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
         endEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
         endEl.style.boxShadow = 'var(--shadow-sm)';
         markersRef.current.push(
-          new mapboxgl.default.Marker({ element: endEl }).setLngLat(coordinates[coordinates.length - 1]).addTo(map),
+          new mapboxgl.default.Marker({ element: buildMarkerEl(endEl, pointLabels.get(`${sessionId}:end`)) })
+            .setLngLat(coordinates[coordinates.length - 1])
+            .addTo(map),
         );
       }
     }
@@ -233,7 +305,7 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession }: Rou
 
   useEffect(() => {
     render();
-  }, [autoFollow, mapboxReady, points, matchingEnabled, matchedBySession]);
+  }, [autoFollow, mapboxReady, points, matchingEnabled, matchedBySession, pointLabels]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -322,6 +394,26 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
     [matchingEnabled, matchedBySession],
   );
 
+  // Inicio y fin de cada sesión (puntos ordenados asc): etiquetamos ambos
+  // marcadores con su nombre operativo (catálogo) o dirección legible (Mapbox).
+  const labelTargets = useMemo(() => {
+    const firstBySession = new Map<string, OperatorRoutePoint>();
+    const lastBySession = new Map<string, OperatorRoutePoint>();
+    for (const point of points) {
+      if (!firstBySession.has(point.session_id)) firstBySession.set(point.session_id, point);
+      lastBySession.set(point.session_id, point);
+    }
+    const targets: { key: string; lng: number; lat: number }[] = [];
+    for (const [sessionId, point] of firstBySession) {
+      targets.push({ key: `${sessionId}:start`, lng: point.longitude, lat: point.latitude });
+    }
+    for (const [sessionId, point] of lastBySession) {
+      targets.push({ key: `${sessionId}:end`, lng: point.longitude, lat: point.latitude });
+    }
+    return targets;
+  }, [points]);
+  const pointLabels = useReverseGeocodedLabels(labelTargets, labelTargets.length > 0);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -397,6 +489,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
                 autoFollow={autoFollow}
                 matchingEnabled={matchingEnabled}
                 matchedBySession={matchedBySession}
+                pointLabels={pointLabels}
               />
             )}
           </div>

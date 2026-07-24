@@ -25,6 +25,27 @@ interface MatchedSegment {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
+// Reverse geocoding: un POI (negocio/hito) solo se prefiere sobre la dirección
+// si está a lo sumo a esta distancia del punto GPS, para no etiquetar con un
+// comercio lejano. Ajustable tras validar con puntos reales.
+const REVERSE_POI_MAX_METERS = 150;
+
+// Catálogo propio (saved_locations): un punto GPS se etiqueta con el nombre
+// operativo (portería, faena, negocio) si hay una ubicación guardada a lo sumo a
+// esta distancia. Las porterías/faenas son grandes, por eso el radio es amplio.
+const CATALOG_MATCH_MAX_METERS = 300;
+
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 /**
  * Filtrado previo al matching: descarta puntos imprecisos (accuracy > 50 m, o
  * accuracy nula cuando hay vecinos válidos) y deduplica coordenadas
@@ -220,7 +241,110 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, origin, destination, query, geometry, mode = 'preview', proximity, session_id } = body;
+    const { action, origin, destination, query, geometry, mode = 'preview', proximity, session_id, coordinates } = body;
+
+    // Reverse geocoding: nombre/dirección legible de una coordenada (lng, lat).
+    // Se usa para etiquetar el punto final de una ruta en el historial.
+    if (action === "reverse_geocode") {
+      if (
+        !Array.isArray(coordinates) ||
+        coordinates.length !== 2 ||
+        typeof coordinates[0] !== "number" ||
+        typeof coordinates[1] !== "number"
+      ) {
+        return new Response(
+          JSON.stringify({ error: "coordinates [lng, lat] required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const [lng, lat] = coordinates;
+
+      // 1) Catálogo propio primero: nombres operativos (porterías, faenas,
+      //    negocios) que Mapbox no tiene. Mismo criterio que la resolución de
+      //    orígenes catalog-first.
+      const { data: savedLocations } = await authContext.supabaseAdmin
+        .from("saved_locations")
+        .select("name, latitude, longitude")
+        .eq("is_active", true);
+
+      let bestCatalog: { name: string } | null = null;
+      let bestCatalogDist = Infinity;
+      for (const loc of savedLocations ?? []) {
+        const la = Number(loc.latitude);
+        const lo = Number(loc.longitude);
+        if (!Number.isFinite(la) || !Number.isFinite(lo)) continue;
+        const d = haversineMeters(lat, lng, la, lo);
+        if (d < bestCatalogDist) {
+          bestCatalog = { name: loc.name };
+          bestCatalogDist = d;
+        }
+      }
+      if (bestCatalog && bestCatalogDist <= CATALOG_MATCH_MAX_METERS) {
+        return new Response(
+          JSON.stringify({ name: bestCatalog.name, place_name: bestCatalog.name, source: "catalog" }),
+          {
+            headers: {
+              ...getCorsHeaders(req),
+              "Content-Type": "application/json",
+              "Cache-Control": "private, max-age=86400",
+            },
+          },
+        );
+      }
+
+      // 2) Mapbox reverse geocoding (POI cercano → dirección → localidad).
+      const url =
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
+        `?access_token=${MAPBOX_TOKEN}&country=cl&language=es&limit=5&types=poi,address,place`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const features: Array<Record<string, any>> = Array.isArray(data?.features) ? data.features : [];
+
+      const distanceOf = (feature: Record<string, any>): number => {
+        const center = feature?.center;
+        if (!Array.isArray(center) || center.length !== 2) return Infinity;
+        return haversineMeters(lat, lng, center[1], center[0]);
+      };
+      const hasType = (feature: Record<string, any>, type: string): boolean =>
+        Array.isArray(feature?.place_type) && feature.place_type.includes(type);
+
+      // Preferencia: POI cercano (nombre del lugar, p.ej. "Salfa Copiapó") →
+      // dirección (calle + número) → primer resultado (localidad).
+      let chosen: Record<string, any> | null = null;
+      let bestPoiDist = Infinity;
+      for (const feature of features) {
+        if (!hasType(feature, "poi")) continue;
+        const d = distanceOf(feature);
+        if (d <= REVERSE_POI_MAX_METERS && d < bestPoiDist) {
+          chosen = feature;
+          bestPoiDist = d;
+        }
+      }
+      if (!chosen) chosen = features.find((f) => hasType(f, "address")) ?? null;
+      if (!chosen) chosen = features[0] ?? null;
+
+      const placeName: string = chosen?.place_name ?? "";
+      let name = placeName;
+      if (chosen) {
+        if (hasType(chosen, "poi")) {
+          name = chosen.text ?? placeName;
+        } else if (hasType(chosen, "address")) {
+          name = chosen.address ? `${chosen.text} ${chosen.address}` : chosen.text;
+        } else {
+          name = chosen.text ?? placeName;
+        }
+      }
+
+      return new Response(JSON.stringify({ name, place_name: placeName, source: "mapbox" }), {
+        headers: {
+          ...getCorsHeaders(req),
+          "Content-Type": "application/json",
+          "Cache-Control": "private, max-age=86400",
+        },
+      });
+    }
 
     // Map Matching — pega los puntos GPS crudos de una sesión a la red vial.
     if (action === "map_matching") {
@@ -446,7 +570,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'geocode', 'directions', 'static_map' or 'map_matching'" }),
+      JSON.stringify({ error: "Invalid action. Use 'geocode', 'reverse_geocode', 'directions', 'static_map' or 'map_matching'" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (_err) {
