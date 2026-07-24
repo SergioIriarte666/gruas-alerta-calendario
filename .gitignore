@@ -35,3 +35,7 @@ supabase/.temp/
 eng.traineddata
 
 *.tsbuildinfo
+
+# Tooling local de la skill impeccable (no es código de la app)
+.claude/skills/
+.impeccable/
