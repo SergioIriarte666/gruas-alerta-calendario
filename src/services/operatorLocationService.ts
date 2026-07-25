@@ -201,6 +201,17 @@ export const fetchTrackingSettings = async (): Promise<TrackingSettings> => {
   return data;
 };
 
+/**
+ * Ventana para readoptar una sesión que el barrido cerró por 'timeout'.
+ *
+ * El sweep cierra a los 10 min sin puntos. Si la app se suspendió en un traslado
+ * largo y vuelve 40 min después, crear una sesión nueva parte el recorrido en
+ * dos rutas inconexas (así aparecieron 3 sesiones fragmentadas en una tarde).
+ * Dentro de esta ventana se reabre la sesión del MISMO servicio y el historial
+ * queda como un solo trayecto con un hueco, que es la verdad.
+ */
+const REOPENABLE_TIMEOUT_WINDOW_MS = 6 * 60 * 60 * 1000;
+
 export const ensureOperatorLocationSession = async (
   operatorId: string,
   userId: string,
@@ -221,11 +232,34 @@ export const ensureOperatorLocationSession = async (
     throw new Error(existingError.message || 'No se pudo revisar la sesión de ubicación activa');
   }
 
-  if (existing && existing.service_id === serviceId && existing.started_reason === startedReason) {
-    return existing as OperatorLocationSession;
-  }
-
   if (existing) {
+    // Misma sesión del mismo servicio (o sesión sin servicio que ahora lo
+    // adquiere): se reutiliza y, si cambió el motivo, se corrige en sitio.
+    // Antes bastaba un started_reason distinto (auto_schedule -> auto_service)
+    // para cerrarla y abrir otra, partiendo la ruta del día sin necesidad.
+    const sameService = existing.service_id === serviceId;
+    const adoptsService = existing.service_id === null && serviceId !== null;
+
+    if (sameService || adoptsService) {
+      if (existing.started_reason === startedReason && sameService) {
+        return existing as OperatorLocationSession;
+      }
+
+      const { data: updated, error: updateError } = await supabase
+        .from(SESSIONS_TABLE)
+        .update({ service_id: serviceId, started_reason: startedReason })
+        .eq('id', existing.id)
+        .select('*')
+        .single();
+
+      if (updateError) {
+        throw new Error(updateError.message || 'No se pudo actualizar la sesión de ubicación activa');
+      }
+
+      return updated as OperatorLocationSession;
+    }
+
+    // Servicio distinto: ahí sí corresponde cerrarla y abrir una nueva.
     await supabase
       .from(SESSIONS_TABLE)
       .update({
@@ -234,6 +268,11 @@ export const ensureOperatorLocationSession = async (
         ended_reason: 'service_change',
       })
       .eq('id', existing.id);
+  }
+
+  if (serviceId) {
+    const reopened = await reopenTimedOutSession(operatorId, serviceId, startedReason);
+    if (reopened) return reopened;
   }
 
   const { data, error } = await supabase
@@ -255,6 +294,49 @@ export const ensureOperatorLocationSession = async (
   }
 
   return data as OperatorLocationSession;
+};
+
+/**
+ * Reabre la última sesión del servicio cerrada por el barrido de zombies, si
+ * cayó dentro de la ventana. Devuelve null si no hay candidata: el llamador
+ * crea una sesión nueva.
+ */
+const reopenTimedOutSession = async (
+  operatorId: string,
+  serviceId: string,
+  startedReason: TrackingSessionStartedReason,
+): Promise<OperatorLocationSession | null> => {
+  const cutoff = new Date(businessClock.now().getTime() - REOPENABLE_TIMEOUT_WINDOW_MS).toISOString();
+
+  const { data: candidate, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .select('*')
+    .eq('operator_id', operatorId)
+    .eq('service_id', serviceId)
+    .eq('status', 'stopped')
+    .eq('ended_reason', 'timeout')
+    .gte('ended_at', cutoff)
+    .order('ended_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !candidate) return null;
+
+  const { data: reopened, error: reopenError } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({
+      status: 'active',
+      ended_at: null,
+      ended_reason: null,
+      started_reason: startedReason,
+    })
+    .eq('id', candidate.id)
+    .select('*')
+    .single();
+
+  if (reopenError || !reopened) return null;
+
+  return reopened as OperatorLocationSession;
 };
 
 export const updateOperatorLocationSessionService = async (
@@ -307,7 +389,9 @@ export const saveOperatorLocationPoint = async (
     altitude_meters: payload.altitudeMeters,
     recorded_at: payload.recordedAt,
     is_offline_sync: payload.isOfflineSync ?? false,
-    source: 'mobile_app',
+    // 'heartbeat' marca los latidos sin movimiento: sin ellos, un operador
+    // detenido y una app muerta se ven idénticos desde la central.
+    source: payload.source ?? 'mobile_app',
     platform: getLocationPlatform(),
   }, {
     onConflict: POINTS_CONFLICT_TARGET,
@@ -330,9 +414,15 @@ export const saveOperatorLocationPoint = async (
   }
 };
 
+/**
+ * Cierra la sesión. Para cortes manuales se registra QUIÉN cortó y se marca
+ * `manual_stop`, que inhibe el auto-encendido por movimiento hasta que el
+ * operador reencienda a mano (el sistema avisa, nunca decide por sobre él).
+ */
 export const stopOperatorLocationSession = async (
   sessionId: string,
   endedReason: TrackingSessionEndedReason,
+  options: { endedBy?: string | null; manualStop?: boolean } = {},
 ): Promise<void> => {
   const { error } = await supabase
     .from(SESSIONS_TABLE)
@@ -340,10 +430,53 @@ export const stopOperatorLocationSession = async (
       status: 'stopped',
       ended_at: new Date().toISOString(),
       ended_reason: endedReason,
+      ...(options.endedBy !== undefined ? { ended_by: options.endedBy } : {}),
+      ...(options.manualStop !== undefined ? { manual_stop: options.manualStop } : {}),
     })
     .eq('id', sessionId);
 
   if (error) {
     throw new Error(error.message || 'No se pudo cerrar la sesión de ubicación');
+  }
+};
+
+/**
+ * ¿El operador cortó a mano la transmisión de este servicio?
+ *
+ * Se consulta en la BD y no solo en almacenamiento local para que la decisión
+ * sobreviva una reinstalación o un cambio de teléfono: el auto-encendido no
+ * debe resucitar por reiniciar la app.
+ */
+export const hasManualStopForService = async (
+  operatorId: string,
+  serviceId: string,
+): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .select('manual_stop')
+    .eq('operator_id', operatorId)
+    .eq('service_id', serviceId)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return data.manual_stop === true;
+};
+
+/** Limpia la marca de corte manual del servicio (el operador reencendió a mano). */
+export const clearManualStopForService = async (
+  operatorId: string,
+  serviceId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({ manual_stop: false })
+    .eq('operator_id', operatorId)
+    .eq('service_id', serviceId)
+    .eq('manual_stop', true);
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo limpiar el corte manual de la sesión');
   }
 };

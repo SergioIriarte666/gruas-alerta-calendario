@@ -294,6 +294,20 @@ Deno.serve(async (req: Request) => {
         }
       : {};
 
+  // Detencion declarada en curso (combustible, comida, descanso, peaje, otro).
+  // Al cliente se le exponen SOLO motivo y hora de inicio: `note` y
+  // `operator_id` son internos y nunca salen por este endpoint publico.
+  const { data: openStopEvent } = await supabase
+    .from("service_stop_events")
+    .select("reason, started_at")
+    .eq("service_id", link.service_id)
+    .is("ended_at", null)
+    .maybeSingle();
+
+  const stopEventPayload = openStopEvent
+    ? { stop_event: { reason: openStopEvent.reason, started_at: openStopEvent.started_at } }
+    : {};
+
   let session: { id: string } | null = null;
 
   const { data: serviceSession } = await supabase
@@ -333,6 +347,7 @@ Deno.serve(async (req: Request) => {
       eta_unavailable: false,
       support_phone: supportPhone,
       ...stopsPayload(publicNextStop()),
+      ...stopEventPayload,
     });
   }
 
@@ -357,6 +372,7 @@ Deno.serve(async (req: Request) => {
       eta_unavailable: false,
       support_phone: supportPhone,
       ...stopsPayload(publicNextStop()),
+      ...stopEventPayload,
     });
   }
 
@@ -501,7 +517,11 @@ Deno.serve(async (req: Request) => {
   // muestra el fallback de distancia en linea recta en vez de "Calculando..."
   // permanente.
   let etaUnavailable = false;
-  if (state === "active" && etaTarget) {
+  // Con una detencion declarada el ETA queda SUSPENDIDO: seguir mostrando una
+  // hora de llegada mientras la grua esta en un descanso produce un dato que
+  // corre solo y llega falso. Tampoco se llama a Routes (ni se toca el cache
+  // vigente): al reanudar, el ETA se recalcula desde la posicion real.
+  if (state === "active" && etaTarget && !openStopEvent) {
     const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
     // El cache (positivo o negativo) solo vale si apunta a la MISMA parada
     // objetivo: al alcanzar una parada, el ETA cacheado hacia ella es invalido
@@ -577,5 +597,6 @@ Deno.serve(async (req: Request) => {
     eta_unavailable: etaUnavailable,
     support_phone: supportPhone,
     ...stopsPayload(nextStop),
+    ...stopEventPayload,
   });
 });

@@ -9,7 +9,9 @@ import { useOperatorIdleMetrics } from '@/hooks/operatorlocations/useOperatorLoc
 import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { businessClock } from '@/utils/businessClock';
 import { toLocalDateString, safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
+import { cn } from '@/lib/utils';
 import type { OperatorIdleDaySummary } from '@/types/operatorLocations';
+import { STOP_REASON_LABELS, isStopEventOverdue, stopEventMinutes } from '@/types/serviceStopEvent';
 
 const formatMinutes = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -82,18 +84,19 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
               <TableHead className="text-right">Sin horario</TableHead>
               <TableHead className="text-right">Tiempo muerto</TableHead>
               <TableHead className="text-right">Gap mayor</TableHead>
+              <TableHead className="text-right">Detenciones declaradas</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">Cargando...</TableCell>
+                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">Cargando...</TableCell>
               </TableRow>
             )}
             {!isLoading && visibleSummaries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
                   No hay gaps sobre el umbral en el rango seleccionado
                 </TableCell>
               </TableRow>
@@ -105,7 +108,8 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                 <Fragment key={key}>
                   <TableRow className="cursor-pointer" onClick={() => toggleExpanded(key)}>
                     <TableCell>
-                      {summary.gaps.length > 0 && (isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />)}
+                      {(summary.gaps.length > 0 || summary.declaredStops.length > 0)
+                        && (isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />)}
                     </TableCell>
                     <TableCell>{summary.operatorName}</TableCell>
                     <TableCell>{safeDateToDisplaySlashes(summary.date)}</TableCell>
@@ -113,6 +117,16 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                     <TableCell className="text-right">{summary.servicesWithoutSchedule || '—'}</TableCell>
                     <TableCell className="text-right">{formatMinutes(summary.totalIdleMinutes)}</TableCell>
                     <TableCell className="text-right">{formatMinutes(summary.largestGapMinutes)}</TableCell>
+                    {/* Detención declarada = parada con motivo. Sin esta columna,
+                        un almuerzo y un hueco inexplicado se ven igual. */}
+                    <TableCell className="text-right">
+                      {summary.declaredStops.length === 0 ? '—' : (
+                        <span className={cn('font-medium', summary.overdueStopCount > 0 && 'text-warning')}>
+                          {summary.declaredStops.length} · {formatMinutes(summary.declaredStopMinutes)}
+                          {summary.overdueStopCount > 0 && ` · ${summary.overdueStopCount} sobre lo típico`}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
@@ -127,13 +141,28 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                   {isExpanded && summary.gaps.map((gap, index) => (
                     <TableRow key={`${key}-gap-${index}`} className="bg-muted/40">
                       <TableCell />
-                      <TableCell colSpan={6} className="text-xs text-muted-foreground">
+                      <TableCell colSpan={7} className="text-xs text-muted-foreground">
                         Entre folio {gap.fromFolio} terminado {gap.fromEndTime} y folio {gap.toFolio} iniciado {gap.toStartTime}
                         {' '}— {formatMinutes(gap.minutes)}
                       </TableCell>
                       <TableCell />
                     </TableRow>
                   ))}
+                  {isExpanded && summary.declaredStops.map((event) => {
+                    const minutes = stopEventMinutes(event, businessClock.now());
+                    const overdue = isStopEventOverdue(event.reason, minutes);
+                    return (
+                      <TableRow key={`${key}-stop-${event.id}`} className="bg-muted/40">
+                        <TableCell />
+                        <TableCell colSpan={7} className={cn('text-xs', overdue ? 'text-warning' : 'text-muted-foreground')}>
+                          Detención declarada · {STOP_REASON_LABELS[event.reason]} · desde{' '}
+                          {businessClock.format(event.started_at, 'HH:mm')} — {formatMinutes(minutes)}
+                          {overdue && ' (sobre lo típico para este motivo)'}
+                        </TableCell>
+                        <TableCell />
+                      </TableRow>
+                    );
+                  })}
                 </Fragment>
               );
             })}

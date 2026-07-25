@@ -10,7 +10,16 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
   const queryClient = useQueryClient();
   
   const updateServiceStatusMutation = useMutation({
-    mutationFn: async ({ id, targetStatus = 'in_progress' }: { id: string; targetStatus?: 'in_progress' | 'inspection_completed' | 'completed' }) => {
+    mutationFn: async ({
+      id,
+      targetStatus = 'in_progress',
+      startTime,
+    }: {
+      id: string;
+      targetStatus?: 'in_progress' | 'inspection_completed' | 'completed';
+      /** 'HH:mm' confirmado por el operador al iniciar. Se guarda junto al cambio de estado. */
+      startTime?: string;
+    }) => {
       if (!id) {
         throw new Error('ID del servicio requerido');
       }
@@ -46,11 +55,16 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
         return currentService;
       }
 
-      // Actualizar estado
-      logger.debug(`🔄 [STATUS] Actualizando a ${targetStatus}...`);
+      // Actualizar estado. start_time viaja en el MISMO update que el cambio a
+      // in_progress: quedaba NULL porque nadie lo escribía al iniciar y la hora
+      // real de partida se perdía (hubo que cargarla a mano después).
+      logger.debug(`🔄 [STATUS] Actualizando a ${targetStatus}...`, { startTime });
       const { data: updatedService, error: updateError } = await supabase
         .from('services')
-        .update({ status: targetStatus })
+        .update({
+          status: targetStatus,
+          ...(startTime ? { start_time: startTime } : {}),
+        })
         .eq('id', id)
         .select('id, status, folio')
         .single();

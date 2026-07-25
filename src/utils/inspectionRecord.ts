@@ -5,6 +5,8 @@ import { uploadInspectionPhoto, getInspectionPhotoSignedUrl, PHOTO_BUCKET } from
 import { deleteInspectionPdf, getInspectionPdfSignedUrl, PDF_BUCKET } from '@/utils/inspectionPdfUpload';
 import { extractStoragePath } from '@/utils/storagePath';
 import { businessClock } from '@/utils/businessClock';
+import { normalizeRut } from '@/utils/rutFormatter';
+import { normalizePersonNameOrNull } from '@/utils/personName';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('Inspection');
@@ -251,11 +253,15 @@ export const persistInspection = async (
   const payload = {
     service_id: serviceId,
     operator_id: operatorId,
+    // equipment_checklist = solo los presentes (compatibilidad con consumidores
+    // existentes). equipment_status = el catálogo completo con true/false, que
+    // es lo único capaz de distinguir "revisado y ausente" de "nunca evaluado".
     equipment_checklist: values.equipment || [],
+    ...(values.equipmentStatus ? { equipment_status: values.equipmentStatus } : {}),
     vehicle_observations: values.vehicleObservations || null,
     ...(phase === 'initial' ? { operator_signature: values.operatorSignature || '' } : {}),
-    client_name: values.clientName || null,
-    client_rut: values.clientRut || null,
+    client_name: normalizePersonNameOrNull(values.clientName),
+    client_rut: values.clientRut ? normalizeRut(values.clientRut) : null,
     ...(phase === 'initial' ? {
       initial_vehicle_state: {
         equipment: values.equipment || [],

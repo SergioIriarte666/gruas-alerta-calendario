@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import { compressBlobForPDF } from './photos/photoProcessor';
 import { drawPhotoPlaceholder } from './photos/photoPlaceholder';
 import { getPhotoBlobForPdf } from './photos/photoStorage';
+import { parsePhotoCaptureAt } from './photos/photoTimestamp';
 import { createLogger } from "@/lib/logger";
 import { REPORT_PDF_COLORS } from './reportPdfTheme';
 
@@ -19,7 +20,9 @@ export const addPhotographicSetSection = async (
     blob?: Blob;
   }>,
   yPosition: number,
-  title: string = 'SET FOTOGRÁFICO'
+  title: string = 'SET FOTOGRÁFICO',
+  /** Hora a estampar cuando el nombre del archivo no trae timestamp parseable. */
+  fallbackCapturedAt: Date = businessClock.now(),
 ): Promise<number> => {
   if (!photographicSet || photographicSet.length === 0) {
     logger.debug('No hay fotos en el set fotográfico');
@@ -112,13 +115,16 @@ export const addPhotographicSetSection = async (
               doc.setDrawColor(200, 200, 200);
               doc.rect(xPos, yPosition + 5, photoWidth, photoHeight);
 
-              // Agregar timestamp en la esquina
+              // Hora REAL de captura (del nombre del archivo), no la hora de
+              // generación del PDF: estampar esta última hacía ver las 6 fotos
+              // tomadas en el mismo minuto y botaba el dato bueno.
+              const capturedAt = parsePhotoCaptureAt(item.photo!.fileName) ?? fallbackCapturedAt;
               doc.setFontSize(7);
               doc.setTextColor(255, 255, 255);
               doc.setDrawColor(0, 0, 0);
               doc.setFillColor(0, 0, 0);
-              doc.rect(xPos + 2, yPosition + photoHeight - 7, 45, 10, 'F');
-              doc.text(businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm'), xPos + 4, yPosition + photoHeight);
+              doc.rect(xPos + 2, yPosition + photoHeight - 7, 47, 10, 'F');
+              doc.text(businessClock.format(capturedAt, 'dd/MM/yyyy HH:mm:ss'), xPos + 4, yPosition + photoHeight);
 
               validPhotosAdded++;
               logger.debug(`Foto agregada exitosamente: ${item.photo!.fileName} (${item.category})`);

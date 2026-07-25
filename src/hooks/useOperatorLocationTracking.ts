@@ -9,6 +9,7 @@ import type {
   OperatorLocationPayload,
   OperatorLocationPoint,
   OperatorLocationSession,
+  OperatorLocationSource,
   TrackingSessionEndedReason,
   TrackingSessionStartedReason,
   TrackingSettings,
@@ -16,11 +17,13 @@ import type {
 import {
   BackgroundGeolocation,
   checkLocationPermission,
+  clearManualStopForService,
   ensureOperatorLocationSession,
   fetchOperatorTrackingEnabled,
   fetchTrackingSettings,
   findActiveOperatorLocationSession,
   getCurrentLocationPoint,
+  hasManualStopForService,
   mapBackgroundGeolocationPoint,
   requestLocationPermission,
   saveOperatorLocationPoint,
@@ -28,6 +31,7 @@ import {
   updateOperatorLocationSessionService,
 } from '@/services/operatorLocationService';
 import { isWithinTrackingSchedule, getTrackingScheduleLabel } from '@/utils/trackingSchedule';
+import { allowSleepSafely, keepAwakeSafely } from '@/utils/keepAwake';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('useOperatorLocationTracking');
@@ -41,6 +45,43 @@ const NATIVE_MIN_PERSIST_INTERVAL_MS = 20000;
 const SCHEDULE_CHECK_INTERVAL_MS = 30000;
 const MAX_QUEUED_POINTS = 200;
 const MAX_QUEUE_ATTEMPTS = 10;
+
+/**
+ * Latido: máximo tiempo sin enviar un punto, haya o no movimiento.
+ *
+ * Debe ser MENOR que tracking_settings.session_timeout_minutes (10 min), o el
+ * barrido de sesiones zombie cierra la sesión antes de que llegue el siguiente
+ * latido. Con 2 min hay cinco latidos de margen.
+ */
+const HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000;
+
+/**
+ * Distancia mínima para considerar que el operador se movió.
+ *
+ * Antes este filtro vivía en el plugin (`distanceFilter: 30`) y ese era el bug
+ * de fondo: con el equipo detenido iOS no emitía NINGÚN evento, así que no
+ * había nada que sostuviera la sesión ni que disparara un latido, y la app
+ * quedaba suspendida hasta que el sweep la mataba a los 10 min. Ahora el
+ * watcher pide todas las actualizaciones (distanceFilter 0) y el filtro se
+ * aplica aquí, donde sí podemos distinguir "no se movió" de "no reportó".
+ */
+const MOVEMENT_THRESHOLD_METERS = 30;
+
+const EARTH_RADIUS_METERS = 6371000;
+
+const distanceMeters = (
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number },
+): number => {
+  const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
+};
 
 export type TrackingMode = TrackingSessionStartedReason | null;
 
@@ -95,6 +136,7 @@ const createPayload = (
   operatorId: string,
   userId: string,
   serviceId: string | null,
+  source: OperatorLocationSource = 'mobile_app',
   isOfflineSync = false,
 ): OperatorLocationPayload => ({
   sessionId,
@@ -109,6 +151,7 @@ const createPayload = (
   altitudeMeters: point.altitudeMeters,
   recordedAt: point.recordedAt,
   isOfflineSync,
+  source,
 });
 
 export const useOperatorLocationTracking = ({
@@ -129,12 +172,18 @@ export const useOperatorLocationTracking = ({
   const [trackingSettings, setTrackingSettings] = useState<TrackingSettings | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [trackingDisabled, setTrackingDisabled] = useState(false);
+  // Corte manual del servicio en curso: inhibe el auto-encendido por movimiento.
+  const [manualStop, setManualStop] = useState(false);
+  const manualStopRef = useRef(false);
 
   const intervalRef = useRef<number | null>(null);
   const watcherIdRef = useRef<string | null>(null);
   const scheduleIntervalRef = useRef<number | null>(null);
   const lastNativePersistAtRef = useRef(0);
   const lastPersistedSignatureRef = useRef<string | null>(null);
+  // Última posición efectivamente enviada: contra ella se mide el umbral de
+  // movimiento, ahora que el filtro dejó de vivir en el plugin.
+  const lastPersistedLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const isTrackingRef = useRef(false);
   const trackingModeRef = useRef<TrackingMode>(null);
@@ -211,12 +260,24 @@ export const useOperatorLocationTracking = ({
     await refreshPendingCount();
   }, [refreshPendingCount]);
 
+  const enqueuePoint = useCallback(async (payload: OperatorLocationPayload) => {
+    const queued = await readQueuedPoints();
+    queued.push({
+      ...payload,
+      localId: `${payload.recordedAt}:${queued.length}`,
+      attempts: 0,
+    });
+    await writeQueuedPoints(queued);
+    await refreshPendingCount();
+  }, [refreshPendingCount]);
+
   const persistPoint = useCallback(async (
     point: OperatorLocationPoint,
     activeSessionId: string,
     activeOperatorId: string,
     activeUserId: string,
     activeServiceId: string | null,
+    source: OperatorLocationSource = 'mobile_app',
   ) => {
     const signature = `${activeSessionId}:${point.recordedAt}:${point.latitude}:${point.longitude}`;
     if (lastPersistedSignatureRef.current === signature) {
@@ -230,27 +291,37 @@ export const useOperatorLocationTracking = ({
       activeOperatorId,
       activeUserId,
       activeServiceId,
+      source,
     );
 
     if (!navigator.onLine) {
-      const queued = await readQueuedPoints();
-      queued.push({
-        ...payload,
-        localId: `${payload.recordedAt}:${queued.length}`,
-        attempts: 0,
-      });
-      await writeQueuedPoints(queued);
-      await refreshPendingCount();
+      trackingLogger.debug('Punto encolado sin conexión', { source, recordedAt: point.recordedAt });
+      await enqueuePoint(payload);
       return;
     }
 
-    await saveOperatorLocationPoint(payload);
+    try {
+      await saveOperatorLocationPoint(payload);
+    } catch (error) {
+      // navigator.onLine miente en terreno: en el desierto la interfaz sigue
+      // "en línea" y la petición muere igual. Sin este catch el punto se perdía
+      // en vez de irse a la cola offline que el esquema ya contempla.
+      trackingLogger.warn('Falló la subida del punto, se encola para reintento', { source, error });
+      await enqueuePoint(payload);
+      return;
+    }
+
+    trackingLogger.debug('Punto enviado', { source, recordedAt: point.recordedAt });
     setLastSyncAt(new Date().toISOString());
     await flushQueue();
-  }, [flushQueue, refreshPendingCount]);
+  }, [enqueuePoint, flushQueue]);
 
-  const stopSession = useCallback(async (endedReason: TrackingSessionEndedReason) => {
+  const stopSession = useCallback(async (
+    endedReason: TrackingSessionEndedReason,
+    options: { endedBy?: string | null; manualStop?: boolean } = {},
+  ) => {
     clearCaptureLoop();
+    void allowSleepSafely();
     const activeSessionId = sessionIdRef.current;
 
     sessionIdRef.current = null;
@@ -261,11 +332,18 @@ export const useOperatorLocationTracking = ({
     setTrackingMode(null);
     setIsTracking(false);
 
+    if (options.manualStop) {
+      // Se refleja de inmediato en memoria: evaluate() corre cada 30 s y sin
+      // esto reabriría la sesión antes de que la BD confirme el corte.
+      manualStopRef.current = true;
+      setManualStop(true);
+    }
+
     if (activeSessionId) {
       try {
-        await stopOperatorLocationSession(activeSessionId, endedReason);
+        await stopOperatorLocationSession(activeSessionId, endedReason, options);
       } catch (error) {
-        logger.warn('Could not stop location session', error);
+        trackingLogger.warn('Could not stop location session', error);
       }
     }
   }, [clearCaptureLoop]);
@@ -302,21 +380,30 @@ export const useOperatorLocationTracking = ({
     activeServiceId: string | null,
   ) => {
     lastNativePersistAtRef.current = 0;
+    lastPersistedLocationRef.current = null;
 
-    // El watcher nativo respeta distanceFilter y, si el equipo permanece
-    // quieto, iOS puede no emitir un primer evento. Capturamos una lectura
-    // inicial explícita para que la central reciba señal desde el momento en
-    // que comienza o se reanuda el rastreo; el watcher queda a cargo de las
-    // actualizaciones posteriores, incluso con la app en segundo plano.
+    const submit = (point: OperatorLocationPoint, source: OperatorLocationSource) => {
+      lastNativePersistAtRef.current = Date.now();
+      lastPersistedLocationRef.current = { latitude: point.latitude, longitude: point.longitude };
+      setLastPoint(point);
+      return persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId, source)
+        .then(() => setErrorMessage(null))
+        .catch((persistError) => {
+          const message = persistError instanceof Error
+            ? persistError.message
+            : 'No se pudo actualizar la ubicacion';
+          trackingLogger.warn('Location persistence failed', persistError);
+          setErrorMessage(message);
+        });
+    };
+
+    // Lectura inicial explícita: con el equipo quieto iOS puede tardar en
+    // emitir el primer evento del watcher y la central quedaría sin señal
+    // desde el arranque o la reanudación del rastreo.
     void getCurrentLocationPoint()
-      .then(async (point) => {
-        lastNativePersistAtRef.current = Date.now();
-        setLastPoint(point);
-        await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
-        setErrorMessage(null);
-      })
+      .then((point) => submit(point, 'mobile_app'))
       .catch((initialPointError) => {
-        logger.warn('Could not capture initial native location point', initialPointError);
+        trackingLogger.warn('Could not capture initial native location point', initialPointError);
       });
 
     BackgroundGeolocation.addWatcher(
@@ -324,35 +411,48 @@ export const useOperatorLocationTracking = ({
         backgroundMessage: 'Compartiendo ubicación con la central',
         backgroundTitle: 'TMS Operador',
         requestPermissions: true,
-        distanceFilter: 30,
+        // distanceFilter 0 = el plugin entrega TODAS las actualizaciones. Es
+        // deliberado: un setInterval JS no sobrevive la suspensión en iOS, así
+        // que el latido tiene que venir del lado nativo. El filtro real de
+        // movimiento y la cadencia se aplican abajo, en JS.
+        distanceFilter: 0,
       },
       (location, error) => {
         if (error) {
-          logger.warn('Background geolocation watcher error', error);
+          trackingLogger.warn('Background geolocation watcher error', error);
           return;
         }
         if (!location) return;
 
         const now = Date.now();
-        if (now - lastNativePersistAtRef.current < NATIVE_MIN_PERSIST_INTERVAL_MS) return;
-        lastNativePersistAtRef.current = now;
+        const elapsed = now - lastNativePersistAtRef.current;
+        if (elapsed < NATIVE_MIN_PERSIST_INTERVAL_MS) return;
 
         const point = mapBackgroundGeolocationPoint(location);
-        setLastPoint(point);
-        void persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId)
-          .then(() => setErrorMessage(null))
-          .catch((persistError) => {
-            const message = persistError instanceof Error
-              ? persistError.message
-              : 'No se pudo actualizar la ubicacion';
-            logger.warn('Location persistence failed', persistError);
-            setErrorMessage(message);
+        const previous = lastPersistedLocationRef.current;
+        const moved = !previous || distanceMeters(previous, point) >= MOVEMENT_THRESHOLD_METERS;
+        const heartbeatDue = elapsed >= HEARTBEAT_INTERVAL_MS;
+
+        if (!moved && !heartbeatDue) return;
+
+        // Sin movimiento pero con latido vencido: se envía igual el último fix
+        // conocido marcado como 'heartbeat'. Eso mantiene viva la sesión frente
+        // al barrido de 10 min y deja constancia de que el operador estaba
+        // detenido, no incomunicado.
+        const source: OperatorLocationSource = moved ? 'mobile_app' : 'heartbeat';
+        if (!moved) {
+          trackingLogger.debug('Latido de ubicación', {
+            secondsSinceLastPoint: Math.round(elapsed / 1000),
           });
+        }
+
+        void submit(point, source);
       },
     ).then((id) => {
       watcherIdRef.current = id;
+      trackingLogger.debug('Watcher de ubicación en segundo plano activo', { watcherId: id });
     }).catch((watcherError) => {
-      logger.warn('Could not start background geolocation watcher', watcherError);
+      trackingLogger.warn('Could not start background geolocation watcher', watcherError);
       setErrorMessage('No se pudo iniciar el rastreo en segundo plano');
     });
   }, [persistPoint]);
@@ -435,7 +535,20 @@ export const useOperatorLocationTracking = ({
       setIsTracking(true);
       setErrorMessage(null);
 
+      // Reencender es siempre un acto explícito o automático posterior al
+      // corte: en ambos casos la inhibición deja de tener sentido.
+      if (manualStopRef.current) {
+        manualStopRef.current = false;
+        setManualStop(false);
+        if (effectiveServiceId) {
+          void clearManualStopForService(operatorId, effectiveServiceId).catch((clearError) => {
+            trackingLogger.warn('No se pudo limpiar la marca de corte manual', clearError);
+          });
+        }
+      }
+
       beginCapture(session.id, operatorId, userId, effectiveServiceId);
+      void keepAwakeSafely();
 
       if (reason === 'manual') {
         toast.success(effectiveServiceId
@@ -455,6 +568,14 @@ export const useOperatorLocationTracking = ({
     if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
 
     if (serviceId) {
+      // Precedencia del corte manual: si el operador apagó la transmisión a
+      // mano, el sistema NO la reenciende solo. Antes esta rama ignoraba tanto
+      // la pausa como el corte, así que el ciclo de 30 s deshacía la decisión
+      // del operador a los pocos segundos.
+      if (manualStopRef.current || isPausedRef.current) {
+        return;
+      }
+
       if (
         !isTrackingRef.current
         || sessionServiceIdRef.current !== serviceId
@@ -513,6 +634,45 @@ export const useOperatorLocationTracking = ({
     }
   }, [serviceId, startSession]);
 
+  /**
+   * Corte manual desde el control unificado. `endedReason` distingue si hubo
+   * que pedir PIN (había un cliente mirando) de la doble confirmación simple;
+   * ambos marcan `manual_stop` e inhiben el auto-encendido.
+   */
+  const stopTransmission = useCallback(async (
+    endedReason: 'manual_pin' | 'manual_confirm',
+  ) => {
+    setIsBusy(true);
+    try {
+      await stopSession(endedReason, { endedBy: userId ?? null, manualStop: true });
+      isPausedRef.current = true;
+      setIsPaused(true);
+      await writePausedFlag(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo detener la transmisión';
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsBusy(false);
+    }
+  }, [stopSession, userId]);
+
+  /**
+   * Encendido automático por movimiento sostenido (3.6). No pasa por encima de
+   * un corte manual: si lo hay, quien llama muestra "Rodando sin transmitir" y
+   * no invoca esto.
+   */
+  const startTransmissionAutomatically = useCallback(async () => {
+    if (manualStopRef.current || isTrackingRef.current || trackingDisabledRef.current) return;
+
+    isPausedRef.current = false;
+    setIsPaused(false);
+    await writePausedFlag(false);
+    await startSession(serviceId ? 'auto_service' : 'manual');
+    trackingLogger.debug('Transmisión encendida automáticamente por movimiento sostenido');
+    toast.success('Transmisión activada automáticamente');
+  }, [serviceId, startSession]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -542,6 +702,20 @@ export const useOperatorLocationTracking = ({
       }
 
       await refreshPendingCount();
+
+      // Se lee de la BD, no solo del almacenamiento local: el corte manual debe
+      // sobrevivir una reinstalación o un cambio de teléfono.
+      if (operatorId && serviceIdRef.current) {
+        try {
+          const stopped = await hasManualStopForService(operatorId, serviceIdRef.current);
+          if (!cancelled && stopped) {
+            manualStopRef.current = true;
+            setManualStop(true);
+          }
+        } catch (error) {
+          trackingLogger.warn('No se pudo leer el corte manual del servicio', error);
+        }
+      }
 
       if (operatorId) {
         try {
@@ -691,8 +865,11 @@ export const useOperatorLocationTracking = ({
     scheduleLabel,
     trackingSettings,
     trackingDisabled,
+    manualStop,
     pauseTracking,
     resumeTracking,
+    stopTransmission,
+    startTransmissionAutomatically,
     flushQueue,
   };
 };

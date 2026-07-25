@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
+import { formatShortAddress } from '@/utils/addressFormat';
 import { createLogger } from "@/lib/logger";
 import { REPORT_PDF_COLORS } from '../reportPdfTheme';
 
@@ -39,8 +40,10 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
     const leftData = [
       ['Cliente', data.service.client?.name || 'N/A'],
       ['Fecha de servicio', formatBusinessDateLong(data.service.serviceDate)],
-      ['Origen', data.service.origin || 'N/A'],
-      ['Destino', data.service.destination || 'N/A'],
+      // Dirección corta: la cadena geocodificada completa arrastra código postal
+      // y país ("…, 2571126 Viña del Mar, Valparaíso, Chile") y desborda la celda.
+      ['Origen', formatShortAddress(data.service.origin) || 'N/A'],
+      ['Destino', formatShortAddress(data.service.destination) || 'N/A'],
       ['Grúa asignada', data.service.crane?.licensePlate || 'N/A'],
       ['Operador', data.service.operator?.name || 'N/A'],
     ];

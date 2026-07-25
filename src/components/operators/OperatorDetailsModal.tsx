@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { OperatorDocumentsSection } from './OperatorDocumentsSection';
+import { OperatorPinSection } from './OperatorPinSection';
 import { OperatorAppAccessBadge } from './OperatorAppAccessBadge';
 import {
   useOperatorDocuments,
@@ -318,6 +319,11 @@ const OperatorDetailsModalInner = ({
           {/* ── Tab Documentos ── */}
           <TabsContent value="documents">
             <OperatorDocumentsSection operator={operator} />
+            {/* El PIN vive junto a los documentos del operador: ambos son datos
+                que solo el admin define y que habilitan operación en terreno. */}
+            <div className="mt-6">
+              <OperatorPinSection operatorId={operator.id} />
+            </div>
             <div className="flex justify-end mt-6">
               <Button
                 variant="outline"

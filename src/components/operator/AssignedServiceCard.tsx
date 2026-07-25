@@ -1,12 +1,24 @@
 import React from 'react';
 import { Service } from '@/types';
-import { Truck, Calendar, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car } from 'lucide-react';
+import { Truck, Calendar, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car, Clock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 import { openNavigation } from '@/utils/navigationUtils';
+import { businessClock } from '@/utils/businessClock';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 
 interface AssignedServiceCardProps {
@@ -133,15 +145,77 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
 
   const navigate = useNavigate();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(service.id);
+  const [startTimeDraft, setStartTimeDraft] = React.useState<string | null>(null);
 
-  const handleStartService = async () => {
+  // services.start_time quedaba NULL al iniciar y la hora real de partida se
+  // perdía. Se propone la hora actual del negocio (nunca new Date(): la TZ del
+  // teléfono puede no ser la de la operación) y el operador la confirma o ajusta.
+  const openStartDialog = () => {
+    setStartTimeDraft(businessClock.format(businessClock.now(), 'HH:mm'));
+  };
+
+  const confirmStartService = async () => {
+    const startTime = startTimeDraft;
+    if (!startTime) return;
+
     try {
-      await updateServiceStatusMutation.mutateAsync({ id: service.id, targetStatus: 'in_progress' });
+      await updateServiceStatusMutation.mutateAsync({
+        id: service.id,
+        targetStatus: 'in_progress',
+        startTime,
+      });
+      setStartTimeDraft(null);
       navigate(`/operator/service/${service.id}/inspection`);
     } catch {
       // el hook ya muestra el toast de error, no hay nada mas que hacer aqui
     }
   };
+
+  const startServiceDialog = (
+    <Dialog
+      open={startTimeDraft !== null}
+      onOpenChange={(open) => { if (!open) setStartTimeDraft(null); }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Iniciar servicio {service.folio}</DialogTitle>
+          <DialogDescription>
+            Confirma la hora real de inicio. Queda registrada en el servicio y en el informe.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="service-start-time" className="flex items-center gap-2">
+            <Clock className="size-4" />
+            Hora de inicio
+          </Label>
+          <Input
+            id="service-start-time"
+            type="time"
+            value={startTimeDraft ?? ''}
+            onChange={(event) => setStartTimeDraft(event.target.value)}
+            className="min-h-12 rounded-xl text-base"
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setStartTimeDraft(null)}
+            disabled={updateServiceStatusMutation.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={confirmStartService}
+            disabled={!startTimeDraft || updateServiceStatusMutation.isPending}
+          >
+            {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar servicio'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   // COMPLETADO
   if (status === 'completed') {
@@ -191,12 +265,13 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
         <CardBody service={service} showNavigation />
         <button
           type="button"
-          onClick={handleStartService}
+          onClick={openStartDialog}
           disabled={updateServiceStatusMutation.isPending}
           className="operator-service-action mt-4 min-h-12 w-full rounded-2xl bg-primary px-4 text-center text-sm font-bold text-primary-foreground transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
         </button>
+        {startServiceDialog}
       </div>
     );
   }

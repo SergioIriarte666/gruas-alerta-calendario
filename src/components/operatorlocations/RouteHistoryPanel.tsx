@@ -11,12 +11,22 @@ import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { useOperatorRouteHistory } from '@/hooks/operatorlocations/useOperatorLocations';
 import { useMatchedRoutes } from '@/hooks/ubicaciones/useMatchedRoute';
 import { useReverseGeocodedLabels, type ReverseGeocodeLabel } from '@/hooks/ubicaciones/useReverseGeocode';
+import { Badge } from '@/components/ui/badge';
 import { businessClock } from '@/utils/businessClock';
-import type {
-  MatchedRouteResult,
-  OperatorRoutePoint,
-  OperatorRouteSession,
+import { cn } from '@/lib/utils';
+import {
+  SIGNAL_FRESHNESS_BADGE_CLASS,
+  describeSignalFreshness,
+  type MatchedRouteResult,
+  type OperatorRoutePoint,
+  type OperatorRouteSession,
 } from '@/types/operatorLocations';
+import {
+  STOP_REASON_LABELS,
+  isStopEventOverdue,
+  stopEventMinutes,
+  type ServiceStopEvent,
+} from '@/types/serviceStopEvent';
 import { createLogger } from '@/lib/logger';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { resolveThemeColor } from '@/lib/themeColors';
@@ -41,6 +51,76 @@ const ROUTE_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 3, 14, 4.5, 18, 6.
 const ROUTE_CASING_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 5.5, 14, 7.5, 18, 10];
 const RAW_DOT_WIDTH = ['interpolate', ['linear'], ['zoom'], 10, 2.5, 14, 3.5, 18, 5];
 
+// Un hueco de datos se declara sólo cuando coinciden tiempo Y distancia: una
+// pausa larga con el equipo quieto no es pérdida de señal, y dos puntos
+// distantes seguidos a 30 s de diferencia son sencillamente velocidad.
+const DATA_GAP_MIN_MINUTES = 5;
+const DATA_GAP_MIN_METERS = 1000;
+const EARTH_RADIUS_METERS = 6371000;
+
+interface RouteDataGap {
+  from: [number, number];
+  to: [number, number];
+  minutes: number;
+  meters: number;
+}
+
+const haversineMeters = (a: OperatorRoutePoint, b: OperatorRoutePoint): number => {
+  const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const h = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
+};
+
+/**
+ * Parte los puntos de una sesión en tramos con datos, separados por los huecos
+ * donde la app dejó de reportar.
+ *
+ * Sin esto, el salto de 23 km sin un solo punto entre Copiapó y Verschae se
+ * dibujaba como una recta sólida por el desierto, indistinguible de una ruta
+ * realmente recorrida.
+ */
+const splitRouteOnDataGaps = (
+  points: OperatorRoutePoint[],
+): { runs: [number, number][][]; gaps: RouteDataGap[] } => {
+  const runs: [number, number][][] = [];
+  const gaps: RouteDataGap[] = [];
+  let current: [number, number][] = [];
+
+  points.forEach((point, index) => {
+    const coordinate: [number, number] = [point.longitude, point.latitude];
+
+    if (index === 0) {
+      current.push(coordinate);
+      return;
+    }
+
+    const previous = points[index - 1];
+    const minutes = (new Date(point.recorded_at).getTime() - new Date(previous.recorded_at).getTime()) / 60000;
+    const meters = haversineMeters(previous, point);
+
+    if (minutes >= DATA_GAP_MIN_MINUTES && meters >= DATA_GAP_MIN_METERS) {
+      gaps.push({
+        from: [previous.longitude, previous.latitude],
+        to: coordinate,
+        minutes: Math.round(minutes),
+        meters,
+      });
+      if (current.length > 0) runs.push(current);
+      current = [coordinate];
+      return;
+    }
+
+    current.push(coordinate);
+  });
+
+  if (current.length > 0) runs.push(current);
+
+  return { runs, gaps };
+};
+
 const STARTED_REASON_LABELS: Record<string, string> = {
   manual: 'Manual',
   auto_schedule: 'Automático (jornada)',
@@ -49,9 +129,43 @@ const STARTED_REASON_LABELS: Record<string, string> = {
 
 const ENDED_REASON_LABELS: Record<string, string> = {
   manual: 'Manual',
+  // El corte con PIN se distingue: hubo un cliente mirando el link cuando se cortó.
+  manual_pin: 'Manual (con PIN)',
+  manual_confirm: 'Manual (confirmado)',
   service_change: 'Cambio de servicio',
   timeout: 'Timeout',
   schedule_end: 'Fin de jornada',
+  service_closed: 'Servicio cerrado',
+};
+
+/**
+ * Ubica una detención declarada sobre la ruta: el punto GPS más cercano en el
+ * tiempo a su inicio. Con el vehículo detenido los puntos son casi idénticos,
+ * así que la aproximación es exacta en la práctica.
+ */
+const locateStopEvents = (
+  points: OperatorRoutePoint[],
+  stopEvents: ServiceStopEvent[],
+): Array<{ event: ServiceStopEvent; lng: number; lat: number }> => {
+  if (points.length === 0) return [];
+
+  return stopEvents.flatMap((event) => {
+    const startedMs = new Date(event.started_at).getTime();
+    let closest = points[0];
+    let bestDelta = Math.abs(new Date(closest.recorded_at).getTime() - startedMs);
+
+    for (const point of points) {
+      const delta = Math.abs(new Date(point.recorded_at).getTime() - startedMs);
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        closest = point;
+      }
+    }
+
+    // Sin un punto razonablemente cercano no se inventa una posición.
+    if (bestDelta > 30 * 60 * 1000) return [];
+    return [{ event, lng: closest.longitude, lat: closest.latitude }];
+  });
 };
 
 interface RouteMapProps {
@@ -60,13 +174,17 @@ interface RouteMapProps {
   matchingEnabled: boolean;
   matchedBySession: Map<string, MatchedRouteResult>;
   pointLabels: Map<string, ReverseGeocodeLabel>;
+  stopEvents: ServiceStopEvent[];
 }
 
-function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, pointLabels }: RouteMapProps) {
+function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, pointLabels, stopEvents }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const loadedRef = useRef(false);
   const layerIdsRef = useRef<string[]>([]);
+  const gapLayerIdsRef = useRef<string[]>([]);
+  const boundGapListenersRef = useRef<Set<string>>(new Set());
+  const gapPopupRef = useRef<import('mapbox-gl').Popup | null>(null);
   const markersRef = useRef<import('mapbox-gl').Marker[]>([]);
   const mapboxRef = useRef<MapboxModule | null>(null);
   const [mapboxReady, setMapboxReady] = useState(false);
@@ -106,6 +224,9 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
       setMapboxReady(false);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
+      gapPopupRef.current?.remove();
+      gapPopupRef.current = null;
+      boundGapListenersRef.current.clear();
       localMap?.remove();
       mapRef.current = null;
       loadedRef.current = false;
@@ -122,6 +243,8 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
       if (map.getSource(id)) map.removeSource(id);
     });
     layerIdsRef.current = [];
+    gapLayerIdsRef.current = [];
+    gapPopupRef.current?.remove();
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
@@ -138,6 +261,7 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
     // Contorno claro que separa la ruta de las calles del mapa base (mismo token
     // que ya usan los marcadores de inicio/fin como borde contra el mapa).
     const casingColor = resolveThemeColor(containerRef.current, '--effect-highlight');
+    const gapColor = resolveThemeColor(containerRef.current, '--danger');
     let colorIndex = 0;
 
     for (const [sessionId, sessionPoints] of bySession.entries()) {
@@ -197,6 +321,46 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
         });
       };
 
+      // Hueco de datos: punteado rojo tenue, distinguible tanto de la ruta
+      // sólida como del punteado de "camino no mapeado". Aquí la app no
+      // reportó; la recta NO es un trayecto verificado.
+      const drawDataGaps = (idBase: string, routeGaps: RouteDataGap[]) => {
+        if (routeGaps.length === 0) return;
+        const id = `${idBase}-gap`;
+        map.addSource(id, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: routeGaps.map((gap) => ({
+              type: 'Feature',
+              properties: {
+                label: `Sin datos ${gap.minutes} min · ${(gap.meters / 1000).toFixed(1)} km`,
+              },
+              geometry: { type: 'LineString', coordinates: [gap.from, gap.to] },
+            })),
+          },
+        });
+        // El paint pasa por Record<string, unknown> igual que en addLineLayer:
+        // las expresiones de zoom son arrays sueltos que no calzan con el tipo
+        // estricto de mapbox-gl.
+        const paint: Record<string, unknown> = {
+          'line-color': gapColor,
+          'line-width': ROUTE_WIDTH,
+          'line-opacity': 0.5,
+          'line-dasharray': [1.5, 1.5],
+        };
+        map.addLayer({
+          id,
+          type: 'line',
+          source: id,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint,
+        });
+        layerIdsRef.current.push(id);
+        gapLayerIdsRef.current.push(id);
+      };
+
+      const { runs, gaps } = splitRouteOnDataGaps(sessionPoints);
       const matched = matchingEnabled ? matchedBySession.get(sessionId) : undefined;
 
       if (matched && matched.segments.length > 0) {
@@ -211,9 +375,12 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
         drawSolid(`route-${sessionId}-matched`, solid);
         drawRaw(`route-${sessionId}-raw`, dashed);
       } else {
-        // Toggle OFF, sin matching aún o sin datos → polilínea cruda.
-        drawSolid(`route-${sessionId}`, [coordinates]);
+        // Toggle OFF, sin matching aún o sin datos → polilínea cruda, cortada
+        // en los huecos para no dibujar el salto como recorrido.
+        drawSolid(`route-${sessionId}`, runs);
       }
+
+      drawDataGaps(`route-${sessionId}`, gaps);
 
       coordinates.forEach((coord) => bounds.extend(coord));
 
@@ -286,6 +453,63 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
       }
     }
 
+    // Tooltip del hueco: la recta punteada por sí sola no dice cuánto tiempo
+    // estuvo sin reportar, que es justo el dato que hay que poder auditar.
+    // Instancia única y estable: los listeners se registran una sola vez y
+    // capturan este popup, así que no puede recrearse en cada render.
+    if (!gapPopupRef.current) {
+      gapPopupRef.current = new mapboxgl.default.Popup({ closeButton: false, closeOnClick: false });
+    }
+    const popup = gapPopupRef.current;
+
+    gapLayerIdsRef.current.forEach((layerId) => {
+      // Los ids de capa son estables por sesión y render() vuelve a crearlas en
+      // cada cambio: sin este registro, cada render acumularía otro listener.
+      if (boundGapListenersRef.current.has(layerId)) return;
+      boundGapListenersRef.current.add(layerId);
+
+      map.on('mouseenter', layerId, (event) => {
+        map.getCanvas().style.cursor = 'pointer';
+        const label = event.features?.[0]?.properties?.label;
+        if (!label) return;
+        popup.setLngLat(event.lngLat).setText(String(label)).addTo(map);
+      });
+      map.on('mousemove', layerId, (event) => {
+        popup.setLngLat(event.lngLat);
+      });
+      map.on('mouseleave', layerId, () => {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+    });
+
+    // Marcadores de detención declarada: separan la parada CON motivo del hueco
+    // sin explicar, que es la distinción que "Tiempos muertos" necesita.
+    for (const { event, lng, lat } of locateStopEvents(points, stopEvents)) {
+      const minutes = stopEventMinutes(event, businessClock.now());
+      const overdue = isStopEventOverdue(event.reason, minutes);
+
+      const markerEl = document.createElement('div');
+      markerEl.style.display = 'flex';
+      markerEl.style.alignItems = 'center';
+      markerEl.style.justifyContent = 'center';
+      markerEl.style.width = '1.5rem';
+      markerEl.style.height = '1.5rem';
+      markerEl.style.borderRadius = '9999px';
+      markerEl.style.fontSize = '0.625rem';
+      markerEl.style.fontWeight = '700';
+      markerEl.style.color = 'hsl(var(--effect-highlight))';
+      markerEl.style.background = overdue ? 'hsl(var(--warning))' : 'hsl(var(--info))';
+      markerEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
+      markerEl.style.boxShadow = 'var(--shadow-sm)';
+      markerEl.textContent = 'P';
+      markerEl.title = `${STOP_REASON_LABELS[event.reason]} · ${minutes} min · desde ${businessClock.format(event.started_at, 'HH:mm')}`;
+
+      markersRef.current.push(
+        new mapboxgl.default.Marker({ element: markerEl }).setLngLat([lng, lat]).addTo(map),
+      );
+    }
+
     const lastPoint = points[points.length - 1];
 
     try {
@@ -305,7 +529,7 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
 
   useEffect(() => {
     render();
-  }, [autoFollow, mapboxReady, points, matchingEnabled, matchedBySession, pointLabels]);
+  }, [autoFollow, mapboxReady, points, matchingEnabled, matchedBySession, pointLabels, stopEvents]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -359,7 +583,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
     }
   }, [operatorId, validOperatorIds]);
 
-  const { points, sessions, isLoading, error } = useOperatorRouteHistory(operatorId, dateISO);
+  const { points, sessions, stopEvents, isLoading, error } = useOperatorRouteHistory(operatorId, dateISO);
 
   const sessionPointCounts = new Map<string, number>();
   for (const point of points) {
@@ -414,6 +638,24 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   }, [points]);
   const pointLabels = useReverseGeocodedLabels(labelTargets, labelTargets.length > 0);
 
+  // Frescura del último punto del día seleccionado. El botón "Siguiendo ruta en
+  // vivo" se pintaba verde aunque el último punto tuviera 93 minutos: seguir un
+  // punto viejo no es seguir en vivo, y ahora el estado lo dice.
+  const lastPointAt = points.length > 0 ? points[points.length - 1].recorded_at : null;
+  const freshness = describeSignalFreshness(lastPointAt);
+  const isToday = dateISO === businessClock.today();
+  const isLive = isToday && freshness.level === 'live';
+
+  const hasDataGaps = useMemo(() => {
+    const bySession = new Map<string, OperatorRoutePoint[]>();
+    for (const point of points) {
+      const group = bySession.get(point.session_id) ?? [];
+      group.push(point);
+      bySession.set(point.session_id, group);
+    }
+    return Array.from(bySession.values()).some((sessionPoints) => splitRouteOnDataGaps(sessionPoints).gaps.length > 0);
+  }, [points]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -438,13 +680,25 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
 
         <Button
           type="button"
-          variant={autoFollow ? 'default' : 'outline'}
+          // Sólo se pinta como acción activa cuando el dato ES fresco; con señal
+          // vieja queda en outline para no vender "en vivo" lo que no lo es.
+          variant={autoFollow && isLive ? 'default' : 'outline'}
           className="w-full sm:w-auto"
           onClick={() => setAutoFollow((current) => !current)}
         >
           <LocateFixed className="size-4" />
-          {autoFollow ? 'Siguiendo ruta en vivo' : 'Seguir ruta en vivo'}
+          {autoFollow ? 'Siguiendo último punto' : 'Seguir último punto'}
         </Button>
+
+        {operatorId && (
+          <Badge
+            variant="outline"
+            className={cn('h-9 rounded-full px-3 text-xs font-semibold', SIGNAL_FRESHNESS_BADGE_CLASS[freshness.level])}
+          >
+            {freshness.label}
+            {freshness.atLabel && freshness.level !== 'lost' ? ` · ${freshness.atLabel}` : ''}
+          </Badge>
+        )}
 
         <div className="flex items-center gap-2 sm:ml-auto">
           <Switch
@@ -490,19 +744,27 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
                 matchingEnabled={matchingEnabled}
                 matchedBySession={matchedBySession}
                 pointLabels={pointLabels}
+                stopEvents={stopEvents}
               />
             )}
           </div>
 
-          {matchingEnabled && (
-            <p className="text-xs text-muted-foreground">
-              {matchingFetching
-                ? 'Ajustando ruta a las calles… mientras tanto se muestra el GPS crudo.'
-                : hasRawSegments
-                  ? 'Tramo punteado: GPS directo (camino no mapeado).'
-                  : 'Ruta ajustada a la red vial.'}
-            </p>
-          )}
+          <div className="space-y-1 text-xs text-muted-foreground">
+            {matchingEnabled && (
+              <p>
+                {matchingFetching
+                  ? 'Ajustando ruta a las calles… mientras tanto se muestra el GPS crudo.'
+                  : hasRawSegments
+                    ? 'Tramo punteado: GPS directo (camino no mapeado).'
+                    : 'Ruta ajustada a la red vial.'}
+              </p>
+            )}
+            {hasDataGaps && (
+              <p className="text-danger">
+                Tramo punteado rojo: sin datos. La app no reportó en ese trecho — la recta no es un recorrido verificado.
+              </p>
+            )}
+          </div>
 
           <div className="resources-panel overflow-x-auto">
             <Table>
@@ -537,6 +799,50 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
               </TableBody>
             </Table>
           </div>
+
+          {stopEvents.length > 0 && (
+            <div className="resources-panel overflow-x-auto">
+              <p className="px-4 pt-3 text-sm font-semibold text-foreground">Detenciones declaradas</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Inicio</TableHead>
+                    <TableHead>Fin</TableHead>
+                    <TableHead>Motivo</TableHead>
+                    <TableHead>Cierre</TableHead>
+                    <TableHead className="text-right">Duración</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stopEvents.map((event) => {
+                    const minutes = stopEventMinutes(event, businessClock.now());
+                    // Sobrepasar lo típico del motivo es señal de posible
+                    // anomalía, no una infracción: el descanso nunca alerta.
+                    const overdue = isStopEventOverdue(event.reason, minutes);
+                    return (
+                      <TableRow key={event.id}>
+                        <TableCell>{businessClock.format(event.started_at, 'HH:mm')}</TableCell>
+                        <TableCell>{event.ended_at ? businessClock.format(event.ended_at, 'HH:mm') : 'En curso'}</TableCell>
+                        <TableCell>{STOP_REASON_LABELS[event.reason]}</TableCell>
+                        <TableCell>
+                          {event.ended_by_source === 'auto_speed'
+                            ? 'Automático (rodando)'
+                            : event.ended_by_source === 'service_closed'
+                              ? 'Servicio cerrado'
+                              : event.ended_by_source === 'manual'
+                                ? 'Manual'
+                                : '—'}
+                        </TableCell>
+                        <TableCell className={cn('text-right font-medium', overdue && 'text-warning')}>
+                          {minutes} min
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
 import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
+import type { ServiceStopEvent } from '@/types/serviceStopEvent';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('useOperatorRouteHistory');
@@ -14,6 +15,8 @@ const INVALIDATE_DEBOUNCE_MS = 2000;
 interface OperatorRouteHistoryResult {
   points: OperatorRoutePoint[];
   sessions: OperatorRouteSession[];
+  /** Detenciones declaradas del día: distinguen la parada con motivo del hueco sin explicar. */
+  stopEvents: ServiceStopEvent[];
 }
 
 const getChileDayRangeUtc = (dateISO: string) => {
@@ -29,7 +32,7 @@ const fetchRouteHistory = async (
 ): Promise<OperatorRouteHistoryResult> => {
   const { startUtc, endUtc } = getChileDayRangeUtc(dateISO);
 
-  const [pointsResult, sessionsResult] = await Promise.all([
+  const [pointsResult, sessionsResult, stopEventsResult] = await Promise.all([
     supabase
       .from('operator_location_points')
       .select('session_id, latitude, longitude, accuracy_meters, speed_mps, heading_degrees, recorded_at')
@@ -44,6 +47,13 @@ const fetchRouteHistory = async (
       .gte('started_at', startUtc)
       .lte('started_at', endUtc)
       .order('started_at', { ascending: true }),
+    supabase
+      .from('service_stop_events')
+      .select('id, service_id, operator_id, reason, note, started_at, ended_at, ended_by_source')
+      .eq('operator_id', operatorId)
+      .gte('started_at', startUtc)
+      .lte('started_at', endUtc)
+      .order('started_at', { ascending: true }),
   ]);
 
   if (pointsResult.error) {
@@ -52,10 +62,16 @@ const fetchRouteHistory = async (
   if (sessionsResult.error) {
     throw new Error(sessionsResult.error.message || 'No se pudo cargar el historial de sesiones');
   }
+  // Las detenciones son contexto, no el historial: si fallan, la ruta se
+  // muestra igual en vez de dejar la pantalla en error.
+  if (stopEventsResult.error) {
+    logger.warn('No se pudieron cargar las detenciones declaradas', stopEventsResult.error);
+  }
 
   return {
     points: ((pointsResult.data ?? []) as OperatorRoutePoint[]).filter(hasValidChileCoordinates),
     sessions: (sessionsResult.data ?? []) as OperatorRouteSession[],
+    stopEvents: (stopEventsResult.data ?? []) as ServiceStopEvent[],
   };
 };
 
@@ -103,6 +119,11 @@ export const useOperatorRouteHistory = (operatorId: string | null, dateISO: stri
         { event: '*', schema: 'public', table: 'operator_location_sessions', filter: `operator_id=eq.${operatorId}` },
         handleChange,
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'service_stop_events', filter: `operator_id=eq.${operatorId}` },
+        handleChange,
+      )
       .subscribe();
 
     return () => {
@@ -117,6 +138,7 @@ export const useOperatorRouteHistory = (operatorId: string | null, dateISO: stri
   return {
     points: query.data?.points ?? [],
     sessions: query.data?.sessions ?? [],
+    stopEvents: query.data?.stopEvents ?? [],
     isLoading: query.isLoading,
     error: query.error,
   };

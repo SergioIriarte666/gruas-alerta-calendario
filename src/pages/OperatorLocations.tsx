@@ -11,8 +11,11 @@ import { IdleMetricsPanel } from '@/components/operatorlocations/IdleMetricsPane
 import { cn } from '@/lib/utils';
 import { MapPinned } from 'lucide-react';
 import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
+import { Badge } from '@/components/ui/badge';
 import {
   OPERATOR_STATUS_LABELS,
+  SIGNAL_FRESHNESS_BADGE_CLASS,
+  describeSignalFreshness,
   deriveOperatorStatus,
   formatMinutesAgo,
   type OperatorLiveLocation,
@@ -139,6 +142,11 @@ const OperatorLocations = () => {
     [filteredLocations, selectedOperatorId],
   );
 
+  const selectedFreshness = useMemo(
+    () => describeSignalFreshness(selectedLocation?.recorded_at ?? null),
+    [selectedLocation],
+  );
+
   return (
     <div className="operator-locations-concept space-y-6">
       <div>
@@ -194,8 +202,17 @@ const OperatorLocations = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-base font-semibold text-foreground">
+                  {/* Frescura explícita: el mapa puede estar mostrando una
+                      posición de hace más de una hora y hasta ahora nada lo decía. */}
+                  <Badge
+                    variant="outline"
+                    className={cn('text-xs font-semibold', SIGNAL_FRESHNESS_BADGE_CLASS[selectedFreshness.level])}
+                  >
+                    {selectedFreshness.label}
+                  </Badge>
+                  <p className="mt-1 text-base font-semibold text-foreground">
                     Ultima señal {formatMinutesAgo(selectedLocation.recorded_at)}
+                    {selectedFreshness.atLabel ? ` · ${selectedFreshness.atLabel}` : ''}
                   </p>
                   <p className="text-sm font-medium text-muted-foreground">{formatAccuracy(selectedLocation.accuracy_meters)}</p>
                 </div>

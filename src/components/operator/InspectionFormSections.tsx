@@ -12,6 +12,7 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useUser } from '@/contexts/UserContext';
 import { Gauge, Fuel, Key, FileText } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatRut } from '@/utils/rutFormatter';
 
 interface InspectionFormSectionsProps {
   form: UseFormReturn<InspectionFormValues>;
@@ -316,6 +317,23 @@ export const InspectionFormSections = ({
                         <FormControl><Input {...nameField} placeholder="Nombre del cliente" className="min-h-12 rounded-xl text-base" /></FormControl>
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="clientRut" render={({ field: rutField }) => (
+                      <FormItem>
+                        <FormLabel>RUT del cliente</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...rutField}
+                            value={rutField.value ?? ''}
+                            onChange={(event) => rutField.onChange(formatRut(event.target.value))}
+                            inputMode="text"
+                            autoCapitalize="characters"
+                            placeholder="12.345.678-9"
+                            className="min-h-12 rounded-xl text-base"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <SignaturePad
                       ref={clientSignatureRef}
                       label="Firma del Cliente"
@@ -339,6 +357,23 @@ export const InspectionFormSections = ({
                       <FormItem>
                         <FormLabel>Nombre de quien recibe el vehículo</FormLabel>
                         <FormControl><Input {...nameField} placeholder="Nombre de quien recibe el vehículo" className="min-h-12 rounded-xl text-base" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="clientRut" render={({ field: rutField }) => (
+                      <FormItem>
+                        <FormLabel>RUT de quien recibe</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...rutField}
+                            value={rutField.value ?? ''}
+                            onChange={(event) => rutField.onChange(formatRut(event.target.value))}
+                            inputMode="text"
+                            autoCapitalize="characters"
+                            placeholder="12.345.678-9"
+                            className="min-h-12 rounded-xl text-base"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

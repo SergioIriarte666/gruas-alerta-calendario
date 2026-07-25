@@ -1,38 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { vehicleEquipment } from '@/data/equipmentData';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import {
+  fetchInspectionEquipmentCatalog,
+  type EquipmentItem,
+} from '@/services/inspectionEquipmentCatalog';
 
 const logger = createLogger("useInspectionEquipment");
 
-export interface EquipmentItem {
-  id: string;
-  name: string;
-  is_active: boolean;
-  sort_order: number;
-}
-
-const FALLBACK_ITEMS: EquipmentItem[] = vehicleEquipment[0].items.map((item, i) => ({
-  id: item.id,
-  name: item.name,
-  is_active: true,
-  sort_order: i + 1,
-}));
+export type { EquipmentItem };
 
 export const useInspectionEquipment = () => {
   const qc = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspection-equipment-items'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('inspection_equipment_items')
-        .select('id, name, is_active, sort_order')
-        .order('sort_order');
-      if (error || !data?.length) return FALLBACK_ITEMS;
-      return data as EquipmentItem[];
-    },
+    queryFn: fetchInspectionEquipmentCatalog,
     staleTime: 5 * 60 * 1000,
   });
 

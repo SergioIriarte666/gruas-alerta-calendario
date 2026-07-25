@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
+import { createLogger } from '@/lib/logger';
 import type { OperatorIdleDaySummary, OperatorIdleGap, OperatorIdleService } from '@/types/operatorLocations';
+import { isStopEventOverdue, stopEventMinutes, type ServiceStopEvent } from '@/types/serviceStopEvent';
 
+const logger = createLogger('useOperatorIdleMetrics');
 const DEFAULT_THRESHOLD_MINUTES = 30;
 
 const timeToMinutes = (value: string): number => {
@@ -13,8 +17,12 @@ const timeToMinutes = (value: string): number => {
 const fetchIdleServices = async (
   dateFromISO: string,
   dateToISO: string,
-): Promise<{ services: OperatorIdleService[]; operatorNames: Map<string, string> }> => {
-  const [servicesResult, operatorsResult] = await Promise.all([
+): Promise<{
+  services: OperatorIdleService[];
+  operatorNames: Map<string, string>;
+  stopEvents: ServiceStopEvent[];
+}> => {
+  const [servicesResult, operatorsResult, stopEventsResult] = await Promise.all([
     supabase
       .from('services')
       .select('id, operator_id, service_date, start_time, end_time, folio, status')
@@ -23,6 +31,11 @@ const fetchIdleServices = async (
       .not('operator_id', 'is', null)
       .neq('status', 'cancelled'),
     supabase.from('operators').select('id, name'),
+    supabase
+      .from('service_stop_events')
+      .select('id, service_id, operator_id, reason, note, started_at, ended_at, ended_by_source')
+      .gte('started_at', `${dateFromISO}T00:00:00`)
+      .lte('started_at', `${dateToISO}T23:59:59.999`),
   ]);
 
   if (servicesResult.error) {
@@ -30,6 +43,11 @@ const fetchIdleServices = async (
   }
   if (operatorsResult.error) {
     throw new Error(operatorsResult.error.message || 'No se pudieron cargar los operadores');
+  }
+  // Las detenciones enriquecen la vista; sin ellas los tiempos muertos siguen
+  // siendo correctos, solo pierden la distinción declarada/sin declarar.
+  if (stopEventsResult.error) {
+    logger.warn('No se pudieron cargar las detenciones declaradas', stopEventsResult.error);
   }
 
   const operatorNames = new Map<string, string>();
@@ -40,6 +58,7 @@ const fetchIdleServices = async (
   return {
     services: (servicesResult.data ?? []) as OperatorIdleService[],
     operatorNames,
+    stopEvents: (stopEventsResult.data ?? []) as ServiceStopEvent[],
   };
 };
 
@@ -47,6 +66,7 @@ const computeIdleSummaries = (
   services: OperatorIdleService[],
   operatorNames: Map<string, string>,
   thresholdMinutes: number,
+  stopEvents: ServiceStopEvent[],
 ): OperatorIdleDaySummary[] => {
   const groups = new Map<string, OperatorIdleService[]>();
 
@@ -55,6 +75,19 @@ const computeIdleSummaries = (
     const group = groups.get(key) ?? [];
     group.push(service);
     groups.set(key, group);
+  }
+
+  // Detención declarada = parada CON motivo. Es lo que separa un hueco
+  // justificado (combustible, comida) de uno que nadie explicó.
+  const now = businessClock.now();
+  const stopsByOperatorDay = new Map<string, ServiceStopEvent[]>();
+  for (const event of stopEvents) {
+    if (!event.operator_id) continue;
+    const day = businessClock.format(event.started_at, 'yyyy-MM-dd');
+    const key = `${event.operator_id}::${day}`;
+    const bucket = stopsByOperatorDay.get(key) ?? [];
+    bucket.push(event);
+    stopsByOperatorDay.set(key, bucket);
   }
 
   const summaries: OperatorIdleDaySummary[] = [];
@@ -90,6 +123,15 @@ const computeIdleSummaries = (
     const totalIdleMinutes = gaps.reduce((sum, gap) => sum + gap.minutes, 0);
     const largestGapMinutes = gaps.reduce((max, gap) => Math.max(max, gap.minutes), 0);
 
+    const declaredStops = stopsByOperatorDay.get(key) ?? [];
+    const declaredStopMinutes = declaredStops.reduce(
+      (sum, event) => sum + stopEventMinutes(event, now),
+      0,
+    );
+    const overdueStopCount = declaredStops.filter(
+      (event) => isStopEventOverdue(event.reason, stopEventMinutes(event, now)),
+    ).length;
+
     summaries.push({
       operatorId,
       operatorName: operatorNames.get(operatorId) ?? 'Operador',
@@ -99,6 +141,9 @@ const computeIdleSummaries = (
       totalIdleMinutes,
       largestGapMinutes,
       gaps,
+      declaredStops,
+      declaredStopMinutes,
+      overdueStopCount,
     });
   }
 
@@ -117,7 +162,9 @@ export const useOperatorIdleMetrics = (
   });
 
   const summaries = useMemo(
-    () => (query.data ? computeIdleSummaries(query.data.services, query.data.operatorNames, thresholdMinutes) : []),
+    () => (query.data
+      ? computeIdleSummaries(query.data.services, query.data.operatorNames, thresholdMinutes, query.data.stopEvents)
+      : []),
     [query.data, thresholdMinutes],
   );
 

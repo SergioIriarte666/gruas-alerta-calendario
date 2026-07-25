@@ -11,6 +11,7 @@ import {
   recordInspectionStorageOrphan,
 } from '@/utils/inspectionRecord';
 import { deleteInspectionPdf, PDF_BUCKET, uploadInspectionPdf } from '@/utils/inspectionPdfUpload';
+import { buildEquipmentStatus, fetchActiveInspectionEquipment } from '@/services/inspectionEquipmentCatalog';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
@@ -79,7 +80,18 @@ export const submitInspectionPipeline = async ({
   }
 
   const uploadedPhotos = await ensurePhotosUploaded(values.photographicSet, serviceId);
-  const valuesWithPhotos: InspectionFormValues = { ...values, photographicSet: uploadedPhotos };
+
+  // El estado explícito se deriva aquí, del catálogo vigente, y no de un valor
+  // guardado en el formulario: así el acta y la columna equipment_status
+  // enumeran siempre TODOS los ítems evaluados, incluidos los ausentes.
+  const activeEquipment = await fetchActiveInspectionEquipment();
+  const equipmentStatus = buildEquipmentStatus(activeEquipment, values.equipment);
+
+  const valuesWithPhotos: InspectionFormValues = {
+    ...values,
+    equipmentStatus,
+    photographicSet: uploadedPhotos,
+  };
 
   const initialPhotos = phase === 'final'
     ? await fetchInitialPhotosForPdf(serviceId).catch((error) => {

@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle2, Loader2, MapPin, Phone, TriangleAlert } from 'lucide-react';
+import {
+  CheckCircle2,
+  Coffee,
+  Fuel,
+  Loader2,
+  MapPin,
+  PauseCircle,
+  Phone,
+  Ticket,
+  TriangleAlert,
+  UtensilsCrossed,
+} from 'lucide-react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 import { getCraneTypeLabel } from '@/utils/craneType';
@@ -470,6 +482,18 @@ const formatDistanceLabel = (meters: number): string => {
   return km >= 10 ? `${Math.round(km)} km` : `${km.toFixed(1)} km`;
 };
 
+/**
+ * Hora local de la operación, 'HH:mm'.
+ *
+ * Esta página es pública y no importa el cliente Supabase (ver el fetch directo
+ * contra SUPABASE_URL), así que no puede usar businessClock, que lee la TZ del
+ * negocio desde la BD. Se fija la misma zona que businessClock usa de fallback.
+ */
+const OPERATION_TIMEZONE = 'America/Santiago';
+
+const formatOperationTime = (isoTimestamp: string): string =>
+  formatInTimeZone(new Date(isoTimestamp), OPERATION_TIMEZONE, 'HH:mm');
+
 const formatRelativeShort = (isoTimestamp: string, nowMs: number): string => {
   const diffSec = Math.max(0, Math.round((nowMs - new Date(isoTimestamp).getTime()) / 1000));
   if (diffSec < 10) return 'justo ahora';
@@ -637,7 +661,29 @@ interface TrackingResponse {
   // paradas se muestran como pines informativos, sin guía ni ETA (SRV-6853).
   // Ausente en servicios sin paradas navegables (flujo original).
   route_armed?: boolean;
+  // Detención declarada en curso. El backend expone SOLO motivo y hora: la nota
+  // interna y el operador nunca salen al cliente. Mientras exista, el ETA queda
+  // suspendido en vez de correr solo y llegar falso.
+  stop_event?: { reason: StopReason; started_at: string } | null;
 }
+
+type StopReason = 'combustible' | 'alimentacion' | 'descanso' | 'peaje' | 'otro';
+
+const STOP_REASON_LABELS: Record<StopReason, string> = {
+  combustible: 'Combustible',
+  alimentacion: 'Alimentación',
+  descanso: 'Descanso',
+  peaje: 'Peaje',
+  otro: 'Detención',
+};
+
+const STOP_REASON_ICONS: Record<StopReason, typeof Fuel> = {
+  combustible: Fuel,
+  alimentacion: UtensilsCrossed,
+  descanso: Coffee,
+  peaje: Ticket,
+  otro: PauseCircle,
+};
 
 type PageStatus = 'loading' | 'ready' | 'invalid' | 'error';
 
@@ -1057,10 +1103,16 @@ const FullScreenStatus = ({
   </div>
 );
 
-const NoSignalBanner = () => (
+// Con la señal caída, el mapa muestra el último punto conocido. Decir la hora
+// exacta es lo único que impide que el cliente lo lea como posición en vivo.
+const NoSignalBanner = ({ recordedAt }: { recordedAt?: string | null }) => (
   <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning/10 px-2.5 py-1.5 text-xs text-warning">
     <TriangleAlert className="mt-0.5 size-3.5 flex-shrink-0" />
-    <span>Sin señal GPS hace unos minutos — la posición puede estar desactualizada</span>
+    <span>
+      {recordedAt
+        ? `Última posición conocida a las ${formatOperationTime(recordedAt)} — la grúa puede haber avanzado desde entonces`
+        : 'Sin señal GPS — la posición puede estar desactualizada'}
+    </span>
   </div>
 );
 
@@ -1073,8 +1125,42 @@ const CallButton = ({ phone }: { phone?: string | null }) => (
   </Button>
 );
 
+/**
+ * Insignia de detención declarada. El ícono congelado sin contexto se lee como
+ * problema; con motivo y hora se lee como lo que es: una parada normal de un
+ * traslado largo.
+ */
+const StopEventBadge = ({ stopEvent }: { stopEvent: NonNullable<TrackingResponse['stop_event']> }) => {
+  const Icon = STOP_REASON_ICONS[stopEvent.reason] ?? PauseCircle;
+  return (
+    <div className="mt-2 flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 px-2.5 py-1.5 text-xs font-medium text-info">
+      <Icon className="size-4 shrink-0" />
+      <span>
+        Detenido · {STOP_REASON_LABELS[stopEvent.reason] ?? 'Detención'} · desde{' '}
+        {formatOperationTime(stopEvent.started_at)}
+      </span>
+    </div>
+  );
+};
+
 const EtaHero = ({ data }: { data: TrackingResponse }) => {
   const stops = data.stops ?? [];
+
+  // Detención en curso: el ETA queda suspendido a propósito. Mostrar una hora
+  // de llegada que sigue corriendo durante un descanso es peor que no mostrar
+  // ninguna — el cliente la toma como compromiso.
+  if (data.stop_event) {
+    return (
+      <div>
+        <p className="text-2xl font-bold leading-tight text-foreground">
+          Detenido · {STOP_REASON_LABELS[data.stop_event.reason] ?? 'Detención'}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Desde las {formatOperationTime(data.stop_event.started_at)}. El tiempo de llegada se actualizará al reanudar.
+        </p>
+      </div>
+    );
+  }
 
   // Recorrido cargado pero servicio aún no iniciado: sin ETA ni guía. Va antes
   // que cualquier otra rama para no caer al render legacy y quedar en
@@ -1302,7 +1388,8 @@ const TrackService = () => {
             <span className="text-xs font-medium text-muted-foreground">Folio {data.folio}</span>
           </div>
           <p className="mt-2 text-base font-semibold text-foreground">{stageTitle}</p>
-          {data.state === 'no_signal' && <NoSignalBanner />}
+          {data.stop_event && <StopEventBadge stopEvent={data.stop_event} />}
+          {data.state === 'no_signal' && <NoSignalBanner recordedAt={data.position?.recorded_at} />}
         </div>
 
         <div className="pointer-events-auto">

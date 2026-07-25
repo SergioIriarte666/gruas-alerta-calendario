@@ -2510,6 +2510,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           equipment_checklist: string[]
+          equipment_status: Json | null
           id: string
           initial_vehicle_state: Json | null
           operator_id: string
@@ -2536,6 +2537,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           equipment_checklist: string[]
+          equipment_status?: Json | null
           id?: string
           initial_vehicle_state?: Json | null
           operator_id: string
@@ -2562,6 +2564,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           equipment_checklist?: string[]
+          equipment_status?: Json | null
           id?: string
           initial_vehicle_state?: Json | null
           operator_id?: string
@@ -4141,6 +4144,47 @@ export type Database = {
         }
         Relationships: []
       }
+      matched_routes: {
+        Row: {
+          api_requests: number | null
+          avg_confidence: number | null
+          computed_at: string
+          id: string
+          points_input: number | null
+          points_used: number | null
+          segments: Json
+          session_id: string
+        }
+        Insert: {
+          api_requests?: number | null
+          avg_confidence?: number | null
+          computed_at?: string
+          id?: string
+          points_input?: number | null
+          points_used?: number | null
+          segments: Json
+          session_id: string
+        }
+        Update: {
+          api_requests?: number | null
+          avg_confidence?: number | null
+          computed_at?: string
+          id?: string
+          points_input?: number | null
+          points_used?: number | null
+          segments?: Json
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matched_routes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "operator_location_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_email_settings: {
         Row: {
           created_at: string
@@ -4644,9 +4688,11 @@ export type Database = {
         Row: {
           created_at: string
           ended_at: string | null
+          ended_by: string | null
           ended_reason: string | null
           id: string
           last_point_at: string | null
+          manual_stop: boolean
           operator_id: string
           platform: string
           service_id: string | null
@@ -4660,9 +4706,11 @@ export type Database = {
         Insert: {
           created_at?: string
           ended_at?: string | null
+          ended_by?: string | null
           ended_reason?: string | null
           id?: string
           last_point_at?: string | null
+          manual_stop?: boolean
           operator_id: string
           platform?: string
           service_id?: string | null
@@ -4676,9 +4724,11 @@ export type Database = {
         Update: {
           created_at?: string
           ended_at?: string | null
+          ended_by?: string | null
           ended_reason?: string | null
           id?: string
           last_point_at?: string | null
+          manual_stop?: boolean
           operator_id?: string
           platform?: string
           service_id?: string | null
@@ -4730,6 +4780,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operator_pins: {
+        Row: {
+          operator_id: string
+          pin_hash: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          operator_id: string
+          pin_hash: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          operator_id?: string
+          pin_hash?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_pins_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: true
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
         ]
@@ -6373,9 +6452,82 @@ export type Database = {
           },
         ]
       }
+      service_stop_events: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          ended_by_source: string | null
+          id: string
+          note: string | null
+          operator_id: string | null
+          reason: string
+          service_id: string
+          started_at: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by_source?: string | null
+          id?: string
+          note?: string | null
+          operator_id?: string | null
+          reason: string
+          service_id: string
+          started_at?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by_source?: string | null
+          id?: string
+          note?: string | null
+          operator_id?: string | null
+          reason?: string
+          service_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_stop_events_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stop_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stop_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stop_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stop_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_stops: {
         Row: {
           address: string | null
+          armed_at: string | null
           created_at: string
           id: string
           label: string
@@ -6389,6 +6541,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          armed_at?: string | null
           created_at?: string
           id?: string
           label: string
@@ -6402,6 +6555,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          armed_at?: string | null
           created_at?: string
           id?: string
           label?: string
@@ -6536,8 +6690,8 @@ export type Database = {
       }
       service_types: {
         Row: {
-          base_price: number | null
           available_in_client_portal: boolean
+          base_price: number | null
           crane_required: boolean
           created_at: string | null
           created_by: string | null
@@ -6560,8 +6714,8 @@ export type Database = {
           vehicle_model_required: boolean
         }
         Insert: {
-          base_price?: number | null
           available_in_client_portal?: boolean
+          base_price?: number | null
           crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -6584,8 +6738,8 @@ export type Database = {
           vehicle_model_required?: boolean
         }
         Update: {
-          base_price?: number | null
           available_in_client_portal?: boolean
+          base_price?: number | null
           crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -8529,6 +8683,10 @@ export type Database = {
       }
       cleanup_orphaned_supplier_costs: { Args: never; Returns: number }
       cleanup_payment_duplicates: { Args: never; Returns: Json }
+      clear_operator_pin: {
+        Args: { p_operator_id: string }
+        Returns: undefined
+      }
       close_service_status_only: {
         Args: { p_service_id: string }
         Returns: Json
@@ -8803,6 +8961,10 @@ export type Database = {
         Args: { p_client_id: string }
         Returns: Json
       }
+      get_client_service_tracking_token: {
+        Args: { p_service_id: string }
+        Returns: string
+      }
       get_closure_service_counts: {
         Args: never
         Returns: {
@@ -8936,6 +9098,10 @@ export type Database = {
           started_reason: string
         }[]
       }
+      get_operator_service_tracking_token: {
+        Args: { p_service_id: string }
+        Returns: string
+      }
       get_or_create_inventory_supplier: {
         Args: {
           p_address: string
@@ -8949,10 +9115,6 @@ export type Database = {
           p_rut: string
           p_subcategory: string
         }
-        Returns: string
-      }
-      get_client_service_tracking_token: {
-        Args: { p_service_id: string }
         Returns: string
       }
       get_or_create_tracking_token: {
@@ -9262,6 +9424,7 @@ export type Database = {
       }
       migrate_unsync_crane_parts: { Args: never; Returns: Json }
       migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
+      operator_has_pin: { Args: { p_operator_id: string }; Returns: boolean }
       preview_next_invoice_folio: { Args: never; Returns: string }
       preview_recovery_operation: {
         Args: { p_operation_id: string }
@@ -9353,6 +9516,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      service_has_active_tracking_link: {
+        Args: { p_service_id: string }
+        Returns: boolean
+      }
+      service_stops_distance_meters: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
       set_lowboy_rcv_cost_link: {
         Args: { p_cost_id: string; p_record_id: string }
         Returns: undefined
@@ -9363,6 +9534,10 @@ export type Database = {
           p_record_id: string
           p_sale_id: string
         }
+        Returns: undefined
+      }
+      set_operator_pin: {
+        Args: { p_operator_id: string; p_pin: string }
         Returns: undefined
       }
       smart_apply_payment: {
@@ -9483,6 +9658,10 @@ export type Database = {
         Returns: Json
       }
       verify_auth_system: { Args: never; Returns: Json }
+      verify_operator_pin: {
+        Args: { p_operator_id: string; p_pin: string }
+        Returns: boolean
+      }
       verify_security_compliance: { Args: never; Returns: string }
       void_inventory_purchase: {
         Args: {

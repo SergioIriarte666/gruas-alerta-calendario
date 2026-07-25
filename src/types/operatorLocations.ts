@@ -49,6 +49,62 @@ export const OPERATOR_STATUS_COLOR_TOKENS: Record<OperatorLiveStatus, `--${strin
 };
 
 const SIGNAL_STALE_MINUTES = 3;
+const SIGNAL_LOST_MINUTES = 10;
+
+/**
+ * Frescura del último punto recibido.
+ * - `live`    (< 3 min): la posición del mapa es la posición real.
+ * - `stale`   (3–10 min): puede haber corrido; se dice cuánto hace.
+ * - `lost`    (> 10 min): el barrido ya cerró (o va a cerrar) la sesión.
+ * - `unknown`: nunca reportó.
+ */
+export type SignalFreshnessLevel = 'live' | 'stale' | 'lost' | 'unknown';
+
+export interface SignalFreshness {
+  level: SignalFreshnessLevel;
+  /** Minutos transcurridos desde el último punto; null si nunca reportó. */
+  minutes: number | null;
+  /** Hora del último punto ('HH:mm'); null si nunca reportó. */
+  atLabel: string | null;
+  /** Texto listo para mostrar junto al indicador. */
+  label: string;
+}
+
+/**
+ * El módulo mostraba "Siguiendo ruta en vivo" en verde con el último punto de
+ * hace 93 minutos: no distinguía "en vivo" de "dato viejo". Esta es la única
+ * fuente de esa distinción; toda vista que muestre posición debe usarla y
+ * acompañarla SIEMPRE con la hora del último punto.
+ */
+export const describeSignalFreshness = (
+  isoTimestamp: string | null | undefined,
+  now: Date = businessClock.now(),
+): SignalFreshness => {
+  if (!isoTimestamp) {
+    return { level: 'unknown', minutes: null, atLabel: null, label: 'Sin señal registrada' };
+  }
+
+  const minutes = Math.max(0, Math.round((now.getTime() - new Date(isoTimestamp).getTime()) / 60000));
+  const atLabel = businessClock.format(isoTimestamp, 'HH:mm');
+
+  if (minutes < SIGNAL_STALE_MINUTES) {
+    return { level: 'live', minutes, atLabel, label: 'En vivo' };
+  }
+
+  if (minutes < SIGNAL_LOST_MINUTES) {
+    return { level: 'stale', minutes, atLabel, label: `Última señal hace ${minutes} min` };
+  }
+
+  return { level: 'lost', minutes, atLabel, label: `Sin señal desde ${atLabel}` };
+};
+
+/** Clases de badge por nivel de frescura (verde / ámbar / gris). */
+export const SIGNAL_FRESHNESS_BADGE_CLASS: Record<SignalFreshnessLevel, string> = {
+  live: 'border-success/30 bg-success/10 text-success',
+  stale: 'border-warning/30 bg-warning/10 text-warning',
+  lost: 'border-danger/30 bg-danger/10 text-danger',
+  unknown: 'border-border bg-muted text-muted-foreground',
+};
 
 /**
  * Deriva el estado visible de un operador a partir de su última sesión de
@@ -161,4 +217,9 @@ export interface OperatorIdleDaySummary {
   totalIdleMinutes: number;
   largestGapMinutes: number;
   gaps: OperatorIdleGap[];
+  /** Detenciones CON motivo declarado: lo que distingue una parada justificada de un hueco sin explicar. */
+  declaredStops: import('@/types/serviceStopEvent').ServiceStopEvent[];
+  declaredStopMinutes: number;
+  /** Detenciones que exceden lo típico de su motivo (el descanso nunca cuenta). */
+  overdueStopCount: number;
 }

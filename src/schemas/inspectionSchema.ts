@@ -3,6 +3,13 @@ import { z } from 'zod';
 
 export const inspectionFormSchema = z.object({
   equipment: z.array(z.string()).optional().default([]),
+  /**
+   * Estado explícito {item_id: true|false} de TODOS los ítems del catálogo
+   * evaluados. No lo llena el usuario: se deriva del catálogo al enviar
+   * (ver inspectionSubmission) y viaja hasta el PDF y la columna
+   * inspections.equipment_status. `equipment` sigue siendo solo los presentes.
+   */
+  equipmentStatus: z.record(z.boolean()).optional(),
   vehicleObservations: z.string().optional(),
   kilometraje: z.string().optional().default(''),
   combustible: z.enum(['0', '1/4', '1/2', '3/4', 'full']).optional(),

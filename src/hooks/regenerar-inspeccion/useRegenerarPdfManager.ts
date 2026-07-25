@@ -54,6 +54,7 @@ const SERVICE_SELECT = `
     id,
     operator_id,
     equipment_checklist,
+    equipment_status,
     vehicle_observations,
     operator_signature,
     client_name,
@@ -235,6 +236,12 @@ const buildInspectionValues = (
     equipment: rawInspection?.equipment_checklist?.length
       ? rawInspection.equipment_checklist
       : ['regenerado-administrativamente'],
+    // Estado explícito congelado al inspeccionar: regenerar un acta histórica
+    // debe reproducir el catálogo de ese día, no el de hoy. Ausente en filas
+    // anteriores a la columna → el PDF cae al comportamiento legacy.
+    equipmentStatus: rawInspection?.equipment_status && typeof rawInspection.equipment_status === 'object'
+      ? rawInspection.equipment_status as Record<string, boolean>
+      : undefined,
     vehicleObservations: rawInspection?.vehicle_observations || service.observations || 'Regenerado administrativamente desde evidencia disponible.',
     kilometraje: typeof storedState.kilometraje === 'string' ? storedState.kilometraje : '',
     combustible: ['0', '1/4', '1/2', '3/4', 'full'].includes(String(storedState.combustible))
@@ -329,6 +336,7 @@ export const useRegenerarPdfManager = () => {
               service_id: serviceId,
               operator_id: operatorId,
               equipment_checklist: inspection.equipment || ['regenerado-administrativamente'],
+              ...(inspection.equipmentStatus ? { equipment_status: inspection.equipmentStatus } : {}),
               vehicle_observations: inspection.vehicleObservations || null,
               operator_signature: inspection.operatorSignature || BLANK_SIGNATURE,
               client_name: inspection.clientName || null,

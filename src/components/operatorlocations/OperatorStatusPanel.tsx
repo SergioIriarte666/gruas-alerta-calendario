@@ -2,6 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { businessClock } from '@/utils/businessClock';
 import {
   OPERATOR_STATUS_LABELS,
+  SIGNAL_FRESHNESS_BADGE_CLASS,
+  describeSignalFreshness,
   deriveOperatorStatus,
   formatMinutesAgo,
   type OperatorLiveLocation,
@@ -42,6 +44,7 @@ export const OperatorStatusPanel = ({
 
       {sorted.map((location) => {
         const status = deriveOperatorStatus(location);
+        const freshness = describeSignalFreshness(location.recorded_at);
         const isSelected = location.operator_id === selectedOperatorId;
 
         return (
@@ -61,6 +64,21 @@ export const OperatorStatusPanel = ({
               <Badge variant="outline" className={cn('shrink-0 text-xs font-semibold', STATUS_BADGE_CLASS[status])}>
                 {OPERATOR_STATUS_LABELS[status]}
               </Badge>
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <Badge
+                variant="outline"
+                className={cn('shrink-0 text-xs font-semibold', SIGNAL_FRESHNESS_BADGE_CLASS[freshness.level])}
+              >
+                {freshness.label}
+              </Badge>
+              {/* La hora del último punto va SIEMPRE junto al indicador: sin ella,
+                  "hace 93 min" y "en vivo" se ven igual de creíbles. */}
+              {freshness.atLabel && (
+                <span className="text-xs font-medium text-muted-foreground">
+                  Último punto {freshness.atLabel}
+                </span>
+              )}
             </div>
             <p className="mt-1 text-sm font-medium text-muted-foreground">
               Última señal {formatMinutesAgo(location.recorded_at)}

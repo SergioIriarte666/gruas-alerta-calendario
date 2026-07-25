@@ -1672,6 +1672,48 @@ html.reduce-motion *::after {
   border: 1px solid hsl(var(--info) / 0.13);
 }
 
+/* Control de transmisión: el pulso es el estado, no un adorno. Verde = está
+   subiendo; ámbar = la subida se congeló o la grúa rueda sin transmitir. */
+.operator-transmission-pulse--live,
+.operator-transmission-pulse--warning {
+  position: relative;
+}
+
+.operator-transmission-pulse--live::before,
+.operator-transmission-pulse--warning::before {
+  position: absolute;
+  inset: -0.25rem;
+  border-radius: 999px;
+  content: '';
+  pointer-events: none;
+  animation: operator-transmission-pulse 2s ease-out infinite;
+}
+
+.operator-transmission-pulse--live::before {
+  border: 2px solid hsl(var(--success) / 0.55);
+}
+
+.operator-transmission-pulse--warning::before {
+  border: 2px solid hsl(var(--warning) / 0.6);
+}
+
+@keyframes operator-transmission-pulse {
+  0% { opacity: 0.85; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.28); }
+  100% { opacity: 0; transform: scale(1.28); }
+}
+
+/* Un pulso permanente frente a los ojos durante horas de traslado es fatiga
+   visual y una barrera de accesibilidad: con reduced-motion el estado se
+   sostiene con el color del borde, que ya lo comunica por sí solo. */
+@media (prefers-reduced-motion: reduce) {
+  .operator-transmission-pulse--live::before,
+  .operator-transmission-pulse--warning::before {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 .operator-native-tabbar {
   border-top: 1px solid var(--operator-line);
   background: hsl(var(--card) / 0.9);

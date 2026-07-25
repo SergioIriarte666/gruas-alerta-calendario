@@ -9,7 +9,7 @@ import { NextServiceCard } from '@/components/operator/NextServiceCard';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspections';
-import { LocationSharingCard } from '@/components/operator/LocationSharingCard';
+import { TransmissionControl } from '@/components/operator/TransmissionControl';
 import { DocumentStatusBanner } from '@/components/operator/DocumentStatusBanner';
 import { OperatorActivityPreview } from '@/components/operator/OperatorActivityPreview';
 
@@ -156,7 +156,10 @@ const OperatorDashboard = () => {
         <NextServiceCard service={asignadosSorted[0]} />
       )}
 
-      <LocationSharingCard
+      {/* Un solo control: transmisión, link del cliente y estado de subida. No
+          puede coexistir con otro consumidor de useOperatorLocationTracking —
+          dos montajes abren dos watchers y pelean por la misma sesión. */}
+      <TransmissionControl
         operatorId={user?.operator_id}
         userId={user?.id}
         currentService={currentTrackingService}

@@ -5,6 +5,8 @@ export interface InspectionPDFData {
   service: Service;
   inspection: {
     equipment?: string[];
+    /** Estado explícito por ítem del catálogo. Ausente en inspecciones anteriores a 2026-07. */
+    equipmentStatus?: Record<string, boolean>;
     vehicleObservations?: string;
     kilometraje?: string;
     combustible?: string;

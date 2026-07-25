@@ -3,7 +3,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
 import { addPDFHeader } from './pdf/pdfHeader';
-import { addServiceInfo, addEquipmentChecklist, addObservationsAndSignatures } from './pdf/pdfSections';
+import { addServiceInfo, addEquipmentChecklist, resolveEquipmentChecklist, addObservationsAndSignatures } from './pdf/pdfSections';
+import { fetchInspectionEquipmentCatalog } from '@/services/inspectionEquipmentCatalog';
 import { addDigitalSignatures } from './pdf/pdfSignatures';
 import { fetchCompanyData } from './pdf/companyDataFetcher';
 import { validateInspectionData } from './pdf/pdfValidation';
@@ -72,10 +73,22 @@ export const generateInspectionPDF = async (data: {
     yPosition = addServiceInfo(doc, pdfData, yPosition);
     logger.debug('Información de servicio agregada, yPosition:', yPosition);
 
-    // Add equipment checklist solo si el servicio requiere detalle
+    // Add equipment checklist solo si el servicio requiere detalle.
+    // El catálogo se lee de inspection_equipment_items en cada generación: si
+    // se hardcodea, el acta omite los ítems agregados después (así se perdió
+    // "Foco Faenero", sort_order 36, en un acta con 35 ítems fijos).
     if (requiresDetail) {
-      yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
-      logger.debug('Checklist agregado, yPosition:', yPosition);
+      const equipmentCatalog = await fetchInspectionEquipmentCatalog();
+      const checklist = resolveEquipmentChecklist(
+        equipmentCatalog,
+        data.inspection.equipmentStatus,
+        data.inspection.equipment,
+      );
+      yPosition = addEquipmentChecklist(doc, checklist, yPosition);
+      logger.debug('Checklist agregado, yPosition:', yPosition, {
+        items: checklist.items.length,
+        explicitStatus: checklist.hasExplicitStatus,
+      });
     } else {
       logger.debug('Checklist omitido: servicio no requiere detalle');
     }
