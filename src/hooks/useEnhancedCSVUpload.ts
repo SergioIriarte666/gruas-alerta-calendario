@@ -9,7 +9,7 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("useEnhancedCSVUpload");
 export const useEnhancedCSVUpload = () => {
-  const { createService, services } = useServices();
+  const { createService, services, refetch } = useServices();
   const { syncAllFoliosAfterBulkUpload } = useFolioGenerator();
   const [uploader] = useState(() => new EnhancedCSVUploader());
   const [file, setFile] = useState<File | null>(null);
@@ -18,6 +18,7 @@ export const useEnhancedCSVUpload = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
 
@@ -110,6 +111,7 @@ export const useEnhancedCSVUpload = () => {
 
     try {
       setIsUploading(true);
+      setIsCancelling(false);
       setUploadProgress(null);
       setUploadResult(null);
 
@@ -118,13 +120,17 @@ export const useEnhancedCSVUpload = () => {
         (serviceData) => createService(serviceData, {
           silent: true,
           tolerateResourceSyncFailure: true,
+          skipInvalidation: true,
+          skipRefetch: true,
         }),
         setUploadProgress
       );
 
       setUploadResult(result);
 
-      if (result.success) {
+      if (result.cancelled) {
+        toast.info(result.message);
+      } else if (result.success) {
         toast.success(`Carga exitosa: ${result.processed} servicios creados`);
       } else {
         toast.error(`Carga parcial: ${result.processed} exitosos, ${result.errors} errores`);
@@ -134,6 +140,7 @@ export const useEnhancedCSVUpload = () => {
       if (result.insertedFolios && result.insertedFolios.length > 0) {
         logger.debug('🔄 Syncing folio counter after bulk upload...');
         await syncAllFoliosAfterBulkUpload(result.insertedFolios);
+        await refetch();
       }
 
       return result;
@@ -151,9 +158,18 @@ export const useEnhancedCSVUpload = () => {
       return errorResult;
     } finally {
       setIsUploading(false);
+      setIsCancelling(false);
       setUploadProgress(null);
     }
-  }, [validationResult, uploader, createService]);
+  }, [validationResult, uploader, createService, refetch, syncAllFoliosAfterBulkUpload]);
+
+  const cancelUpload = useCallback(() => {
+    if (!isUploading || isCancelling) return;
+
+    setIsCancelling(true);
+    uploader.cancelUpload();
+    toast.info('Cancelando carga después del servicio en curso...');
+  }, [isUploading, isCancelling, uploader]);
 
   const downloadTemplate = useCallback(() => {
     uploader.generateTemplate();
@@ -178,12 +194,14 @@ export const useEnhancedCSVUpload = () => {
     isInitialized,
     isValidating,
     isUploading,
+    isCancelling,
     uploadProgress,
     uploadResult,
     setFile,
     parseFile,
     validateData,
     uploadServices,
+    cancelUpload,
     downloadTemplate,
     downloadExcelTemplate,
     reset,

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useEnhancedCSVUpload } from '@/hooks/useEnhancedCSVUpload';
 import { ValidationError } from '@/utils/enhancedCsvUpload';
-import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
+import { formatCurrency } from '@/utils/statusHelpers';
 import { BatchUploadAnimations } from './BatchUploadAnimations';
 import { AnimatedProgress } from './AnimatedProgress';
 import { AnimatedStatCard } from './AnimatedStatCard';
@@ -29,6 +29,19 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("EnhancedCSVUploadServices");
+
+const getPreviewValue = (
+  row: Record<string, unknown>,
+  spreadsheetHeader: string,
+  mappedField: string
+): unknown => row[spreadsheetHeader] ?? row[mappedField] ?? '';
+
+const getPreviewVehicle = (row: Record<string, unknown>): string => {
+  const brand = String(getPreviewValue(row, 'Vehículo Marca', 'vehicleBrand')).trim();
+  const model = String(getPreviewValue(row, 'Vehículo Modelo', 'vehicleModel')).trim();
+  return [brand, model].filter(Boolean).join(' ') || '-';
+};
+
 interface EnhancedCSVUploadServicesProps {
   onClose?: () => void;
   onSuccess?: (count: number) => void;
@@ -42,12 +55,14 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     isInitialized,
     isValidating,
     isUploading,
+    isCancelling,
     uploadProgress,
     uploadResult,
     setFile,
     parseFile,
     validateData,
     uploadServices,
+    cancelUpload,
     downloadTemplate,
     downloadExcelTemplate,
     reset,
@@ -359,15 +374,34 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
       {/* Progress indicator */}
       {uploadProgress && (
-        <Card className="glass-card animate-slide-up">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <BarChart3 className={cn(
-                "size-5",
-                uploadProgress.stage === 'uploading' && "animate-rotate-slow"
-              )} />
-              {getProgressStageText(uploadProgress.stage)}
-            </CardTitle>
+        <Card className="glass-card animate-slide-up overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <BarChart3 className={cn(
+                  "size-5",
+                  uploadProgress.stage === 'uploading' && "animate-rotate-slow"
+                )} />
+                {getProgressStageText(uploadProgress.stage)}
+              </CardTitle>
+              {uploadProgress.stage === 'uploading' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={cancelUpload}
+                  disabled={isCancelling}
+                  className="border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
+                >
+                  {isCancelling ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <XCircle className="mr-2 size-4" />
+                  )}
+                  {isCancelling ? 'Cancelando…' : 'Cancelar'}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4" ref={progressBarRef}>
             <div>
@@ -375,8 +409,10 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                 <span className="animate-fade-in">
                   {uploadProgress.stage === 'uploading' ? `Lote ${uploadProgress.currentBatch} de ${uploadProgress.totalBatches}` : 'Progreso'}
                 </span>
-                <span className="font-mono font-semibold animate-fade-in">
+                <span className="font-mono font-semibold tabular-nums animate-fade-in">
                   {uploadProgress.processed} de {uploadProgress.total}
+                  {' · '}
+                  {Math.min(100, Math.max(0, Math.round(uploadProgress.percentage)))}%
                 </span>
               </div>
               <AnimatedProgress 
@@ -523,6 +559,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                     </TableHeader>
                     <TableBody>
                       {csvData.slice(0, 5).map((row, index) => {
+                        const previewRow = row as Record<string, unknown>;
                         const hasError = validationResult.errors.some(
                           error => error.row === index && error.severity === 'error'
                         );
@@ -532,16 +569,24 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
                         return (
                           <TableRow key={index} className="border">
-                            <TableCell className="text-foreground">{row.Folio || row.folio}</TableCell>
-                            <TableCell className="text-foreground">{row['Fecha Servicio'] || row.serviceDate}</TableCell>
-                            <TableCell className="text-foreground">{row['Cliente Nombre'] || row.clientName}</TableCell>
                             <TableCell className="text-foreground">
-                              {formatVehicleInfo(row)}
+                              {String(getPreviewValue(previewRow, 'Folio', 'folio'))}
                             </TableCell>
                             <TableCell className="text-foreground">
-                              {shouldShowVehicleInfo(row) ? (row.Patente || row.licensePlate) : '-'}
+                              {String(getPreviewValue(previewRow, 'Fecha Servicio', 'serviceDate'))}
                             </TableCell>
-                            <TableCell className="text-foreground">${row.Valor || row.value}</TableCell>
+                            <TableCell className="text-foreground">
+                              {String(getPreviewValue(previewRow, 'Cliente Nombre', 'clientName'))}
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {getPreviewVehicle(previewRow)}
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {String(getPreviewValue(previewRow, 'Patente', 'licensePlate') || '-')}
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {formatCurrency(Number(getPreviewValue(previewRow, 'Valor', 'value')))}
+                            </TableCell>
                             <TableCell>
                               {hasError ? (
                                 <Badge className="border-danger/30 bg-danger/10 text-danger">Error</Badge>
@@ -576,7 +621,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                   {isUploading ? (
                     <>
                       <Loader2 className="size-4 mr-2 animate-spin" />
-                      Cargando...
+                      {isCancelling ? 'Cancelando…' : 'Cargando...'}
                     </>
                   ) : (
                     <>

@@ -14,6 +14,7 @@ const logger = createLogger('ServiceManager');
 interface CreateServiceOptions {
   silent?: boolean;
   tolerateResourceSyncFailure?: boolean;
+  skipInvalidation?: boolean;
 }
 
 interface UpdateServiceOptions {
@@ -498,8 +499,12 @@ export const useServiceManager = () => {
           originCatalogId: resolvedOriginCatalogId,
         });
 
-        await queryClient.invalidateQueries({ queryKey: ['services'] });
-        await queryClient.invalidateQueries({ queryKey: ['costs'] });
+        if (!options?.skipInvalidation) {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['services'] }),
+            queryClient.invalidateQueries({ queryKey: ['costs'] })
+          ]);
+        }
 
         const transformedService = transformToService(newService);
         return transformedService;

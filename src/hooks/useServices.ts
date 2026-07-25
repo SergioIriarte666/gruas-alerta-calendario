@@ -9,6 +9,8 @@ import { businessClock } from '@/utils/businessClock';
 interface CreateServiceOptions {
   silent?: boolean;
   tolerateResourceSyncFailure?: boolean;
+  skipInvalidation?: boolean;
+  skipRefetch?: boolean;
 }
 
 interface UpdateServiceOptions {
@@ -36,7 +38,9 @@ export const useServices = () => {
 
   const createService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {
     const newService = await createServiceMutation(serviceData, options);
-    await refetch();
+    if (!options?.skipRefetch) {
+      await refetch();
+    }
     return newService;
   };
 

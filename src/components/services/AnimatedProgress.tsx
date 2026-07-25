@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 interface AnimatedProgressProps {
@@ -54,25 +53,30 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
     return 'shadow-glow-success';
   };
 
+  const boundedDisplayValue = Math.min(100, Math.max(0, displayValue));
+
   return (
-    <div className="relative">
-      <Progress 
-        value={displayValue} 
-        className={cn(
-          "h-3 transition-all duration-300 overflow-visible",
-          className
-        )}
-      />
+    <div
+      className={cn(
+        "relative h-3 w-full overflow-hidden rounded-full bg-secondary",
+        className
+      )}
+      role="progressbar"
+      aria-label="Progreso de carga"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(boundedDisplayValue)}
+    >
       <div 
         className={cn(
-          "absolute top-0 left-0 h-full rounded-full transition-all duration-500",
+          "absolute inset-y-0 left-0 max-w-full overflow-hidden rounded-full transition-[width] duration-500",
           getColorClass(),
           showPulse && "animate-progress-flow",
           isAtMilestone && "animate-scale-pulse",
           isAtMilestone && getGlowClass()
         )}
         style={{
-          width: `${displayValue}%`,
+          width: `${boundedDisplayValue}%`,
         }}
       >
         {/* Shimmer effect */}

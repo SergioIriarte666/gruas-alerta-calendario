@@ -6,6 +6,68 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('EnhancedCsvUpload');
 
+const normalizeHeaderForComparison = (header: string): string =>
+  header
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+
+const EXCEL_DATE_HEADERS = new Set([
+  'fechasolicitud',
+  'fechaservicio',
+  'requestdate',
+  'servicedate',
+]);
+
+export const normalizeExcelCellValue = (header: string, cellValue: unknown): unknown => {
+  const isDateColumn = EXCEL_DATE_HEADERS.has(normalizeHeaderForComparison(header));
+
+  if (!isDateColumn) {
+    return cellValue ?? '';
+  }
+
+  if (cellValue instanceof Date) {
+    const year = cellValue.getUTCFullYear();
+    const month = String(cellValue.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(cellValue.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  if (typeof cellValue === 'number' && (XLSX as any).SSF?.parse_date_code) {
+    const parsed = (XLSX as any).SSF.parse_date_code(cellValue);
+    if (parsed?.y) {
+      const month = String(parsed.m).padStart(2, '0');
+      const day = String(parsed.d).padStart(2, '0');
+      return `${parsed.y}-${month}-${day}`;
+    }
+  }
+
+  if (typeof cellValue === 'string') {
+    const trimmed = cellValue.trim();
+    const ddmmyyyy = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    const yyyymmdd = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+
+    if (ddmmyyyy) {
+      const [, day, month, year] = ddmmyyyy;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    if (yyyymmdd) {
+      const [, year, month, day] = yyyymmdd;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    return trimmed;
+  }
+
+  return cellValue ?? '';
+};
+
+export const isMissingRequiredValue = (value: unknown): boolean =>
+  value === null || value === undefined || String(value).trim() === '';
+
 export interface ValidationError {
   row: number;
   field: string;
@@ -35,6 +97,7 @@ export interface UploadProgress {
 
 export interface UploadResult {
   success: boolean;
+  cancelled?: boolean;
   processed: number;
   errors: number;
   message: string;
@@ -46,6 +109,7 @@ export interface UploadResult {
 export class EnhancedCSVUploader {
   private dataMapper: DataMapper;
   private batchSize = 25;
+  private uploadCancelled = false;
 
   constructor() {
     this.dataMapper = new DataMapper();
@@ -55,6 +119,10 @@ export class EnhancedCSVUploader {
     logger.debug('🔄 Initializing CSV uploader...');
     await this.dataMapper.initialize();
     logger.debug('✅ CSV uploader initialized successfully');
+  }
+
+  cancelUpload(): void {
+    this.uploadCancelled = true;
   }
 
   async parseFile(file: File, onProgress?: (progress: UploadProgress) => void): Promise<any[]> {
@@ -189,41 +257,8 @@ export class EnhancedCSVUploader {
           .map((row, index) => {
             const rowObject: any = {};
             headers.forEach((header, headerIndex) => {
-              let value = row[headerIndex];
-              
-              // Excel serial dates arrive as Date objects (cellDates:true).
-              // Use UTC components to preserve the literal day the user typed,
-              // regardless of the browser timezone.
-              if (value instanceof Date) {
-                const y = value.getUTCFullYear();
-                const m = String(value.getUTCMonth() + 1).padStart(2, '0');
-                const d = String(value.getUTCDate()).padStart(2, '0');
-                value = `${y}-${m}-${d}`;
-              } else if (typeof value === 'number' && (XLSX as any).SSF?.parse_date_code) {
-                // Defensive: numeric Excel serial dates → YYYY-MM-DD
-                const parsed = (XLSX as any).SSF.parse_date_code(value);
-                if (parsed && parsed.y) {
-                  const y = parsed.y;
-                  const m = String(parsed.m).padStart(2, '0');
-                  const d = String(parsed.d).padStart(2, '0');
-                  value = `${y}-${m}-${d}`;
-                }
-              } else if (typeof value === 'string') {
-                // Handle DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD
-                const trimmed = value.trim();
-                const ddmmyyyy = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-                const yyyymmdd = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
-                if (ddmmyyyy) {
-                  const [, d, m, y] = ddmmyyyy;
-                  value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                  logger.debug(`📅 Converted date ${trimmed} to ${value}`);
-                } else if (yyyymmdd) {
-                  const [, y, m, d] = yyyymmdd;
-                  value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                }
-              }
-              
-              rowObject[header.trim()] = value || '';
+              const cleanHeader = String(header ?? '').trim();
+              rowObject[cleanHeader] = normalizeExcelCellValue(cleanHeader, row[headerIndex]);
             });
             
             if (index === 0) {
@@ -359,7 +394,7 @@ export class EnhancedCSVUploader {
       
       for (const field of requiredFields) {
         const value = mappedRow[field];
-        const isEmpty = !value || value.toString().trim() === '';
+        const isEmpty = isMissingRequiredValue(value);
         
         if (isEmpty) {
           logger.debug(`❌ Row ${i + 1} missing field '${field}':`, value);
@@ -452,6 +487,7 @@ export class EnhancedCSVUploader {
     createService: (service: any) => Promise<any>,
     onProgress?: (progress: UploadProgress) => void
   ): Promise<UploadResult> {
+    this.uploadCancelled = false;
     const total = services.length;
     const totalBatches = Math.ceil(total / this.batchSize);
     let processed = 0;
@@ -459,6 +495,16 @@ export class EnhancedCSVUploader {
     const failedRows: number[] = [];
     const errorDetails: ValidationError[] = [];
     const insertedFolios: string[] = [];
+    const cancelledResult = (): UploadResult => ({
+      success: false,
+      cancelled: true,
+      processed,
+      errors,
+      message: `Carga cancelada: ${processed} de ${total} servicios creados`,
+      failedRows: failedRows.length > 0 ? failedRows : undefined,
+      errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
+      insertedFolios: insertedFolios.length > 0 ? insertedFolios : undefined
+    });
 
     logger.debug('🚀 Starting service upload:', {
       total,
@@ -479,12 +525,20 @@ export class EnhancedCSVUploader {
 
     try {
       for (let i = 0; i < totalBatches; i++) {
+        if (this.uploadCancelled) {
+          return cancelledResult();
+        }
+
         const batch = services.slice(i * this.batchSize, (i + 1) * this.batchSize);
         const currentBatch = i + 1;
 
         logger.debug(`📦 Processing batch ${currentBatch}/${totalBatches} with ${batch.length} services`);
 
         for (let j = 0; j < batch.length; j++) {
+          if (this.uploadCancelled) {
+            return cancelledResult();
+          }
+
           const service = batch[j];
           const globalIndex = i * this.batchSize + j;
 

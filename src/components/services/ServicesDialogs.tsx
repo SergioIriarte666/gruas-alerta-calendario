@@ -41,14 +41,16 @@ export const ServicesDialogs = ({
   return (
     <>
       <Dialog open={isCSVUploadOpen} onOpenChange={onCSVUploadClose}>
-        <DialogContent className="max-h-[90vh] max-w-6xl w-[95vw] overflow-clip border-border/70 bg-card">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[95vw] max-w-6xl flex-col gap-0 overflow-hidden border-border/70 bg-card p-0 sm:max-h-[calc(100dvh-3rem)]">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 pr-14">
             <DialogTitle>Carga Masiva de Servicios</DialogTitle>
           </DialogHeader>
-          <EnhancedCSVUploadServices
-            onClose={onCSVUploadClose}
-            onSuccess={onCSVSuccess}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
+            <EnhancedCSVUploadServices
+              onClose={onCSVUploadClose}
+              onSuccess={onCSVSuccess}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
