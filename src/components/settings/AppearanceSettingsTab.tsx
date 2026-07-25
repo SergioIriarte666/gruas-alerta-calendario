@@ -277,27 +277,39 @@ export const AppearanceSettingsTab = () => {
           </div>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
+          {/* El espaciado sale de `--app-density` (index.css), el mismo token que
+              usa el shell real: la vista previa no puede divergir de la app. */}
           <div className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-inner">
-            <div className="grid min-h-56 grid-cols-[3.25rem_1fr] sm:grid-cols-[9rem_1fr]">
+            <div className={cn(
+              'grid min-h-56 grid-cols-[3.25rem_1fr]',
+              !preferences.sidebarCollapsed && 'sm:grid-cols-[9rem_1fr]',
+            )}>
               <div className="border-r border-border/70 bg-card/90 p-2.5">
                 <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
-                  <div className="size-7 rounded-lg bg-primary" />
-                  <span className="hidden text-xs font-bold uppercase tracking-widest text-muted-foreground sm:block">Operaciones</span>
+                  <div className="size-7 shrink-0 rounded-lg bg-primary" />
+                  <span className={cn(
+                    'hidden truncate text-xs font-bold uppercase tracking-widest text-muted-foreground',
+                    !preferences.sidebarCollapsed && 'sm:block',
+                  )}>
+                    Operaciones
+                  </span>
                 </div>
                 <div className="space-y-1.5">
                   {[0, 1, 2, 3].map((item) => (
                     <div key={item} className={cn(
-                      'flex items-center gap-2 rounded-lg px-2',
-                      preferences.density === 'compact' ? 'py-1.5' : 'py-2.5',
+                      'appearance-preview-nav-item flex items-center gap-2 rounded-lg px-2',
                       item === 0 ? 'bg-primary/[0.12] text-primary' : 'text-muted-foreground',
                     )}>
-                      <span className="size-3 rounded-sm border border-current" />
-                      <span className="hidden h-1.5 flex-1 rounded-full bg-current opacity-40 sm:block" />
+                      <span className="size-3 shrink-0 rounded-sm border border-current" />
+                      <span className={cn(
+                        'hidden h-1.5 flex-1 rounded-full bg-current opacity-40',
+                        !preferences.sidebarCollapsed && 'sm:block',
+                      )} />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className={cn('min-w-0', preferences.density === 'compact' ? 'p-3' : 'p-5')}>
+              <div className="appearance-preview-body min-w-0">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <div className="h-2.5 w-28 rounded-full bg-foreground/80" />
@@ -307,10 +319,7 @@ export const AppearanceSettingsTab = () => {
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {[['12', 'Servicios'], ['04', 'Pendientes'], ['96%', 'Cumplimiento']].map(([value, label]) => (
-                    <div key={label} className={cn(
-                      'rounded-xl border border-border/70 bg-card',
-                      preferences.density === 'compact' ? 'p-2.5' : 'p-4',
-                    )}>
+                    <div key={label} className="appearance-preview-metric rounded-xl border border-border/70 bg-card">
                       <p className="text-base font-bold text-foreground">{value}</p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">{label}</p>
                     </div>
@@ -318,10 +327,10 @@ export const AppearanceSettingsTab = () => {
                 </div>
                 <div className="mt-3 overflow-hidden rounded-xl border border-border/70">
                   {[0, 1, 2].map((row) => (
-                    <div key={row} className={cn(
-                      'grid grid-cols-[1fr_4rem] items-center border-b border-border/60 px-3 last:border-0',
-                      preferences.density === 'compact' ? 'py-2' : 'py-3',
-                    )}>
+                    <div
+                      key={row}
+                      className="appearance-preview-row grid grid-cols-[1fr_4rem] items-center border-b border-border/60 px-3 last:border-0"
+                    >
                       <span className="h-1.5 w-3/5 rounded-full bg-muted-foreground/25" />
                       <span className={cn('ml-auto h-4 w-12 rounded-full', row === 0 ? 'bg-primary/20' : 'bg-muted')} />
                     </div>
@@ -330,6 +339,9 @@ export const AppearanceSettingsTab = () => {
               </div>
             </div>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Datos de ejemplo — solo ilustran el estilo aplicado, no son métricas del sistema.
+          </p>
         </CardContent>
       </Card>
 

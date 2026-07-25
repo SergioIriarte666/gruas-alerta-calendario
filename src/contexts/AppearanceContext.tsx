@@ -55,7 +55,12 @@ const readLegacyThemePreferences = (): AppearancePreferences | null => {
 
 const writeLocalPreferences = (userId: string | null | undefined, preferences: AppearancePreferences) => {
   try {
-    localStorage.setItem(getStorageKey(userId), JSON.stringify(preferences));
+    const payload = JSON.stringify(preferences);
+    localStorage.setItem(getStorageKey(userId), payload);
+    // Espejo sin usuario: lo lee el script de pre-pintado de index.html, que
+    // corre antes de conocer la sesión. Mantenerlo siempre al día es lo que
+    // evita el flash de apariencia anterior en un F5.
+    localStorage.setItem(getStorageKey(null), payload);
   } catch {
     // La preferencia sigue activa durante la sesión aunque el navegador bloquee storage.
   }

@@ -462,6 +462,9 @@ html {
   font-size: 16px;
 }
 
+/* Tamaño de lectura: se aplica como font-size del root para que todo el
+   espaciado en rem escale con él. No se usa zoom del navegador porque
+   rompe el mapa de Ubicaciones y la generación de PDF de inspección. */
 html[data-text-scale="110"] {
   font-size: 17.6px;
 }
@@ -478,15 +481,71 @@ body {
 }
 
 /* Preferencias visuales personales. La densidad conserva la jerarquía y
-   reduce únicamente el espacio de superficies operativas repetitivas. */
+   reduce únicamente el espacio de superficies operativas repetitivas.
+
+   `--app-density` es el único interruptor: todo espacio configurable por
+   densidad —layout real y vista previa de Apariencia— se deriva de él con
+   calc(), de modo que la vista previa no pueda divergir de la aplicación.
+   Los breakpoints van en px a propósito: así el tamaño de lectura no
+   desplaza el punto de corte responsive. */
+html {
+  --app-density: 1;
+  --app-pad-page: calc(0.75rem * var(--app-density));
+  --app-row-py: calc(0.72rem * var(--app-density));
+}
+
+@media (min-width: 768px) {
+  html {
+    --app-pad-page: calc(1rem * var(--app-density));
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    --app-pad-page: calc(1.5rem * var(--app-density));
+  }
+}
+
+html[data-density="compact"] {
+  --app-density: 0.62;
+}
+
+/* Contenedores de página del shell (Layout). */
+.app-density-content,
+.app-density-page {
+  padding: var(--app-pad-page);
+}
+
+/* Filas de tablas operativas reales (Servicios, Costos, Bodega…). En densidad
+   cómoda se deja el padding de Tailwind (`p-4` en td, `h-12` en th): la regla
+   solo expresa la reducción, y su valor sale del mismo token que la vista
+   previa para que ambas no puedan divergir. */
 html[data-density="compact"] .app-shell-concept table th,
 html[data-density="compact"] .app-shell-concept table td {
-  padding-top: 0.45rem;
-  padding-bottom: 0.45rem;
+  padding-top: var(--app-row-py);
+  padding-bottom: var(--app-row-py);
 }
 
 html[data-density="compact"] .configuration-tabs {
   min-height: 2.25rem;
+}
+
+/* Vista previa de Configuración → Apariencia. Consume el mismo
+   multiplicador que el layout real, a escala reducida. */
+.appearance-preview-nav-item {
+  padding-block: calc(0.625rem * var(--app-density));
+}
+
+.appearance-preview-body {
+  padding: calc(1.25rem * var(--app-density));
+}
+
+.appearance-preview-metric {
+  padding: calc(1rem * var(--app-density));
+}
+
+.appearance-preview-row {
+  padding-block: calc(0.75rem * var(--app-density));
 }
 
 html.reduce-motion {

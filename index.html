@@ -31,18 +31,36 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="/logo-gruas-5-norte.png" />
+    <!-- Rehidratación de apariencia antes del primer pintado: evita el flash
+         de tema/densidad/escala anterior en un F5. Lee el espejo sin usuario
+         que AppearanceContext mantiene en 'tms.appearance.device', porque
+         aquí todavía no se conoce la sesión. Sin optional chaining a
+         propósito: este script no pasa por el bundler. -->
     <script>
       (() => {
+        const root = document.documentElement;
         try {
-          const preference = localStorage.getItem('tms.theme') || 'light';
+          let prefs = null;
+          try {
+            const raw = localStorage.getItem('tms.appearance.device');
+            if (raw) prefs = JSON.parse(raw);
+          } catch (e) { prefs = null; }
+          if (!prefs || typeof prefs !== 'object') prefs = {};
+
+          const preference = prefs.theme || localStorage.getItem('tms.theme') || 'light';
           const resolved = preference === 'system'
             ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : preference;
-          document.documentElement.classList.add(resolved);
-          document.documentElement.dataset.theme = resolved;
-          document.documentElement.style.colorScheme = resolved;
+            : (preference === 'dark' ? 'dark' : 'light');
+          root.classList.add(resolved);
+          root.dataset.theme = resolved;
+          root.style.colorScheme = resolved;
+
+          root.dataset.density = prefs.density === 'compact' ? 'compact' : 'comfortable';
+          const scale = Number(prefs.textScale);
+          root.dataset.textScale = String([100, 110, 120].indexOf(scale) === -1 ? 100 : scale);
+          if (prefs.reduceMotion === true) root.classList.add('reduce-motion');
         } catch {
-          document.documentElement.classList.add('light');
+          root.classList.add('light');
         }
       })();
     </script>

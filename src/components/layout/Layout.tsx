@@ -7,12 +7,10 @@ import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QuickEntryProvider } from '@/contexts/QuickEntryContext';
 import { useServiceRequestAlerts } from '@/hooks/useServiceRequestAlerts';
-import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { useAppearance } from '@/contexts/AppearanceContext';
 
 export const Layout = () => {
-  const { isMobile, isTablet } = useDeviceType();
   const { preferences, updatePreferences } = useAppearance();
   const isCollapsed = preferences.sidebarCollapsed;
   const setIsCollapsed = (collapsed: boolean) => updatePreferences({ sidebarCollapsed: collapsed });
@@ -41,19 +39,16 @@ export const Layout = () => {
           )}
         >
           <Header setIsMobileMenuOpen={setIsMobileMenuOpen} isMobileMenuOpen={isMobileMenuOpen} />
+          {/* El espaciado de página lo resuelve `--app-pad-page` en index.css
+              (responsive + densidad), única fuente de verdad compartida con la
+              vista previa de Apariencia. */}
           <main
             id="main-content"
-            className={cn(
-              "app-density-content flex-1 overflow-x-hidden overflow-y-auto bg-background",
-              isMobile ? "p-3" : isTablet ? "p-4" : preferences.density === 'compact' ? "p-4" : "p-6"
-            )}
+            className="app-density-content flex-1 overflow-x-hidden overflow-y-auto bg-background"
           >
             <div className="mx-auto w-full max-w-screen-2xl">
               <div className="rounded-3xl border border-border/60 bg-card/35 shadow-sm backdrop-blur-sm">
-                <div className={cn(
-                  "app-density-page",
-                  isMobile ? "p-3" : isTablet ? "p-4" : preferences.density === 'compact' ? "p-4" : "p-6",
-                )}>
+                <div className="app-density-page">
             <ErrorBoundary name="Página">
               <Suspense fallback={null}>
                 <Outlet />
