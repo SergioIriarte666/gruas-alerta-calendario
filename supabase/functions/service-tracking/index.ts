@@ -46,6 +46,7 @@ const STOP_GEOFENCE_METERS = 300;
 const STOP_ARMING_METERS = 1000;
 const ETA_CACHE_MS = 60 * 1000;
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
+const GEOCODING_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
 type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
@@ -94,6 +95,107 @@ const toPublicStop = (stop: ServiceStop) => ({
   reached: stop.lat != null && stop.lng != null ? stop.reached_at !== null : null,
   order: stop.stop_order,
 });
+
+// Desde que el vehiculo va cargado, el ETA deja de mirar al origen: lo que el
+// cliente espera saber es cuando llega SU CARGA al destino (Fix 8, SRV-6858).
+// Etapas de rango >= towing rutean al destino del servicio.
+const DESTINATION_TARGET_MIN_RANK = STAGE_RANK.towing;
+
+type EtaTargetKind = "origin" | "destination" | "stop";
+
+/** Misma normalizacion que normalizeLocationText del cliente: minusculas, sin
+ * diacriticos y espacios colapsados. "MANTOS DE ORO" == " Mantos  de Oro ". */
+const normalizeLocationText = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Geocodifica texto libre a coordenadas. Sesgado a Chile: los destinos son
+ * comunas y faenas cuyo nombre se repite en otros paises. */
+async function geocodeText(address: string): Promise<{ lat: number; lng: number } | null> {
+  if (!GOOGLE_MAPS_API_KEY) return null;
+  try {
+    const url = new URL(GEOCODING_BASE);
+    url.searchParams.set("address", address);
+    url.searchParams.set("region", "cl");
+    url.searchParams.set("language", "es");
+    url.searchParams.set("key", GOOGLE_MAPS_API_KEY);
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    const data = await res.json();
+    const location = data?.results?.[0]?.geometry?.location;
+    if (typeof location?.lat !== "number" || typeof location?.lng !== "number") return null;
+    return { lat: location.lat, lng: location.lng };
+  } catch (error) {
+    console.warn("[service-tracking] geocodeText failed:", error);
+    return null;
+  }
+}
+
+/** Coordenadas del DESTINO del servicio, resueltas una sola vez y cacheadas en
+ * services.destination_lat/lng.
+ *
+ * Catalog-first, igual que resolveOriginFromCatalog en el cliente: un match
+ * exacto (normalizado) de nombre o alias en saved_locations GANA antes de
+ * gastar una llamada de geocoding, porque para nombres coloquiales homonimos
+ * ("Mantos de Oro") el geocoder devuelve un punto en otra ciudad.
+ *
+ * Devuelve null si el destino es solo texto no resoluble: el cliente muestra
+ * "en traslado" sin numero, que es honesto, en vez de un ETA al punto que la
+ * grua ya dejo atras. */
+async function resolveDestinationCoords(
+  supabase: ReturnType<typeof createClient>,
+  serviceId: string,
+  destinationText: string | null,
+  cachedLat: number | null,
+  cachedLng: number | null,
+): Promise<{ lat: number; lng: number } | null> {
+  if (cachedLat != null && cachedLng != null) return { lat: cachedLat, lng: cachedLng };
+
+  const text = (destinationText ?? "").trim();
+  if (normalizeLocationText(text).length < 2) return null;
+
+  let resolved: { lat: number; lng: number } | null = null;
+
+  try {
+    const { data: catalog } = await supabase
+      .from("saved_locations")
+      .select("name, aliases, latitude, longitude")
+      .eq("is_active", true);
+
+    const needle = normalizeLocationText(text);
+    const match = (catalog ?? []).find((location: Record<string, unknown>) => {
+      const name = typeof location.name === "string" ? normalizeLocationText(location.name) : "";
+      if (name === needle) return true;
+      const aliases = Array.isArray(location.aliases) ? location.aliases : [];
+      return aliases.some((alias: unknown) => typeof alias === "string" && normalizeLocationText(alias) === needle);
+    });
+
+    if (match && match.latitude != null && match.longitude != null) {
+      resolved = { lat: Number(match.latitude), lng: Number(match.longitude) };
+    }
+  } catch (error) {
+    console.warn("[service-tracking] catalogo de destino no consultable:", error);
+  }
+
+  if (!resolved) resolved = await geocodeText(text);
+  if (!resolved) return null;
+
+  try {
+    await supabase
+      .from("services")
+      .update({ destination_lat: resolved.lat, destination_lng: resolved.lng })
+      .eq("id", serviceId);
+  } catch {
+    // no-op: el cache es una optimizacion; con la escritura fallida se
+    // reintenta en el proximo poll y el ETA de este igual sale correcto
+  }
+
+  return resolved;
+}
 
 const jsonResponse = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -186,7 +288,7 @@ Deno.serve(async (req: Request) => {
     .select(`
       id, service_id, revoked_at, expires_at, access_count,
       eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
-      eta_target_stop_id, on_site_reached_at, max_stage_reached
+      eta_target_stop_id, eta_target_kind, on_site_reached_at, max_stage_reached
     `)
     .eq("token", token)
     .maybeSingle();
@@ -209,6 +311,9 @@ Deno.serve(async (req: Request) => {
         origin,
         origin_lat,
         origin_lng,
+        destination,
+        destination_lat,
+        destination_lng,
         operator_id,
         crane:cranes(license_plate, type),
         operator:operators(name)
@@ -250,6 +355,14 @@ Deno.serve(async (req: Request) => {
     lat: service.origin_lat ?? null,
     lng: service.origin_lng ?? null,
     text: service.origin ?? null,
+  };
+
+  // El destino solo existe como texto libre en la mayoria de los servicios; las
+  // coordenadas se resuelven bajo demanda al entrar en "towing" (Fix 8).
+  const destination = {
+    lat: (service.destination_lat as number | null) ?? null,
+    lng: (service.destination_lng as number | null) ?? null,
+    text: (service.destination as string | null) ?? null,
   };
 
   if (!ACTIVE_TRACKING_STATUSES.includes(service.status)) {
@@ -416,7 +529,7 @@ Deno.serve(async (req: Request) => {
     // una parada (de un deploy anterior o de un cambio de estado hacia atras),
     // se limpia aqui para que al armar la ruta se recalcule desde cero en vez
     // de servir una guia calculada antes del inicio.
-    if (link.eta_cached_at || link.eta_polyline || link.eta_target_stop_id) {
+    if (link.eta_cached_at || link.eta_polyline || link.eta_target_stop_id || link.eta_target_kind) {
       try {
         await supabase
           .from("service_tracking_links")
@@ -426,6 +539,7 @@ Deno.serve(async (req: Request) => {
             eta_polyline: null,
             eta_cached_at: null,
             eta_target_stop_id: null,
+            eta_target_kind: null,
           })
           .eq("id", link.id);
       } catch {
@@ -538,17 +652,39 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // Destino del ETA: la proxima parada NAVEGABLE pendiente (multidestino) o
-  // el origen del servicio (flujo original y paradas sin coordenadas). Con la
-  // ruta sin armar nextStop es null y no hay destino: ni polyline ni ETA hasta
-  // que el operador inicie el servicio.
-  const etaTarget = hasNavigableStops
-    ? nextStop
-      ? { lat: nextStop.lat as number, lng: nextStop.lng as number }
-      : null
-    : hasOrigin
-      ? { lat: origin.lat as number, lng: origin.lng as number }
-      : null;
+  // Destino del ETA: la proxima parada NAVEGABLE pendiente (multidestino) o,
+  // en el flujo original, un objetivo que DEPENDE DE LA ETAPA. Con la ruta sin
+  // armar nextStop es null y no hay destino: ni polyline ni ETA hasta que el
+  // operador inicie el servicio.
+  //
+  // Fix 8: antes de la carga el objetivo es el ORIGEN ("tu grua llega en X" =
+  // llegada al rescate); desde "towing" el vehiculo ya va cargado y el objetivo
+  // pasa a ser el DESTINO ("tu carga llega en X"). Publicar el ETA al origen
+  // durante el traslado es un dato falso: el 26/07 el cliente de SRV-6858 leyo
+  // "llega en 2 min · 0.7 km" con la entrega a ~1,5 h de distancia. Con el Fix 4
+  // (etapa monotonica) el objetivo tampoco puede retroceder al origen.
+  let etaTargetKind: EtaTargetKind = hasNavigableStops ? "stop" : "origin";
+  let etaTarget: { lat: number; lng: number } | null = null;
+  let destinationCoords: { lat: number; lng: number } | null = null;
+
+  if (hasNavigableStops) {
+    etaTarget = nextStop ? { lat: nextStop.lat as number, lng: nextStop.lng as number } : null;
+  } else if (STAGE_RANK[journeyStage] >= DESTINATION_TARGET_MIN_RANK) {
+    etaTargetKind = "destination";
+    destinationCoords = await resolveDestinationCoords(
+      supabase,
+      link.service_id as string,
+      destination.text,
+      destination.lat,
+      destination.lng,
+    );
+    // Sin destino resoluble no hay ETA: el cliente ve "en traslado" sin numero.
+    // NO se cae de vuelta al origen — ese fallback ES el bug.
+    etaTarget = destinationCoords;
+  } else if (hasOrigin) {
+    etaTarget = { lat: origin.lat as number, lng: origin.lng as number };
+  }
+
   const etaTargetStopId = hasNavigableStops ? (nextStop?.id ?? null) : null;
 
   let eta: Eta = null;
@@ -563,10 +699,15 @@ Deno.serve(async (req: Request) => {
   // vigente): al reanudar, el ETA se recalcula desde la posicion real.
   if (state === "active" && etaTarget && !openStopEvent) {
     const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
-    // El cache (positivo o negativo) solo vale si apunta a la MISMA parada
-    // objetivo: al alcanzar una parada, el ETA cacheado hacia ella es invalido
-    // aunque el TTL siga fresco. Sin paradas ambos lados son null.
-    const targetMatches = ((link.eta_target_stop_id as string | null) ?? null) === etaTargetStopId;
+    // El cache (positivo o negativo) solo vale si apunta al MISMO objetivo: al
+    // alcanzar una parada, el ETA cacheado hacia ella es invalido aunque el TTL
+    // siga fresco. La CLASE de objetivo tambien forma parte de la llave: en el
+    // flujo legacy el stop_id es null a ambos lados, asi que sin comparar el
+    // kind el ETA al ORIGEN seguiria calzando hasta 60 s despues de pasar a
+    // "towing" y se serviria el numero equivocado (Fix 8).
+    const targetMatches =
+      ((link.eta_target_stop_id as string | null) ?? null) === etaTargetStopId &&
+      ((link.eta_target_kind as EtaTargetKind | null) ?? null) === etaTargetKind;
     const cacheFresh = targetMatches && now - cachedAt < ETA_CACHE_MS;
     if (cacheFresh && link.eta_polyline) {
       // Cache positivo vigente.
@@ -591,6 +732,7 @@ Deno.serve(async (req: Request) => {
               eta_polyline: eta.polyline,
               eta_cached_at: new Date().toISOString(),
               eta_target_stop_id: etaTargetStopId,
+              eta_target_kind: etaTargetKind,
             })
             .eq("id", link.id);
         } catch {
@@ -610,6 +752,7 @@ Deno.serve(async (req: Request) => {
               eta_polyline: null,
               eta_cached_at: new Date().toISOString(),
               eta_target_stop_id: etaTargetStopId,
+              eta_target_kind: etaTargetKind,
             })
             .eq("id", link.id);
         } catch {
@@ -632,8 +775,18 @@ Deno.serve(async (req: Request) => {
       recorded_at: point.recorded_at,
     },
     origin,
+    // El destino viaja SIEMPRE (texto + coordenadas resueltas si las hay): es
+    // lo que el cliente necesita leer una vez que su carga va en camino.
+    destination: {
+      lat: destinationCoords?.lat ?? destination.lat,
+      lng: destinationCoords?.lng ?? destination.lng,
+      text: destination.text,
+    },
     journey_stage: journeyStage,
     eta,
+    // Hacia donde apunta el ETA publicado: el cliente cambia el rotulo
+    // ("Tu grua llega en" vs "Entrega estimada en") segun esto (Fix 8).
+    eta_target: etaTargetKind,
     eta_unavailable: etaUnavailable,
     support_phone: supportPhone,
     ...stopsPayload(nextStop),

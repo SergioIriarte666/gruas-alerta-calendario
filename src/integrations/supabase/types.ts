@@ -6607,6 +6607,7 @@ export type Database = {
           eta_distance_meters: number | null
           eta_polyline: string | null
           eta_seconds: number | null
+          eta_target_kind: string | null
           eta_target_stop_id: string | null
           expires_at: string
           id: string
@@ -6625,6 +6626,7 @@ export type Database = {
           eta_distance_meters?: number | null
           eta_polyline?: string | null
           eta_seconds?: number | null
+          eta_target_kind?: string | null
           eta_target_stop_id?: string | null
           expires_at?: string
           id?: string
@@ -6643,6 +6645,7 @@ export type Database = {
           eta_distance_meters?: number | null
           eta_polyline?: string | null
           eta_seconds?: number | null
+          eta_target_kind?: string | null
           eta_target_stop_id?: string | null
           expires_at?: string
           id?: string
@@ -6859,6 +6862,8 @@ export type Database = {
           custody_total_amount: number | null
           custody_vehicle_type: string | null
           destination: string | null
+          destination_lat: number | null
+          destination_lng: number | null
           end_time: string | null
           excess_amount: number | null
           folio: string
@@ -6919,6 +6924,8 @@ export type Database = {
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
           destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
           end_time?: string | null
           excess_amount?: number | null
           folio: string
@@ -6979,6 +6986,8 @@ export type Database = {
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
           destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
           end_time?: string | null
           excess_amount?: number | null
           folio?: string

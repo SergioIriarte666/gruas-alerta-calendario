@@ -647,9 +647,17 @@ interface TrackingResponse {
     recorded_at: string;
   } | null;
   origin?: { lat: number | null; lng: number | null; text: string | null };
+  // Destino del servicio. Las coordenadas se resuelven en el servidor recién al
+  // entrar en "towing" y pueden ser null si el destino es texto no geocodable.
+  destination?: { lat: number | null; lng: number | null; text: string | null };
   journey_stage?: JourneyStage;
   eta?: { seconds: number; distance_meters: number; polyline: string } | null;
-  // true cuando el origen existe pero Google no puede rutear la zona: la UI
+  // Hacia dónde apunta el ETA: 'origin' antes de la carga, 'destination' desde
+  // que el vehículo va cargado, 'stop' en multidestino. Manda el rótulo de la
+  // tarjeta: mostrar "tu grúa llega en" con el ETA al destino (o viceversa) es
+  // el bug de SRV-6858. Ausente en respuestas de versiones anteriores.
+  eta_target?: 'origin' | 'destination' | 'stop';
+  // true cuando el objetivo existe pero Google no puede rutear la zona: la UI
   // muestra distancia en línea recta en vez de "Calculando..." permanente.
   eta_unavailable?: boolean;
   support_phone?: string | null;
@@ -950,6 +958,20 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       }
     }
 
+    // Fix 8: desde que la carga va a bordo, el punto de interés del mapa es el
+    // DESTINO, no el origen ya visitado — el trazado del ETA apunta allá y
+    // encuadrar contra el origen dejaba la ruta entera fuera de pantalla.
+    // OJO: el umbral de "origen sospechoso" NO se aplica al destino. Nace de
+    // detectar un origen mal geocodificado; en un traslado real (Copiapó ->
+    // Viña, 800 km) una distancia enorme al destino es exactamente lo esperado.
+    const toDestination = data.eta_target === 'destination';
+    const destinationCoords: [number, number] | null =
+      data.destination?.lat != null && data.destination?.lng != null
+        ? [data.destination.lng, data.destination.lat]
+        : null;
+    const focusCoords = toDestination && destinationCoords ? destinationCoords : originCoords;
+    const focusLabel = toDestination && destinationCoords ? data.destination?.text : data.origin?.text;
+
     if (data.position && craneCoords) {
       if (!craneMarkerRef.current) {
         const refs = createCraneMarkerElement();
@@ -971,19 +993,19 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
 
     // Con paradas, el itinerario reemplaza al marcador de origen: el punto de
     // partida (base) no aporta al viaje y solo ensucia el encuadre.
-    if (originCoords && !hasStops) {
+    if (focusCoords && !hasStops) {
       if (!originMarkerRef.current) {
         const refs = createOriginMarkerElement();
         originElRefs.current = refs;
         originMarkerRef.current = new mapboxgl.default.Marker({ element: refs.anchor, anchor: 'bottom' })
-          .setLngLat(originCoords)
+          .setLngLat(focusCoords)
           .addTo(map);
       } else {
-        originMarkerRef.current.setLngLat(originCoords);
+        originMarkerRef.current.setLngLat(focusCoords);
       }
 
-      if (originElRefs.current && data.origin?.text) {
-        originElRefs.current.label.textContent = truncateLabel(toTitleCase(data.origin.text));
+      if (originElRefs.current && focusLabel) {
+        originElRefs.current.label.textContent = truncateLabel(toTitleCase(focusLabel));
       }
     } else if (originMarkerRef.current) {
       originMarkerRef.current.remove();
@@ -1039,8 +1061,8 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
               boundsCoords.push([stop.lng as number, stop.lat as number]);
             }
           }
-        } else if (originCoords) {
-          boundsCoords.push(originCoords);
+        } else if (focusCoords) {
+          boundsCoords.push(focusCoords);
         }
 
         if (boundsCoords.length > 1) {
@@ -1242,11 +1264,17 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
     return <p className="text-2xl font-bold leading-tight text-foreground">Tu grúa está en el lugar</p>;
   }
 
+  // Desde que el vehículo va cargado, el ETA apunta al DESTINO y el rótulo debe
+  // decirlo: con la grúa ya en ruta a Copiapó, "TU GRÚA LLEGA EN 2 min" (ETA al
+  // origen que acababa de dejar atrás) le prometió al cliente de SRV-6858 una
+  // entrega inmediata que estaba a ~1,5 h. El objetivo lo declara el servidor.
+  const toDestination = data.eta_target === 'destination';
+
   if (data.eta) {
     return (
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Tu grúa llega en
+          {toDestination ? 'Entrega estimada en' : 'Tu grúa llega en'}
         </p>
         <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
           {formatDurationLabel(data.eta.seconds)}
@@ -1255,18 +1283,19 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
     );
   }
 
-  // Origen no ruteable por Google (zona sin ruta, p. ej. C-13 Termas de Juncal):
-  // en vez de "Calculando..." permanente, mostrar la distancia en línea recta
-  // grúa->origen para dar contexto útil al cliente.
+  // Objetivo no ruteable por Google (zona sin ruta, p. ej. C-13 Termas de Juncal
+  // o el tramo cordillerano a Mantos de Oro): en vez de "Calculando..."
+  // permanente, la distancia en línea recta al punto que corresponda a la etapa.
+  const fallbackPoint = toDestination ? data.destination : data.origin;
   if (
     data.position &&
     data.eta_unavailable &&
-    data.origin?.lat != null &&
-    data.origin?.lng != null
+    fallbackPoint?.lat != null &&
+    fallbackPoint?.lng != null
   ) {
     const straightLineKm = haversineDistanceKm(
       [data.position.lng, data.position.lat],
-      [data.origin.lng, data.origin.lat],
+      [fallbackPoint.lng, fallbackPoint.lat],
     );
     const kmLabel = straightLineKm >= 10
       ? Math.round(straightLineKm)
@@ -1274,11 +1303,25 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
     return (
       <div>
         <p className="text-2xl font-bold leading-tight text-foreground">
-          Tu grúa está a ~{kmLabel} km
+          {toDestination ? `Tu carga está a ~${kmLabel} km` : `Tu grúa está a ~${kmLabel} km`}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           Tiempo estimado no disponible en esta zona
         </p>
+      </div>
+    );
+  }
+
+  // Traslado en curso hacia un destino que el servidor no pudo geocodificar
+  // (solo texto). Decir "en traslado" sin número es honesto; caer al ETA-al-
+  // origen para tener algo que mostrar es exactamente el bug que esto corrige.
+  if (toDestination) {
+    return (
+      <div>
+        <p className="text-2xl font-bold leading-tight text-foreground">Tu carga va en camino</p>
+        {data.destination?.text && (
+          <p className="mt-1 text-sm text-muted-foreground">Destino: {data.destination.text}</p>
+        )}
       </div>
     );
   }
