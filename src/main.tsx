@@ -44,6 +44,21 @@ function reloadOnce() {
   window.location.reload();
 }
 
+/**
+ * Un Error no tiene propiedades enumerables, así que el logger lo serializaba
+ * como `{}`: en el iPhone quedaba constancia de que ALGO falló y nada más. Esto
+ * lo desarma a mano para que el log de terreno diga qué fue y dónde.
+ */
+function describeError(value: unknown): unknown {
+  if (value instanceof Error) {
+    return { name: value.name, message: value.message, stack: value.stack };
+  }
+  if (value && typeof value === 'object' && Object.keys(value).length === 0) {
+    return { raw: String(value) };
+  }
+  return value;
+}
+
 function formatBootError(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   if (typeof error === 'string') return error;
@@ -93,7 +108,7 @@ function showBootError(error: unknown) {
 
 window.addEventListener('unhandledrejection', (ev) => {
   if (isBenignError(ev.reason?.message ?? ev.reason)) {
-    logger.warn('Aviso benigno ignorado', { reason: ev.reason });
+    logger.warn('Aviso benigno ignorado', { reason: describeError(ev.reason) });
     return;
   }
   if (isChunkError(ev.reason)) {
@@ -101,7 +116,7 @@ window.addEventListener('unhandledrejection', (ev) => {
     return;
   }
   if (!shouldShowBootError()) {
-    logger.error('Unhandled promise rejection (post-boot o fuera del portal operador)', { reason: ev.reason });
+    logger.error('Unhandled promise rejection (post-boot o fuera del portal operador)', { reason: describeError(ev.reason) });
     return;
   }
   showBootError(ev.reason);
@@ -116,7 +131,7 @@ window.addEventListener('error', (ev) => {
     return;
   }
   if (!shouldShowBootError()) {
-    logger.error('Error global (post-boot o fuera del portal operador)', { message: ev.message, error: ev.error });
+    logger.error('Error global (post-boot o fuera del portal operador)', { message: ev.message, error: describeError(ev.error) });
     return;
   }
   showBootError(ev.error || ev.message);

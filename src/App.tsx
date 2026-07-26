@@ -24,9 +24,12 @@ import ConnectionTest from '@/pages/ConnectionTest';
 import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { isOperatorMobileVariant } from '@/lib/appVariant';
+import { createLogger } from '@/lib/logger';
 import { startLiveUpdateService } from '@/services/liveUpdate';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+
+const logger = createLogger('App');
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -219,12 +222,27 @@ function AppContent() {
     };
 
     let removeListener: (() => Promise<void>) | undefined;
-    void CapacitorApp.addListener('appUrlOpen', ({ url }) => openWidgetUrl(url)).then((handle) => {
-      removeListener = () => handle.remove();
-    });
-    void CapacitorApp.getLaunchUrl().then(({ url }) => openWidgetUrl(url));
+    void CapacitorApp.addListener('appUrlOpen', ({ url }) => openWidgetUrl(url))
+      .then((handle) => {
+        removeListener = () => handle.remove();
+      })
+      .catch((error) => {
+        logger.warn('No se pudo escuchar la apertura por URL del widget', error);
+      });
 
-    return () => { void removeListener?.(); };
+    // getLaunchUrl() resuelve UNDEFINED cuando la app no se abrió desde una URL,
+    // que es el arranque normal. Destructurar ahí lanzaba un TypeError sin
+    // capturar en cada boot; si eso cae con la ruta bajo /operator antes de que
+    // termine el arranque, main.tsx tapa la app con la pantalla de error fatal.
+    void CapacitorApp.getLaunchUrl()
+      .then((launch) => openWidgetUrl(launch?.url))
+      .catch((error) => {
+        logger.warn('No se pudo leer la URL de apertura', error);
+      });
+
+    return () => {
+      void removeListener?.().catch(() => {});
+    };
   }, [navigate]);
 
   useEffect(() => {
