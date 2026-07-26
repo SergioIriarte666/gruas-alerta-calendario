@@ -19,12 +19,14 @@ import {
   checkLocationPermission,
   clearManualStopForService,
   ensureOperatorLocationSession,
+  fetchOperatorLocationSession,
   fetchOperatorTrackingEnabled,
   fetchTrackingSettings,
   findActiveOperatorLocationSession,
   getCurrentLocationPoint,
   hasManualStopForService,
   mapBackgroundGeolocationPoint,
+  reactivateOperatorLocationSession,
   requestLocationPermission,
   saveOperatorLocationPoint,
   stopOperatorLocationSession,
@@ -67,7 +69,50 @@ const HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000;
  */
 const MOVEMENT_THRESHOLD_METERS = 30;
 
+/**
+ * Cadencia con la que se reconcilia el estado local contra la SESIÓN EN BD.
+ * La sesión es el único dueño del estado de transmisión; esto es lo que evita
+ * que la UI y el watcher queden opinando cosas distintas.
+ */
+const SESSION_RECONCILE_INTERVAL_MS = 30000;
+
 const EARTH_RADIUS_METERS = 6371000;
+
+/**
+ * Watcher singleton a nivel de MÓDULO, no de componente.
+ *
+ * En la prueba del 25/07 la UI decía "Sin transmitir" mientras un watcher
+ * huérfano seguía subiendo puntos (POST 201) contra una sesión ya `stopped`.
+ * Con el id guardado en un ref de componente, un remount (o un segundo montaje)
+ * perdía la referencia al watcher anterior y nadie podía apagarlo nunca más.
+ * Aquí solo puede existir UNO por página, y `captureGeneration` es el token de
+ * propiedad: todo callback de captura que no traiga la generación vigente se
+ * descarta solo, aunque el sistema operativo lo siga invocando.
+ */
+let activeWatcherId: string | null = null;
+let activeWebIntervalId: number | null = null;
+let captureGeneration = 0;
+
+const hasLiveCapture = (): boolean =>
+  Capacitor.isNativePlatform() ? activeWatcherId !== null : activeWebIntervalId !== null;
+
+/** Apaga la captura vigente e invalida la generación: los callbacks en vuelo mueren solos. */
+const teardownCapture = () => {
+  captureGeneration += 1;
+
+  if (activeWebIntervalId !== null) {
+    window.clearInterval(activeWebIntervalId);
+    activeWebIntervalId = null;
+  }
+
+  if (activeWatcherId !== null) {
+    const id = activeWatcherId;
+    activeWatcherId = null;
+    void BackgroundGeolocation.removeWatcher({ id }).catch((error) => {
+      logger.warn('Could not remove background geolocation watcher', error);
+    });
+  }
+};
 
 const distanceMeters = (
   a: { latitude: number; longitude: number },
@@ -176,8 +221,6 @@ export const useOperatorLocationTracking = ({
   const [manualStop, setManualStop] = useState(false);
   const manualStopRef = useRef(false);
 
-  const intervalRef = useRef<number | null>(null);
-  const watcherIdRef = useRef<string | null>(null);
   const scheduleIntervalRef = useRef<number | null>(null);
   const lastNativePersistAtRef = useRef(0);
   const lastPersistedSignatureRef = useRef<string | null>(null);
@@ -211,17 +254,7 @@ export const useOperatorLocationTracking = ({
   );
 
   const clearCaptureLoop = useCallback(() => {
-    if (intervalRef.current !== null) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    if (watcherIdRef.current !== null) {
-      const id = watcherIdRef.current;
-      watcherIdRef.current = null;
-      void BackgroundGeolocation.removeWatcher({ id }).catch((error) => {
-        logger.warn('Could not remove background geolocation watcher', error);
-      });
-    }
+    teardownCapture();
   }, []);
 
   const refreshPendingCount = useCallback(async () => {
@@ -353,10 +386,19 @@ export const useOperatorLocationTracking = ({
     activeOperatorId: string,
     activeUserId: string,
     activeServiceId: string | null,
+    generation: number,
   ) => {
     const run = async () => {
+      // Un ciclo de una generación anterior (o contra una sesión que ya no es
+      // la vigente) no sube nada: se descarta solo. Es lo que impide que un
+      // temporizador sobreviviente siga alimentando la central tras un corte.
+      if (generation !== captureGeneration || sessionIdRef.current !== activeSessionId) {
+        return;
+      }
+
       try {
         const point = await getCurrentLocationPoint();
+        if (generation !== captureGeneration || sessionIdRef.current !== activeSessionId) return;
         setLastPoint(point);
         await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
         setErrorMessage(null);
@@ -368,7 +410,7 @@ export const useOperatorLocationTracking = ({
     };
 
     void run();
-    intervalRef.current = window.setInterval(() => {
+    activeWebIntervalId = window.setInterval(() => {
       void run();
     }, TRACKING_INTERVAL_MS);
   }, [persistPoint]);
@@ -378,11 +420,18 @@ export const useOperatorLocationTracking = ({
     activeOperatorId: string,
     activeUserId: string,
     activeServiceId: string | null,
+    generation: number,
   ) => {
     lastNativePersistAtRef.current = 0;
     lastPersistedLocationRef.current = null;
 
     const submit = (point: OperatorLocationPoint, source: OperatorLocationSource) => {
+      // Mismo guard que en el polling web: el watcher nativo puede seguir vivo
+      // unos instantes después del corte y sus fixes NO deben subirse.
+      if (generation !== captureGeneration || sessionIdRef.current !== activeSessionId) {
+        return Promise.resolve();
+      }
+
       lastNativePersistAtRef.current = Date.now();
       lastPersistedLocationRef.current = { latitude: point.latitude, longitude: point.longitude };
       setLastPoint(point);
@@ -423,6 +472,7 @@ export const useOperatorLocationTracking = ({
           return;
         }
         if (!location) return;
+        if (generation !== captureGeneration) return;
 
         const now = Date.now();
         const elapsed = now - lastNativePersistAtRef.current;
@@ -449,7 +499,13 @@ export const useOperatorLocationTracking = ({
         void submit(point, source);
       },
     ).then((id) => {
-      watcherIdRef.current = id;
+      // Si mientras se registraba el watcher ya se cortó (o se re-armó) la
+      // captura, este watcher nace huérfano: se retira en el acto.
+      if (generation !== captureGeneration) {
+        void BackgroundGeolocation.removeWatcher({ id }).catch(() => {});
+        return;
+      }
+      activeWatcherId = id;
       trackingLogger.debug('Watcher de ubicación en segundo plano activo', { watcherId: id });
     }).catch((watcherError) => {
       trackingLogger.warn('Could not start background geolocation watcher', watcherError);
@@ -463,14 +519,16 @@ export const useOperatorLocationTracking = ({
     activeUserId: string,
     activeServiceId: string | null,
   ) => {
-    clearCaptureLoop();
+    // SIEMPRE se apaga lo anterior antes de crear lo nuevo: nunca dos watchers.
+    teardownCapture();
+    const generation = captureGeneration;
 
     if (Capacitor.isNativePlatform()) {
-      beginNativeWatcher(activeSessionId, activeOperatorId, activeUserId, activeServiceId);
+      beginNativeWatcher(activeSessionId, activeOperatorId, activeUserId, activeServiceId, generation);
     } else {
-      beginWebPolling(activeSessionId, activeOperatorId, activeUserId, activeServiceId);
+      beginWebPolling(activeSessionId, activeOperatorId, activeUserId, activeServiceId, generation);
     }
-  }, [beginNativeWatcher, beginWebPolling, clearCaptureLoop]);
+  }, [beginNativeWatcher, beginWebPolling]);
 
   const maybeRepairAutoServiceSession = useCallback(async (
     session: OperatorLocationSession,
@@ -519,6 +577,14 @@ export const useOperatorLocationTracking = ({
       let session = await ensureOperatorLocationSession(operatorId, userId, effectiveServiceId, reason);
       session = await maybeRepairAutoServiceSession(session);
 
+      // Reapertura consistente: si por cualquier vía la sesión que vamos a usar
+      // no está activa, se reabre ANTES de capturar. Un punto contra una sesión
+      // `stopped` es exactamente el estado inconsistente que produjo el zombi.
+      if (session.status !== 'active' || session.ended_at) {
+        await reactivateOperatorLocationSession(session.id);
+        session = { ...session, status: 'active', ended_at: null, ended_reason: null };
+      }
+
       if (reason === 'auto_service' && isPausedRef.current) {
         isPausedRef.current = false;
         setIsPaused(false);
@@ -563,6 +629,83 @@ export const useOperatorLocationTracking = ({
       }
     }
   }, [beginCapture, maybeRepairAutoServiceSession, operatorId, serviceId, userId]);
+
+  /**
+   * Reconciliación con el dueño del estado: la SESIÓN EN BD.
+   *
+   * Nadie más decide si se está transmitiendo. Si la sesión murió (barrido de
+   * zombies, cierre del servicio server-side, corte desde otro dispositivo), la
+   * captura local se apaga aunque el estado de React creyera lo contrario; si la
+   * sesión sigue viva pero el watcher se murió en background, se re-engancha.
+   */
+  const reconcileWithSession = useCallback(async () => {
+    const activeSessionId = sessionIdRef.current;
+    if (!activeSessionId || !operatorId) return;
+
+    let session: OperatorLocationSession | null;
+    try {
+      session = await fetchOperatorLocationSession(activeSessionId);
+    } catch (error) {
+      // Sin red no se puede reconciliar: mantener el estado local es correcto,
+      // los puntos se van a la cola offline igual.
+      trackingLogger.warn('No se pudo reconciliar el estado con la sesión', error);
+      return;
+    }
+
+    if (sessionIdRef.current !== activeSessionId) return;
+
+    if (!session || session.status !== 'active' || session.ended_at) {
+      trackingLogger.warn('La sesión ya no está activa: se apaga la captura local', {
+        sessionId: activeSessionId,
+        endedReason: session?.ended_reason ?? null,
+      });
+
+      teardownCapture();
+      void allowSleepSafely();
+      sessionIdRef.current = null;
+      sessionServiceIdRef.current = null;
+      trackingModeRef.current = null;
+      isTrackingRef.current = false;
+      setSessionId(null);
+      setTrackingMode(null);
+      setIsTracking(false);
+
+      // Un corte manual desde otro dispositivo también debe inhibir aquí el
+      // auto-encendido por movimiento.
+      if (session?.manual_stop) {
+        manualStopRef.current = true;
+        setManualStop(true);
+        isPausedRef.current = true;
+        setIsPaused(true);
+        await writePausedFlag(true);
+      }
+      return;
+    }
+
+    // La sesión manda también sobre lo que la UI muestra como "última subida".
+    if (session.last_point_at) {
+      setLastSyncAt((current) =>
+        !current || new Date(session!.last_point_at as string) > new Date(current)
+          ? (session!.last_point_at as string)
+          : current,
+      );
+    }
+
+    sessionServiceIdRef.current = session.service_id;
+    trackingModeRef.current = session.started_reason;
+    isTrackingRef.current = true;
+    setTrackingMode(session.started_reason);
+    setIsTracking(true);
+
+    // Sesión viva sin captura local: el watcher murió (iOS lo mata en
+    // background). Re-engancharlo es lo único que mantiene el recorrido.
+    if (!hasLiveCapture() && userId) {
+      trackingLogger.warn('Sesión activa sin watcher: se re-engancha la captura', {
+        sessionId: activeSessionId,
+      });
+      beginCapture(activeSessionId, operatorId, userId, session.service_id);
+    }
+  }, [beginCapture, operatorId, userId]);
 
   const evaluate = useCallback(() => {
     if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
@@ -760,11 +903,19 @@ export const useOperatorLocationTracking = ({
 
   useEffect(() => {
     if (!isReady) return;
-    evaluate();
+
+    // Orden obligatorio: primero se reconcilia contra la BD y recién después
+    // decide evaluate(), que lee los refs que la reconciliación acaba de fijar.
+    const tick = async () => {
+      await reconcileWithSession();
+      evaluate();
+    };
+
+    void tick();
 
     scheduleIntervalRef.current = window.setInterval(() => {
-      evaluate();
-    }, SCHEDULE_CHECK_INTERVAL_MS);
+      void tick();
+    }, Math.min(SCHEDULE_CHECK_INTERVAL_MS, SESSION_RECONCILE_INTERVAL_MS));
 
     return () => {
       if (scheduleIntervalRef.current !== null) {
@@ -772,7 +923,7 @@ export const useOperatorLocationTracking = ({
         scheduleIntervalRef.current = null;
       }
     };
-  }, [evaluate, isReady]);
+  }, [evaluate, isReady, reconcileWithSession]);
 
   // Auto-recuperación al volver a foreground / reabrir tras un crash.
   // iOS puede terminar el proceso (o el watcher nativo) mientras la app está en
@@ -784,6 +935,9 @@ export const useOperatorLocationTracking = ({
     if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
 
     await flushQueue();
+    // La sesión manda: si murió mientras la app estaba suspendida, esto apaga
+    // la captura antes de que el resto de la función decida sobre datos viejos.
+    await reconcileWithSession();
 
     const activeServiceId = serviceIdRef.current;
 
@@ -806,13 +960,14 @@ export const useOperatorLocationTracking = ({
       return;
     }
 
-    // Creemos estar rastreando, pero el watcher nativo pudo morir en background
-    // sin que el estado JS se enterara. Re-enganchar la captura garantiza que el
-    // tramo de traslado siga registrando puntos.
-    if (Capacitor.isNativePlatform() && sessionIdRef.current) {
+    // Creemos estar rastreando, pero la captura pudo morir en background sin
+    // que el estado JS se enterara (watcher nativo terminado por iOS, o el
+    // temporizador web congelado). Re-engancharla garantiza que el tramo de
+    // traslado siga registrando puntos.
+    if (!hasLiveCapture() && sessionIdRef.current) {
       beginCapture(sessionIdRef.current, operatorId, userId, activeServiceId);
     }
-  }, [beginCapture, evaluate, flushQueue, isReady, operatorId, startSession, userId]);
+  }, [beginCapture, evaluate, flushQueue, isReady, operatorId, reconcileWithSession, startSession, userId]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -831,6 +986,32 @@ export const useOperatorLocationTracking = ({
 
     return () => {
       removeListener?.();
+    };
+  }, [recoverTrackingOnForeground]);
+
+  // Web (Safari del operador, sin app nativa): el temporizador no sobrevive a
+  // la pantalla bloqueada, pero SÍ puede resucitar suelto al volver. Se apaga
+  // en `pagehide` y se re-engancha —vía reconciliación con la sesión— al
+  // volver a ser visible. En nativo NO se toca: ahí el watcher en segundo plano
+  // es justamente lo que debe seguir corriendo con la app en background.
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
+
+    const handlePageHide = () => {
+      teardownCapture();
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void recoverTrackingOnForeground();
+      }
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [recoverTrackingOnForeground]);
 

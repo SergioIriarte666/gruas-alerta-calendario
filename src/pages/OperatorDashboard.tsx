@@ -12,6 +12,7 @@ import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspectio
 import { TransmissionControl } from '@/components/operator/TransmissionControl';
 import { DocumentStatusBanner } from '@/components/operator/DocumentStatusBanner';
 import { OperatorActivityPreview } from '@/components/operator/OperatorActivityPreview';
+import { selectActiveOperatorService, selectTrackingService } from '@/utils/operatorActiveService';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -33,7 +34,17 @@ const OperatorDashboard = () => {
   const completadosRecientes = [...serviceTabs.completados]
     .sort((a, b) => (b.serviceDate || '').localeCompare(a.serviceDate || ''))
     .slice(0, 5);
-  const currentTrackingService = serviceTabs.activos[0] || asignadosSorted[0] || null;
+  // Dos servicios distintos y no intercambiables: el que transmite (puede ser
+  // el próximo asignado, "voy en camino") y el que está EN CURSO, único al que
+  // pueden colgarse detenciones. Confundirlos escribió el "Descanso" de las
+  // 21:11 en un servicio de la mañana siguiente (25/07).
+  const operatorServices = [
+    ...serviceTabs.activos,
+    ...serviceTabs.pendientes_entrega,
+    ...asignadosSorted,
+  ];
+  const activeService = selectActiveOperatorService(operatorServices);
+  const currentTrackingService = selectTrackingService(operatorServices);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -163,6 +174,7 @@ const OperatorDashboard = () => {
         operatorId={user?.operator_id}
         userId={user?.id}
         currentService={currentTrackingService}
+        activeService={activeService}
       />
 
       {pendingCount > 0 && (

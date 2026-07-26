@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@/contexts/UserContext';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('OperatorPin');
@@ -23,22 +24,33 @@ interface OperatorPinSectionProps {
  *
  * Aquí solo se escribe: el hash vive en operator_pins, tabla sin acceso para
  * roles de cliente, y nunca vuelve al navegador.
+ *
+ * La comprobación de rol se hace AQUÍ y no en el llamador: este modal también se
+ * abre desde el Parte Diario, que no es una ruta solo-admin. Un PIN que el
+ * propio vigilado puede quitar no protege nada. Las funciones
+ * set_operator_pin/clear_operator_pin ya exigen admin en la base de datos: esto
+ * es la capa visual del mismo criterio, no su único guardián.
  */
 export const OperatorPinSection = ({ operatorId }: OperatorPinSectionProps) => {
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [pin, setPin] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (!isAdmin) return;
     const { data, error } = await supabase.rpc('operator_has_pin', { p_operator_id: operatorId });
     if (error) {
       logger.warn('No se pudo consultar el estado del PIN', error);
       return;
     }
     setHasPin(data === true);
-  }, [operatorId]);
+  }, [isAdmin, operatorId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  if (!isAdmin) return null;
 
   const handleSave = async () => {
     if (pin.length !== 4) return;

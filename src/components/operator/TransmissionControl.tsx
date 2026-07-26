@@ -39,7 +39,13 @@ const AGE_TICK_MS = 5000;
 interface TransmissionControlProps {
   operatorId?: string | null;
   userId?: string | null;
+  /** Servicio al que se asocia la transmisión (puede ser el próximo asignado). */
   currentService?: Service | null;
+  /**
+   * Servicio EN CURSO (in_progress / inspection_completed). Es el único al que
+   * pueden colgarse detenciones: el chip se deshabilita si no hay ninguno.
+   */
+  activeService?: Service | null;
 }
 
 const formatAge = (iso: string | null, now: Date): string | null => {
@@ -62,6 +68,7 @@ export const TransmissionControl = ({
   operatorId,
   userId,
   currentService,
+  activeService = null,
 }: TransmissionControlProps) => {
   const {
     isTracking,
@@ -78,8 +85,12 @@ export const TransmissionControl = ({
   } = useOperatorLocationTracking({ operatorId, userId, currentService });
 
   const serviceId = currentService?.id ?? null;
+  // La detención se cuelga SIEMPRE del servicio en curso, jamás del "próximo
+  // servicio" de la tarjeta de resumen (bug del 25/07: el descanso quedó
+  // registrado en un servicio de la mañana siguiente).
+  const activeServiceId = activeService?.id ?? null;
   const { stopEvent, minutesStopped, isBusy: isStopBusy, declareStop, resume } = useServiceStopEvent({
-    serviceId,
+    serviceId: activeServiceId,
     operatorId,
     lastPoint,
   });
@@ -271,9 +282,19 @@ export const TransmissionControl = ({
         </Button>
       </div>
 
-      {serviceId && (
+      {(activeServiceId || serviceId) && (
         <div className="mt-3">
-          {stopEvent ? (
+          {!activeServiceId ? (
+            // Hay servicio asignado pero ninguno en curso: el chip existe y se
+            // ve deshabilitado, en vez de escribir la detención en el servicio
+            // equivocado.
+            <>
+              <StopReasonPicker disabled onSelect={declareStop} />
+              <p className="mt-2 text-xs font-medium text-muted-foreground">
+                Inicia el servicio para poder registrar detenciones.
+              </p>
+            </>
+          ) : stopEvent ? (
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-3">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-warning">

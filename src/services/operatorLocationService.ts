@@ -339,6 +339,48 @@ const reopenTimedOutSession = async (
   return reopened as OperatorLocationSession;
 };
 
+/**
+ * Estado vigente de una sesión, leído de la BD.
+ *
+ * La sesión es el ÚNICO dueño del estado de transmisión: la UI y el watcher se
+ * derivan de ella. Sin esta lectura, el estado local y la BD divergen y aparece
+ * el watcher zombi (UI "Sin transmitir" subiendo puntos contra una sesión
+ * `stopped`, prueba en terreno del 25/07).
+ */
+export const fetchOperatorLocationSession = async (
+  sessionId: string,
+): Promise<OperatorLocationSession | null> => {
+  const { data, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .select('*')
+    .eq('id', sessionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo leer la sesión de ubicación');
+  }
+
+  return (data as OperatorLocationSession | null) ?? null;
+};
+
+/**
+ * Reactiva una sesión que quedó `stopped` cuando el flujo decide reanudar.
+ * Un punto jamás debe subirse contra una sesión cerrada: primero se reabre.
+ */
+export const reactivateOperatorLocationSession = async (
+  sessionId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({ status: 'active', ended_at: null, ended_reason: null })
+    .eq('id', sessionId)
+    .neq('status', 'active');
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo reactivar la sesión de ubicación');
+  }
+};
+
 export const updateOperatorLocationSessionService = async (
   sessionId: string,
   serviceId: string,

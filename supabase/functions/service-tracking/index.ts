@@ -50,6 +50,25 @@ const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
 type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
 
+type JourneyStage = "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived";
+
+// La linea de tiempo del cliente SOLO AVANZA. La etapa se deriva de la
+// posicion, asi que volver a pasar por el origen la rebobinaba: el 25/07 el
+// cliente vio "Trasladando" a las 21:25 y "llego al punto de origen" a las
+// 21:41. Se publica max(etapa_calculada, etapa_persistida) y el maximo se
+// guarda en service_tracking_links.max_stage_reached.
+const STAGE_RANK: Record<JourneyStage, number> = {
+  assigned: 0,
+  en_route: 1,
+  on_site: 2,
+  towing: 3,
+  last_leg: 4,
+  arrived: 5,
+};
+
+const rankOfStage = (stage: string | null): number =>
+  stage && stage in STAGE_RANK ? STAGE_RANK[stage as JourneyStage] : -1;
+
 // Paradas de un servicio multidestino. Si el servicio no tiene paradas, todo
 // el flujo multi-stop se salta y el comportamiento original (ETA al origen,
 // on_site/towing) queda intacto.
@@ -167,7 +186,7 @@ Deno.serve(async (req: Request) => {
     .select(`
       id, service_id, revoked_at, expires_at, access_count,
       eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
-      eta_target_stop_id, on_site_reached_at
+      eta_target_stop_id, on_site_reached_at, max_stage_reached
     `)
     .eq("token", token)
     .maybeSingle();
@@ -381,7 +400,7 @@ Deno.serve(async (req: Request) => {
 
   const hasOrigin = origin.lat != null && origin.lng != null;
 
-  let journeyStage: "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived" = "en_route";
+  let journeyStage: JourneyStage = "en_route";
   let nextStop: ServiceStop | null = null;
 
   if (hasNavigableStops && !routeArmed) {
@@ -494,6 +513,27 @@ Deno.serve(async (req: Request) => {
         }
       } else if (onSiteReachedAt) {
         journeyStage = "on_site";
+      }
+    }
+  }
+
+  // Monotonia de la linea de tiempo. Se aplica SOLO con la guia armada: con el
+  // servicio aun no iniciado la etapa es "assigned" por decision explicita
+  // (SRV-6853) y no debe destaparse un maximo viejo.
+  const guidanceOn = !(hasNavigableStops && !routeArmed);
+  if (guidanceOn) {
+    const persistedRank = rankOfStage(link.max_stage_reached as string | null);
+    if (persistedRank > STAGE_RANK[journeyStage]) {
+      journeyStage = (Object.keys(STAGE_RANK) as JourneyStage[])
+        .find((stage) => STAGE_RANK[stage] === persistedRank) ?? journeyStage;
+    } else if (STAGE_RANK[journeyStage] > persistedRank) {
+      try {
+        await supabase
+          .from("service_tracking_links")
+          .update({ max_stage_reached: journeyStage })
+          .eq("id", link.id);
+      } catch {
+        // no-op: el maximo es memoria de la linea de tiempo, nunca debe romper el seguimiento publico
       }
     }
   }

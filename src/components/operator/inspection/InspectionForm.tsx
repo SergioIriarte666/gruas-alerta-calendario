@@ -60,6 +60,9 @@ interface InspectionFormProps {
   isGeneratingPDF: boolean;
   isUpdatingStatus: boolean;
   onCancelExisting?: () => void;
+  /** Retoma una cadena que quedó a medias: PDF ya guardado, servicio sin cerrar. */
+  onResumeClosure?: () => void;
+  isResumingClosure?: boolean;
 }
 
 export const InspectionForm = ({
@@ -70,6 +73,8 @@ export const InspectionForm = ({
   isGeneratingPDF,
   isUpdatingStatus,
   onCancelExisting,
+  onResumeClosure,
+  isResumingClosure = false,
 }: InspectionFormProps) => {
   const { toast } = useToast();
   const { user } = useUser();
@@ -429,21 +434,37 @@ export const InspectionForm = ({
     const phaseLabel = currentPhase === 'initial' ? 'inspección inicial' : 'inspección de entrega';
     const operatorLabel = existingConflict.operatorName || 'operador no identificado';
     const createdAtLabel = formatDateForDisplay(existingConflict.createdAt);
+    // Cadena a medias: la evidencia de entrega existe pero el servicio nunca se
+    // cerró (WebView zombi, 25/07). El operador no tiene que recapturar nada;
+    // le falta el último paso y este botón lo da.
+    const canResumeClosure = Boolean(
+      onResumeClosure && currentPhase === 'final' && service.status === 'inspection_completed',
+    );
 
     return (
       <>
         <Dialog open onOpenChange={(open) => { if (!open) onCancelExisting?.(); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ya existe una inspección</DialogTitle>
+              <DialogTitle>
+                {canResumeClosure ? 'La entrega quedó a medias' : 'Ya existe una inspección'}
+              </DialogTitle>
               <DialogDescription>
-                Ya existe una inspección para este servicio (fecha {createdAtLabel}, operador {operatorLabel}). ¿Qué desea hacer?
+                {canResumeClosure
+                  ? `La entrega de este servicio ya está guardada (fecha ${createdAtLabel}, operador ${operatorLabel}), pero el servicio no alcanzó a cerrarse. Puede finalizarlo ahora sin volver a capturar nada.`
+                  : `Ya existe una inspección para este servicio (fecha ${createdAtLabel}, operador ${operatorLabel}). ¿Qué desea hacer?`}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={onCancelExisting}>
                 Cancelar
               </Button>
+              {canResumeClosure && (
+                <Button type="button" onClick={onResumeClosure} disabled={isResumingClosure}>
+                  <CheckCircle className="size-4 mr-2" />
+                  {isResumingClosure ? 'Finalizando...' : 'Finalizar servicio'}
+                </Button>
+              )}
               {isAdmin && (
                 <Button type="button" variant="destructive" onClick={() => setShowOverwriteConfirm(true)}>
                   <RotateCcw className="size-4 mr-2" />

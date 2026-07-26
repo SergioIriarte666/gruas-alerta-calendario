@@ -25,6 +25,7 @@ const ServiceInspection = () => {
     completedInspection,
     processInspectionMutation,
     updateServiceStatusMutation,
+    resumeClosureMutation,
     handleManualDownload,
     handleRetry,
     navigate
@@ -121,6 +122,8 @@ const ServiceInspection = () => {
         isGeneratingPDF={isGeneratingPDF}
         isUpdatingStatus={updateServiceStatusMutation.isPending}
         onCancelExisting={handleBack}
+        onResumeClosure={() => resumeClosureMutation.mutate()}
+        isResumingClosure={resumeClosureMutation.isPending}
       />
     </div>
   );

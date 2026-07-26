@@ -14,6 +14,16 @@ import type { OperatorLocationPoint } from '@/types/operatorLocation';
 
 const logger = createLogger('Tracking');
 
+/**
+ * Cadencia con la que se relee la detención abierta desde la BD.
+ *
+ * Quien CIERRA por velocidad sostenida es el servidor (trigger sobre
+ * operator_location_points): el evaluador de abajo es solo un espejo optimista
+ * para que la UI no espere. Sin esta relectura, una detención cerrada por el
+ * servidor seguiría pintada como abierta en el teléfono.
+ */
+const STOP_EVENT_REFRESH_MS = 30000;
+
 interface UseServiceStopEventOptions {
   serviceId?: string | null;
   operatorId?: string | null;
@@ -46,11 +56,24 @@ export const useServiceStopEvent = ({
       return;
     }
 
-    void fetchOpenStopEvent(serviceId).then((event) => {
-      if (!cancelled) setStopEvent(event);
-    });
+    const refresh = () => {
+      void fetchOpenStopEvent(serviceId).then((event) => {
+        if (!cancelled) setStopEvent(event);
+      });
+    };
 
-    return () => { cancelled = true; };
+    refresh();
+    const intervalId = window.setInterval(refresh, STOP_EVENT_REFRESH_MS);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [serviceId]);
 
   const declareStop = useCallback(async (reason: StopReason) => {

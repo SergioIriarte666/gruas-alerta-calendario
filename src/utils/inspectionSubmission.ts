@@ -38,6 +38,76 @@ const updateServiceStatusDirect = async (
   }
 };
 
+/** Estado al que debe quedar el servicio cuando la fase termina bien. */
+export const targetStatusForPhase = (
+  service: Service,
+  phase: 'initial' | 'final',
+): 'inspection_completed' | 'completed' =>
+  // Servicios in-situ: una sola fase, pasan directo a 'completed' en lugar de
+  // quedar colgados en 'inspection_completed'.
+  phase === 'final' || isInSituService(service) ? 'completed' : 'inspection_completed';
+
+/**
+ * Cadena interrumpida: el PDF de la fase ya está subido y registrado, pero el
+ * servicio nunca avanzó de estado.
+ *
+ * Es exactamente lo que pasó en terreno el 25/07: el WebView quedó zombi a
+ * mitad de la entrega y el servicio se quedó en 'inspection_completed' con
+ * evidencia ya guardada. Recapturar la entrega completa sería absurdo (y el
+ * guardia de "ya existe una inspección" ni siquiera lo permite): lo que falta es
+ * el último paso, y este lo retoma sin duplicar nada.
+ *
+ * Devuelve true si había algo pendiente que completar.
+ */
+export const resumeInterruptedSubmission = async ({
+  service,
+  serviceId,
+  phase,
+}: {
+  service: Service;
+  serviceId: string;
+  phase: 'initial' | 'final';
+}): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('pdf_url, pdf_retiro_url')
+    .eq('service_id', serviceId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`No se pudo revisar la evidencia ya guardada: ${error.message}`);
+  }
+
+  const phasePdf = phase === 'initial' ? data?.pdf_url : data?.pdf_retiro_url;
+  if (!phasePdf) return false;
+
+  const targetStatus = targetStatusForPhase(service, phase);
+
+  const { data: currentService, error: serviceError } = await supabase
+    .from('services')
+    .select('status')
+    .eq('id', serviceId)
+    .maybeSingle();
+
+  if (serviceError) {
+    throw new Error(`No se pudo revisar el estado del servicio: ${serviceError.message}`);
+  }
+
+  if (currentService?.status === targetStatus) {
+    return false;
+  }
+
+  logger.warn('Cadena de entrega interrumpida: se retoma el cierre del servicio', {
+    serviceId,
+    phase,
+    statusActual: currentService?.status,
+    targetStatus,
+  });
+
+  await updateServiceStatusDirect(serviceId, targetStatus);
+  return true;
+};
+
 const cleanupPdfAfterFailure = async (path: string, serviceId: string) => {
   try {
     await deleteInspectionPdf(path);
@@ -142,13 +212,7 @@ export const submitInspectionPipeline = async ({
   }
 
   try {
-    // Servicios in-situ: una sola fase, pasan directo a 'completed'
-    // en lugar de quedar colgados en 'inspection_completed'.
-    const targetStatus: 'inspection_completed' | 'completed' =
-      phase === 'final' || isInSituService(service)
-        ? 'completed'
-        : 'inspection_completed';
-    await updateServiceStatusDirect(serviceId, targetStatus);
+    await updateServiceStatusDirect(serviceId, targetStatusForPhase(service, phase));
   } catch (statusError) {
     if (persistedInspection) {
       if (persistedInspection.wasInserted || phase === 'initial') {

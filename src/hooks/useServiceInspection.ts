@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -9,13 +9,21 @@ import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdat
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { createLogger } from '@/lib/logger';
-import { submitInspectionPipeline } from '@/utils/inspectionSubmission';
+import { resumeInterruptedSubmission, submitInspectionPipeline } from '@/utils/inspectionSubmission';
 import { queuePendingInspection, updateCachedOperatorService } from '@/utils/operatorOffline';
 import { isInSituService } from '@/utils/inspectionPhase';
 import { PhotoStorage } from '@/utils/photoStorage';
 import type { Service } from '@/types';
 
 const logger = createLogger('useServiceInspection');
+
+/**
+ * Tiempo tras el cual una entrega que no ha terminado deja de ser "lenta" y
+ * pasa a ser sospechosa. No cancela nada: avisa. El fallo del 25/07 fue
+ * silencioso —el operador se quedó mirando "Finalizando..." sin saber si el
+ * servicio había cerrado o no— y eso es lo que no puede volver a pasar.
+ */
+const SUBMISSION_STALL_MS = 90000;
 
 export const useServiceInspection = () => {
   const params = useParams();
@@ -40,6 +48,7 @@ export const useServiceInspection = () => {
     finishPdfGeneration,
   } = useInspectionPDF();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(serviceId);
+  const stallTimerRef = useRef<number | null>(null);
   const [completedInspection, setCompletedInspection] = useState<{
     blob?: Blob;
     values: InspectionFormValues;
@@ -90,17 +99,35 @@ export const useServiceInspection = () => {
 
       beginPdfGeneration();
 
-      const { blob, signedUrl, valuesWithPhotos } = await submitInspectionPipeline({
-        service,
-        serviceId,
-        values,
-        phase,
-        onPdfProgress: updatePdfGeneration,
-      });
+      // Vigilancia de atasco: el aviso llega aunque la promesa nunca resuelva.
+      if (stallTimerRef.current !== null) window.clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = window.setTimeout(() => {
+        toast.warning(
+          phase === 'final'
+            ? 'La entrega está tardando más de lo normal. No cierres la app; si no avanza, vuelve a intentarlo y se retomará donde quedó.'
+            : 'La inspección está tardando más de lo normal. No cierres la app; si no avanza, vuelve a intentarlo.',
+          { duration: 12000 },
+        );
+      }, SUBMISSION_STALL_MS);
 
-      finishPdfGeneration();
+      try {
+        const { blob, signedUrl, valuesWithPhotos } = await submitInspectionPipeline({
+          service,
+          serviceId,
+          values,
+          phase,
+          onPdfProgress: updatePdfGeneration,
+        });
 
-      return { blob, values: valuesWithPhotos, phase, signedUrl, queuedOffline: false } as const;
+        finishPdfGeneration();
+
+        return { blob, values: valuesWithPhotos, phase, signedUrl, queuedOffline: false } as const;
+      } finally {
+        if (stallTimerRef.current !== null) {
+          window.clearTimeout(stallTimerRef.current);
+          stallTimerRef.current = null;
+        }
+      }
     },
     onSuccess: async (result) => {
       const { blob, values, phase, signedUrl, queuedOffline } = result;
@@ -182,6 +209,45 @@ export const useServiceInspection = () => {
     }
   });
 
+  /**
+   * Retoma la cadena de entrega interrumpida: la evidencia ya está guardada y
+   * solo falta cerrar el servicio. No regenera el PDF ni duplica nada.
+   */
+  const resumeClosureMutation = useMutation({
+    mutationFn: async () => {
+      if (!service || !serviceId) {
+        throw new Error('No hay datos del servicio disponibles.');
+      }
+
+      const phase: 'initial' | 'final' = service.status === 'inspection_completed' ? 'final' : 'initial';
+      const resumed = await resumeInterruptedSubmission({ service, serviceId, phase });
+      return { resumed, phase };
+    },
+    onSuccess: async ({ resumed }) => {
+      toast.success(resumed
+        ? 'Servicio finalizado: se retomó el cierre pendiente.'
+        : 'El servicio ya estaba cerrado.');
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) }),
+        queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+        refetch(),
+      ]);
+
+      navigate('/operator');
+    },
+    onError: (error: Error) => {
+      logger.error('No se pudo retomar el cierre del servicio:', error);
+      toast.error(`No se pudo finalizar el servicio: ${error.message}`);
+      reportFrontendError({
+        componentName: 'useServiceInspection.resumeClosure',
+        errorMessage: error.message,
+        errorStack: error.stack,
+        url: window.location.href,
+      }).catch(() => {});
+    },
+  });
+
   const handleRetry = async () => {
     logger.debug('Retrying service fetch...');
     await refetch();
@@ -200,6 +266,7 @@ export const useServiceInspection = () => {
     completedInspection,
     processInspectionMutation,
     updateServiceStatusMutation,
+    resumeClosureMutation,
     handleManualDownload: () => handleManualDownload(service),
     handleRetry,
     navigate
