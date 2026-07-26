@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useServiceInspection } from '@/hooks/useServiceInspection';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
 import { PDFProgress } from '@/components/operator/PDFProgress';
@@ -7,6 +7,7 @@ import { InspectionErrorState } from '@/components/operator/inspection/Inspectio
 import { InspectionLoadingState } from '@/components/operator/inspection/InspectionLoadingState';
 import { InspectionForm } from '@/components/operator/inspection/InspectionForm';
 import { InspectionSuccess } from '@/components/operator/inspection/InspectionSuccess';
+import { DeliveryIdentityGate } from '@/components/operator/inspection/DeliveryIdentityGate';
 import { AlertTriangle } from 'lucide-react';
 import { createLogger } from '@/lib/logger';
 
@@ -30,6 +31,10 @@ const ServiceInspection = () => {
     handleRetry,
     navigate
   } = useServiceInspection();
+
+  // Entrega: identidad confirmada antes de abrir el formulario. La garantía dura
+  // es la doble llave del servidor; esto es para que el operador vea qué cierra.
+  const [deliveryIdentityConfirmed, setDeliveryIdentityConfirmed] = useState(false);
 
   logger.debug('Component Render:', {
     id,
@@ -93,6 +98,19 @@ const ServiceInspection = () => {
         onDownload={handleManualDownload}
         onBackToList={() => navigate('/operator')}
       />
+    );
+  }
+
+  if (service.status === 'inspection_completed' && !deliveryIdentityConfirmed) {
+    return (
+      <div className="operator-inspection-flow space-y-5">
+        <InspectionHeader onBack={handleBack} folio={service.folio} phase="final" />
+        <DeliveryIdentityGate
+          service={service}
+          onConfirm={() => setDeliveryIdentityConfirmed(true)}
+          onCancel={handleBack}
+        />
+      </div>
     );
   }
 

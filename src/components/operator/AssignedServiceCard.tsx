@@ -161,6 +161,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
     try {
       await updateServiceStatusMutation.mutateAsync({
         id: service.id,
+        // El folio que esta tarjeta está mostrando: si no corresponde al id que
+        // se manda, el servidor rechaza en vez de iniciar otro servicio.
+        folioConfirmation: service.folio,
         targetStatus: 'in_progress',
         startTime,
       });

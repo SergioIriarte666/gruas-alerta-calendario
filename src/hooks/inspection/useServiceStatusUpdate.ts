@@ -12,10 +12,18 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
   const updateServiceStatusMutation = useMutation({
     mutationFn: async ({
       id,
+      folioConfirmation,
       targetStatus = 'in_progress',
       startTime,
     }: {
       id: string;
+      /**
+       * El folio TAL COMO SE MUESTRA en la pantalla que dispara la acción. Es la
+       * segunda llave: si el id que el flujo carga por dentro no corresponde a
+       * ese folio, el servidor rechaza. Sin esto, un flujo con el servicio
+       * equivocado cerró en producción un traslado real (25/07).
+       */
+      folioConfirmation: string;
       targetStatus?: 'in_progress' | 'inspection_completed' | 'completed';
       /** 'HH:mm' confirmado por el operador al iniciar. Se guarda junto al cambio de estado. */
       startTime?: string;
@@ -23,68 +31,37 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
       if (!id) {
         throw new Error('ID del servicio requerido');
       }
-      
-      logger.debug('🔄 [STATUS] Iniciando actualización para servicio:', id);
-      
-      // Verificar servicio actual
-      const { data: currentService, error: fetchError } = await supabase
-        .from('services')
-        .select('id, status, folio')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        logger.error('❌ [STATUS] Error al obtener servicio:', fetchError);
-        throw new Error(`Error al obtener servicio: ${fetchError.message}`);
+      if (!folioConfirmation) {
+        throw new Error('Falta el folio de confirmación del servicio');
       }
 
-      if (!currentService) {
-        logger.error('❌ [STATUS] Servicio no encontrado:', id);
-        throw new Error('Servicio no encontrado');
+      logger.debug('🔄 [STATUS] Actualizando servicio', { id, folioConfirmation, targetStatus });
+
+      // El estado se cambia SIEMPRE por RPC con doble llave (id + folio). El
+      // UPDATE directo a services está bloqueado por trigger para el operador.
+      const { error } = targetStatus === 'completed'
+        ? await supabase.rpc('complete_service', {
+            p_service_id: id,
+            p_folio_confirmation: folioConfirmation,
+          })
+        : await supabase.rpc('advance_operator_service_status', {
+            p_service_id: id,
+            p_folio_confirmation: folioConfirmation,
+            p_target_status: targetStatus,
+            // start_time viaja en la MISMA llamada que el cambio a in_progress:
+            // quedaba NULL porque nadie lo escribía al iniciar y la hora real de
+            // partida se perdía.
+            p_start_time: startTime ?? null,
+          });
+
+      if (error) {
+        logger.error('❌ [STATUS] Error en actualización:', error);
+        throw new Error(`Error al actualizar: ${error.message}`);
       }
 
-      logger.debug('🔍 [STATUS] Servicio encontrado:', {
-        id: currentService.id,
-        folio: currentService.folio,
-        statusActual: currentService.status
-      });
+      logger.debug('✅ [STATUS] Actualización exitosa:', { id, targetStatus });
 
-      // Verificar si ya está en el estado objetivo
-      if (currentService.status === targetStatus) {
-        logger.debug(`⚠️ [STATUS] Servicio ya en estado ${targetStatus}`);
-        return currentService;
-      }
-
-      // Actualizar estado. start_time viaja en el MISMO update que el cambio a
-      // in_progress: quedaba NULL porque nadie lo escribía al iniciar y la hora
-      // real de partida se perdía (hubo que cargarla a mano después).
-      logger.debug(`🔄 [STATUS] Actualizando a ${targetStatus}...`, { startTime });
-      const { data: updatedService, error: updateError } = await supabase
-        .from('services')
-        .update({
-          status: targetStatus,
-          ...(startTime ? { start_time: startTime } : {}),
-        })
-        .eq('id', id)
-        .select('id, status, folio')
-        .single();
-
-      if (updateError) {
-        logger.error('❌ [STATUS] Error en actualización:', updateError);
-        throw new Error(`Error al actualizar: ${updateError.message}`);
-      }
-
-      if (!updatedService) {
-        throw new Error('No se pudo confirmar la actualización');
-      }
-      
-      logger.debug('✅ [STATUS] Actualización exitosa:', {
-        id: updatedService.id,
-        folio: updatedService.folio,
-        nuevoStatus: updatedService.status
-      });
-
-      return updatedService;
+      return { id, folio: folioConfirmation, status: targetStatus };
     },
     onSuccess: async (updatedService) => {
       logger.debug('✅ [STATUS] Mutation exitosa:', updatedService);

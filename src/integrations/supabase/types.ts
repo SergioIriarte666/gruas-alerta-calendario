@@ -6611,6 +6611,7 @@ export type Database = {
           expires_at: string
           id: string
           last_accessed_at: string | null
+          max_stage_reached: string | null
           on_site_reached_at: string | null
           revoked_at: string | null
           service_id: string
@@ -6628,6 +6629,7 @@ export type Database = {
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
+          max_stage_reached?: string | null
           on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id: string
@@ -6645,6 +6647,7 @@ export type Database = {
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
+          max_stage_reached?: string | null
           on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id?: string
@@ -8511,6 +8514,15 @@ export type Database = {
         }
         Returns: string
       }
+      advance_operator_service_status: {
+        Args: {
+          p_folio_confirmation: string
+          p_service_id: string
+          p_start_time?: string
+          p_target_status: string
+        }
+        Returns: string
+      }
       apply_payment_fifo: {
         Args: { p_client_id?: string; p_payment_id: string }
         Returns: Json
@@ -8540,6 +8552,10 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      assert_service_identity: {
+        Args: { p_folio_confirmation: string; p_service_id: string }
+        Returns: string
       }
       assign_lowboy_container_to_sale: {
         Args: {
@@ -8690,6 +8706,10 @@ export type Database = {
       close_service_status_only: {
         Args: { p_service_id: string }
         Returns: Json
+      }
+      complete_service: {
+        Args: { p_folio_confirmation: string; p_service_id: string }
+        Returns: string
       }
       comprehensive_payment_diagnosis: { Args: never; Returns: Json }
       compute_service_route_metrics: {
@@ -9460,6 +9480,16 @@ export type Database = {
       rollback_import_batch: { Args: { p_batch_id: string }; Returns: Json }
       safe_update_service: {
         Args: { service_id_param: string; update_data: Json }
+        Returns: Json
+      }
+      save_inspection_evidence: {
+        Args: {
+          p_folio_confirmation: string
+          p_operator_id: string
+          p_payload: Json
+          p_phase: string
+          p_service_id: string
+        }
         Returns: Json
       }
       save_lowboy_sale_with_containers: {

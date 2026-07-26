@@ -44,3 +44,70 @@ export const selectTrackingService = (services: Service[]): Service | null => {
 
   return pending[0] ?? null;
 };
+
+/** Servicios "en vuelo": los que la jornada puede confundir entre sí. */
+export const IN_FLIGHT_OPERATOR_SERVICE_STATUSES = [
+  'pending',
+  'in_progress',
+  'inspection_completed',
+] as const;
+
+export interface OperatorServiceSelection {
+  /** Servicios en vuelo, en orden de prioridad operativa. */
+  candidates: Service[];
+  /** true cuando hay más de uno y el operador todavía no eligió. */
+  requiresSelection: boolean;
+  /** Servicio en curso resuelto, o null si es ambiguo. */
+  activeService: Service | null;
+  /** Servicio al que se asocia la transmisión, o null si es ambiguo. */
+  trackingService: Service | null;
+}
+
+/**
+ * Resolución ÚNICA del servicio del portal operador, para todos los flujos
+ * (transmisión, detenciones, compartir link, entrega).
+ *
+ * Con un solo servicio en vuelo se resuelve solo. Con dos o más NO SE ADIVINA:
+ * el sistema exige una elección explícita y, mientras no la haya, no cuelga nada
+ * de ningún servicio. La noche del 25/07 el operador tenía TEST-TRACK-01 en
+ * curso y SRV-6858 asignado para la mañana siguiente, y "el primero de la lista"
+ * se llevó una detención que no era suya.
+ */
+export const resolveOperatorServiceSelection = (
+  services: Service[],
+  selectedServiceId?: string | null,
+): OperatorServiceSelection => {
+  const candidates = services
+    .filter((service) =>
+      (IN_FLIGHT_OPERATOR_SERVICE_STATUSES as readonly string[]).includes(service.status))
+    .sort((a, b) => {
+      const rank = (service: Service) =>
+        service.status === 'in_progress' ? 0 : service.status === 'inspection_completed' ? 1 : 2;
+      const byRank = rank(a) - rank(b);
+      return byRank !== 0 ? byRank : (a.serviceDate || '').localeCompare(b.serviceDate || '');
+    });
+
+  const selected = selectedServiceId
+    ? candidates.find((service) => service.id === selectedServiceId) ?? null
+    : null;
+
+  if (selected) {
+    return {
+      candidates,
+      requiresSelection: false,
+      activeService: isActiveOperatorService(selected) ? selected : null,
+      trackingService: selected,
+    };
+  }
+
+  if (candidates.length > 1) {
+    return { candidates, requiresSelection: true, activeService: null, trackingService: null };
+  }
+
+  return {
+    candidates,
+    requiresSelection: false,
+    activeService: selectActiveOperatorService(candidates),
+    trackingService: selectTrackingService(candidates),
+  };
+};

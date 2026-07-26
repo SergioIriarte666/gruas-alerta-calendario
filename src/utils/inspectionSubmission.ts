@@ -24,14 +24,28 @@ export interface InspectionSubmissionResult {
   valuesWithPhotos: InspectionFormValues;
 }
 
-const updateServiceStatusDirect = async (
+/**
+ * Avance de estado con DOBLE LLAVE: el id que el flujo carga por dentro y el
+ * folio que la pantalla muestra. Si divergen —el defecto del 25/07, que cerró
+ * un servicio real mientras la UI decía otro— el servidor rechaza y no toca
+ * nada. El UPDATE directo a services está bloqueado por trigger para el rol
+ * operador: esta no es "la forma recomendada", es la única que existe.
+ */
+const advanceServiceStatus = async (
   serviceId: string,
+  folioConfirmation: string,
   targetStatus: 'inspection_completed' | 'completed',
 ): Promise<void> => {
-  const { error } = await supabase
-    .from('services')
-    .update({ status: targetStatus })
-    .eq('id', serviceId);
+  const { error } = targetStatus === 'completed'
+    ? await supabase.rpc('complete_service', {
+        p_service_id: serviceId,
+        p_folio_confirmation: folioConfirmation,
+      })
+    : await supabase.rpc('advance_operator_service_status', {
+        p_service_id: serviceId,
+        p_folio_confirmation: folioConfirmation,
+        p_target_status: targetStatus,
+      });
 
   if (error) {
     throw new Error(`No se pudo actualizar el estado del servicio: ${error.message}`);
@@ -104,7 +118,7 @@ export const resumeInterruptedSubmission = async ({
     targetStatus,
   });
 
-  await updateServiceStatusDirect(serviceId, targetStatus);
+  await advanceServiceStatus(serviceId, service.folio, targetStatus);
   return true;
 };
 
@@ -200,6 +214,7 @@ export const submitInspectionPipeline = async ({
   try {
     persistedInspection = await persistInspection(
       serviceId,
+      service.folio,
       operatorId,
       valuesWithPhotos,
       uploadedPhotos,
@@ -212,7 +227,7 @@ export const submitInspectionPipeline = async ({
   }
 
   try {
-    await updateServiceStatusDirect(serviceId, targetStatusForPhase(service, phase));
+    await advanceServiceStatus(serviceId, service.folio, targetStatusForPhase(service, phase));
   } catch (statusError) {
     if (persistedInspection) {
       if (persistedInspection.wasInserted || phase === 'initial') {

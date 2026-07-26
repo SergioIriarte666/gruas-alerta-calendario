@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Eye, Loader2, Radio, RadioTower, Share2, Square, WifiOff } from 'lucide-react';
+import { ChevronRight, Eye, Loader2, Radio, RadioTower, Share2, Square, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -36,6 +36,12 @@ const logger = createLogger('Tracking');
 const UPLOAD_STALE_MS = 2 * 60 * 1000;
 const AGE_TICK_MS = 5000;
 
+const SERVICE_STATE_LABELS: Record<string, string> = {
+  pending: 'Asignado',
+  in_progress: 'En curso',
+  inspection_completed: 'Por entregar',
+};
+
 interface TransmissionControlProps {
   operatorId?: string | null;
   userId?: string | null;
@@ -46,6 +52,11 @@ interface TransmissionControlProps {
    * pueden colgarse detenciones: el chip se deshabilita si no hay ninguno.
    */
   activeService?: Service | null;
+  /** Servicios en vuelo de la jornada, para elegir cuando hay más de uno. */
+  candidates?: Service[];
+  /** true = hay varios en vuelo y nadie eligió: no se asume ninguno. */
+  requiresSelection?: boolean;
+  onSelectService?: (serviceId: string | null) => void;
 }
 
 const formatAge = (iso: string | null, now: Date): string | null => {
@@ -69,6 +80,9 @@ export const TransmissionControl = ({
   userId,
   currentService,
   activeService = null,
+  candidates = [],
+  requiresSelection = false,
+  onSelectService,
 }: TransmissionControlProps) => {
   const {
     isTracking,
@@ -216,11 +230,70 @@ export const TransmissionControl = ({
     live: 'border-success/40 bg-success/10 text-success operator-transmission-pulse--live',
   }[statusTone];
 
+  // Varios servicios en vuelo y ninguno elegido: NO se adivina. Sin elección no
+  // se cuelga nada de ningún servicio —ni transmisión, ni link, ni detenciones—
+  // porque "el primero de la lista" es exactamente lo que escribió una detención
+  // en el servicio de la mañana siguiente (25/07).
+  if (requiresSelection) {
+    return (
+      <section
+        className="operator-transmission-control rounded-3xl border border-border bg-card p-4"
+        aria-label="Elegir servicio de la jornada"
+      >
+        <p className="operator-native-eyebrow">Tienes {candidates.length} servicios en jornada</p>
+        <h2 className="mt-1 text-lg font-bold text-foreground">¿En cuál estás trabajando?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          La transmisión, el link del cliente y las detenciones se asocian al servicio que elijas.
+        </p>
+        <div className="mt-3 space-y-2">
+          {candidates.map((service) => (
+            <button
+              key={service.id}
+              type="button"
+              onClick={() => onSelectService?.(service.id)}
+              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-2.5 text-left transition-colors hover:bg-muted"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold text-foreground">
+                  {service.folio}
+                  {service.licensePlate ? ` · ${service.licensePlate.toUpperCase()}` : ''}
+                </span>
+                <span className="block truncate text-xs font-medium text-muted-foreground">
+                  {service.client?.name ?? 'Cliente no especificado'} · {SERVICE_STATE_LABELS[service.status] ?? service.status}
+                </span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className="operator-transmission-control rounded-3xl border border-border bg-card p-4"
       aria-label="Control de transmisión"
     >
+      {candidates.length > 1 && currentService && (
+        // Identidad visible: con varios servicios en jornada, el control dice en
+        // voz alta sobre cuál está operando.
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-muted/60 px-3 py-2">
+          <p className="min-w-0 truncate text-xs font-semibold text-muted-foreground">
+            Trabajando en <span className="text-foreground">{currentService.folio}</span>
+            {currentService.licensePlate ? ` · ${currentService.licensePlate.toUpperCase()}` : ''}
+            {currentService.client?.name ? ` · ${currentService.client.name}` : ''}
+          </p>
+          <button
+            type="button"
+            onClick={() => onSelectService?.(null)}
+            className="shrink-0 text-xs font-bold text-primary"
+          >
+            Cambiar
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         <button
           type="button"

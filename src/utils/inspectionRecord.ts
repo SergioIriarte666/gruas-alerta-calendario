@@ -228,8 +228,16 @@ export const ensurePhotosUploaded = async (
   return uploaded;
 };
 
+/**
+ * Guarda la evidencia de la fase con DOBLE LLAVE: el id del servicio y el folio
+ * que la pantalla está mostrando. El 25/07 un flujo que decía TEST-TRACK-01
+ * escribió el PDF de entrega, el RUT y el nombre del receptor sobre el servicio
+ * REAL 3262047-1. La escritura directa a `inspections` está bloqueada por
+ * trigger para el rol operador: este es el único camino.
+ */
 export const persistInspection = async (
   serviceId: string,
+  folioConfirmation: string,
   operatorId: string,
   values: InspectionFormValues,
   uploadedPhotos: (PhotographicSetItem & { storageUrl: string })[],
@@ -240,26 +248,14 @@ export const persistInspection = async (
     throw new Error('La entrega requiere al menos una fotografía antes de guardar.');
   }
 
-  const pdfFields = phase === 'initial'
-    ? { pdf_url: pdfPath, pdf_uploaded_at: businessClock.nowISO() }
-    : { pdf_retiro_url: pdfPath, pdf_retiro_uploaded_at: businessClock.nowISO() };
-
-  // uploadedPhotos[].storageUrl es el PATH del objeto en Storage (ver photoUpload.ts), no una
-  // signed URL: se firma on-demand al mostrar la evidencia, nunca se persiste con TTL.
-  const photoFields = phase === 'initial'
-    ? { photos_before_service: uploadedPhotos.map(photo => photo.storageUrl) }
-    : { photos_client_vehicle: uploadedPhotos.map(photo => photo.storageUrl) };
-
   const payload = {
-    service_id: serviceId,
-    operator_id: operatorId,
     // equipment_checklist = solo los presentes (compatibilidad con consumidores
     // existentes). equipment_status = el catálogo completo con true/false, que
     // es lo único capaz de distinguir "revisado y ausente" de "nunca evaluado".
     equipment_checklist: values.equipment || [],
     ...(values.equipmentStatus ? { equipment_status: values.equipmentStatus } : {}),
     vehicle_observations: values.vehicleObservations || null,
-    ...(phase === 'initial' ? { operator_signature: values.operatorSignature || '' } : {}),
+    operator_signature: values.operatorSignature || '',
     client_name: normalizePersonNameOrNull(values.clientName),
     client_rut: values.clientRut ? normalizeRut(values.clientRut) : null,
     ...(phase === 'initial' ? {
@@ -271,53 +267,42 @@ export const persistInspection = async (
         documentacion: values.documentacion || null,
       },
     } : {}),
-    ...photoFields,
-    ...pdfFields,
+    // storageUrl es el PATH del objeto en Storage (ver photoUpload.ts), no una
+    // signed URL: se firma on-demand al mostrar la evidencia, nunca se persiste
+    // con TTL.
+    photos: uploadedPhotos.map(photo => photo.storageUrl),
+    pdf_path: pdfPath,
   };
 
-  const { data: existing, error: selectError } = await supabase
-    .from('inspections')
-    .select('id')
-    .eq('service_id', serviceId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc('save_inspection_evidence', {
+    p_service_id: serviceId,
+    p_folio_confirmation: folioConfirmation,
+    p_phase: phase,
+    p_operator_id: operatorId,
+    p_payload: payload,
+  });
 
-  if (selectError) {
-    logger.error('Error consultando inspección existente:', selectError);
-    throw new Error(`Error al consultar inspección: ${selectError.message}`);
+  if (error) {
+    logger.error('Error guardando la evidencia de inspección:', error);
+    throw new Error(`Error al guardar inspección: ${error.message}`);
   }
 
-  let persisted: { id: string; photos_before_service: string[] | null; photos_client_vehicle: string[] | null; pdf_url: string | null; pdf_retiro_url: string | null } | null = null;
-  let wasInserted = false;
+  const result = (data ?? {}) as { id?: string; was_inserted?: boolean };
+  if (!result.id) {
+    throw new Error(`La evidencia de ${phase === 'initial' ? 'inspección inicial' : 'entrega'} no quedó persistida completamente.`);
+  }
 
-  if (existing) {
-    const { data: updated, error: updateError } = await supabase
-      .from('inspections')
-      .update(payload)
-      .eq('id', existing.id)
-      .select('id, photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
-      .single();
+  // Verificación de lectura: la fila queda releída para confirmar que el PDF y
+  // TODAS las fotos quedaron guardados, no solo que la escritura no dio error.
+  const { data: persisted, error: verifyError } = await supabase
+    .from('inspections')
+    .select('photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
+    .eq('id', result.id)
+    .maybeSingle();
 
-    if (updateError) {
-      logger.error('Error actualizando inspección:', updateError);
-      throw new Error(`Error al actualizar inspección: ${updateError.message}`);
-    }
-    persisted = updated;
-  } else {
-    if (phase === 'final') {
-      throw new Error('No existe una inspección inicial donde guardar la evidencia de entrega.');
-    }
-    const { data: inserted, error: insertError } = await supabase
-      .from('inspections')
-      .insert({ ...payload, operator_signature: values.operatorSignature || '' })
-      .select('id, photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
-      .single();
-
-    if (insertError) {
-      logger.error('Error insertando inspección:', insertError);
-      throw new Error(`Error al guardar inspección: ${insertError.message}`);
-    }
-    persisted = inserted;
-    wasInserted = true;
+  if (verifyError) {
+    logger.error('Error verificando la evidencia persistida:', verifyError);
+    throw new Error(`Error al verificar inspección: ${verifyError.message}`);
   }
 
   const persistedPhotos = phase === 'initial' ? persisted?.photos_before_service : persisted?.photos_client_vehicle;
@@ -327,7 +312,7 @@ export const persistInspection = async (
   }
 
   logger.debug('Inspección persistida correctamente para servicio:', serviceId);
-  return { id: persisted.id, wasInserted };
+  return { id: result.id, wasInserted: result.was_inserted === true };
 };
 
 export const deleteInspectionRow = async (inspectionId: string): Promise<void> => {
