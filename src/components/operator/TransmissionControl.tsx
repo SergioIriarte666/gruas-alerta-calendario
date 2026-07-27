@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { OperatorPinDialog } from '@/components/operator/OperatorPinDialog';
+import { OperatorDrivePanel } from '@/components/operator/OperatorDrivePanel';
 import { StopReasonPicker } from '@/components/operator/StopReasonPicker';
 import { useOperatorLocationTracking } from '@/hooks/useOperatorLocationTracking';
 import { useServiceStopEvent } from '@/hooks/operator/useServiceStopEvent';
@@ -500,6 +501,8 @@ export const TransmissionControl = ({
           {isSharing ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
         </Button>
       </div>
+
+      <OperatorDrivePanel isTracking={isTracking} point={lastPoint} />
 
       {(activeServiceId || serviceId) && (
         <div className="mt-3">

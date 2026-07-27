@@ -475,10 +475,14 @@ export const useOperatorLocationTracking = ({
         if (generation !== captureGeneration) return;
 
         const now = Date.now();
+        // La cabina del operador necesita velocidad y rumbo en vivo. La UI sí
+        // recibe cada lectura GPS, aunque la persistencia conserve su filtro de
+        // 20 s / 30 m para no aumentar escrituras, red ni consumo de batería.
+        const point = mapBackgroundGeolocationPoint(location);
+        setLastPoint(point);
         const elapsed = now - lastNativePersistAtRef.current;
         if (elapsed < NATIVE_MIN_PERSIST_INTERVAL_MS) return;
 
-        const point = mapBackgroundGeolocationPoint(location);
         const previous = lastPersistedLocationRef.current;
         const moved = !previous || distanceMeters(previous, point) >= MOVEMENT_THRESHOLD_METERS;
         const heartbeatDue = elapsed >= HEARTBEAT_INTERVAL_MS;
