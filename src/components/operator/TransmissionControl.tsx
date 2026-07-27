@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ChevronRight, Eye, Loader2, Radio, RadioTower, Share2, Square, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,13 @@ import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { STOP_REASON_LABELS } from '@/types/serviceStopEvent';
+import { resolveTransmissionStopGate } from '@/utils/transmissionStopGate';
+import {
+  KEEP_AWAKE_DENIED_MESSAGE,
+  keepAwakeSafely,
+  subscribeKeepAwake,
+  type KeepAwakeOutcome,
+} from '@/utils/keepAwake';
 import type { Service } from '@/types';
 
 const logger = createLogger('Tracking');
@@ -35,6 +42,15 @@ const logger = createLogger('Tracking');
  */
 const UPLOAD_STALE_MS = 2 * 60 * 1000;
 const AGE_TICK_MS = 5000;
+
+/**
+ * Cadencia con la que se relee si el cliente tiene un link vigente.
+ *
+ * El estado no puede quedarse pegado al valor del montaje: el 26/07 el link se
+ * creó a las 14:13 y la insignia del ojo —y con ella el gate del PIN— siguió
+ * creyendo que nadie miraba hasta las 21:3x.
+ */
+const LINK_STATE_REFRESH_MS = 60000;
 
 const SERVICE_STATE_LABELS: Record<string, string> = {
   pending: 'Asignado',
@@ -114,7 +130,13 @@ export const TransmissionControl = ({
   const [pinOpen, setPinOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showAlwaysHint, setShowAlwaysHint] = useState(false);
+  const [keepAwakeOutcome, setKeepAwakeOutcome] = useState<KeepAwakeOutcome>('idle');
   const [now, setNow] = useState(() => businessClock.now());
+  // URL del seguimiento resuelta por adelantado. Compartir tiene que poder
+  // llamar a navigator.share SIN una llamada de red por delante: la activación
+  // transitoria del gesto expira durante el await y Safari rechaza con
+  // NotAllowedError (26/07, 14:13 — el token se creó y el panel nunca se abrió).
+  const trackingUrlRef = useRef<string | null>(null);
 
   const { isRollingWithoutTransmitting } = useAutoTransmissionOnMovement({
     enabled: Boolean(serviceId) && !isTracking && !trackingDisabled,
@@ -129,22 +151,77 @@ export const TransmissionControl = ({
     return () => window.clearInterval(intervalId);
   }, []);
 
-  const refreshLinkState = useCallback(async () => {
+  /**
+   * ¿Hay un cliente mirando? Se resuelve contra la BD (RPC SECURITY DEFINER:
+   * el operador nunca lee la tabla de tokens) y devuelve el valor para que el
+   * gate del corte pueda usarlo en el acto, sin esperar un render.
+   *
+   * Devuelve `null` cuando no se pudo averiguar: quien decide trata la
+   * incertidumbre como "puede haber alguien mirando".
+   */
+  const refreshLinkState = useCallback(async (): Promise<boolean | null> => {
     if (!serviceId) {
       setHasActiveLink(false);
-      return;
+      return false;
     }
     const { data, error } = await supabase.rpc('service_has_active_tracking_link', {
       p_service_id: serviceId,
     });
     if (error) {
       logger.warn('No se pudo revisar el link de seguimiento vigente', error);
-      return;
+      return null;
     }
-    setHasActiveLink(data === true);
+    const active = data === true;
+    setHasActiveLink(active);
+    return active;
   }, [serviceId]);
 
-  useEffect(() => { void refreshLinkState(); }, [refreshLinkState]);
+  // Al montar, cada minuto y al volver a primer plano. Un valor de hace siete
+  // horas no sirve para decidir si el corte necesita PIN.
+  useEffect(() => {
+    void refreshLinkState();
+    const intervalId = window.setInterval(() => { void refreshLinkState(); }, LINK_STATE_REFRESH_MS);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void refreshLinkState();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [refreshLinkState]);
+
+  useEffect(() => subscribeKeepAwake(setKeepAwakeOutcome), []);
+
+  /**
+   * Token del link, pedido apenas hay servicio y cacheado.
+   *
+   * `get_operator_service_tracking_token` es idempotente: reutiliza el vigente
+   * y solo crea uno si no lo hay, así que pedirlo por adelantado no multiplica
+   * links. Con la URL ya en mano, compartir es una operación síncrona dentro
+   * del gesto.
+   */
+  useEffect(() => {
+    if (!serviceId) {
+      trackingUrlRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    void supabase
+      .rpc('get_operator_service_tracking_token', { p_service_id: serviceId })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          logger.warn('No se pudo preparar el link de seguimiento', error);
+          return;
+        }
+        trackingUrlRef.current = `${window.location.origin}/track/${data}`;
+        void refreshLinkState();
+      });
+
+    return () => { cancelled = true; };
+  }, [refreshLinkState, serviceId]);
 
   // Sin permiso "Siempre" en iOS el rastreo muere al bloquear la pantalla: es
   // el único texto que se conserva, porque sin él el control queda en gris sin
@@ -162,55 +239,124 @@ export const TransmissionControl = ({
   const isFrozen = isTracking && (uploadAgeMs === null || uploadAgeMs > UPLOAD_STALE_MS);
   const ageLabel = formatAge(lastSyncAt, now);
 
+  /** Copia al portapapeles con respaldo para WebViews que no exponen la API. */
+  const copyToClipboard = async (url: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch (error) {
+      logger.warn('El portapapeles no aceptó el link', error);
+      return false;
+    }
+  };
+
+  const markShared = async () => {
+    if (!serviceId) return;
+    const { error } = await supabase.rpc('mark_service_tracking_link_shared', {
+      p_service_id: serviceId,
+    });
+    if (error) logger.warn('No se pudo marcar el link como entregado', error);
+    await refreshLinkState();
+  };
+
+  /**
+   * Compartir NUNCA termina en error: a lo más se degrada a copiar.
+   *
+   * Orden obligatorio dentro del gesto: primero `navigator.share` con el URL ya
+   * cacheado (sin ningún await por delante), y recién después el resto —
+   * encender la transmisión, marcar el link como entregado—. Invertirlo es lo
+   * que produjo el NotAllowedError del 26/07.
+   */
   const handleShare = async () => {
     if (!serviceId) return;
+
+    const url = trackingUrlRef.current;
     setIsSharing(true);
+
+    // Regla dura: compartir con la transmisión apagada la enciende igual. Va
+    // sin await para no consumir la activación del gesto antes del share.
+    const keepAwakePromise = isTracking ? null : keepAwakeSafely();
+    const resumePromise = isTracking ? null : resumeTracking();
+
     try {
-      // Regla dura: compartir con la transmisión apagada la enciende PRIMERO.
-      // El orden queda garantizado por la interfaz, no por la memoria del operador.
-      if (!isTracking) {
-        await resumeTracking();
+      if (url && navigator.share) {
+        try {
+          await navigator.share({ title: `Seguimiento ${currentService?.folio ?? ''}`.trim(), url });
+          await markShared();
+          return;
+        } catch (error) {
+          // Cancelar el diálogo nativo no es un fallo que reportar ni que
+          // degradar: el operador decidió no compartir.
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+          logger.warn('El panel de compartir no se abrió, se copia el link', error);
+        }
       }
 
-      const { data, error } = await supabase.rpc('get_operator_service_tracking_token', {
-        p_service_id: serviceId,
-      });
-      if (error) throw new Error(error.message);
+      // Sin URL cacheada (arranque muy temprano o RPC caída) se pide ahora: se
+      // pierde el share nativo, pero el operador se lleva el link igual.
+      const fallbackUrl = url ?? await (async () => {
+        const { data, error } = await supabase.rpc('get_operator_service_tracking_token', {
+          p_service_id: serviceId,
+        });
+        if (error || !data) return null;
+        const resolved = `${window.location.origin}/track/${data}`;
+        trackingUrlRef.current = resolved;
+        return resolved;
+      })();
 
-      const url = `${window.location.origin}/track/${data}`;
-      if (navigator.share) {
-        await navigator.share({ title: `Seguimiento ${currentService?.folio ?? ''}`.trim(), url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        toast.success('Link de seguimiento copiado');
+      if (!fallbackUrl) {
+        toast.error('No se pudo preparar el link. Revisa tu conexión e inténtalo de nuevo.');
+        return;
       }
-      await refreshLinkState();
-    } catch (error) {
-      // Cancelar el diálogo nativo de compartir no es un fallo que reportar.
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      const message = error instanceof Error ? error.message : 'No se pudo compartir el seguimiento';
-      logger.warn('No se pudo compartir el link de seguimiento', error);
-      toast.error(message);
+
+      if (await copyToClipboard(fallbackUrl)) {
+        toast.success('Link copiado · pégalo en WhatsApp');
+        await markShared();
+        return;
+      }
+
+      // Último recurso: el link a la vista para copiarlo a mano. Sigue siendo
+      // mejor que un error técnico que no deja nada.
+      toast.info(fallbackUrl, { description: 'Copia este link y envíaselo al cliente', duration: 30000 });
+      await markShared();
     } finally {
+      await Promise.allSettled([keepAwakePromise, resumePromise].filter(Boolean));
       setIsSharing(false);
     }
   };
 
   const handleToggle = async () => {
     if (!isTracking) {
+      // El wake lock se pide DENTRO del gesto, antes de cualquier await: fuera
+      // de él Safari lo rechaza ("possibly because the user denied permission").
+      void keepAwakeSafely();
       await resumeTracking();
       return;
     }
 
-    // Con un cliente mirando, el corte debe ser deliberado y atribuible.
-    // Sin nadie mirando, basta doble confirmación: no agregar fricción donde
-    // no aporta.
-    if (hasActiveLink) {
-      const { data } = await supabase.rpc('operator_has_pin', { p_operator_id: operatorId });
-      if (data === true) {
-        setPinOpen(true);
-        return;
-      }
+    // El estado cacheado no decide el corte: se relee contra la BD en el
+    // instante en que el operador aprieta. Si la consulta falla, se asume que
+    // SÍ hay alguien mirando —la fricción de más es preferible a cortarle el
+    // seguimiento a un cliente en silencio—.
+    const freshLinkState = await refreshLinkState();
+    const linkIsActive = freshLinkState ?? true;
+
+    const { data: pinData, error: pinError } = await supabase.rpc('operator_has_pin', {
+      p_operator_id: operatorId,
+    });
+    if (pinError) logger.warn('No se pudo revisar el PIN del operador', pinError);
+
+    const gate = resolveTransmissionStopGate({
+      hasActiveLink: linkIsActive,
+      hasPin: pinData === true,
+    });
+
+    if (gate === 'pin') {
+      setPinOpen(true);
+      return;
+    }
+
+    if (linkIsActive) {
       // Con link vigente pero sin PIN configurado no se puede exigir lo que no
       // existe: se cae a la confirmación en vez de dejar al operador atrapado.
       logger.warn('Corte con link vigente sin PIN configurado: se usa doble confirmación', { operatorId });
@@ -396,6 +542,15 @@ export const TransmissionControl = ({
       {showAlwaysHint && (
         <p className="mt-3 rounded-xl border border-info/30 bg-info/10 p-2.5 text-xs text-info">
           Para transmitir con la pantalla apagada, activa Ubicación → Siempre en Ajustes de iOS.
+        </p>
+      )}
+
+      {/* El sistema negó mantener la pantalla activa. No corta la transmisión:
+          es un aviso de que la pantalla se va a apagar sola y con ella el
+          rastreo, con la instrucción concreta para evitarlo. */}
+      {isTracking && keepAwakeOutcome === 'denied' && (
+        <p className="mt-3 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
+          {KEEP_AWAKE_DENIED_MESSAGE}
         </p>
       )}
 

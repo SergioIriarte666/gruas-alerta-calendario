@@ -9,12 +9,15 @@ import {
   PauseCircle,
   Phone,
   Ticket,
+  TrafficCone,
   TriangleAlert,
   UtensilsCrossed,
+  Wrench,
 } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
+import { resolveEtaLabel, type EtaTargetKind } from '@/utils/trackEtaLabel';
 import { getCraneTypeLabel } from '@/utils/craneType';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -675,13 +678,26 @@ interface TrackingResponse {
   stop_event?: { reason: StopReason; started_at: string } | null;
 }
 
-type StopReason = 'combustible' | 'alimentacion' | 'descanso' | 'peaje' | 'otro';
+type StopReason =
+  | 'combustible'
+  | 'alimentacion'
+  | 'descanso'
+  | 'peaje'
+  | 'ruta_cortada'
+  | 'falla_mecanica'
+  | 'otro';
 
+// Redactadas para el CLIENTE, no para el operador: "Ruta cortada" y "Falla
+// mecánica" explican por sí solas por qué su carga está detenida. El catálogo
+// interno vive en src/types/serviceStopEvent.ts; esta página es pública y no
+// importa nada del cliente Supabase, por eso la copia.
 const STOP_REASON_LABELS: Record<StopReason, string> = {
   combustible: 'Combustible',
   alimentacion: 'Alimentación',
   descanso: 'Descanso',
   peaje: 'Peaje',
+  ruta_cortada: 'Ruta cortada',
+  falla_mecanica: 'Falla mecánica',
   otro: 'Detención',
 };
 
@@ -690,6 +706,8 @@ const STOP_REASON_ICONS: Record<StopReason, typeof Fuel> = {
   alimentacion: UtensilsCrossed,
   descanso: Coffee,
   peaje: Ticket,
+  ruta_cortada: TrafficCone,
+  falla_mecanica: Wrench,
   otro: PauseCircle,
 };
 
@@ -1165,79 +1183,133 @@ const StopEventBadge = ({ stopEvent }: { stopEvent: NonNullable<TrackingResponse
   );
 };
 
+/**
+ * Objetivo geográfico de la etapa, para la distancia en línea recta cuando
+ * Google no rutea la zona. `stop` usa la próxima parada pendiente con
+ * coordenadas; el resto, origen o destino según lo que declare el servidor.
+ */
+const resolveFallbackPoint = (
+  data: TrackingResponse,
+  target: 'origin' | 'destination' | 'stop',
+): { lat: number; lng: number; label: string | null } | null => {
+  if (target === 'stop') {
+    const nextPending = (data.stops ?? []).find(
+      (stop) => !stop.reached && stop.lat != null && stop.lng != null,
+    );
+    return nextPending
+      ? { lat: nextPending.lat as number, lng: nextPending.lng as number, label: nextPending.label }
+      : null;
+  }
+
+  const point = target === 'destination' ? data.destination : data.origin;
+  if (point?.lat == null || point?.lng == null) return null;
+  return { lat: point.lat, lng: point.lng, label: point.text ?? null };
+};
+
 const EtaHero = ({ data }: { data: TrackingResponse }) => {
   const stops = data.stops ?? [];
 
-  // Detención en curso: el ETA queda suspendido a propósito. Mostrar una hora
-  // de llegada que sigue corriendo durante un descanso es peor que no mostrar
-  // ninguna — el cliente la toma como compromiso.
-  if (data.stop_event) {
-    return (
-      <div>
-        <p className="text-2xl font-bold leading-tight text-foreground">
-          Detenido · {STOP_REASON_LABELS[data.stop_event.reason] ?? 'Detención'}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Desde las {formatOperationTime(data.stop_event.started_at)}. El tiempo de llegada se actualizará al reanudar.
-        </p>
-      </div>
-    );
-  }
+  // Objetivo geográfico de la etapa, resuelto UNA vez: alimenta tanto la
+  // decisión (¿hay adónde medir?) como el render de la distancia en línea recta.
+  const fallbackTarget: EtaTargetKind =
+    stops.length > 0 ? 'stop' : data.eta_target === 'destination' ? 'destination' : 'origin';
+  const fallbackPoint = resolveFallbackPoint(data, fallbackTarget);
 
-  // Recorrido cargado pero servicio aún no iniciado: sin ETA ni guía. Va antes
-  // que cualquier otra rama para no caer al render legacy y quedar en
-  // "Calculando tiempo de llegada…" permanente (SRV-6853).
-  if (stops.length > 0 && data.route_armed === false) {
-    return (
-      <div>
-        <p className="text-2xl font-bold leading-tight text-foreground">Servicio no iniciado</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          El recorrido está programado; el seguimiento comienza cuando el operador inicia el servicio.
-        </p>
-      </div>
-    );
-  }
+  // La decisión de rótulo/objetivo vive en resolveEtaLabel (función pura, con
+  // tests): aquí solo se pinta lo que esa decisión ordena. Rótulo y objetivo no
+  // pueden desalinearse sin que falle una prueba.
+  const presentation = resolveEtaLabel({
+    journeyStage: data.journey_stage,
+    state: data.state,
+    etaTarget: data.eta_target,
+    hasEta: Boolean(data.eta),
+    etaUnavailable: data.eta_unavailable,
+    hasPosition: Boolean(data.position),
+    hasTargetCoords: Boolean(fallbackPoint),
+    isStopped: Boolean(data.stop_event),
+    hasStops: stops.length > 0,
+    hasNextStop: Boolean(data.next_stop),
+    routeArmed: data.route_armed,
+  });
 
-  // Flujo multidestino: el ETA apunta a la próxima parada pendiente, no al
-  // origen. Solo aplica si hay una parada objetivo o llegada real confirmada
-  // (journey_stage arrived en estado activo): con paradas sin coordenadas o
-  // en waiting, el backend opera en modo legacy y se cae al render original.
-  // El estado (waiting/active) SIEMPRE manda sobre journey_stage.
-  const arrivedConfirmed = data.journey_stage === 'arrived' && data.state !== 'waiting';
-  if (stops.length > 0 && arrivedConfirmed) {
-    return <p className="text-2xl font-bold leading-tight text-foreground">Llegamos al destino final</p>;
-  }
-
-  if (stops.length > 0 && data.next_stop) {
-    if (data.eta) {
+  switch (presentation.kind) {
+    // Detención en curso: el ETA queda suspendido a propósito. Mostrar una hora
+    // de llegada que sigue corriendo durante un descanso es peor que no mostrar
+    // ninguna — el cliente la toma como compromiso.
+    case 'stopped':
       return (
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            En ruta a {data.next_stop.label} · llega en
+          <p className="text-2xl font-bold leading-tight text-foreground">
+            Detenido · {data.stop_event ? STOP_REASON_LABELS[data.stop_event.reason] ?? 'Detención' : 'Detención'}
           </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {data.stop_event
+              ? `Desde las ${formatOperationTime(data.stop_event.started_at)}. El tiempo de llegada se actualizará al reanudar.`
+              : 'El tiempo de llegada se actualizará al reanudar.'}
+          </p>
+        </div>
+      );
+
+    // Recorrido cargado pero servicio aún no iniciado: sin ETA ni guía, en vez
+    // de quedar en "Calculando tiempo de llegada…" permanente (SRV-6853).
+    case 'not_started':
+      return (
+        <div>
+          <p className="text-2xl font-bold leading-tight text-foreground">Servicio no iniciado</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            El recorrido está programado; el seguimiento comienza cuando el operador inicia el servicio.
+          </p>
+        </div>
+      );
+
+    case 'arrived':
+      return <p className="text-2xl font-bold leading-tight text-foreground">Llegamos al destino final</p>;
+
+    // Una vez que la grúa llegó, el ETA-al-origen cacheado (hasta 60 s de
+    // antigüedad) queda semánticamente obsoleto y contradice el título.
+    case 'on_site':
+      return <p className="text-2xl font-bold leading-tight text-foreground">Tu grúa está en el lugar</p>;
+
+    case 'eta': {
+      const seconds = data.eta?.seconds ?? 0;
+      // Multidestino: el rótulo nombra la parada objetivo. El resto usa el
+      // rótulo que declara la decisión, atado al objetivo del servidor.
+      const label = presentation.target === 'stop'
+        ? `En ruta a ${data.next_stop?.label ?? 'la próxima parada'} · llega en`
+        : presentation.label;
+
+      return (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
           <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
-            {formatDurationLabel(data.eta.seconds)}
+            {formatDurationLabel(seconds)}
           </p>
         </div>
       );
     }
 
-    // Tramo no ruteable por Google (p. ej. cordillera hacia Mantos de Oro):
-    // distancia en línea recta hacia la próxima parada pendiente.
-    const nextPending = stops.find((stop) => !stop.reached && stop.lat != null && stop.lng != null);
-    if (data.position && data.eta_unavailable && nextPending) {
+    // Objetivo no ruteable por Google (C-13 Termas de Juncal, el tramo
+    // cordillerano a Mantos de Oro): distancia en línea recta al punto que
+    // corresponde a la etapa, en vez de "Calculando..." permanente.
+    case 'straight_line': {
+      if (!data.position || !fallbackPoint) break;
       const straightLineKm = haversineDistanceKm(
         [data.position.lng, data.position.lat],
-        [nextPending.lng as number, nextPending.lat as number],
+        [fallbackPoint.lng, fallbackPoint.lat],
       );
       const kmLabel = straightLineKm >= 10
         ? Math.round(straightLineKm)
         : Math.round(straightLineKm * 10) / 10;
+
+      const headline = presentation.target === 'stop'
+        ? `A ~${kmLabel} km de ${fallbackPoint.label ?? 'la próxima parada'}`
+        : presentation.target === 'destination'
+          ? `Tu carga está a ~${kmLabel} km`
+          : `Tu grúa está a ~${kmLabel} km`;
+
       return (
         <div>
-          <p className="text-2xl font-bold leading-tight text-foreground">
-            A ~{kmLabel} km de {nextPending.label}
-          </p>
+          <p className="text-2xl font-bold leading-tight text-foreground">{headline}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Tiempo estimado no disponible en esta zona
           </p>
@@ -1245,92 +1317,27 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
       );
     }
 
-    if (data.position) {
+    // Traslado en curso hacia un destino que el servidor no pudo geocodificar.
+    // Decir "en camino" sin número es honesto; caer al ETA-al-origen para tener
+    // algo que mostrar es exactamente el bug que esto corrige.
+    case 'in_transit_unknown_destination':
+      return (
+        <div>
+          <p className="text-2xl font-bold leading-tight text-foreground">Tu carga va en camino</p>
+          {data.destination?.text && (
+            <p className="mt-1 text-sm text-muted-foreground">Destino: {data.destination.text}</p>
+          )}
+        </div>
+      );
+
+    case 'calculating':
       return <p className="text-lg font-semibold text-muted-foreground">Calculando tiempo de llegada…</p>;
-    }
 
-    return (
-      <div className="space-y-2">
-        <div className="h-3 w-28 rounded-full bg-muted motion-safe:animate-pulse" />
-        <div className="h-8 w-40 rounded-full bg-muted motion-safe:animate-pulse" />
-      </div>
-    );
+    default:
+      break;
   }
 
-  // on_site primero: una vez que la grua llego, el ETA-al-origen cacheado
-  // (hasta 60s de antiguedad) queda semanticamente obsoleto y contradice el
-  // titulo — "en el lugar" no debe convivir con un numero de minutos.
-  if (data.journey_stage === 'on_site') {
-    return <p className="text-2xl font-bold leading-tight text-foreground">Tu grúa está en el lugar</p>;
-  }
-
-  // Desde que el vehículo va cargado, el ETA apunta al DESTINO y el rótulo debe
-  // decirlo: con la grúa ya en ruta a Copiapó, "TU GRÚA LLEGA EN 2 min" (ETA al
-  // origen que acababa de dejar atrás) le prometió al cliente de SRV-6858 una
-  // entrega inmediata que estaba a ~1,5 h. El objetivo lo declara el servidor.
-  const toDestination = data.eta_target === 'destination';
-
-  if (data.eta) {
-    return (
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {toDestination ? 'Entrega estimada en' : 'Tu grúa llega en'}
-        </p>
-        <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
-          {formatDurationLabel(data.eta.seconds)}
-        </p>
-      </div>
-    );
-  }
-
-  // Objetivo no ruteable por Google (zona sin ruta, p. ej. C-13 Termas de Juncal
-  // o el tramo cordillerano a Mantos de Oro): en vez de "Calculando..."
-  // permanente, la distancia en línea recta al punto que corresponda a la etapa.
-  const fallbackPoint = toDestination ? data.destination : data.origin;
-  if (
-    data.position &&
-    data.eta_unavailable &&
-    fallbackPoint?.lat != null &&
-    fallbackPoint?.lng != null
-  ) {
-    const straightLineKm = haversineDistanceKm(
-      [data.position.lng, data.position.lat],
-      [fallbackPoint.lng, fallbackPoint.lat],
-    );
-    const kmLabel = straightLineKm >= 10
-      ? Math.round(straightLineKm)
-      : Math.round(straightLineKm * 10) / 10;
-    return (
-      <div>
-        <p className="text-2xl font-bold leading-tight text-foreground">
-          {toDestination ? `Tu carga está a ~${kmLabel} km` : `Tu grúa está a ~${kmLabel} km`}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tiempo estimado no disponible en esta zona
-        </p>
-      </div>
-    );
-  }
-
-  // Traslado en curso hacia un destino que el servidor no pudo geocodificar
-  // (solo texto). Decir "en traslado" sin número es honesto; caer al ETA-al-
-  // origen para tener algo que mostrar es exactamente el bug que esto corrige.
-  if (toDestination) {
-    return (
-      <div>
-        <p className="text-2xl font-bold leading-tight text-foreground">Tu carga va en camino</p>
-        {data.destination?.text && (
-          <p className="mt-1 text-sm text-muted-foreground">Destino: {data.destination.text}</p>
-        )}
-      </div>
-    );
-  }
-
-  if (data.position) {
-    return <p className="text-lg font-semibold text-muted-foreground">Calculando tiempo de llegada…</p>;
-  }
-
-  // Esperando la primera posicion: skeleton en vez de un hueco roto.
+  // Esperando la primera posición: esqueleto en vez de un hueco roto.
   return (
     <div className="space-y-2">
       <div className="h-3 w-28 rounded-full bg-muted motion-safe:animate-pulse" />

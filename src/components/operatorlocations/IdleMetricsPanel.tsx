@@ -11,7 +11,12 @@ import { businessClock } from '@/utils/businessClock';
 import { toLocalDateString, safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import type { OperatorIdleDaySummary } from '@/types/operatorLocations';
-import { STOP_REASON_LABELS, isStopEventOverdue, stopEventMinutes } from '@/types/serviceStopEvent';
+import {
+  STOP_REASON_LABELS,
+  isIncidentStopReason,
+  isStopEventOverdue,
+  stopEventMinutes,
+} from '@/types/serviceStopEvent';
 
 const formatMinutes = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -151,11 +156,21 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                   {isExpanded && summary.declaredStops.map((event) => {
                     const minutes = stopEventMinutes(event, businessClock.now());
                     const overdue = isStopEventOverdue(event.reason, minutes);
+                    // Incidente (ruta cortada / falla mecánica): no tiene
+                    // duración típica contra la cual alertar, así que se
+                    // distingue por lo que es, no por cuánto duró.
+                    const incident = isIncidentStopReason(event.reason);
                     return (
                       <TableRow key={`${key}-stop-${event.id}`} className="bg-muted/40">
                         <TableCell />
-                        <TableCell colSpan={7} className={cn('text-xs', overdue ? 'text-warning' : 'text-muted-foreground')}>
-                          Detención declarada · {STOP_REASON_LABELS[event.reason]} · desde{' '}
+                        <TableCell
+                          colSpan={7}
+                          className={cn(
+                            'text-xs',
+                            incident ? 'text-danger' : overdue ? 'text-warning' : 'text-muted-foreground',
+                          )}
+                        >
+                          {incident ? 'Incidente' : 'Detención declarada'} · {STOP_REASON_LABELS[event.reason]} · desde{' '}
                           {businessClock.format(event.started_at, 'HH:mm')} — {formatMinutes(minutes)}
                           {overdue && ' (sobre lo típico para este motivo)'}
                         </TableCell>

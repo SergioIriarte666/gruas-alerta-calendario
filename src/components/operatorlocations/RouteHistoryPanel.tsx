@@ -23,6 +23,8 @@ import {
 } from '@/types/operatorLocations';
 import {
   STOP_REASON_LABELS,
+  STOP_REASON_MARKER_GLYPH,
+  isIncidentStopReason,
   isStopEventOverdue,
   stopEventMinutes,
   type ServiceStopEvent,
@@ -488,6 +490,10 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
     for (const { event, lng, lat } of locateStopEvents(points, stopEvents)) {
       const minutes = stopEventMinutes(event, businessClock.now());
       const overdue = isStopEventOverdue(event.reason, minutes);
+      // Ruta cortada y falla mecánica no tienen umbral de duración (no existe
+      // una duración "normal"), así que jamás se pintarían como excedidas: se
+      // marcan como incidente para que no se lean como una parada de rutina.
+      const incident = isIncidentStopReason(event.reason);
 
       const markerEl = document.createElement('div');
       markerEl.style.display = 'flex';
@@ -499,10 +505,12 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
       markerEl.style.fontSize = '0.625rem';
       markerEl.style.fontWeight = '700';
       markerEl.style.color = 'hsl(var(--effect-highlight))';
-      markerEl.style.background = overdue ? 'hsl(var(--warning))' : 'hsl(var(--info))';
+      markerEl.style.background = incident
+        ? 'hsl(var(--danger))'
+        : overdue ? 'hsl(var(--warning))' : 'hsl(var(--info))';
       markerEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
       markerEl.style.boxShadow = 'var(--shadow-sm)';
-      markerEl.textContent = 'P';
+      markerEl.textContent = STOP_REASON_MARKER_GLYPH[event.reason] ?? 'P';
       markerEl.title = `${STOP_REASON_LABELS[event.reason]} · ${minutes} min · desde ${businessClock.format(event.started_at, 'HH:mm')}`;
 
       markersRef.current.push(

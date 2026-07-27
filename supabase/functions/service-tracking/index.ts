@@ -1,5 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import {
+  rankOfStage,
+  resolveEffectiveStage,
+  STAGE_RANK,
+  type JourneyStage,
+} from "../_shared/journeyStage.ts";
 
 /**
  * Seguimiento publico por link con token (Fase 1, sin login).
@@ -51,24 +57,10 @@ const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
 type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
 
-type JourneyStage = "assigned" | "en_route" | "on_site" | "towing" | "last_leg" | "arrived";
-
-// La linea de tiempo del cliente SOLO AVANZA. La etapa se deriva de la
-// posicion, asi que volver a pasar por el origen la rebobinaba: el 25/07 el
-// cliente vio "Trasladando" a las 21:25 y "llego al punto de origen" a las
-// 21:41. Se publica max(etapa_calculada, etapa_persistida) y el maximo se
-// guarda en service_tracking_links.max_stage_reached.
-const STAGE_RANK: Record<JourneyStage, number> = {
-  assigned: 0,
-  en_route: 1,
-  on_site: 2,
-  towing: 3,
-  last_leg: 4,
-  arrived: 5,
-};
-
-const rankOfStage = (stage: string | null): number =>
-  stage && stage in STAGE_RANK ? STAGE_RANK[stage as JourneyStage] : -1;
+// La linea de tiempo del cliente SOLO AVANZA y NO depende de que el link haya
+// visto el viaje entero. STAGE_RANK, el piso por estado del servicio y la
+// combinacion de ambos con el maximo persistido viven en ../_shared/
+// journeyStage.ts: es logica pura, cubierta por los tests del repo.
 
 // Paradas de un servicio multidestino. Si el servicio no tiene paradas, todo
 // el flujo multi-stop se salta y el comportamiento original (ETA al origen,
@@ -440,28 +432,57 @@ Deno.serve(async (req: Request) => {
     ? { stop_event: { reason: openStopEvent.reason, started_at: openStopEvent.started_at } }
     : {};
 
+  // Sesion que alimenta la pagina, en orden de precedencia:
+  //
+  //   1. Sesion ACTIVA de este servicio (transmitiendo ahora).
+  //   2. Sesion ACTIVA del operador ASIGNADO VIGENTE, aunque todavia no la haya
+  //      enganchado al servicio.
+  //   3. Ultima sesion del servicio, aunque este cerrada: es el "ultimo punto
+  //      conocido" que la pagina rotula como tal.
+  //
+  // El orden importa por el cambio de operador a mitad de servicio (26/07,
+  // Sergio -> Jesus con transbordo de camion). Preferir "la ultima sesion del
+  // servicio" —como hacia antes— dejaba al cliente mirando el ultimo punto del
+  // operador ANTERIOR mientras el nuevo ya iba rodando: sus puntos existian
+  // pero colgaban de otra sesion.
   let session: { id: string } | null = null;
 
-  const { data: serviceSession } = await supabase
+  const { data: activeServiceSession } = await supabase
     .from("operator_location_sessions")
     .select("id")
     .eq("service_id", link.service_id)
+    .eq("status", "active")
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (serviceSession) {
-    session = serviceSession;
-  } else if (service.operator_id) {
+  session = activeServiceSession;
+
+  if (!session && service.operator_id) {
+    // Solo sesiones sin servicio o de ESTE servicio: una sesion activa colgada
+    // de OTRO servicio del mismo operador no puede alimentar este link, o el
+    // cliente veria la grua atendiendo un trabajo ajeno.
     const { data: operatorSession } = await supabase
       .from("operator_location_sessions")
       .select("id")
       .eq("operator_id", service.operator_id)
       .eq("status", "active")
+      .or(`service_id.is.null,service_id.eq.${link.service_id}`)
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     session = operatorSession;
+  }
+
+  if (!session) {
+    const { data: lastServiceSession } = await supabase
+      .from("operator_location_sessions")
+      .select("id")
+      .eq("service_id", link.service_id)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    session = lastServiceSession;
   }
 
   const craneInfo = crane ? { plate: crane.license_plate, type: crane.type } : null;
@@ -631,25 +652,43 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // Monotonia de la linea de tiempo. Se aplica SOLO con la guia armada: con el
-  // servicio aun no iniciado la etapa es "assigned" por decision explicita
-  // (SRV-6853) y no debe destaparse un maximo viejo.
+  // Etapa efectiva = max(piso por ESTADO del servicio, etapa por geocerco,
+  // maximo persistido).
+  //
+  // El piso por estado (Fix C) es lo que hace que un link creado a mitad de
+  // viaje nazca con la etapa verdadera: el historial de geocercos vive en la
+  // sesion, pero "el vehiculo ya esta cargado" es un hecho del SERVICIO
+  // (inspection_completed). Sin el, el link nuevo del 26/07 arranco en
+  // "en_route" y el ETA apunto al ORIGEN con la carga camino a Viña.
+  //
+  // Se aplica SOLO con la guia armada: con el servicio aun no iniciado la etapa
+  // es "assigned" por decision explicita (SRV-6853) y no debe destaparse ni un
+  // maximo viejo ni un piso. Coherente por construccion: un servicio sin
+  // iniciar esta en `pending`, que no tiene piso.
   const guidanceOn = !(hasNavigableStops && !routeArmed);
   if (guidanceOn) {
     const persistedRank = rankOfStage(link.max_stage_reached as string | null);
-    if (persistedRank > STAGE_RANK[journeyStage]) {
-      journeyStage = (Object.keys(STAGE_RANK) as JourneyStage[])
-        .find((stage) => STAGE_RANK[stage] === persistedRank) ?? journeyStage;
-    } else if (STAGE_RANK[journeyStage] > persistedRank) {
+    const effectiveStage = resolveEffectiveStage(
+      journeyStage,
+      service.status as string,
+      link.max_stage_reached as string | null,
+    );
+
+    if (STAGE_RANK[effectiveStage] > persistedRank) {
+      // El maximo se persiste tambien cuando lo levanto el piso por estado: asi
+      // la linea de tiempo del cliente no rebota si el proximo poll llega antes
+      // de que la posicion confirme el traslado.
       try {
         await supabase
           .from("service_tracking_links")
-          .update({ max_stage_reached: journeyStage })
+          .update({ max_stage_reached: effectiveStage })
           .eq("id", link.id);
       } catch {
         // no-op: el maximo es memoria de la linea de tiempo, nunca debe romper el seguimiento publico
       }
     }
+
+    journeyStage = effectiveStage;
   }
 
   // Destino del ETA: la proxima parada NAVEGABLE pendiente (multidestino) o,

@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Coffee, Fuel, PauseCircle, Ticket, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import {
+  Coffee,
+  Fuel,
+  PauseCircle,
+  Ticket,
+  TrafficCone,
+  UtensilsCrossed,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STOP_REASON_LABELS, STOP_REASON_ORDER, type StopReason } from '@/types/serviceStopEvent';
 
@@ -8,6 +17,10 @@ export const STOP_REASON_ICONS: Record<StopReason, LucideIcon> = {
   alimentacion: UtensilsCrossed,
   descanso: Coffee,
   peaje: Ticket,
+  // Cono de faena y llave: se reconocen de un vistazo con el camión detenido en
+  // la berma, que es exactamente cuando se usan.
+  ruta_cortada: TrafficCone,
+  falla_mecanica: Wrench,
   otro: PauseCircle,
 };
 
