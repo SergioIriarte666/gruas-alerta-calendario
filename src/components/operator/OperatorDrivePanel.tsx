@@ -88,6 +88,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
 
     let cancelled = false;
     let localMap: import('mapbox-gl').Map | null = null;
+    let resizeObserver: ResizeObserver | null = null;
 
     void loadMapbox()
       .then((mapboxgl) => {
@@ -106,11 +107,35 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
           new mapboxgl.default.AttributionControl({ compact: true }),
           'bottom-right',
         );
+
+        // En WKWebView el grid termina de medir sus columnas después de que
+        // Mapbox crea el canvas. Sin un resize explícito el mapa conserva el
+        // tamaño inicial (a veces 0 px) y queda como un panel negro aunque el
+        // estilo haya cargado correctamente.
+        if (typeof ResizeObserver !== 'undefined') {
+          resizeObserver = new ResizeObserver(() => {
+            localMap?.resize();
+          });
+          resizeObserver.observe(containerRef.current);
+        }
+
         localMap.on('dragstart', () => {
           followPositionRef.current = false;
           setIsFollowing(false);
         });
-        localMap.on('load', () => setMapReady(true));
+        localMap.on('load', () => {
+          if (cancelled) return;
+          localMap?.resize();
+          localMap?.triggerRepaint();
+          setMapReady(true);
+
+          // Segundo frame: iOS ya aplicó el ancho definitivo de la columna.
+          window.requestAnimationFrame(() => {
+            if (cancelled) return;
+            localMap?.resize();
+            localMap?.triggerRepaint();
+          });
+        });
         localMap.on('error', (event) => {
           logger.warn('Mapbox reported an operator map error', event.error);
         });
@@ -126,6 +151,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       markerRef.current?.remove();
       markerRef.current = null;
       markerHeadingRef.current = null;
+      resizeObserver?.disconnect();
       localMap?.remove();
       mapRef.current = null;
       mapboxRef.current = null;
@@ -136,7 +162,9 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   useEffect(() => {
     const map = mapRef.current;
     const mapboxgl = mapboxRef.current;
-    if (!map || !mapboxgl || !coordinates) return;
+    if (!map || !mapboxgl || !mapReady || !coordinates) return;
+
+    map.resize();
 
     if (!markerRef.current) {
       const markerParts = createOperatorMarker();
@@ -164,7 +192,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
         duration: 650,
       });
     }
-  }, [coordinates, point?.headingDegrees]);
+  }, [coordinates, mapReady, point?.headingDegrees]);
 
   const recenter = () => {
     if (!coordinates || !mapRef.current) return;
