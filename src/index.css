@@ -1682,6 +1682,22 @@ html.reduce-motion *::after {
   background: hsl(var(--background) / 0.64);
 }
 
+.operator-drive-panel.has-expanded-map {
+  overflow: visible;
+}
+
+body.operator-map-expanded {
+  overflow: hidden;
+}
+
+/* La animación de entrada deja un transform calculado sobre la tarjeta. Un
+   fixed dentro de un ancestro transformado se encierra en esa tarjeta en iOS;
+   al ampliar se retira ese containing block para ocupar el viewport real. */
+body.operator-map-expanded .operator-native-dashboard > * {
+  animation: none !important;
+  transform: none !important;
+}
+
 .operator-drive-panel__header {
   display: flex;
   align-items: center;
@@ -1745,6 +1761,114 @@ html.reduce-motion *::after {
   height: 100%;
 }
 
+.operator-drive-map--expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  border-radius: 0;
+}
+
+.operator-drive-map__expand {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 0;
+  padding: 0.75rem;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.operator-drive-map__expand > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid hsl(var(--border) / 0.82);
+  border-radius: 999px;
+  padding: 0.45rem 0.65rem;
+  background: hsl(var(--card) / 0.92);
+  box-shadow: var(--shadow-md);
+  color: hsl(var(--foreground));
+  font-size: 0.7rem;
+  font-weight: 750;
+  backdrop-filter: blur(10px);
+}
+
+.operator-drive-map__expanded-toolbar {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: 1rem;
+  left: 1rem;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid hsl(var(--border) / 0.82);
+  border-radius: 1.15rem;
+  padding: 0.8rem 0.8rem 0.8rem 1rem;
+  background: hsl(var(--card) / 0.92);
+  box-shadow: 0 18px 44px -24px hsl(var(--overlay) / 0.8);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.operator-drive-map__expanded-toolbar button {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.85rem;
+  background: hsl(var(--background) / 0.82);
+  color: hsl(var(--foreground));
+}
+
+.operator-drive-map__expanded-speed {
+  position: absolute;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 1rem;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 0.3rem;
+  border: 1px solid hsl(var(--border) / 0.82);
+  border-radius: 1rem;
+  padding: 0.7rem 0.9rem;
+  background: hsl(var(--card) / 0.92);
+  box-shadow: var(--shadow-lg);
+  color: hsl(var(--foreground));
+  backdrop-filter: blur(16px);
+}
+
+.operator-drive-map__expanded-speed strong {
+  font-family: 'Barlow Condensed', 'IBM Plex Sans', sans-serif;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+}
+
+.operator-drive-map__expanded-speed span {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.operator-drive-map__expanded-speed small {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.62rem;
+  font-weight: 650;
+}
+
 .operator-drive-map__overlay {
   position: absolute;
   inset: 0;
@@ -1801,6 +1925,14 @@ html.reduce-motion *::after {
 .operator-drive-map__recenter.is-active {
   border-color: hsl(var(--primary) / 0.4);
   color: hsl(var(--primary));
+}
+
+.operator-drive-map--expanded .operator-drive-map__recenter {
+  right: 1rem;
+  bottom: max(5rem, calc(env(safe-area-inset-bottom) + 4rem));
+  width: 3rem;
+  height: 3rem;
+  border-color: hsl(var(--primary) / 0.45);
 }
 
 .operator-drive-marker {

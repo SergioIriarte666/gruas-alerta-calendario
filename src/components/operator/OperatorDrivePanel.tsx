@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Crosshair, Gauge, Loader2, MapPin, Navigation, TriangleAlert } from 'lucide-react';
+import {
+  Crosshair,
+  Gauge,
+  Loader2,
+  MapPin,
+  Maximize2,
+  Navigation,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -70,6 +79,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [isFollowing, setIsFollowing] = useState(true);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   const { speedKmh, gaugeProgress, needleRotation } = getSpeedometerState(
     point?.speedMps ?? null,
@@ -194,6 +204,38 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     }
   }, [coordinates, mapReady, point?.headingDegrees]);
 
+  useEffect(() => {
+    if (!isMapExpanded) return;
+
+    document.body.classList.add('operator-map-expanded');
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMapExpanded(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.classList.remove('operator-map-expanded');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMapExpanded]);
+
+  // El mismo canvas cambia de tamaño: no se crea otro mapa ni otro watcher GPS.
+  useEffect(() => {
+    if (!isMapExpanded || !mapRef.current) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.resize();
+      if (coordinates) {
+        map.easeTo({ center: coordinates, zoom: DEFAULT_ZOOM, duration: 450 });
+      }
+      map.triggerRepaint();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [coordinates, isMapExpanded]);
+
   const recenter = () => {
     if (!coordinates || !mapRef.current) return;
     followPositionRef.current = true;
@@ -201,9 +243,15 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     mapRef.current.easeTo({ center: coordinates, zoom: DEFAULT_ZOOM, duration: 700 });
   };
 
+  const expandMap = () => {
+    followPositionRef.current = true;
+    setIsFollowing(true);
+    setIsMapExpanded(true);
+  };
+
   return (
     <section
-      className="operator-drive-panel"
+      className={cn('operator-drive-panel', isMapExpanded && 'has-expanded-map')}
       aria-label="Mi posición y velocidad"
     >
       <div className="operator-drive-panel__header">
@@ -226,7 +274,12 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       </div>
 
       <div className="operator-drive-panel__body">
-        <div className="operator-drive-map">
+        <div
+          className={cn('operator-drive-map', isMapExpanded && 'operator-drive-map--expanded')}
+          role={isMapExpanded ? 'dialog' : undefined}
+          aria-modal={isMapExpanded ? true : undefined}
+          aria-label={isMapExpanded ? 'Mapa ampliado de mi posición' : undefined}
+        >
           {MAPBOX_TOKEN && !mapError ? (
             <>
               <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
@@ -246,7 +299,45 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
                   </span>
                 </div>
               )}
-              {point && (
+              {mapReady && !isMapExpanded && (
+                <button
+                  type="button"
+                  onClick={expandMap}
+                  className="operator-drive-map__expand"
+                  aria-label="Abrir mapa en pantalla completa"
+                >
+                  <span>
+                    <Maximize2 className="size-4" />
+                    Ampliar
+                  </span>
+                </button>
+              )}
+              {isMapExpanded && (
+                <div className="operator-drive-map__expanded-toolbar">
+                  <div>
+                    <p className="operator-native-eyebrow">Navegación en vivo</p>
+                    <p className="mt-1 flex items-center gap-2 font-bold text-foreground">
+                      <Navigation className="size-4 text-primary" />
+                      Mi posición
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsMapExpanded(false)}
+                    aria-label="Cerrar mapa ampliado"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+              )}
+              {isMapExpanded && (
+                <div className="operator-drive-map__expanded-speed" aria-live="polite">
+                  <strong>{speedKmh}</strong>
+                  <span>km/h</span>
+                  <small>{accuracyLabel}</small>
+                </div>
+              )}
+              {point && isMapExpanded && (
                 <button
                   type="button"
                   onClick={recenter}
