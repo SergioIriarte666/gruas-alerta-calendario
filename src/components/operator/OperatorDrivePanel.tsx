@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Capacitor } from '@capacitor/core';
 import {
   Crosshair,
   Gauge,
@@ -13,13 +14,25 @@ import {
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  checkLocationPermission,
+  getCurrentLocationPoint,
+} from '@/services/operatorLocationService';
 import type { OperatorLocationPoint } from '@/types/operatorLocation';
 
 const logger = createLogger('OperatorDrivePanel');
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
+const MAPBOX_WEB_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
+const MAPBOX_MOBILE_TOKEN = import.meta.env.VITE_MAPBOX_MOBILE_TOKEN as string | undefined;
+const IS_NATIVE_PLATFORM = Capacitor.isNativePlatform();
+const USE_NATIVE_STATIC_MAP = IS_NATIVE_PLATFORM && !MAPBOX_MOBILE_TOKEN;
+const MAPBOX_TOKEN = IS_NATIVE_PLATFORM ? MAPBOX_MOBILE_TOKEN : MAPBOX_WEB_TOKEN;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const COPIAPO_CENTER: [number, number] = [-70.33, -27.37];
 const DEFAULT_ZOOM = 15.5;
+const MAP_LOAD_TIMEOUT_MS = 15000;
 const SPEEDOMETER_MAX_KMH = 120;
 const LOGO_SRC = '/logo-gruas-5-norte.png';
 
@@ -76,25 +89,125 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   const mapboxRef = useRef<MapboxModule | null>(null);
   const markerRef = useRef<import('mapbox-gl').Marker | null>(null);
   const markerHeadingRef = useRef<HTMLDivElement | null>(null);
+  const nativeMapUrlRef = useRef<string | null>(null);
   const followPositionRef = useRef(true);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [isFollowing, setIsFollowing] = useState(true);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [previewPoint, setPreviewPoint] = useState<OperatorLocationPoint | null>(null);
+  const [nativeMapUrl, setNativeMapUrl] = useState<string | null>(null);
+  const displayPoint = point ?? previewPoint;
 
   const { speedKmh, gaugeProgress, needleRotation } = getSpeedometerState(
-    point?.speedMps ?? null,
+    displayPoint?.speedMps ?? null,
   );
-  const accuracyLabel = typeof point?.accuracyMeters === 'number'
-    ? `Precisión ±${Math.round(point.accuracyMeters)} m`
+  const accuracyLabel = typeof displayPoint?.accuracyMeters === 'number'
+    ? `Precisión ±${Math.round(displayPoint.accuracyMeters)} m`
     : 'Esperando precisión GPS';
 
   const coordinates = useMemo<[number, number] | null>(() => {
-    if (!point) return null;
-    return [point.longitude, point.latitude];
+    if (!displayPoint) return null;
+    return [displayPoint.longitude, displayPoint.latitude];
+  }, [displayPoint]);
+  const nativeMapCenter = useMemo<[number, number] | null>(() => {
+    if (!coordinates) return null;
+    // Evita descargar una imagen nueva por cada oscilación del GPS. El fondo
+    // se actualiza al desplazarse aproximadamente 100 m.
+    return [
+      Math.round(coordinates[0] * 1000) / 1000,
+      Math.round(coordinates[1] * 1000) / 1000,
+    ];
+  }, [coordinates]);
+
+  useEffect(() => {
+    if (point) return;
+
+    let cancelled = false;
+
+    // Mostrar la posición del dispositivo no debe depender de que exista una
+    // sesión de transmisión. Esta lectura es sólo local y no se guarda ni se
+    // envía al servidor.
+    void checkLocationPermission()
+      .then((permission) => {
+        if (permission !== 'granted') return null;
+        return getCurrentLocationPoint();
+      })
+      .then((currentPoint) => {
+        if (!cancelled && currentPoint) setPreviewPoint(currentPoint);
+      })
+      .catch((error) => {
+        logger.warn('Could not read the current position for the operator map', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [point]);
 
   useEffect(() => {
+    if (!USE_NATIVE_STATIC_MAP || !nativeMapCenter) return;
+
+    const abortController = new AbortController();
+    let cancelled = false;
+    if (!nativeMapUrlRef.current) setMapReady(false);
+    setMapError(false);
+
+    void (async () => {
+      const { data: authData } = await supabase.auth.getSession();
+      const accessToken = authData.session?.access_token;
+      if (!accessToken) throw new Error('No active operator session for the native map');
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        signal: abortController.signal,
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'static_map',
+          origin: nativeMapCenter,
+          destination: nativeMapCenter,
+          geometry: { coordinates: [nativeMapCenter, nativeMapCenter] },
+          mode: 'full',
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Native map proxy returned HTTP ${response.status}`);
+      }
+
+      const objectUrl = URL.createObjectURL(await response.blob());
+      if (cancelled) {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+
+      const previousUrl = nativeMapUrlRef.current;
+      nativeMapUrlRef.current = objectUrl;
+      setNativeMapUrl(objectUrl);
+      setMapReady(true);
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+    })().catch((error) => {
+      if (cancelled || abortController.signal.aborted) return;
+      logger.error('Could not load the native operator map', error);
+      setMapError(true);
+    });
+
+    return () => {
+      cancelled = true;
+      abortController.abort();
+    };
+  }, [nativeMapCenter]);
+
+  useEffect(() => () => {
+    if (nativeMapUrlRef.current) URL.revokeObjectURL(nativeMapUrlRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (USE_NATIVE_STATIC_MAP) return;
+
     // Al alternar entre la tarjeta y pantalla completa se crea un canvas nuevo
     // en su tamaño final. WKWebView puede dejar transparente un contexto WebGL
     // que cambia bruscamente de una columna pequeña a todo el viewport, aunque
@@ -107,6 +220,8 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     let cancelled = false;
     let localMap: import('mapbox-gl').Map | null = null;
     let resizeObserver: ResizeObserver | null = null;
+    let loadTimeout: number | null = null;
+    let ready = false;
 
     void loadMapbox()
       .then((mapboxgl) => {
@@ -141,10 +256,17 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
           followPositionRef.current = false;
           setIsFollowing(false);
         });
-        localMap.on('load', () => {
-          if (cancelled) return;
+
+        const markMapReady = () => {
+          if (cancelled || ready) return;
+          ready = true;
+          if (loadTimeout !== null) {
+            window.clearTimeout(loadTimeout);
+            loadTimeout = null;
+          }
           localMap?.resize();
           localMap?.triggerRepaint();
+          setMapError(false);
           setMapReady(true);
 
           // Segundo frame: iOS ya aplicó el ancho definitivo de la columna.
@@ -153,11 +275,27 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
             localMap?.resize();
             localMap?.triggerRepaint();
           });
-        });
+        };
+
+        localMap.on('load', markMapReady);
+        localMap.on('style.load', markMapReady);
         localMap.on('error', (event) => {
           logger.warn('Mapbox reported an operator map error', event.error);
         });
         mapRef.current = localMap;
+
+        // En WKWebView un estilo servido desde caché puede terminar de cargar
+        // antes de que React alcance a registrar el listener de `load`.
+        if (localMap.loaded() || localMap.isStyleLoaded()) {
+          markMapReady();
+        } else {
+          loadTimeout = window.setTimeout(() => {
+            if (cancelled || ready) return;
+            loadTimeout = null;
+            logger.error('Operator map did not finish loading before timeout');
+            setMapError(true);
+          }, MAP_LOAD_TIMEOUT_MS);
+        }
       })
       .catch((error) => {
         logger.error('Could not load the operator position map', error);
@@ -166,6 +304,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
 
     return () => {
       cancelled = true;
+      if (loadTimeout !== null) window.clearTimeout(loadTimeout);
       markerRef.current?.remove();
       markerRef.current = null;
       markerHeadingRef.current = null;
@@ -199,7 +338,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     }
 
     if (markerHeadingRef.current) {
-      const heading = point?.headingDegrees;
+      const heading = displayPoint?.headingDegrees;
       markerHeadingRef.current.style.display = typeof heading === 'number' ? 'block' : 'none';
       markerHeadingRef.current.style.transform = `rotate(${heading ?? 0}deg)`;
     }
@@ -211,7 +350,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
         duration: 650,
       });
     }
-  }, [coordinates, mapReady, point?.headingDegrees]);
+  }, [coordinates, displayPoint?.headingDegrees, mapReady]);
 
   useEffect(() => {
     if (!isMapExpanded) return;
@@ -248,22 +387,54 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       aria-modal={expanded ? true : undefined}
       aria-label={expanded ? 'Mapa ampliado de mi posición' : undefined}
     >
-      {MAPBOX_TOKEN && !mapError ? (
+      {(USE_NATIVE_STATIC_MAP || MAPBOX_TOKEN) && !mapError ? (
         <>
-          <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
+          {USE_NATIVE_STATIC_MAP ? (
+            <>
+              {nativeMapUrl && (
+                <img
+                  src={nativeMapUrl}
+                  alt=""
+                  className="operator-drive-map__native-image"
+                />
+              )}
+              {mapReady && displayPoint && (
+                <div className="operator-drive-map__native-marker" aria-label="Mi posición">
+                  <div className="operator-drive-marker">
+                    <div
+                      className="operator-drive-marker__heading"
+                      style={{
+                        display: typeof displayPoint.headingDegrees === 'number' ? 'block' : 'none',
+                        transform: `rotate(${displayPoint.headingDegrees ?? 0}deg)`,
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2.8 19 20l-7-4.2L5 20 12 2.8Z" />
+                      </svg>
+                    </div>
+                    <div className="operator-drive-marker__disc">
+                      <img src={LOGO_SRC} alt="" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
+          )}
           {!mapReady && (
             <div className="operator-drive-map__overlay">
               <Loader2 className="size-5 animate-spin" />
               Cargando mapa
             </div>
           )}
-          {mapReady && !point && (
+          {mapReady && !displayPoint && (
             <div className="operator-drive-map__message">
               <MapPin className="size-5" />
               <span>
                 {isTracking
                   ? 'Obteniendo tu primera posición…'
-                  : 'Enciende la transmisión para ver tu posición'}
+                  : 'Activa la ubicación o la transmisión para ver tu posición'}
               </span>
             </div>
           )}
@@ -305,7 +476,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
               <small>{accuracyLabel}</small>
             </div>
           )}
-          {point && expanded && (
+          {displayPoint && expanded && !USE_NATIVE_STATIC_MAP && (
             <button
               type="button"
               onClick={recenter}

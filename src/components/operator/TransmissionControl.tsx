@@ -26,6 +26,7 @@ import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { STOP_REASON_LABELS } from '@/types/serviceStopEvent';
 import { resolveTransmissionStopGate } from '@/utils/transmissionStopGate';
+import { buildPublicTrackingUrl } from '@/utils/trackingUrl';
 import {
   KEEP_AWAKE_DENIED_MESSAGE,
   keepAwakeSafely,
@@ -220,7 +221,7 @@ export const TransmissionControl = ({
           logger.warn('No se pudo preparar el link de seguimiento', error);
           return;
         }
-        trackingUrlRef.current = `${window.location.origin}/track/${data}`;
+        trackingUrlRef.current = buildPublicTrackingUrl(data);
         void refreshLinkState();
       });
 
@@ -303,7 +304,7 @@ export const TransmissionControl = ({
           p_service_id: serviceId,
         });
         if (error || !data) return null;
-        const resolved = `${window.location.origin}/track/${data}`;
+        const resolved = buildPublicTrackingUrl(data);
         trackingUrlRef.current = resolved;
         return resolved;
       })();
