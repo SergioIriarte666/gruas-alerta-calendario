@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Crosshair,
   Gauge,
@@ -94,6 +95,13 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   }, [point]);
 
   useEffect(() => {
+    // Al alternar entre la tarjeta y pantalla completa se crea un canvas nuevo
+    // en su tamaño final. WKWebView puede dejar transparente un contexto WebGL
+    // que cambia bruscamente de una columna pequeña a todo el viewport, aunque
+    // los Marker y controles DOM de Mapbox sigan visibles.
+    setMapReady(false);
+    setMapError(false);
+
     if (!containerRef.current || !MAPBOX_TOKEN) return;
 
     let cancelled = false;
@@ -166,8 +174,9 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       mapRef.current = null;
       mapboxRef.current = null;
     };
-    // El mapa se monta una sola vez; los puntos posteriores se procesan abajo.
-  }, []);
+    // Los puntos posteriores se procesan abajo. Sólo se recrea el mapa cuando
+    // cambia de superficie compacta a ampliada (o viceversa).
+  }, [isMapExpanded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -219,23 +228,6 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     };
   }, [isMapExpanded]);
 
-  // El mismo canvas cambia de tamaño: no se crea otro mapa ni otro watcher GPS.
-  useEffect(() => {
-    if (!isMapExpanded || !mapRef.current) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      const map = mapRef.current;
-      if (!map) return;
-      map.resize();
-      if (coordinates) {
-        map.easeTo({ center: coordinates, zoom: DEFAULT_ZOOM, duration: 450 });
-      }
-      map.triggerRepaint();
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [coordinates, isMapExpanded]);
-
   const recenter = () => {
     if (!coordinates || !mapRef.current) return;
     followPositionRef.current = true;
@@ -249,9 +241,93 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     setIsMapExpanded(true);
   };
 
+  const renderMapSurface = (expanded: boolean) => (
+    <div
+      className={cn('operator-drive-map', expanded && 'operator-drive-map--expanded')}
+      role={expanded ? 'dialog' : undefined}
+      aria-modal={expanded ? true : undefined}
+      aria-label={expanded ? 'Mapa ampliado de mi posición' : undefined}
+    >
+      {MAPBOX_TOKEN && !mapError ? (
+        <>
+          <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
+          {!mapReady && (
+            <div className="operator-drive-map__overlay">
+              <Loader2 className="size-5 animate-spin" />
+              Cargando mapa
+            </div>
+          )}
+          {mapReady && !point && (
+            <div className="operator-drive-map__message">
+              <MapPin className="size-5" />
+              <span>
+                {isTracking
+                  ? 'Obteniendo tu primera posición…'
+                  : 'Enciende la transmisión para ver tu posición'}
+              </span>
+            </div>
+          )}
+          {mapReady && !expanded && (
+            <button
+              type="button"
+              onClick={expandMap}
+              className="operator-drive-map__expand"
+              aria-label="Abrir mapa en pantalla completa"
+            >
+              <span>
+                <Maximize2 className="size-4" />
+                Ampliar
+              </span>
+            </button>
+          )}
+          {expanded && (
+            <div className="operator-drive-map__expanded-toolbar">
+              <div>
+                <p className="operator-native-eyebrow">Navegación en vivo</p>
+                <p className="mt-1 flex items-center gap-2 font-bold text-foreground">
+                  <Navigation className="size-4 text-primary" />
+                  Mi posición
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMapExpanded(false)}
+                aria-label="Cerrar mapa ampliado"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+          )}
+          {expanded && (
+            <div className="operator-drive-map__expanded-speed" aria-live="polite">
+              <strong>{speedKmh}</strong>
+              <span>km/h</span>
+              <small>{accuracyLabel}</small>
+            </div>
+          )}
+          {point && expanded && (
+            <button
+              type="button"
+              onClick={recenter}
+              className={cn('operator-drive-map__recenter', isFollowing && 'is-active')}
+              aria-label="Centrar mapa en mi posición"
+            >
+              <Crosshair className="size-4" />
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="operator-drive-map__overlay text-warning">
+          <TriangleAlert className="size-5" />
+          Mapa no disponible
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <section
-      className={cn('operator-drive-panel', isMapExpanded && 'has-expanded-map')}
+      className="operator-drive-panel"
       aria-label="Mi posición y velocidad"
     >
       <div className="operator-drive-panel__header">
@@ -274,87 +350,9 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       </div>
 
       <div className="operator-drive-panel__body">
-        <div
-          className={cn('operator-drive-map', isMapExpanded && 'operator-drive-map--expanded')}
-          role={isMapExpanded ? 'dialog' : undefined}
-          aria-modal={isMapExpanded ? true : undefined}
-          aria-label={isMapExpanded ? 'Mapa ampliado de mi posición' : undefined}
-        >
-          {MAPBOX_TOKEN && !mapError ? (
-            <>
-              <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
-              {!mapReady && (
-                <div className="operator-drive-map__overlay">
-                  <Loader2 className="size-5 animate-spin" />
-                  Cargando mapa
-                </div>
-              )}
-              {mapReady && !point && (
-                <div className="operator-drive-map__message">
-                  <MapPin className="size-5" />
-                  <span>
-                    {isTracking
-                      ? 'Obteniendo tu primera posición…'
-                      : 'Enciende la transmisión para ver tu posición'}
-                  </span>
-                </div>
-              )}
-              {mapReady && !isMapExpanded && (
-                <button
-                  type="button"
-                  onClick={expandMap}
-                  className="operator-drive-map__expand"
-                  aria-label="Abrir mapa en pantalla completa"
-                >
-                  <span>
-                    <Maximize2 className="size-4" />
-                    Ampliar
-                  </span>
-                </button>
-              )}
-              {isMapExpanded && (
-                <div className="operator-drive-map__expanded-toolbar">
-                  <div>
-                    <p className="operator-native-eyebrow">Navegación en vivo</p>
-                    <p className="mt-1 flex items-center gap-2 font-bold text-foreground">
-                      <Navigation className="size-4 text-primary" />
-                      Mi posición
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsMapExpanded(false)}
-                    aria-label="Cerrar mapa ampliado"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </div>
-              )}
-              {isMapExpanded && (
-                <div className="operator-drive-map__expanded-speed" aria-live="polite">
-                  <strong>{speedKmh}</strong>
-                  <span>km/h</span>
-                  <small>{accuracyLabel}</small>
-                </div>
-              )}
-              {point && isMapExpanded && (
-                <button
-                  type="button"
-                  onClick={recenter}
-                  className={cn('operator-drive-map__recenter', isFollowing && 'is-active')}
-                  aria-label="Centrar mapa en mi posición"
-                >
-                  <Crosshair className="size-4" />
-                </button>
-              )}
-            </>
-          ) : (
-            <div className="operator-drive-map__overlay text-warning">
-              <TriangleAlert className="size-5" />
-              Mapa no disponible
-            </div>
-          )}
-        </div>
+        {isMapExpanded
+          ? createPortal(renderMapSurface(true), document.body)
+          : renderMapSurface(false)}
 
         <div className="operator-speedometer">
           <div className="operator-speedometer__title">

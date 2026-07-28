@@ -7,6 +7,7 @@ import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { LiveOperatorsMap, type LiveOperatorsMapHandle } from '@/components/operatorlocations/LiveOperatorsMap';
 import { OperatorStatusPanel } from '@/components/operatorlocations/OperatorStatusPanel';
 import { RouteHistoryPanel } from '@/components/operatorlocations/RouteHistoryPanel';
+import { ServiceTelemetryPanel } from '@/components/operatorlocations/ServiceTelemetryPanel';
 import { IdleMetricsPanel } from '@/components/operatorlocations/IdleMetricsPanel';
 import { cn } from '@/lib/utils';
 import { MapPinned } from 'lucide-react';
@@ -21,7 +22,7 @@ import {
   type OperatorLiveLocation,
 } from '@/types/operatorLocations';
 
-type TabKey = 'mapa' | 'historial' | 'tiempos-muertos';
+type TabKey = 'mapa' | 'historial' | 'telemetria' | 'tiempos-muertos';
 type LiveFilterKey = 'todos' | 'con-senal' | 'en-servicio' | 'sin-senal' | 'inactivos';
 
 const LIVE_FILTER_LABELS: Record<LiveFilterKey, string> = {
@@ -159,6 +160,7 @@ const OperatorLocations = () => {
         <TabsList className="resources-tabs h-auto max-w-full justify-start overflow-x-auto p-1">
           <TabsTrigger value="mapa">Mapa en vivo</TabsTrigger>
           <TabsTrigger value="historial">Historial de ruta</TabsTrigger>
+          <TabsTrigger value="telemetria">Telemetría de servicios</TabsTrigger>
           <TabsTrigger value="tiempos-muertos">Tiempos muertos</TabsTrigger>
         </TabsList>
 
@@ -260,6 +262,10 @@ const OperatorLocations = () => {
             initialOperatorId={routePreset?.operatorId ?? selectedOperatorId}
             initialDate={routePreset?.dateISO}
           />
+        </TabsContent>
+
+        <TabsContent value="telemetria" className="mt-4">
+          <ServiceTelemetryPanel onViewRoute={handleViewRoute} />
         </TabsContent>
 
         <TabsContent value="tiempos-muertos" className="mt-4">

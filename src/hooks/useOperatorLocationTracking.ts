@@ -35,6 +35,7 @@ import {
 import { isWithinTrackingSchedule, getTrackingScheduleLabel } from '@/utils/trackingSchedule';
 import { allowSleepSafely, keepAwakeSafely } from '@/utils/keepAwake';
 import { createLogger } from '@/lib/logger';
+import { isNewHighSpeedPeak } from '@/utils/locationTelemetry';
 
 const logger = createLogger('useOperatorLocationTracking');
 // Logger dedicado para detectar regresiones del bug SRV: sesiones auto_service con service_id NULL
@@ -224,6 +225,7 @@ export const useOperatorLocationTracking = ({
   const scheduleIntervalRef = useRef<number | null>(null);
   const lastNativePersistAtRef = useRef(0);
   const lastPersistedSignatureRef = useRef<string | null>(null);
+  const highestPersistedSpeedMpsRef = useRef<number | null>(null);
   // Última posición efectivamente enviada: contra ella se mide el umbral de
   // movimiento, ahora que el filtro dejó de vivir en el plugin.
   const lastPersistedLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
@@ -424,6 +426,7 @@ export const useOperatorLocationTracking = ({
   ) => {
     lastNativePersistAtRef.current = 0;
     lastPersistedLocationRef.current = null;
+    highestPersistedSpeedMpsRef.current = null;
 
     const submit = (point: OperatorLocationPoint, source: OperatorLocationSource) => {
       // Mismo guard que en el polling web: el watcher nativo puede seguir vivo
@@ -434,6 +437,12 @@ export const useOperatorLocationTracking = ({
 
       lastNativePersistAtRef.current = Date.now();
       lastPersistedLocationRef.current = { latitude: point.latitude, longitude: point.longitude };
+      if (typeof point.speedMps === 'number' && Number.isFinite(point.speedMps) && point.speedMps >= 0) {
+        highestPersistedSpeedMpsRef.current = Math.max(
+          highestPersistedSpeedMpsRef.current ?? 0,
+          point.speedMps,
+        );
+      }
       setLastPoint(point);
       return persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId, source)
         .then(() => setErrorMessage(null))
@@ -481,22 +490,32 @@ export const useOperatorLocationTracking = ({
         const point = mapBackgroundGeolocationPoint(location);
         setLastPoint(point);
         const elapsed = now - lastNativePersistAtRef.current;
-        if (elapsed < NATIVE_MIN_PERSIST_INTERVAL_MS) return;
+        const isHighSpeedPeak = isNewHighSpeedPeak(
+          point.speedMps,
+          highestPersistedSpeedMpsRef.current,
+        );
+        if (elapsed < NATIVE_MIN_PERSIST_INTERVAL_MS && !isHighSpeedPeak) return;
 
         const previous = lastPersistedLocationRef.current;
         const moved = !previous || distanceMeters(previous, point) >= MOVEMENT_THRESHOLD_METERS;
         const heartbeatDue = elapsed >= HEARTBEAT_INTERVAL_MS;
 
-        if (!moved && !heartbeatDue) return;
+        if (!moved && !heartbeatDue && !isHighSpeedPeak) return;
 
         // Sin movimiento pero con latido vencido: se envía igual el último fix
         // conocido marcado como 'heartbeat'. Eso mantiene viva la sesión frente
         // al barrido de 10 min y deja constancia de que el operador estaba
         // detenido, no incomunicado.
-        const source: OperatorLocationSource = moved ? 'mobile_app' : 'heartbeat';
-        if (!moved) {
+        const source: OperatorLocationSource = moved || isHighSpeedPeak ? 'mobile_app' : 'heartbeat';
+        if (!moved && !isHighSpeedPeak) {
           trackingLogger.debug('Latido de ubicación', {
             secondsSinceLastPoint: Math.round(elapsed / 1000),
+          });
+        }
+
+        if (isHighSpeedPeak) {
+          trackingLogger.debug('Nuevo máximo de velocidad enviado sin esperar la cadencia normal', {
+            speedKmh: Math.round((point.speedMps ?? 0) * 3.6),
           });
         }
 

@@ -1682,20 +1682,8 @@ html.reduce-motion *::after {
   background: hsl(var(--background) / 0.64);
 }
 
-.operator-drive-panel.has-expanded-map {
-  overflow: visible;
-}
-
 body.operator-map-expanded {
   overflow: hidden;
-}
-
-/* La animación de entrada deja un transform calculado sobre la tarjeta. Un
-   fixed dentro de un ancestro transformado se encierra en esa tarjeta en iOS;
-   al ampliar se retira ese containing block para ocupar el viewport real. */
-body.operator-map-expanded .operator-native-dashboard > * {
-  animation: none !important;
-  transform: none !important;
 }
 
 .operator-drive-panel__header {
@@ -2079,6 +2067,202 @@ body.operator-map-expanded .operator-native-dashboard > * {
   font-size: 0.62rem;
   font-weight: 600;
   text-align: center;
+}
+
+/* Bitácora de telemetría: tablero industrial de lectura rápida. La retícula
+   recuerda el papel de tacógrafo y mantiene el acento operativo del producto. */
+.telemetry-ledger__hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 1.5rem;
+  padding: clamp(1.15rem, 2.5vw, 1.75rem);
+  background:
+    linear-gradient(115deg, hsl(218 35% 12% / 0.98), hsl(215 28% 18% / 0.96)),
+    hsl(218 35% 12%);
+  box-shadow: 0 24px 55px -38px hsl(var(--overlay) / 0.9);
+  color: hsl(0 0% 100%);
+}
+
+.telemetry-ledger__hero::before {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(hsl(0 0% 100% / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.035) 1px, transparent 1px);
+  background-size: 1.75rem 1.75rem;
+  content: '';
+  pointer-events: none;
+}
+
+.telemetry-ledger__hero::after {
+  position: absolute;
+  top: -7rem;
+  right: -3rem;
+  width: 24rem;
+  height: 14rem;
+  border: 1px solid hsl(var(--primary) / 0.22);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2.5rem hsl(var(--primary) / 0.025),
+    0 0 0 5rem hsl(var(--primary) / 0.018);
+  content: '';
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.telemetry-ledger__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: hsl(var(--primary));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.telemetry-ledger__hero h2 {
+  margin-top: 0.45rem;
+  font-family: 'Barlow Condensed', 'IBM Plex Sans', sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+}
+
+.telemetry-ledger__hero h2 + p {
+  margin-top: 0.65rem;
+  color: hsl(215 18% 74%);
+  font-size: 0.9rem;
+}
+
+.telemetry-ledger__limit {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 0.35rem;
+  min-width: 9rem;
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 1rem;
+  padding: 0.75rem 0.9rem;
+  background: hsl(218 30% 9% / 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.telemetry-ledger__limit span {
+  grid-column: 1 / -1;
+  color: hsl(215 18% 70%);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.telemetry-ledger__limit strong {
+  font-family: 'Barlow Condensed', sans-serif;
+  color: hsl(var(--primary));
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.telemetry-ledger__limit small {
+  color: hsl(215 18% 72%);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.telemetry-ledger__metrics {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.telemetry-ledger__metrics > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 0.5rem;
+  border: 1px solid hsl(0 0% 100% / 0.09);
+  border-radius: 1rem;
+  padding: 0.8rem 0.9rem;
+  background: hsl(218 30% 9% / 0.52);
+}
+
+.telemetry-ledger__metrics svg {
+  color: hsl(var(--primary));
+}
+
+.telemetry-ledger__metrics span {
+  color: hsl(215 16% 70%);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.telemetry-ledger__metrics strong {
+  grid-column: 1 / -1;
+  margin-top: 0.55rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem;
+  line-height: 0.9;
+}
+
+.telemetry-ledger__metrics small {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+  color: hsl(215 15% 63%);
+  font-size: 0.62rem;
+}
+
+.telemetry-ledger__metrics > .is-alert {
+  border-color: hsl(var(--warning) / 0.42);
+  background: hsl(var(--warning) / 0.08);
+}
+
+.telemetry-ledger__metrics > .is-alert svg,
+.telemetry-ledger__metrics > .is-alert strong {
+  color: hsl(var(--warning));
+}
+
+.telemetry-ledger__table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: hsl(var(--muted) / 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.telemetry-ledger__row {
+  position: relative;
+}
+
+.telemetry-ledger__row.is-alert {
+  background: linear-gradient(90deg, hsl(var(--warning) / 0.08), transparent 28%);
+}
+
+.telemetry-ledger__row.is-alert > td:first-child {
+  box-shadow: inset 3px 0 0 hsl(var(--warning));
+}
+
+@media (max-width: 900px) {
+  .telemetry-ledger__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .telemetry-ledger__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .telemetry-ledger__limit {
+    width: 100%;
+  }
 }
 
 @media (max-width: 540px) {

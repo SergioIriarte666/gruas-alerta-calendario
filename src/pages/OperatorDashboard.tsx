@@ -205,6 +205,7 @@ const OperatorDashboard = () => {
         candidates={candidates}
         requiresSelection={requiresSelection}
         onSelectService={handleSelectService}
+        showDrivePanel={activeTab === 'asignados'}
       />
 
       {pendingCount > 0 && (

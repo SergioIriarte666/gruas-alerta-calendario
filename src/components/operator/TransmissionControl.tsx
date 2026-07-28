@@ -62,6 +62,8 @@ const SERVICE_STATE_LABELS: Record<string, string> = {
 interface TransmissionControlProps {
   operatorId?: string | null;
   userId?: string | null;
+  /** El mapa/velocímetro sólo pertenece a Inicio; el watcher GPS sigue montado en las demás pestañas. */
+  showDrivePanel?: boolean;
   /** Servicio al que se asocia la transmisión (puede ser el próximo asignado). */
   currentService?: Service | null;
   /**
@@ -95,6 +97,7 @@ const formatAge = (iso: string | null, now: Date): string | null => {
 export const TransmissionControl = ({
   operatorId,
   userId,
+  showDrivePanel = true,
   currentService,
   activeService = null,
   candidates = [],
@@ -502,7 +505,7 @@ export const TransmissionControl = ({
         </Button>
       </div>
 
-      <OperatorDrivePanel isTracking={isTracking} point={lastPoint} />
+      {showDrivePanel && <OperatorDrivePanel isTracking={isTracking} point={lastPoint} />}
 
       {(activeServiceId || serviceId) && (
         <div className="mt-3">
