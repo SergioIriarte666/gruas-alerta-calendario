@@ -4,7 +4,7 @@ import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
-import { FileText, AlertTriangle, Calculator, TrendingDown, Info } from 'lucide-react';
+import { FileText, AlertTriangle, Calculator, TrendingDown, Info, Users } from 'lucide-react';
 
 interface ServiceCostsSectionProps {
   serviceId: string;
@@ -49,6 +49,46 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
     acc[categoryName].push(cost);
     return acc;
   }, {} as Record<string, typeof allCosts>) || {};
+
+  // Costeo por tramo: cuando hay relevo de operadores, el dueño necesita ver
+  // quién gastó qué. Filas por concepto, columnas por operador, gran total —
+  // el formato de la planilla con la que ya trabaja. Los costos sin operador
+  // asignado caen en su propia columna en vez de desaparecer del cuadre.
+  const UNASSIGNED_OPERATOR = '__sin_operador__';
+
+  const operatorColumns = (() => {
+    const seen = new Map<string, string>();
+    allCosts.forEach(cost => {
+      const id = cost.operator_id || UNASSIGNED_OPERATOR;
+      if (!seen.has(id)) {
+        seen.set(id, cost.operators?.name || 'Sin operador');
+      }
+    });
+    // Con un solo operador (o ninguno) el cuadro no aporta nada que el listado
+    // no diga ya: solo aparece cuando hay más de uno con costos.
+    const realOperators = [...seen.keys()].filter(id => id !== UNASSIGNED_OPERATOR);
+    if (realOperators.length < 2) return [];
+    return [...seen.entries()].map(([id, name]) => ({ id, name }));
+  })();
+
+  const costsByConcept = operatorColumns.length > 0
+    ? Object.entries(
+        allCosts.reduce((acc, cost) => {
+          const concept = cost.description?.trim() || 'Sin descripción';
+          if (!acc[concept]) acc[concept] = {};
+          const operatorKey = cost.operator_id || UNASSIGNED_OPERATOR;
+          acc[concept][operatorKey] = (acc[concept][operatorKey] || 0) + Number(cost.amount);
+          return acc;
+        }, {} as Record<string, Record<string, number>>)
+      )
+    : [];
+
+  const operatorTotals = operatorColumns.map(column => ({
+    ...column,
+    total: allCosts
+      .filter(cost => (cost.operator_id || UNASSIGNED_OPERATOR) === column.id)
+      .reduce((sum, cost) => sum + Number(cost.amount), 0),
+  }));
 
   // Assign colors to categories
   const categoryKeys = Object.keys(costsByCategory);
@@ -141,6 +181,65 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Costos por operador (solo con relevo: más de un operador con gastos) */}
+      {operatorColumns.length > 0 && (
+        <div className="rounded-lg border border-border bg-muted/50 p-4">
+          <div className="flex items-center gap-x-2 mb-3">
+            <Users className="size-4 text-primary" />
+            <span className="font-medium text-foreground text-sm">Costos por operador</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-max text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Concepto</th>
+                  {operatorColumns.map(column => (
+                    <th key={column.id} className="pb-2 px-3 text-right font-medium text-muted-foreground whitespace-nowrap">
+                      {column.name}
+                    </th>
+                  ))}
+                  <th className="pb-2 pl-3 text-right font-medium text-muted-foreground">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costsByConcept.map(([concept, amounts]) => {
+                  const conceptTotal = Object.values(amounts).reduce((sum, value) => sum + value, 0);
+                  return (
+                    <tr key={concept} className="border-b border-border/50 last:border-0">
+                      <td className="py-2 pr-4 text-foreground">{concept}</td>
+                      {operatorColumns.map(column => (
+                        <td key={column.id} className="py-2 px-3 text-right tabular-nums text-muted-foreground">
+                          {amounts[column.id] ? formatCurrency(amounts[column.id]) : '—'}
+                        </td>
+                      ))}
+                      <td className="py-2 pl-3 text-right tabular-nums font-medium text-foreground">
+                        {formatCurrency(conceptTotal)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-border">
+                  <td className="pt-2 pr-4 font-semibold text-foreground">Total por operador</td>
+                  {operatorTotals.map(column => (
+                    <td key={column.id} className="pt-2 px-3 text-right tabular-nums font-semibold text-foreground">
+                      {formatCurrency(column.total)}
+                    </td>
+                  ))}
+                  <td className="pt-2 pl-3 text-right tabular-nums font-bold text-destructive">
+                    {formatCurrency(totalCosts)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            No incluye comisiones: se listan aparte porque las genera el cierre del servicio.
+          </p>
         </div>
       )}
 

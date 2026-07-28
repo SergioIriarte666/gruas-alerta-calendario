@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CostCategory } from '@/types/costs';
+import { COMMISSION_CATEGORY_NOTICE, selectableCostCategories } from '@/lib/costCategories';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Crane, Operator, Service } from '@/types';
 import { ServiceSelector } from './ServiceSelector';
@@ -138,13 +139,16 @@ export const CostFormInputs = ({
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {categories.map(cat => (
+                                        {selectableCostCategories(categories, field.value).map(cat => (
                                             <SelectItem key={cat.id} value={cat.id}>
                                                 {cat.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    {COMMISSION_CATEGORY_NOTICE}
+                                </p>
                                 <FormMessage />
                             </FormItem>
                         )} />

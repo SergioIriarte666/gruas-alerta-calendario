@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Tag, FileText } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { CostCategory } from '@/types/costs';
+import { COMMISSION_CATEGORY_NOTICE, selectableCostCategories } from '@/lib/costCategories';
 import { CostFormValues } from '@/schemas/costSchema';
 import { CostCombobox } from './CostCombobox';
 import DatePickerInput from '@/components/common/DatePickerInput';
@@ -112,13 +113,16 @@ export const CostFormStep1 = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {categories.map(cat => (
+                    {selectableCostCategories(categories, field.value).map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  {COMMISSION_CATEGORY_NOTICE}
+                </p>
                 <FormMessage />
               </FormItem>
             )} />

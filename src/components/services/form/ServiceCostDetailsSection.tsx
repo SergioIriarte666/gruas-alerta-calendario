@@ -12,8 +12,18 @@ import { Badge } from '@/components/ui/badge';
 import { ENTITIES, LOWBOY_CRANE_IDS, type EntityKey } from '@/lib/entities';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { useAddCost, useUpdateCost, useDeleteCost } from '@/hooks/useCosts';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { getCurrentChileDateString } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { debounce } from 'lodash';
 import { supabase } from '@/integrations/supabase/client';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
@@ -53,7 +63,6 @@ interface ServiceCostDetail {
 
 interface ServiceCostDetailsSectionProps {
   serviceId?: string;
-  serviceDate?: string;
   costDetails: ServiceCostDetail[];
   onCostDetailsChange: (costDetails: ServiceCostDetail[]) => void;
   disabled?: boolean;
@@ -61,7 +70,6 @@ interface ServiceCostDetailsSectionProps {
 
 export const ServiceCostDetailsSection = ({
   serviceId,
-  serviceDate,
   costDetails,
   onCostDetailsChange,
   disabled = false
@@ -113,6 +121,36 @@ export const ServiceCostDetailsSection = ({
     enabled: !!serviceId,
     staleTime: 60 * 1000,
   });
+
+  // Operadores que efectivamente trabajaron el servicio: el principal más los de
+  // service_resources. El patrón real del negocio es el relevo —un operador hace
+  // el primer tramo y otro lo termina— y el costeo por tramo necesita saber de
+  // quién es cada gasto. La lista completa queda como respaldo si el servicio
+  // todavía no tiene operadores asignados.
+  const { data: serviceOperatorIds = [] } = useQuery({
+    queryKey: ['service-cost-operators', serviceId],
+    queryFn: async () => {
+      if (!serviceId) return [] as string[];
+      const [{ data: service }, { data: resources }] = await Promise.all([
+        supabase.from('services').select('operator_id').eq('id', serviceId).maybeSingle(),
+        supabase
+          .from('service_resources')
+          .select('operator_id')
+          .eq('service_id', serviceId)
+          .eq('resource_type', 'operator'),
+      ]);
+
+      const ids = new Set<string>();
+      if (service?.operator_id) ids.add(service.operator_id);
+      (resources || []).forEach(row => { if (row.operator_id) ids.add(row.operator_id); });
+      return [...ids];
+    },
+    enabled: !!serviceId,
+    staleTime: 60 * 1000,
+  });
+
+  const serviceOperators = operators.filter(op => serviceOperatorIds.includes(op.id));
+  const operatorOptions = serviceOperators.length > 0 ? serviceOperators : operators;
 
   // Entidad por defecto según la grúa asignada al servicio: si es equipo LowBoy → 'lowboy',
   // en caso contrario → 'gruas_5_norte'. Es solo el default; cada costo puede sobrescribirse abajo.
@@ -184,9 +222,9 @@ export const ServiceCostDetailsSection = ({
   
   const addCostDetail = () => {
     if (isAddingCost || !serviceCostCategory) return; // Prevenir múltiples clics
-    
+
     setIsAddingCost(true);
-    
+
     const newCostDetail: ServiceCostDetail = {
       id: `temp-${Date.now()}`,
       description: '',
@@ -199,35 +237,53 @@ export const ServiceCostDetailsSection = ({
       isExisting: false,
       entity: craneDefaultEntity,
       paid_by: craneDefaultEntity,
+      // La fecha del GASTO por defecto es HOY, no la del servicio. Un servicio
+      // del 25 puede acumular gastos del 26 y del 28; heredar service_date los
+      // dejaba a todos en el 25 y descuadraba el costeo por día.
+      date: businessClock.today(),
     };
-    
+
     onCostDetailsChange([...costDetails, newCostDetail]);
-    
+
     // Resetear el flag después de un breve delay
     setTimeout(() => setIsAddingCost(false), 300);
   };
 
-  const removeCostDetail = async (id: string) => {
+  // Quitar un costo guardado es un acto explícito y confirmado, nunca un efecto
+  // colateral de guardar el servicio.
+  const [costPendingRemoval, setCostPendingRemoval] = useState<ServiceCostDetail | null>(null);
+
+  const requestRemoveCostDetail = (id: string) => {
     const costToRemove = costDetails.find(cost => cost.id === id);
-    
-    if (costToRemove?.isExisting && serviceId) {
-      // Delete from database if it's an existing cost
-      deleteCost(id, {
-        onSuccess: () => {
-          logger.debug('[ServiceCostDetailsSection] Cost deleted successfully:', id);
-          onCostDetailsChange(costDetails.filter(cost => cost.id !== id));
-          refetchCosts();
-          toast.success("Costo eliminado correctamente");
-        },
-        onError: (error) => {
-          logger.error('[ServiceCostDetailsSection] Error deleting cost:', error);
-          toast.error("Error al eliminar el costo");
-        }
-      });
-    } else {
-      // Just remove from local state if it's a new cost
-      onCostDetailsChange(costDetails.filter(cost => cost.id !== id));
+    if (!costToRemove) return;
+
+    if (costToRemove.isExisting && serviceId) {
+      setCostPendingRemoval(costToRemove);
+      return;
     }
+
+    // Fila nunca persistida: se descarta del estado local sin más ceremonia.
+    onCostDetailsChange(costDetails.filter(cost => cost.id !== id));
+  };
+
+  const confirmRemoveCostDetail = () => {
+    const costToRemove = costPendingRemoval;
+    if (!costToRemove) return;
+
+    deleteCost({ id: costToRemove.id, context: 'wizard' }, {
+      onSuccess: () => {
+        logger.debug('[ServiceCostDetailsSection] Cost deleted successfully:', costToRemove.id);
+        onCostDetailsChange(costDetails.filter(cost => cost.id !== costToRemove.id));
+        refetchCosts();
+        toast.success("Costo eliminado correctamente");
+      },
+      onError: (error) => {
+        logger.error('[ServiceCostDetailsSection] Error deleting cost:', error);
+        toast.error("Error al eliminar el costo");
+      }
+    });
+
+    setCostPendingRemoval(null);
   };
 
   const updateCostDetail = (id: string, field: keyof ServiceCostDetail, value: any) => {
@@ -340,7 +396,8 @@ export const ServiceCostDetailsSection = ({
       return;
     }
 
-    const costDate = costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString());
+    // La fecha del gasto la manda la fila; serviceDate ya no la pisa.
+    const costDate = costDetail.date || businessClock.today();
     // Buscar payment_date previo si es un costo existente (no sobreescribir pago manual previo)
     const existingCost = costDetail.isExisting
       ? existingCosts?.find(c => c.id === costDetail.id)
@@ -512,7 +569,7 @@ export const ServiceCostDetailsSection = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => removeCostDetail(cost.id)}
+                  onClick={() => requestRemoveCostDetail(cost.id)}
                   disabled={disabled}
                   className="text-danger-text hover:text-danger-text/80"
                 >
@@ -555,6 +612,43 @@ export const ServiceCostDetailsSection = ({
                   placeholder="Ej: Combustible, peajes, etc."
                   disabled={disabled}
                 />
+              </div>
+
+              {/* Fecha del gasto: propia del costo, independiente de la del servicio */}
+              <div className="space-y-2">
+                <Label htmlFor={`cost-date-${cost.id}`}>Fecha del gasto *</Label>
+                <Input
+                  id={`cost-date-${cost.id}`}
+                  type="date"
+                  value={cost.date || businessClock.today()}
+                  onChange={(e) => updateCostDetail(cost.id, 'date', e.target.value)}
+                  disabled={disabled}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cuándo se hizo el gasto, no cuándo se hizo el servicio.
+                </p>
+              </div>
+
+              {/* Operador del gasto: costeo por tramo cuando hay relevo */}
+              <div className="space-y-2">
+                <Label htmlFor={`cost-operator-${cost.id}`}>Operador</Label>
+                <Select
+                  value={cost.operator_id || 'none'}
+                  onValueChange={(value) => updateCostDetail(cost.id, 'operator_id', value === 'none' ? undefined : value)}
+                  disabled={disabled}
+                >
+                  <SelectTrigger id={`cost-operator-${cost.id}`}>
+                    <SelectValue placeholder="Sin operador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin operador</SelectItem>
+                    {operatorOptions.map((operator) => (
+                      <SelectItem key={operator.id} value={operator.id}>
+                        <OperatorSelectLabel operator={operator} />
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Cantidad */}
@@ -639,7 +733,6 @@ export const ServiceCostDetailsSection = ({
                 const cfg = getSubcategoryConfig(cost.category_id, cost.subcategory);
                 const shouldShowInventoryFields = categoryName === 'Inventario' || !!cfg?.routes_to_inventory;
                 const shouldShowSupplier = !!cfg?.requires_supplier;
-                const shouldShowOperator = !!cfg?.requires_operator;
                 const shouldShowLocation = !!cfg?.requires_location;
                 const shouldShowDocument = !!cfg?.requires_document;
                 const shouldShowOtherReason = !!cfg?.requires_other_reason;
@@ -664,28 +757,9 @@ export const ServiceCostDetailsSection = ({
                       </div>
                     )}
 
-                    {shouldShowOperator && (
-                      <div className="space-y-2">
-                        <Label>Operador *</Label>
-                        <Select
-                          value={cost.operator_id || 'none'}
-                          onValueChange={(value) => updateCostDetail(cost.id, 'operator_id', value === 'none' ? undefined : value)}
-                          disabled={disabled}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar operador" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Sin operador</SelectItem>
-                            {operators.map((operator) => (
-                              <SelectItem key={operator.id} value={operator.id}>
-                                <OperatorSelectLabel operator={operator} />
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                    {/* El selector de operador ya no vive aquí: ahora es un campo
+                        fijo de la fila (arriba). Las subcategorías que lo exigen
+                        siguen validándolo en saveCostDetail. */}
 
                     {shouldShowLocation && (
                       <div className="space-y-2">
@@ -858,6 +932,29 @@ export const ServiceCostDetailsSection = ({
           </div>
         )}
       </CardContent>
+
+      <AlertDialog
+        open={!!costPendingRemoval}
+        onOpenChange={(open) => { if (!open) setCostPendingRemoval(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Eliminar el costo "{costPendingRemoval?.description || 'sin descripción'}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará de la base de datos por ${(costPendingRemoval?.amount || 0).toLocaleString('es-CL')} CLP.
+              Queda registrado en el historial del costo con quién lo eliminó y cuándo, pero el registro no vuelve.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveCostDetail}>
+              Eliminar costo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

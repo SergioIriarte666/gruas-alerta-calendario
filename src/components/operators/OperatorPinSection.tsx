@@ -38,15 +38,35 @@ export const OperatorPinSection = ({ operatorId }: OperatorPinSectionProps) => {
   const [pin, setPin] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  /**
+   * Lee de la BASE si el PIN existe. Devuelve el booleano —no solo lo guarda en
+   * estado— porque los handlers lo usan como CONFIRMACIÓN: el badge y el toast
+   * de éxito se emiten contra lo que dice la base, nunca contra el optimismo del
+   * cliente. El 26/07 la UI dio por guardado un PIN que nunca llegó a
+   * operator_pins; al día siguiente el mismo flujo funcionó. Un fallo
+   * intermitente que se muestra como éxito es peor que un fallo a secas: el
+   * admin se va convencido de que el operador quedó protegido.
+   *
+   * Si la lectura falla, se propaga: "no pude confirmar" no es "salió bien".
+   */
+  const readHasPin = useCallback(async () => {
+    const { data, error } = await supabase.rpc('operator_has_pin', { p_operator_id: operatorId });
+    logger.debug('operator_has_pin', { operatorId, data, error: error?.message ?? null });
+    if (error) throw new Error(error.message);
+    return data === true;
+  }, [operatorId]);
+
   const refresh = useCallback(async () => {
     if (!isAdmin) return;
-    const { data, error } = await supabase.rpc('operator_has_pin', { p_operator_id: operatorId });
-    if (error) {
+    try {
+      setHasPin(await readHasPin());
+    } catch (error) {
+      // El badge queda en "desconocido" en vez de mentir en cualquiera de los
+      // dos sentidos.
+      setHasPin(null);
       logger.warn('No se pudo consultar el estado del PIN', error);
-      return;
     }
-    setHasPin(data === true);
-  }, [isAdmin, operatorId]);
+  }, [isAdmin, readHasPin]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -55,19 +75,29 @@ export const OperatorPinSection = ({ operatorId }: OperatorPinSectionProps) => {
   const handleSave = async () => {
     if (pin.length !== 4) return;
     setIsSaving(true);
+    logger.debug('set_operator_pin request', { operatorId });
     try {
       const { error } = await supabase.rpc('set_operator_pin', {
         p_operator_id: operatorId,
         p_pin: pin,
       });
+      logger.debug('set_operator_pin response', { operatorId, error: error?.message ?? null });
       if (error) throw new Error(error.message);
+
+      const confirmed = await readHasPin();
+      if (!confirmed) {
+        throw new Error('El PIN no quedó guardado. Vuelve a intentarlo.');
+      }
+
+      setHasPin(true);
       setPin('');
-      await refresh();
       toast.success('PIN actualizado');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo guardar el PIN';
       logger.warn('No se pudo guardar el PIN', error);
       toast.error(message);
+      // El badge NO cambia por un intento fallido: se re-lee y que hable la base.
+      void refresh();
     } finally {
       setIsSaving(false);
     }
@@ -75,15 +105,24 @@ export const OperatorPinSection = ({ operatorId }: OperatorPinSectionProps) => {
 
   const handleClear = async () => {
     setIsSaving(true);
+    logger.debug('clear_operator_pin request', { operatorId });
     try {
       const { error } = await supabase.rpc('clear_operator_pin', { p_operator_id: operatorId });
+      logger.debug('clear_operator_pin response', { operatorId, error: error?.message ?? null });
       if (error) throw new Error(error.message);
-      await refresh();
+
+      const stillHasPin = await readHasPin();
+      if (stillHasPin) {
+        throw new Error('El PIN sigue configurado. Vuelve a intentarlo.');
+      }
+
+      setHasPin(false);
       toast.success('PIN eliminado');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo eliminar el PIN';
       logger.warn('No se pudo eliminar el PIN', error);
       toast.error(message);
+      void refresh();
     } finally {
       setIsSaving(false);
     }

@@ -52,6 +52,27 @@ export const IN_FLIGHT_OPERATOR_SERVICE_STATUSES = [
   'inspection_completed',
 ] as const;
 
+/**
+ * ¿Es SUYO el servicio, o solo está autorizado en él?
+ *
+ * Un servicio tiene muchos operadores autorizados —el principal más los
+ * adicionales de service_resources— pero UNA sola grúa transmitiendo. Para
+ * decidir de quién es la POSICIÓN del servicio, "estar asignado" es la pregunta
+ * equivocada: el 28/07, tras el relevo Sergio -> Jesús, el teléfono de Sergio
+ * seguía etiquetando puntos al folio 3262047-1 porque seguía figurando como
+ * Adicional. La página del cliente alternaba entre el punto más fresco de cada
+ * teléfono y la grúa saltaba 430 km entre el corte y Grúas 5 Norte.
+ *
+ * Sin `operatorId` no se filtra, por compatibilidad con los llamadores que no
+ * lo tienen. La guarda de verdad vive en la base
+ * (enforce_principal_operator_service_binding): la app del operador es
+ * Capacitor y las versiones viejas siguen en terreno indefinidamente.
+ */
+export const isPrincipalOperatorOfService = (
+  service: Service,
+  operatorId?: string | null,
+): boolean => !operatorId || service.operator?.id === operatorId;
+
 export interface OperatorServiceSelection {
   /** Servicios en vuelo, en orden de prioridad operativa. */
   candidates: Service[];
@@ -76,6 +97,8 @@ export interface OperatorServiceSelection {
 export const resolveOperatorServiceSelection = (
   services: Service[],
   selectedServiceId?: string | null,
+  /** Operador que mira. Sin él, `trackingService` no se filtra por titularidad. */
+  operatorId?: string | null,
 ): OperatorServiceSelection => {
   const candidates = services
     .filter((service) =>
@@ -87,6 +110,13 @@ export const resolveOperatorServiceSelection = (
       return byRank !== 0 ? byRank : (a.serviceDate || '').localeCompare(b.serviceDate || '');
     });
 
+  // La transmisión solo puede colgar de un servicio PROPIO. El resto de la
+  // resolución no cambia: un adicional sigue viendo el servicio en su jornada,
+  // sigue pudiendo inspeccionar y declarar detenciones. Lo único que no hace es
+  // teñir la posición del traslado con la de su camión.
+  const bindable = (service: Service | null): Service | null =>
+    service && isPrincipalOperatorOfService(service, operatorId) ? service : null;
+
   const selected = selectedServiceId
     ? candidates.find((service) => service.id === selectedServiceId) ?? null
     : null;
@@ -96,7 +126,7 @@ export const resolveOperatorServiceSelection = (
       candidates,
       requiresSelection: false,
       activeService: isActiveOperatorService(selected) ? selected : null,
-      trackingService: selected,
+      trackingService: bindable(selected),
     };
   }
 
@@ -108,6 +138,6 @@ export const resolveOperatorServiceSelection = (
     candidates,
     requiresSelection: false,
     activeService: selectActiveOperatorService(candidates),
-    trackingService: selectTrackingService(candidates),
+    trackingService: bindable(selectTrackingService(candidates)),
   };
 };

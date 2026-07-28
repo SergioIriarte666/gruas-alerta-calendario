@@ -566,7 +566,17 @@ export const useUpdateCost = () => {
   });
 };
 
-export const deleteCostRecord = async (id: string) => {
+/**
+ * Origen del borrado. Viaja hasta cost_change_history.change_context: sin él,
+ * un borrado intencional desde Finanzas y uno provocado por un bug del wizard
+ * se ven exactamente igual en el historial.
+ */
+export type CostChangeContext = 'wizard' | 'costs_module' | 'import' | 'sql';
+
+export const deleteCostRecord = async (
+  id: string,
+  context: CostChangeContext = 'costs_module'
+) => {
   // Break the circular FK first. The database trigger owns cancellation and stock reversal.
   const { data: costData, error: fetchError } = await supabase
     .from('costs')
@@ -591,7 +601,13 @@ export const deleteCostRecord = async (id: string) => {
     }
   }
 
-  const { error } = await supabase.from('costs').delete().eq('id', id);
+  // Vía RPC y no .delete() directo: la función sella el origen del cambio y
+  // además falla si el borrado no afectó ninguna fila (RLS), en vez de
+  // devolver el silencio que PostgREST reporta como éxito.
+  const { error } = await supabase.rpc('delete_cost_with_context', {
+    p_cost_id: id,
+    p_context: context,
+  });
 
   if (error) {
     logger.error('Error deleting cost:', error);
@@ -602,7 +618,7 @@ export const deleteCostRecord = async (id: string) => {
 };
 
 const deleteCosts = async (ids: string[]) => {
-  const serviceIds = await Promise.all(ids.map(deleteCostRecord));
+  const serviceIds = await Promise.all(ids.map(id => deleteCostRecord(id)));
   return serviceIds.filter((serviceId): serviceId is string => Boolean(serviceId));
 };
 
@@ -740,7 +756,12 @@ export const useDeleteCost = () => {
   const { invalidateAll } = useUniversalSync();
   
   return useMutation({
-    mutationFn: deleteCostRecord,
+    // Acepta el id suelto (Finanzas) o {id, context} para que el llamador
+    // declare desde qué pantalla se pidió el borrado.
+    mutationFn: (input: string | { id: string; context: CostChangeContext }) =>
+      typeof input === 'string'
+        ? deleteCostRecord(input)
+        : deleteCostRecord(input.id, input.context),
     onSuccess: (serviceId) => {
       logger.debug('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
       invalidateAll('full');

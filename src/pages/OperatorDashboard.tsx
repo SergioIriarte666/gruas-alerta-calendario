@@ -52,8 +52,12 @@ const OperatorDashboard = () => {
     ...serviceTabs.pendientes_entrega,
     ...asignadosSorted,
   ];
+  // El operator_id va como tercer argumento a propósito: la transmisión solo se
+  // amarra a servicios donde este operador es el PRINCIPAL. Un adicional
+  // (service_resources) ve el servicio y opera en él, pero su posición no es la
+  // del traslado.
   const { candidates, requiresSelection, activeService, trackingService } =
-    resolveOperatorServiceSelection(operatorServices, selectedServiceId);
+    resolveOperatorServiceSelection(operatorServices, selectedServiceId, user?.operator_id);
 
   useEffect(() => {
     if (!selectedServiceId) return;

@@ -8,6 +8,7 @@ import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { resolveClientDepartment, resolveOriginCoordinates } from '@/services/originResolutionService';
+import { planServiceCostChanges } from './serviceCostDiff';
 
 const logger = createLogger('ServiceManager');
 
@@ -855,12 +856,17 @@ export const useServiceManager = () => {
       
       
 
-      // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
+      // Costos del servicio: DIFF, nunca reemplazo.
+      //
+      // Este bloque borraba TODOS los costos del servicio y volvía a insertar lo
+      // que trajera el estado del formulario. Un costo cargado desde Finanzas —o
+      // simplemente uno que la sección aún no había hidratado— no estaba en ese
+      // estado, y el guardado se lo llevaba por delante sin decir nada.
+      //
+      // Ahora: UPDATE por id para las filas que ya existen, INSERT solo para las
+      // nuevas, y NINGÚN delete implícito. Quitar un costo es un acto explícito
+      // del usuario en la sección (con confirmación) y se ejecuta allí.
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
-      // ✅ NUEVO: Solo procesar costos si viene del formulario principal
-      const isFromMainForm = (serviceData as ServiceSnakeCase)._source === 'main_form' || (serviceData as ServiceSnakeCase)._processCosts === true;
-      
-      if (isFromMainForm) {
         const { data: serviceCostCategory, error: serviceCostCategoryError } = await supabase
           .from('cost_categories')
           .select('id')
@@ -871,26 +877,12 @@ export const useServiceManager = () => {
         if (!serviceCostCategory) {
           throw new Error('No se encontró la categoría Gastos de Servicios');
         }
-        
-        
-        const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
-        
-        // Delete existing costs for this service (exclude commissions)
-        const { error: deleteCostsError } = await supabase
-          .from('costs')
-          .delete()
-          .eq('service_id', id)
-          .neq('category_id', commissionCategoryId);
-      
-        if (deleteCostsError) {
-          logger.error('[updateService] Error deleting existing service costs:', deleteCostsError);
-        }
-      
+
         // Filter valid cost details
-        const validCostDetails = serviceData.costDetails.filter(cost => 
+        const validCostDetails = serviceData.costDetails.filter(cost =>
           cost.description && cost.amount > 0
         );
-      
+
         if (validCostDetails.length > 0) {
           // Get current service data for foreign keys
           const { data: currentService } = await supabase
@@ -898,45 +890,90 @@ export const useServiceManager = () => {
             .select('folio, service_date, crane_id')
             .eq('id', id)
             .single();
-      
-          const serviceCosts = validCostDetails.map(cost => ({
-            amount: cost.amount,
+
+          // Los ids reales que hoy tiene el servicio. Una fila del formulario
+          // solo se trata como "existente" si su id sigue vivo en la base: un id
+          // temporal (temp-…) o uno ya borrado desde otra pestaña entra como alta.
+          const { data: persistedCosts, error: persistedCostsError } = await supabase
+            .from('costs')
+            .select('id')
+            .eq('service_id', id);
+
+          if (persistedCostsError) throw persistedCostsError;
+
+          const persistedIds = new Set((persistedCosts || []).map(row => row.id));
+
+          const resolveCostDate = (cost: Record<string, unknown>) =>
+            (typeof cost.date === 'string' && cost.date) || businessClock.today();
+
+          const buildCostPayload = (cost: Record<string, unknown>) => ({
+            amount: cost.amount as number,
             category_id: serviceCostCategory.id,
             service_id: id,
             service_folio: currentService?.folio || 'Unknown',
-            date: currentService?.service_date || serviceData.serviceDate || getTodayLocal(),
-            description: cost.description,
-            subcategory: cost.subcategory || null,
-            notes: cost.notes || 'Costo actualizado desde formulario de servicio',
+            // La fecha del GASTO, no la del servicio: un viático del día 26 en un
+            // servicio del día 25 es un gasto del 26. Si la fila no la trae, hoy.
+            date: resolveCostDate(cost),
+            description: cost.description as string,
+            subcategory: (cost.subcategory as string) || null,
+            notes: (cost.notes as string) || 'Costo desde formulario de servicio',
             crane_id: currentService?.crane_id,
-          payment_date: serviceData.markCostsPaidOnCreate
-            ? (currentService?.service_date || serviceData.serviceDate || getTodayLocal())
-            : null,
-          supplier_id: (cost as Record<string, unknown>).supplier_id || null,
-          operator_id: (cost as Record<string, unknown>).operator_id || null,
-          document_type: (cost as Record<string, unknown>).document_type || null,
-          document_number: (cost as Record<string, unknown>).document_number || null,
-          location_text: (cost as Record<string, unknown>).location_text || null,
-          other_reason: (cost as Record<string, unknown>).other_reason || null,
-          purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
-          purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
-          immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
-          entity: 'gruas_5_norte',
-          paid_by: 'gruas_5_norte',
-            created_by: createdBy
-          }));
-      
-          
-      
-          const { error: insertCostsError } = await supabase
-            .from('costs')
-            .insert(serviceCosts);
-      
-          if (insertCostsError) {
-            logger.error('[updateService] Error inserting updated service costs:', insertCostsError);
+            supplier_id: cost.supplier_id || null,
+            operator_id: cost.operator_id || null,
+            document_type: cost.document_type || null,
+            document_number: cost.document_number || null,
+            location_text: cost.location_text || null,
+            other_reason: cost.other_reason || null,
+            purchase_quantity: cost.purchase_quantity || null,
+            purchase_unit_cost: cost.purchase_unit_cost || null,
+            immediate_consumption: !!cost.immediate_consumption,
+            // entity/paid_by vienen resueltos por la sección según la grúa
+            // (LowBoy vs G5N); fijarlos aquí a G5N desclasificaba los de LowBoy.
+            entity: (cost.entity as string) || 'gruas_5_norte',
+            paid_by: (cost.paid_by as string) || 'gruas_5_norte',
+          });
+
+          const { toUpdate, toInsert } = planServiceCostChanges(validCostDetails, persistedIds);
+
+          for (const cost of toUpdate) {
+            const record = cost as unknown as Record<string, unknown>;
+            const { error: updateCostError } = await supabase
+              .from('costs')
+              .update(buildCostPayload(record))
+              .eq('id', cost.id as string);
+
+            if (updateCostError) {
+              logger.error('[updateService] Error updating service cost:', updateCostError);
+              throw new Error(`No se pudo actualizar el costo "${cost.description}": ${updateCostError.message}`);
+            }
+          }
+
+          if (toInsert.length > 0) {
+            const inserts = toInsert.map(cost => {
+              const record = cost as unknown as Record<string, unknown>;
+              return {
+                ...buildCostPayload(record),
+                // Misma regla que el botón "Guardar" de la sección: los gastos
+                // operativos de un servicio nacen pagados. Antes esta rama los
+                // dejaba pendientes, así que un costo escrito en el wizard salía
+                // pagado o no según por cuál de los dos botones pasara.
+                payment_date: resolveCostDate(record),
+                created_by: createdBy,
+              };
+            });
+
+            const { error: insertCostsError } = await supabase
+              .from('costs')
+              .insert(inserts);
+
+            // Antes solo se logueaba: el usuario veía "servicio actualizado" con
+            // los costos sin guardar. Un guardado que no guardó no es un éxito.
+            if (insertCostsError) {
+              logger.error('[updateService] Error inserting service costs:', insertCostsError);
+              throw new Error(`No se pudieron guardar los costos del servicio: ${insertCostsError.message}`);
+            }
           }
         }
-      }
       }
 
       // ✅ Handle operators update. Las COMISIONES las maneja exclusivamente el

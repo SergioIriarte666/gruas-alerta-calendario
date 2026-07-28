@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
 import { ServiceChangeHistory } from './ServiceChangeHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
+import { ServiceHandoffPanel } from './ServiceHandoffPanel';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
@@ -1165,8 +1166,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               )}
             </TabsContent>
 
-            <TabsContent value="history" className="mt-0">
-               <VehicleHistory 
+            <TabsContent value="history" className="mt-0 space-y-6">
+               <ServiceHandoffPanel serviceId={serviceData.id} />
+               <VehicleHistory
                  licensePlate={serviceData.licensePlate} 
                  currentServiceId={serviceData.id}
                  clientId={serviceData.client.id}

@@ -20,6 +20,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
+import { usePendingServiceHandoff } from '@/hooks/operator/useServiceHandoff';
+import { ServiceHandoffGate } from './ServiceHandoffGate';
 
 interface AssignedServiceCardProps {
   service: Service;
@@ -146,6 +148,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   const navigate = useNavigate();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(service.id);
   const [startTimeDraft, setStartTimeDraft] = React.useState<string | null>(null);
+  const { data: pendingHandoff } = usePendingServiceHandoff(service.id);
 
   // services.start_time quedaba NULL al iniciar y la hora real de partida se
   // perdía. Se propone la hora actual del negocio (nunca new Date(): la TZ del
@@ -219,6 +222,22 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
       </DialogContent>
     </Dialog>
   );
+
+  // RECEPCIÓN PENDIENTE (relevo con servicio en vuelo)
+  //
+  // Va antes que cualquier otro estado: mientras el traspaso no esté confirmado,
+  // la tarjeta no ofrece acciones. El servicio sigue transmitiendo y el cliente
+  // sigue viendo su link —los puntos cuelgan del SERVICIO, no del operador—, lo
+  // único que se retiene es la operación por parte del entrante.
+  if (pendingHandoff) {
+    return (
+      <div className={baseCard}>
+        <CardHeader service={service} rightSlot={<Package className="size-4 flex-shrink-0 text-warning-text" />} />
+        <CardBody service={service} showNavigation />
+        <ServiceHandoffGate serviceId={service.id} folio={service.folio} />
+      </div>
+    );
+  }
 
   // COMPLETADO
   if (status === 'completed') {

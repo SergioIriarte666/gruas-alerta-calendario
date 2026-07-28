@@ -113,4 +113,54 @@ describe('operatorActiveService', () => {
     expect(selectTrackingService(services)?.id).toBe('SRV-6858');
     expect(selectActiveOperatorService(services)).toBeNull();
   });
+
+  describe('binding de transmisión al operador principal', () => {
+    const PRINCIPAL = 'op-jesus';
+    const ADICIONAL = 'op-sergio';
+
+    const conPrincipal = (id: string, principalId: string): Service =>
+      service({ id, status: 'in_progress', operator: { id: principalId } } as never);
+
+    // El defecto del 28/07: tras el relevo Sergio -> Jesús, el teléfono de
+    // Sergio seguía figurando como Adicional del servicio y sus puntos se
+    // etiquetaban al folio. El cliente veía la grúa saltar 430 km.
+    it('el adicional no amarra su transmisión al servicio', () => {
+      const services = [conPrincipal('3262047-1', PRINCIPAL)];
+
+      const resuelto = resolveOperatorServiceSelection(services, null, ADICIONAL);
+
+      expect(resuelto.trackingService).toBeNull();
+      // Sigue viéndolo y operándolo: lo único que pierde es teñir la posición.
+      expect(resuelto.candidates.map((item) => item.id)).toEqual(['3262047-1']);
+      expect(resuelto.activeService?.id).toBe('3262047-1');
+    });
+
+    it('el principal sí amarra su transmisión', () => {
+      const services = [conPrincipal('3262047-1', PRINCIPAL)];
+
+      const resuelto = resolveOperatorServiceSelection(services, null, PRINCIPAL);
+
+      expect(resuelto.trackingService?.id).toBe('3262047-1');
+    });
+
+    // Elegir a mano tampoco habilita el amarre: el gate va después de la
+    // elección, no antes.
+    it('elegir el servicio como adicional tampoco lo amarra', () => {
+      const services = [
+        conPrincipal('3262047-1', PRINCIPAL),
+        conPrincipal('SRV-6858', ADICIONAL),
+      ];
+
+      const resuelto = resolveOperatorServiceSelection(services, '3262047-1', ADICIONAL);
+
+      expect(resuelto.trackingService).toBeNull();
+      expect(resuelto.activeService?.id).toBe('3262047-1');
+    });
+
+    it('sin operador declarado no se filtra (compatibilidad)', () => {
+      const services = [conPrincipal('3262047-1', PRINCIPAL)];
+
+      expect(resolveOperatorServiceSelection(services, null).trackingService?.id).toBe('3262047-1');
+    });
+  });
 });

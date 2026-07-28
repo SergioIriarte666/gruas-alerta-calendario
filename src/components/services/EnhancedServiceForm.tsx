@@ -335,17 +335,42 @@ export const EnhancedServiceForm = React.memo(({
     if (enhancedService && service?.id) {
       logger.debug('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
       
-      const costDetails = enhancedService.serviceCosts?.map((cost: { id: string; description: string; amount?: number; notes?: string; category_id?: string; subcategory?: string }) => ({
-        id: cost.id,
-        description: cost.description,
-        amount: cost.amount || 0,
-        quantity: 1,
-        unitPrice: cost.amount || 0,
-        notes: cost.notes || '',
-        category_id: cost.category_id,
-        subcategory: cost.subcategory || '',
-        isExisting: true
-      })) || [];
+      // Los costos vigentes del servicio se cargan COMPLETOS. El mapeo anterior
+      // se quedaba con descripción/monto/notas y descartaba fecha, operador,
+      // proveedor, documento y entidad: al guardar, el wizard escribía de vuelta
+      // esa versión mutilada. Lo que no viaja de ida, se pierde a la vuelta.
+      //
+      // Las comisiones quedan fuera a propósito: las maneja el motor automático
+      // desde "Operadores del Servicio", y arrastrarlas aquí las recategorizaría
+      // como gasto operativo al guardar.
+      const costDetails = (enhancedService.serviceCosts as unknown as Array<Record<string, any>> | undefined)
+        ?.filter(cost => {
+          const categoryName = String(cost.cost_categories?.name || '').toLowerCase();
+          return !categoryName.includes('comisión') && !categoryName.includes('comision');
+        })
+        .map(cost => ({
+          id: cost.id as string,
+          description: cost.description as string,
+          amount: Number(cost.amount) || 0,
+          quantity: 1,
+          unitPrice: Number(cost.amount) || 0,
+          notes: cost.notes || '',
+          category_id: cost.category_id,
+          subcategory: cost.subcategory || '',
+          supplier_id: cost.supplier_id || undefined,
+          operator_id: cost.operator_id || undefined,
+          document_type: cost.document_type || undefined,
+          document_number: cost.document_number || undefined,
+          location_text: cost.location_text || undefined,
+          other_reason: cost.other_reason || undefined,
+          purchase_quantity: cost.purchase_quantity || undefined,
+          purchase_unit_cost: cost.purchase_unit_cost || undefined,
+          immediate_consumption: !!cost.immediate_consumption,
+          date: cost.date || undefined,
+          entity: cost.entity || undefined,
+          paid_by: cost.paid_by || undefined,
+          isExisting: true
+        })) || [];
 
       const pickFirstNonEmpty = (...values: Array<string | null | undefined>) => {
         for (const value of values) {
@@ -1530,7 +1555,6 @@ export const EnhancedServiceForm = React.memo(({
                     costDetails={formData.costDetails || []}
                     onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
                     serviceId={service?.id}
-                    serviceDate={formData.serviceDate}
                     disabled={false}
                   />
                 )}

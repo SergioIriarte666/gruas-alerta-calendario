@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       alert_acknowledgements: {
@@ -6204,6 +6179,92 @@ export type Database = {
           },
         ]
       }
+      service_operator_handoffs: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
+          id: string
+          incoming_operator_id: string
+          notes: string | null
+          outgoing_operator_id: string | null
+          photo_paths: string[]
+          requested_at: string
+          service_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          id?: string
+          incoming_operator_id: string
+          notes?: string | null
+          outgoing_operator_id?: string | null
+          photo_paths?: string[]
+          requested_at?: string
+          service_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          id?: string
+          incoming_operator_id?: string
+          notes?: string | null
+          outgoing_operator_id?: string | null
+          photo_paths?: string[]
+          requested_at?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_operator_handoffs_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_incoming_operator_id_fkey"
+            columns: ["incoming_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_outgoing_operator_id_fkey"
+            columns: ["outgoing_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_rates: {
         Row: {
           client_id: string
@@ -6616,6 +6677,7 @@ export type Database = {
           on_site_reached_at: string | null
           revoked_at: string | null
           service_id: string
+          shared_at: string | null
           token: string
         }
         Insert: {
@@ -6635,6 +6697,7 @@ export type Database = {
           on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id: string
+          shared_at?: string | null
           token: string
         }
         Update: {
@@ -6654,6 +6717,7 @@ export type Database = {
           on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id?: string
+          shared_at?: string | null
           token?: string
         }
         Relationships: [
@@ -8562,6 +8626,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      assert_no_pending_handoff: {
+        Args: { p_service_id: string }
+        Returns: undefined
+      }
       assert_service_identity: {
         Args: { p_folio_confirmation: string; p_service_id: string }
         Returns: string
@@ -8725,6 +8793,15 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: undefined
       }
+      confirm_service_handoff: {
+        Args: {
+          p_folio: string
+          p_notes?: string
+          p_photo_paths: string[]
+          p_service_id: string
+        }
+        Returns: string
+      }
       create_automatic_payment_for_invoice:
         | { Args: { p_invoice_id: string }; Returns: Json }
         | {
@@ -8825,6 +8902,10 @@ export type Database = {
       delete_account_permanently: {
         Args: { target_user_id: string }
         Returns: undefined
+      }
+      delete_cost_with_context: {
+        Args: { p_context?: string; p_cost_id: string }
+        Returns: string
       }
       delete_service_cascade: {
         Args: { p_service_id: string }
@@ -9430,6 +9511,10 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
+      mark_service_tracking_link_shared: {
+        Args: { p_service_id: string }
+        Returns: boolean
+      }
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }
         Returns: boolean
@@ -9482,6 +9567,7 @@ export type Database = {
         Args: { p_invoice_id: string; p_payment_id: string }
         Returns: Json
       }
+      resolve_cost_change_context: { Args: never; Returns: string }
       resolve_payment_application_conflicts: {
         Args: { p_payment_id?: string }
         Returns: Json
@@ -9887,9 +9973,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "operator", "viewer", "client"],
