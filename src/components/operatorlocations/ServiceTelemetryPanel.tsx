@@ -294,7 +294,7 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
             <TableHeader className="telemetry-ledger__table-head">
               <TableRow>
                 <TableHead>Fecha servicio</TableHead>
-                <TableHead>Servicio</TableHead>
+                <TableHead className="min-w-48">Servicio</TableHead>
                 <TableHead>Grúa</TableHead>
                 <TableHead>Operador</TableHead>
                 <TableHead>Ventana GPS</TableHead>
@@ -356,8 +356,8 @@ const TelemetryRow = ({ row, onViewRoute }: TelemetryRowProps) => {
   return (
     <TableRow className={cn('telemetry-ledger__row', hasAlert && 'is-alert')}>
       <TableCell className="font-semibold">{safeDateToDisplaySlashes(row.serviceDate)}</TableCell>
-      <TableCell>
-        <span className="font-bold text-foreground">Folio {row.folio}</span>
+      <TableCell className="min-w-48">
+        <span className="whitespace-nowrap font-bold text-foreground">{row.folio}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
           {formatDuration(row.totalDurationMinutes)} · {row.gpsPointsCount} puntos
         </span>

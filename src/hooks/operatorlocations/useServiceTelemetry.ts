@@ -30,7 +30,7 @@ interface RawService {
   operator_id: string | null;
   crane_id: string | null;
   operator: { id: string; name: string } | null;
-  crane: { id: string; license_plate: string; brand: string; model: string } | null;
+  crane: { id: string; license_plate: string } | null;
   route_metrics: RawRouteMetrics | null;
 }
 
@@ -118,7 +118,7 @@ const fetchServices = async (dateFrom: string, dateTo: string): Promise<RawServi
         operator_id,
         crane_id,
         operator:operators!services_operator_id_fkey(id, name),
-        crane:cranes!services_crane_id_fkey(id, license_plate, brand, model),
+        crane:cranes!services_crane_id_fkey(id, license_plate),
         route_metrics:service_route_metrics(
           total_distance_km,
           matched_total_distance_km,
@@ -252,7 +252,7 @@ const fetchServiceTelemetry = async (
       operatorName: service.operator?.name ?? firstReporter?.name ?? 'Sin operador asignado',
       craneId: service.crane?.id ?? service.crane_id,
       craneLabel: service.crane
-        ? `${service.crane.license_plate.toUpperCase()} · ${service.crane.brand} ${service.crane.model}`
+        ? service.crane.license_plate.toUpperCase()
         : 'Sin grúa asignada',
       startAt: servicePoints[0]?.recorded_at ?? metrics?.first_point_at ?? null,
       endAt: servicePoints[servicePoints.length - 1]?.recorded_at ?? metrics?.last_point_at ?? null,
