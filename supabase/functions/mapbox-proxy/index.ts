@@ -79,6 +79,21 @@ function buildStaticMapUrl(
   return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays}/auto/700x400@2x?access_token=${token}&padding=60`;
 }
 
+function buildStaticPointMapUrl(
+  token: string,
+  coordinates: [number, number],
+): string {
+  const [lng, lat] = coordinates;
+  // La vista del operador necesita una cámara estable alrededor de su GPS, no
+  // el encuadre automático pensado para rutas. Una imagen cuadrada funciona
+  // tanto en la tarjeta como al ampliarla y evita recalcular el mapa al abrirlo.
+  return (
+    `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/` +
+    `${lng},${lat},15.5,0/900x900@2x` +
+    `?access_token=${token}&logo=true&attribution=true`
+  );
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
@@ -302,6 +317,43 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Static map centered on the operator's current GPS position.
+    if (action === "static_point_map") {
+      if (
+        !Array.isArray(coordinates) ||
+        coordinates.length !== 2 ||
+        typeof coordinates[0] !== "number" ||
+        typeof coordinates[1] !== "number" ||
+        !Number.isFinite(coordinates[0]) ||
+        !Number.isFinite(coordinates[1])
+      ) {
+        return new Response(
+          JSON.stringify({ error: "coordinates [lng, lat] required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const imageRes = await fetch(
+        buildStaticPointMapUrl(MAPBOX_TOKEN, coordinates as [number, number]),
+      );
+      if (!imageRes.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch static point map" }),
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const imageData = await imageRes.arrayBuffer();
+      const contentType = imageRes.headers.get("Content-Type") ?? "image/png";
+      return new Response(imageData, {
+        headers: {
+          ...getCorsHeaders(req),
+          "Content-Type": contentType,
+          "Cache-Control": "private, max-age=300",
+        },
+      });
+    }
+
     // Static map image with route
     if (action === "static_map") {
       if (!geometry?.coordinates || !origin || !destination) {
@@ -421,7 +473,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'geocode', 'reverse_geocode', 'directions', 'static_map' or 'map_matching'" }),
+      JSON.stringify({ error: "Invalid action. Use 'geocode', 'reverse_geocode', 'directions', 'static_point_map', 'static_map' or 'map_matching'" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (_err) {

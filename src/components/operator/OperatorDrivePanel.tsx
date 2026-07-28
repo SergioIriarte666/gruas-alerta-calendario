@@ -167,18 +167,20 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'static_map',
-          origin: nativeMapCenter,
-          destination: nativeMapCenter,
-          geometry: { coordinates: [nativeMapCenter, nativeMapCenter] },
-          mode: 'full',
+          action: 'static_point_map',
+          coordinates: nativeMapCenter,
         }),
       });
       if (!response.ok) {
         throw new Error(`Native map proxy returned HTTP ${response.status}`);
       }
 
-      const objectUrl = URL.createObjectURL(await response.blob());
+      const mapBlob = await response.blob();
+      if (!mapBlob.type.startsWith('image/')) {
+        throw new Error(`Native map proxy returned ${mapBlob.type || 'an unknown content type'}`);
+      }
+
+      const objectUrl = URL.createObjectURL(mapBlob);
       if (cancelled) {
         URL.revokeObjectURL(objectUrl);
         return;
@@ -187,7 +189,6 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       const previousUrl = nativeMapUrlRef.current;
       nativeMapUrlRef.current = objectUrl;
       setNativeMapUrl(objectUrl);
-      setMapReady(true);
       if (previousUrl) URL.revokeObjectURL(previousUrl);
     })().catch((error) => {
       if (cancelled || abortController.signal.aborted) return;
@@ -396,6 +397,15 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
                   src={nativeMapUrl}
                   alt=""
                   className="operator-drive-map__native-image"
+                  onLoad={() => {
+                    setMapError(false);
+                    setMapReady(true);
+                  }}
+                  onError={() => {
+                    logger.error('iOS could not decode the native operator map image');
+                    setMapReady(false);
+                    setMapError(true);
+                  }}
                 />
               )}
               {mapReady && displayPoint && (
