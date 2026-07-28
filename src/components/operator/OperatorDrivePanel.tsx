@@ -26,8 +26,10 @@ const logger = createLogger('OperatorDrivePanel');
 const MAPBOX_WEB_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
 const MAPBOX_MOBILE_TOKEN = import.meta.env.VITE_MAPBOX_MOBILE_TOKEN as string | undefined;
 const IS_NATIVE_PLATFORM = Capacitor.isNativePlatform();
-const USE_NATIVE_STATIC_MAP = IS_NATIVE_PLATFORM && !MAPBOX_MOBILE_TOKEN;
-const MAPBOX_TOKEN = IS_NATIVE_PLATFORM ? MAPBOX_MOBILE_TOKEN : MAPBOX_WEB_TOKEN;
+const USE_NATIVE_RESOURCE_PROXY = IS_NATIVE_PLATFORM && !MAPBOX_MOBILE_TOKEN;
+const MAPBOX_TOKEN = IS_NATIVE_PLATFORM
+  ? (MAPBOX_MOBILE_TOKEN || MAPBOX_WEB_TOKEN)
+  : MAPBOX_WEB_TOKEN;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const COPIAPO_CENTER: [number, number] = [-70.33, -27.37];
@@ -35,6 +37,15 @@ const DEFAULT_ZOOM = 15.5;
 const MAP_LOAD_TIMEOUT_MS = 15000;
 const SPEEDOMETER_MAX_KMH = 120;
 const LOGO_SRC = '/logo-gruas-5-norte.png';
+const PROXYABLE_MAPBOX_RESOURCE_TYPES = new Set([
+  'Style',
+  'Source',
+  'Tile',
+  'Glyphs',
+  'SpriteImage',
+  'SpriteJSON',
+  'Image',
+]);
 
 interface OperatorDrivePanelProps {
   isTracking: boolean;
@@ -89,14 +100,12 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   const mapboxRef = useRef<MapboxModule | null>(null);
   const markerRef = useRef<import('mapbox-gl').Marker | null>(null);
   const markerHeadingRef = useRef<HTMLDivElement | null>(null);
-  const nativeMapUrlRef = useRef<string | null>(null);
   const followPositionRef = useRef(true);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [isFollowing, setIsFollowing] = useState(true);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [previewPoint, setPreviewPoint] = useState<OperatorLocationPoint | null>(null);
-  const [nativeMapUrl, setNativeMapUrl] = useState<string | null>(null);
   const displayPoint = point ?? previewPoint;
 
   const { speedKmh, gaugeProgress, needleRotation } = getSpeedometerState(
@@ -110,15 +119,6 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     if (!displayPoint) return null;
     return [displayPoint.longitude, displayPoint.latitude];
   }, [displayPoint]);
-  const nativeMapCenter = useMemo<[number, number] | null>(() => {
-    if (!coordinates) return null;
-    // Evita descargar una imagen nueva por cada oscilación del GPS. El fondo
-    // se actualiza al desplazarse aproximadamente 100 m.
-    return [
-      Math.round(coordinates[0] * 1000) / 1000,
-      Math.round(coordinates[1] * 1000) / 1000,
-    ];
-  }, [coordinates]);
 
   useEffect(() => {
     if (point) return;
@@ -146,69 +146,6 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
   }, [point]);
 
   useEffect(() => {
-    if (!USE_NATIVE_STATIC_MAP || !nativeMapCenter) return;
-
-    const abortController = new AbortController();
-    let cancelled = false;
-    if (!nativeMapUrlRef.current) setMapReady(false);
-    setMapError(false);
-
-    void (async () => {
-      const { data: authData } = await supabase.auth.getSession();
-      const accessToken = authData.session?.access_token;
-      if (!accessToken) throw new Error('No active operator session for the native map');
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/mapbox-proxy`, {
-        method: 'POST',
-        signal: abortController.signal,
-        headers: {
-          apikey: SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'static_point_map',
-          coordinates: nativeMapCenter,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`Native map proxy returned HTTP ${response.status}`);
-      }
-
-      const mapBlob = await response.blob();
-      if (!mapBlob.type.startsWith('image/')) {
-        throw new Error(`Native map proxy returned ${mapBlob.type || 'an unknown content type'}`);
-      }
-
-      const objectUrl = URL.createObjectURL(mapBlob);
-      if (cancelled) {
-        URL.revokeObjectURL(objectUrl);
-        return;
-      }
-
-      const previousUrl = nativeMapUrlRef.current;
-      nativeMapUrlRef.current = objectUrl;
-      setNativeMapUrl(objectUrl);
-      if (previousUrl) URL.revokeObjectURL(previousUrl);
-    })().catch((error) => {
-      if (cancelled || abortController.signal.aborted) return;
-      logger.error('Could not load the native operator map', error);
-      setMapError(true);
-    });
-
-    return () => {
-      cancelled = true;
-      abortController.abort();
-    };
-  }, [nativeMapCenter]);
-
-  useEffect(() => () => {
-    if (nativeMapUrlRef.current) URL.revokeObjectURL(nativeMapUrlRef.current);
-  }, []);
-
-  useEffect(() => {
-    if (USE_NATIVE_STATIC_MAP) return;
-
     // Al alternar entre la tarjeta y pantalla completa se crea un canvas nuevo
     // en su tamaño final. WKWebView puede dejar transparente un contexto WebGL
     // que cambia bruscamente de una columna pequeña a todo el viewport, aunque
@@ -224,80 +161,115 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
     let loadTimeout: number | null = null;
     let ready = false;
 
-    void loadMapbox()
-      .then((mapboxgl) => {
-        if (cancelled || !containerRef.current) return;
-
-        mapboxRef.current = mapboxgl;
-        mapboxgl.default.accessToken = MAPBOX_TOKEN;
-        localMap = new mapboxgl.default.Map({
-          container: containerRef.current,
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: coordinates ?? COPIAPO_CENTER,
-          zoom: coordinates ? DEFAULT_ZOOM : 12,
-          attributionControl: false,
-        });
-        localMap.addControl(
-          new mapboxgl.default.AttributionControl({ compact: true }),
-          'bottom-right',
-        );
-
-        // En WKWebView el grid termina de medir sus columnas después de que
-        // Mapbox crea el canvas. Sin un resize explícito el mapa conserva el
-        // tamaño inicial (a veces 0 px) y queda como un panel negro aunque el
-        // estilo haya cargado correctamente.
-        if (typeof ResizeObserver !== 'undefined') {
-          resizeObserver = new ResizeObserver(() => {
-            localMap?.resize();
-          });
-          resizeObserver.observe(containerRef.current);
+    void (async () => {
+      let nativeAccessToken: string | null = null;
+      if (USE_NATIVE_RESOURCE_PROXY) {
+        const { data: authData } = await supabase.auth.getSession();
+        nativeAccessToken = authData.session?.access_token ?? null;
+        if (!nativeAccessToken) {
+          throw new Error('No active operator session for the interactive map');
         }
+      }
 
-        localMap.on('dragstart', () => {
-          followPositionRef.current = false;
-          setIsFollowing(false);
+      const mapboxgl = await loadMapbox();
+      if (cancelled || !containerRef.current) return;
+
+      mapboxRef.current = mapboxgl;
+      mapboxgl.default.accessToken = MAPBOX_TOKEN;
+      localMap = new mapboxgl.default.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: coordinates ?? COPIAPO_CENTER,
+        zoom: coordinates ? DEFAULT_ZOOM : 12,
+        attributionControl: false,
+        transformRequest: USE_NATIVE_RESOURCE_PROXY && nativeAccessToken
+          ? (url, resourceType) => {
+              if (!PROXYABLE_MAPBOX_RESOURCE_TYPES.has(resourceType)) return { url };
+
+              try {
+                const upstreamUrl = new URL(url);
+                const isMapboxResourceHost =
+                  upstreamUrl.hostname === 'api.mapbox.com' ||
+                  /^[a-d]\.tiles\.mapbox\.com$/.test(upstreamUrl.hostname);
+                if (upstreamUrl.protocol !== 'https:' || !isMapboxResourceHost) {
+                  return { url };
+                }
+                upstreamUrl.searchParams.delete('access_token');
+
+                return {
+                  url: `${SUPABASE_URL}/functions/v1/mapbox-proxy?resource_url=${encodeURIComponent(upstreamUrl.toString())}`,
+                  headers: {
+                    apikey: SUPABASE_PUBLISHABLE_KEY,
+                    Authorization: `Bearer ${nativeAccessToken}`,
+                  },
+                };
+              } catch {
+                return { url };
+              }
+            }
+          : undefined,
+      });
+      localMap.addControl(
+        new mapboxgl.default.AttributionControl({ compact: true }),
+        'bottom-right',
+      );
+
+      // En WKWebView el grid termina de medir sus columnas después de que
+      // Mapbox crea el canvas. Sin un resize explícito el mapa conserva el
+      // tamaño inicial (a veces 0 px) y queda como un panel negro aunque el
+      // estilo haya cargado correctamente.
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(() => {
+          localMap?.resize();
         });
+        resizeObserver.observe(containerRef.current);
+      }
 
-        const markMapReady = () => {
-          if (cancelled || ready) return;
-          ready = true;
-          if (loadTimeout !== null) {
-            window.clearTimeout(loadTimeout);
-            loadTimeout = null;
-          }
+      localMap.on('dragstart', () => {
+        followPositionRef.current = false;
+        setIsFollowing(false);
+      });
+
+      const markMapReady = () => {
+        if (cancelled || ready) return;
+        ready = true;
+        if (loadTimeout !== null) {
+          window.clearTimeout(loadTimeout);
+          loadTimeout = null;
+        }
+        localMap?.resize();
+        localMap?.triggerRepaint();
+        setMapError(false);
+        setMapReady(true);
+
+        // Segundo frame: iOS ya aplicó el ancho definitivo de la columna.
+        window.requestAnimationFrame(() => {
+          if (cancelled) return;
           localMap?.resize();
           localMap?.triggerRepaint();
-          setMapError(false);
-          setMapReady(true);
-
-          // Segundo frame: iOS ya aplicó el ancho definitivo de la columna.
-          window.requestAnimationFrame(() => {
-            if (cancelled) return;
-            localMap?.resize();
-            localMap?.triggerRepaint();
-          });
-        };
-
-        localMap.on('load', markMapReady);
-        localMap.on('style.load', markMapReady);
-        localMap.on('error', (event) => {
-          logger.warn('Mapbox reported an operator map error', event.error);
         });
-        mapRef.current = localMap;
+      };
 
-        // En WKWebView un estilo servido desde caché puede terminar de cargar
-        // antes de que React alcance a registrar el listener de `load`.
-        if (localMap.loaded() || localMap.isStyleLoaded()) {
-          markMapReady();
-        } else {
-          loadTimeout = window.setTimeout(() => {
-            if (cancelled || ready) return;
-            loadTimeout = null;
-            logger.error('Operator map did not finish loading before timeout');
-            setMapError(true);
-          }, MAP_LOAD_TIMEOUT_MS);
-        }
-      })
+      localMap.on('load', markMapReady);
+      localMap.on('style.load', markMapReady);
+      localMap.on('error', (event) => {
+        logger.warn('Mapbox reported an operator map error', event.error);
+      });
+      mapRef.current = localMap;
+
+      // En WKWebView un estilo servido desde caché puede terminar de cargar
+      // antes de que React alcance a registrar el listener de `load`.
+      if (localMap.loaded() || localMap.isStyleLoaded()) {
+        markMapReady();
+      } else {
+        loadTimeout = window.setTimeout(() => {
+          if (cancelled || ready) return;
+          loadTimeout = null;
+          logger.error('Operator map did not finish loading before timeout');
+          setMapError(true);
+        }, MAP_LOAD_TIMEOUT_MS);
+      }
+    })()
       .catch((error) => {
         logger.error('Could not load the operator position map', error);
         if (!cancelled) setMapError(true);
@@ -388,50 +360,9 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
       aria-modal={expanded ? true : undefined}
       aria-label={expanded ? 'Mapa ampliado de mi posición' : undefined}
     >
-      {(USE_NATIVE_STATIC_MAP || MAPBOX_TOKEN) && !mapError ? (
+      {MAPBOX_TOKEN && !mapError ? (
         <>
-          {USE_NATIVE_STATIC_MAP ? (
-            <>
-              {nativeMapUrl && (
-                <img
-                  src={nativeMapUrl}
-                  alt=""
-                  className="operator-drive-map__native-image"
-                  onLoad={() => {
-                    setMapError(false);
-                    setMapReady(true);
-                  }}
-                  onError={() => {
-                    logger.error('iOS could not decode the native operator map image');
-                    setMapReady(false);
-                    setMapError(true);
-                  }}
-                />
-              )}
-              {mapReady && displayPoint && (
-                <div className="operator-drive-map__native-marker" aria-label="Mi posición">
-                  <div className="operator-drive-marker">
-                    <div
-                      className="operator-drive-marker__heading"
-                      style={{
-                        display: typeof displayPoint.headingDegrees === 'number' ? 'block' : 'none',
-                        transform: `rotate(${displayPoint.headingDegrees ?? 0}deg)`,
-                      }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 2.8 19 20l-7-4.2L5 20 12 2.8Z" />
-                      </svg>
-                    </div>
-                    <div className="operator-drive-marker__disc">
-                      <img src={LOGO_SRC} alt="" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
-          )}
+          <div ref={containerRef} className="absolute inset-0" aria-label="Mapa de mi posición" />
           {!mapReady && (
             <div className="operator-drive-map__overlay">
               <Loader2 className="size-5 animate-spin" />
@@ -486,7 +417,7 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
               <small>{accuracyLabel}</small>
             </div>
           )}
-          {displayPoint && expanded && !USE_NATIVE_STATIC_MAP && (
+          {displayPoint && expanded && (
             <button
               type="button"
               onClick={recenter}

@@ -1749,22 +1749,6 @@ body.operator-map-expanded {
   height: 100%;
 }
 
-.operator-drive-map__native-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.operator-drive-map__native-marker {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 1;
-  transform: translate(-50%, -50%);
-}
-
 .operator-drive-map--expanded {
   position: fixed;
   inset: 0;

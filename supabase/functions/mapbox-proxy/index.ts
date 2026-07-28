@@ -113,6 +113,114 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    if (req.method === "GET") {
+      const resourceUrl = new URL(req.url).searchParams.get("resource_url");
+      if (!resourceUrl) {
+        return new Response(
+          JSON.stringify({ error: "resource_url is required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      let upstreamUrl: URL;
+      try {
+        upstreamUrl = new URL(resourceUrl);
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Invalid resource_url" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const allowedPaths = [
+        "/styles/v1/",
+        "/v4/",
+        "/fonts/v1/",
+        "/tiles/v1/",
+        "/raster/v1/",
+        "/models/v1/",
+      ];
+      const isApiResource =
+        upstreamUrl.origin === "https://api.mapbox.com" &&
+        allowedPaths.some((path) => upstreamUrl.pathname.startsWith(path));
+      const isTileResource =
+        upstreamUrl.protocol === "https:" &&
+        /^[a-d]\.tiles\.mapbox\.com$/.test(upstreamUrl.hostname) &&
+        (
+          upstreamUrl.pathname.startsWith("/v4/") ||
+          upstreamUrl.pathname.startsWith("/raster/v1/") ||
+          upstreamUrl.pathname.startsWith("/rasterarrays/v1/")
+        );
+      const isAllowedResource = isApiResource || isTileResource;
+      if (!isAllowedResource) {
+        return new Response(
+          JSON.stringify({ error: "Mapbox resource is not allowed" }),
+          { status: 403, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      upstreamUrl.searchParams.set("access_token", MAPBOX_TOKEN);
+      const upstreamResponse = await fetch(upstreamUrl);
+      const responseHeaders = new Headers(getCorsHeaders(req));
+      for (const header of ["content-type", "cache-control", "etag", "last-modified"]) {
+        const value = upstreamResponse.headers.get(header);
+        if (value) responseHeaders.set(header, value);
+      }
+
+      // TileJSON suele devolver plantillas de tiles que incluyen el token usado
+      // por el servidor. Aunque sea un token público, no debe llegar al cliente:
+      // Mapbox GL volverá a pasar esas URLs por transformRequest y el proxy
+      // agregará la credencial en el servidor.
+      const contentType = upstreamResponse.headers.get("content-type") ?? "";
+      if (
+        upstreamResponse.ok &&
+        contentType.includes("application/json") &&
+        upstreamUrl.pathname.endsWith(".json")
+      ) {
+        const data = await upstreamResponse.json();
+        if (Array.isArray(data?.tiles)) {
+          data.tiles = data.tiles.map((tileUrl: unknown) => {
+            if (typeof tileUrl !== "string") return tileUrl;
+            try {
+              const sanitizedUrl = new URL(tileUrl);
+              sanitizedUrl.searchParams.delete("access_token");
+              // URL serializa las llaves de la plantilla como %7Bz%7D; Mapbox
+              // GL necesita conservarlas literalmente para sustituir z/x/y.
+              return sanitizedUrl
+                .toString()
+                .replace(/%7B(z|x|y|ratio)%7D/gi, "{$1}");
+            } catch {
+              return tileUrl;
+            }
+          });
+        }
+        responseHeaders.set("content-type", "application/json; charset=utf-8");
+        return new Response(JSON.stringify(data), {
+          status: upstreamResponse.status,
+          headers: responseHeaders,
+        });
+      }
+
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: responseHeaders,
+      });
+    }
+
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Method not allowed" }),
+        {
+          status: 405,
+          headers: {
+            ...getCorsHeaders(req),
+            "Content-Type": "application/json",
+            "Allow": "GET, POST, OPTIONS",
+          },
+        },
+      );
+    }
+
     const body = await req.json();
     const { action, origin, destination, query, geometry, mode = 'preview', proximity, session_id, coordinates } = body;
 
