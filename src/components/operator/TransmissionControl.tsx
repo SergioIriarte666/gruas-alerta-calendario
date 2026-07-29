@@ -499,9 +499,9 @@ export const TransmissionControl = ({
    *    en la base, vía startSession).
    * 2. Cierra la detención abierta del servicio con `ended_by_source='manual'`.
    *
-   * Hasta ahora eran dos gestos separados —encender y después "Rodando"—, y el
-   * segundo se olvidaba: el cliente quedaba viendo "detenido" con la grúa
-   * andando. El orden importa: primero la transmisión, porque es lo que el
+   * Hasta ahora eran dos gestos separados —encender y después "Terminar
+   * detención"—, y el segundo se olvidaba: el cliente quedaba viendo "detenido"
+   * con la grúa andando. El orden importa: primero la transmisión, porque es lo que el
    * cliente deja de ver; si el cierre de la detención falla, su propio toast lo
    * dice y la transmisión ya quedó arriba.
    */
@@ -709,6 +709,13 @@ export const TransmissionControl = ({
                   desde {businessClock.format(stopEvent.started_at, 'HH:mm')} · {minutesStopped} min
                 </p>
               </div>
+              {/* Verbo, no estado. "Rodando" describía la grúa, no la acción, y
+                  al lado de un banner que dice "Detenido" se leía como un
+                  rótulo más en vez de como el botón que cierra la detención.
+                  Tampoco puede empezar con "Reanudar": con la transmisión caída
+                  y una detención abierta, este botón convive con "Reanudar
+                  viaje", que además enciende la transmisión. Dos verbos
+                  distintos para dos acciones distintas. */}
               <Button
                 type="button"
                 size="sm"
@@ -716,7 +723,7 @@ export const TransmissionControl = ({
                 disabled={isStopBusy}
                 className="shrink-0 rounded-xl"
               >
-                Rodando
+                Terminar detención
               </Button>
             </div>
           ) : (

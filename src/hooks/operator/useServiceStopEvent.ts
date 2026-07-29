@@ -34,7 +34,7 @@ interface UseServiceStopEventOptions {
 /**
  * Detención declarada del servicio en curso.
  *
- * La reanudación tiene doble vía a propósito: el botón "Rodando" y el cierre
+ * La reanudación tiene doble vía a propósito: el botón "Terminar detención" y el
  * automático por velocidad sostenida. El operador que olvida cerrar no puede
  * dejar al cliente viendo "en descanso" mientras la grúa rueda.
  */

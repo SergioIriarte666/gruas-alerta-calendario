@@ -30,7 +30,11 @@ interface StopReasonPickerProps {
 }
 
 /**
- * "Detenido" abre chips de motivo; un toque registra la detención.
+ * "Registrar detención" abre chips de motivo; un toque registra la detención.
+ *
+ * El rótulo es un VERBO a propósito. Antes decía "Detenido", que se lee como el
+ * estado actual de la grúa y no como lo que va a pasar al tocarlo: el operador
+ * no podía saber si el botón informaba o accionaba.
  *
  * La transmisión NO se corta al declarar una parada: un vehículo detenido con
  * posición fresca es información buena. Lo que se detiene es el ETA, para no
@@ -48,7 +52,7 @@ export const StopReasonPicker = ({ disabled, onSelect }: StopReasonPickerProps) 
         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/60 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
       >
         <PauseCircle className="size-4" />
-        Detenido
+        Registrar detención
       </button>
     );
   }
