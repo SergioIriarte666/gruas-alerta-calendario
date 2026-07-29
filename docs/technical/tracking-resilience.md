@@ -60,24 +60,68 @@ Ver Fix 9 (`enqueue_tracking_silence_alerts`, cron cada 5 min) y Fix 10 (botón
 "Reanudar viaje" con deep link `/operador?accion=reanudar`). Son las capas de
 las que la operación depende de verdad; lo de arriba es conveniencia.
 
-## Lo que NO se implementó, y por qué
+### 3. Vigilante de la captura, en el teléfono
 
-**Relanzamiento automático tras muerte del proceso** (`stopOnTerminate=false`,
-`startOnBoot=true`, Significant Location Change).
+**La pieza más importante, y la que casi se pierde por un diagnóstico apurado.**
 
-`@capacitor-community/background-geolocation` **no expone ninguna de las tres**.
-Sus únicas opciones de watcher son `backgroundMessage`, `backgroundTitle`,
-`requestPermissions`, `stale` y `distanceFilter`
-(`node_modules/@capacitor-community/background-geolocation/definitions.d.ts`).
+`hasLiveCapture()` significaba "tengo un `activeWatcherId`". Ese id solo se
+limpia en `teardownCapture()`, así que un watcher que dejó de entregar fixes
+—por lo que sea— seguía contando como vivo, y la auto-reparación de
+`reconcileWithSession` ("sesión activa sin watcher: se re-engancha") **nunca se
+disparaba**.
 
-Conseguirlo exige cambiar a `@transistorsoft/capacitor-background-geolocation`
-—licencia comercial, rebuild nativo completo y revalidar todo el pipeline de
-tracking—. Es una ronda propia con pruebas en terreno, no un cambio de pasada
-sobre el mecanismo del que depende lo que ve el cliente.
+Eso cuadra exactamente con la evidencia del 28/07: app viva, sesión viva, cero
+puntos, **cola vacía** (no se capturó nada que encolar) y ninguna recuperación
+en dos horas.
 
-Decisión (2026-07-29): **posponer**. El propio diseño de la ronda 4 degrada esta
-pieza a capa de conveniencia: el watchdog de servidor avisa a los 10 minutos y
-"Reanudar viaje" repara con un toque, sin depender de que iOS relance nada.
+Ahora la vida del watcher se mide por hechos: `markCaptureAlive()` en cada fix,
+`markCaptureFailed()` en cada error, y `isCaptureStalled()` declara muerto al
+que lleva 5 minutos mudo. `rearmStalledCapture()` corre en el tick de 30 s,
+**antes de reconciliar y sin tocar la red** —en un corte de tres horas sin datos,
+cualquier reparación que necesite servidor no se ejecuta—, con un piso de 60 s
+entre re-armados para que reparar no se vuelva un bucle.
+
+La virtud del enfoque es que **no depende de adivinar la causa**: cubre el error
+de CoreLocation, el watcher que iOS deja de alimentar, el puente que perdió el
+callback y lo que todavía no sabemos que puede pasar.
+
+## Lo que se leyó del plugin, y qué hipótesis mató
+
+Del Swift de `@capacitor-community/background-geolocation`
+(`ios/Plugin/Swift/Plugin.swift`):
+
+- `pausesLocationUpdatesAutomatically = false`. **Descarta** la hipótesis de que
+  iOS pausara las actualizaciones tras tres horas detenido.
+- `allowsBackgroundLocationUpdates` se activa cuando se pasa `backgroundMessage`,
+  que sí se pasa. Correcto.
+- Ante `CLError.denied`, el plugin llama `watcher.stop()` —o sea
+  `stopUpdatingLocation()`— y solo revive con un cambio de autorización. Sin
+  re-armar desde JS, ese watcher queda muerto para siempre con su id intacto.
+- **No llama a `startMonitoringSignificantLocationChanges` en ninguna parte.**
+  Ahí sí se confirma que no hay relanzamiento tras terminación.
+
+Descartado por comprobación, no por intuición: un `call.reject` **no** libera el
+callback. Ni `toJsError` en `CapacitorBridge.swift` ni `returnResult` en
+`native-bridge.js` borran la llamada guardada cuando es un callback (sí cuando
+es una promesa). El puente sobrevive al error.
+
+## Relanzamiento tras muerte del proceso: pendiente, sin transistorsoft
+
+`@transistorsoft/capacitor-background-geolocation` está **descartado** (decisión
+del dueño, 2026-07-29). No hace falta: el proyecto ya escribe plugins nativos
+propios —`ios/App/App/OperatorWidgetPlugin.swift`, registrado en el target de la
+app, no en SPM—, así que un plugin local de ~40 líneas de Swift que llame a
+`startMonitoringSignificantLocationChanges` da el mismo relanzamiento, gratis y
+sin licencia. `UIBackgroundModes` ya incluye `location`.
+
+Segunda vía, con infraestructura que ya existe: **push silencioso** desde el
+watchdog del Fix 9. El servidor ya detecta el silencio a los 10 minutos; un
+push `content-available` puede despertar la app terminada por el sistema y
+re-armar el rastreo. Hay funciones de push desplegadas
+(`send-push-notification`, `save-push-subscription`).
+
+Ninguna de las dos se implementó todavía. Con el vigilante de captura arriba, la
+mayor parte del agujero real queda cubierta sin tocar nada nativo.
 
 ## Mitigación operativa, sin código
 
@@ -98,6 +142,9 @@ Requieren el rebuild iOS pendiente:
   reconectar, los puntos suben en lote con `is_offline_sync=true` sin fragmentar
   la sesión.
 - Matar la app → mover el equipo → comprobar qué ocurre (con este plugin, se
-  espera que NO relance: es la limitación documentada arriba).
+  espera que NO relance hasta que exista el plugin local de SLC).
+- Watcher mudo forzado (denegar ubicación con la transmisión encendida y
+  volver a concederla): a los 5 minutos el vigilante debe re-armar solo, con la
+  línea `Captura muda: se re-arma el watcher` en el log.
 - `app_boot_log` poblándose; error JS forzado apareciendo en el arranque
   siguiente.

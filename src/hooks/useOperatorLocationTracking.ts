@@ -92,12 +92,73 @@ let activeWatcherId: string | null = null;
 let activeWebIntervalId: number | null = null;
 let captureGeneration = 0;
 
+/** Última vez que la captura entregó ALGO. La prueba de vida real del watcher. */
+let lastCaptureAt = 0;
+/** El watcher reportó un error: se considera muerto hasta que vuelva a hablar. */
+let captureFailed = false;
+/** Último re-armado, para que la reparación no se convierta en un bucle. */
+let lastCaptureRearmAt = 0;
+
+/**
+ * Silencio del watcher que se considera muerte.
+ *
+ * Con `distanceFilter: 0` iOS entrega actualizaciones continuamente, incluso con
+ * el equipo detenido —de eso trata el latido—. Cinco minutos sin UNA sola
+ * llamada al callback no es "no se movió": es "no reportó".
+ */
+const CAPTURE_STALL_MS = 5 * 60 * 1000;
+
+/** Piso entre re-armados. Un watcher que muere al nacer no puede reintentarse en bucle. */
+const CAPTURE_REARM_MIN_INTERVAL_MS = 60 * 1000;
+
+/**
+ * ¿Tenemos un watcher registrado? Ojo: tener el id NO significa que funcione.
+ *
+ * Este era el punto ciego del 28/07. `activeWatcherId` solo se limpia en
+ * `teardownCapture`, así que un watcher que dejó de entregar fixes —por lo que
+ * sea— seguía contando como "vivo", y la auto-reparación de
+ * `reconcileWithSession` ("sesión activa sin watcher: se re-engancha") nunca se
+ * disparaba. Cuadra exactamente con la evidencia: app viva, sesión viva, cero
+ * puntos, cola VACÍA (no se capturó nada que encolar) y ninguna recuperación en
+ * dos horas.
+ */
 const hasLiveCapture = (): boolean =>
   Capacitor.isNativePlatform() ? activeWatcherId !== null : activeWebIntervalId !== null;
+
+/** El watcher habló: sigue vivo. */
+const markCaptureAlive = () => {
+  lastCaptureAt = Date.now();
+  captureFailed = false;
+};
+
+/**
+ * El watcher reportó un error.
+ *
+ * No se re-arma aquí mismo a propósito: hay errores que se repiten en ráfaga y
+ * re-armar dentro del callback produciría decenas de watchers por segundo. Se
+ * marca, y el tick de 30 s repara con su propio piso de tiempo. Un solo camino
+ * de reparación, un solo acelerador.
+ *
+ * Importa porque el plugin, ante `CLError.denied`, llama `stopUpdatingLocation()`
+ * del lado NATIVO y solo revive con un cambio de autorización: sin re-armar,
+ * ese watcher está muerto para siempre aunque su id siga en memoria.
+ */
+const markCaptureFailed = () => {
+  captureFailed = true;
+};
+
+/** ¿Hay un watcher registrado que dejó de entregar? */
+const isCaptureStalled = (): boolean => {
+  if (!hasLiveCapture()) return false;
+  if (captureFailed) return true;
+  return lastCaptureAt > 0 && Date.now() - lastCaptureAt > CAPTURE_STALL_MS;
+};
 
 /** Apaga la captura vigente e invalida la generación: los callbacks en vuelo mueren solos. */
 const teardownCapture = () => {
   captureGeneration += 1;
+  lastCaptureAt = 0;
+  captureFailed = false;
 
   if (activeWebIntervalId !== null) {
     window.clearInterval(activeWebIntervalId);
@@ -346,11 +407,13 @@ export const useOperatorLocationTracking = ({
       try {
         const point = await getCurrentLocationPoint();
         if (generation !== captureGeneration || sessionIdRef.current !== activeSessionId) return;
+        markCaptureAlive();
         setLastPoint(point);
         await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
         setErrorMessage(null);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'No se pudo actualizar la ubicacion';
+        markCaptureFailed();
         logger.warn('Location polling failed', error);
         setErrorMessage(message);
       }
@@ -422,12 +485,18 @@ export const useOperatorLocationTracking = ({
       },
       (location, error) => {
         if (error) {
+          // Antes esto solo se logueaba y el watcher quedaba contando como
+          // vivo. Ahora se marca muerto y el tick lo re-arma: el plugin, ante
+          // CLError.denied, apaga startUpdatingLocation del lado nativo y no lo
+          // vuelve a encender salvo por un cambio de autorización.
+          markCaptureFailed();
           trackingLogger.warn('Background geolocation watcher error', error);
           return;
         }
         if (!location) return;
         if (generation !== captureGeneration) return;
 
+        markCaptureAlive();
         const now = Date.now();
         // La cabina del operador necesita velocidad y rumbo en vivo. La UI sí
         // recibe cada lectura GPS, aunque la persistencia conserve su filtro de
@@ -490,6 +559,9 @@ export const useOperatorLocationTracking = ({
     // SIEMPRE se apaga lo anterior antes de crear lo nuevo: nunca dos watchers.
     teardownCapture();
     const generation = captureGeneration;
+    // Arranca el reloj de vida: un watcher recién creado tiene su ventana de
+    // gracia antes de que el vigilante pueda declararlo mudo.
+    lastCaptureAt = Date.now();
 
     if (Capacitor.isNativePlatform()) {
       beginNativeWatcher(activeSessionId, activeOperatorId, activeUserId, activeServiceId, generation);
@@ -665,14 +737,44 @@ export const useOperatorLocationTracking = ({
     setTrackingMode(session.started_reason);
     setIsTracking(true);
 
-    // Sesión viva sin captura local: el watcher murió (iOS lo mata en
-    // background). Re-engancharlo es lo único que mantiene el recorrido.
-    if (!hasLiveCapture() && userId) {
+    // Sesión viva sin captura local, o con una captura que ya no entrega: el
+    // watcher murió (iOS lo mata en background, o dejó de alimentarlo).
+    // Re-engancharlo es lo único que mantiene el recorrido.
+    if ((!hasLiveCapture() || isCaptureStalled()) && userId) {
       trackingLogger.warn('Sesión activa sin watcher: se re-engancha la captura', {
         sessionId: activeSessionId,
       });
       beginCapture(activeSessionId, operatorId, userId, session.service_id);
     }
+  }, [beginCapture, operatorId, userId]);
+
+  /**
+   * Vigilante de la captura, en el teléfono.
+   *
+   * Es la pieza que faltaba el 28/07 y la que no depende de adivinar la causa:
+   * si el watcher lleva cinco minutos mudo —o reportó un error— se tira y se
+   * crea uno nuevo, sin importar POR QUÉ murió. Cubre el error de CoreLocation,
+   * el watcher que iOS deja de alimentar, el puente que perdió el callback y
+   * todo lo que todavía no sabemos que puede pasar.
+   *
+   * Corre ANTES de reconciliar con la base y no toca la red a propósito: en el
+   * escenario que importa —tres horas sin datos en un corte de ruta— cualquier
+   * reparación que necesite servidor no se ejecuta.
+   */
+  const rearmStalledCapture = useCallback(() => {
+    if (!operatorId || !userId || trackingDisabledRef.current) return;
+    if (!isTrackingRef.current || !sessionIdRef.current) return;
+    if (!isCaptureStalled()) return;
+    if (Date.now() - lastCaptureRearmAt < CAPTURE_REARM_MIN_INTERVAL_MS) return;
+
+    lastCaptureRearmAt = Date.now();
+    trackingLogger.warn('Captura muda: se re-arma el watcher', {
+      sessionId: sessionIdRef.current,
+      secondsSinceLastFix: lastCaptureAt ? Math.round((Date.now() - lastCaptureAt) / 1000) : null,
+      afterError: captureFailed,
+    });
+
+    beginCapture(sessionIdRef.current, operatorId, userId, sessionServiceIdRef.current);
   }, [beginCapture, operatorId, userId]);
 
   const evaluate = useCallback(() => {
@@ -882,7 +984,12 @@ export const useOperatorLocationTracking = ({
 
     // Orden obligatorio: primero se reconcilia contra la BD y recién después
     // decide evaluate(), que lee los refs que la reconciliación acaba de fijar.
+    //
+    // El vigilante de la captura va PRIMERO de todo y fuera del await: sin red
+    // la reconciliación lanza y corta el tick, y justamente el escenario donde
+    // más falta hace re-armar el watcher es el que no tiene red.
     const tick = async () => {
+      rearmStalledCapture();
       await reconcileWithSession();
       evaluate();
     };
@@ -899,7 +1006,7 @@ export const useOperatorLocationTracking = ({
         scheduleIntervalRef.current = null;
       }
     };
-  }, [evaluate, isReady, reconcileWithSession]);
+  }, [evaluate, isReady, rearmStalledCapture, reconcileWithSession]);
 
   // Auto-recuperación al volver a foreground / reabrir tras un crash.
   // iOS puede terminar el proceso (o el watcher nativo) mientras la app está en
@@ -937,10 +1044,11 @@ export const useOperatorLocationTracking = ({
     }
 
     // Creemos estar rastreando, pero la captura pudo morir en background sin
-    // que el estado JS se enterara (watcher nativo terminado por iOS, o el
-    // temporizador web congelado). Re-engancharla garantiza que el tramo de
-    // traslado siga registrando puntos.
-    if (!hasLiveCapture() && sessionIdRef.current) {
+    // que el estado JS se enterara (watcher nativo terminado por iOS, el
+    // temporizador web congelado, o un watcher que conserva su id y ya no
+    // entrega). Re-engancharla garantiza que el tramo de traslado siga
+    // registrando puntos.
+    if ((!hasLiveCapture() || isCaptureStalled()) && sessionIdRef.current) {
       beginCapture(sessionIdRef.current, operatorId, userId, activeServiceId);
     }
   }, [beginCapture, evaluate, flushQueue, isReady, operatorId, reconcileWithSession, startSession, userId]);
