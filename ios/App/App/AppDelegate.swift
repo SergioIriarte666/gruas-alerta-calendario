@@ -5,7 +5,15 @@ import Capacitor
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Rearme del despertador ANTES que nada.
+        //
+        // Cuando iOS relanza la app por un cambio significativo de ubicación
+        // —la única forma de revivir un proceso terminado—, entrega la clave
+        // `.location` y hay que volver a pedir la vigilancia de inmediato. Si
+        // esto esperara a que cargue el WebView y el proceso muriera antes, la
+        // app perdería su único mecanismo de despertar y no volvería nunca.
+        let launchedByLocation = launchOptions?[.location] != nil
+        OperatorRelaunchMonitor.shared.restoreOnLaunch(launchedByLocation: launchedByLocation)
         return true
     }
 

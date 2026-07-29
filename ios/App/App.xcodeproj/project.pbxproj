@@ -16,6 +16,8 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A10000000000000000000004 /* OperatorWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* OperatorWidgetPlugin.swift */; };
+		A10000000000000000000006 /* OperatorRelaunchMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* OperatorRelaunchMonitor.swift */; };
+		A10000000000000000000007 /* OperatorRelaunchPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* OperatorRelaunchPlugin.swift */; };
 		A10000000000000000000005 /* OperatorBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* OperatorBridgeViewController.swift */; };
 		A20000000000000000000006 /* TMSOperatorWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* TMSOperatorWidgets.swift */; };
 		A20000000000000000000007 /* TMSOperatorWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* TMSOperatorWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -58,6 +60,8 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A10000000000000000000001 /* OperatorWidgetPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperatorWidgetPlugin.swift; sourceTree = "<group>"; };
+		A10000000000000000000008 /* OperatorRelaunchMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperatorRelaunchMonitor.swift; sourceTree = "<group>"; };
+		A10000000000000000000009 /* OperatorRelaunchPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperatorRelaunchPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* OperatorBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperatorBridgeViewController.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		A20000000000000000000002 /* TMSOperatorWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TMSOperatorWidgets.swift; sourceTree = "<group>"; };
@@ -113,6 +117,8 @@
 				A30000000000000000000001 /* SceneDelegate.swift */,
 				A10000000000000000000001 /* OperatorWidgetPlugin.swift */,
 				A10000000000000000000002 /* OperatorBridgeViewController.swift */,
+				A10000000000000000000008 /* OperatorRelaunchMonitor.swift */,
+				A10000000000000000000009 /* OperatorRelaunchPlugin.swift */,
 				A10000000000000000000003 /* App.entitlements */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -253,6 +259,8 @@
 				A30000000000000000000002 /* SceneDelegate.swift in Sources */,
 				A10000000000000000000004 /* OperatorWidgetPlugin.swift in Sources */,
 				A10000000000000000000005 /* OperatorBridgeViewController.swift in Sources */,
+				A10000000000000000000006 /* OperatorRelaunchMonitor.swift in Sources */,
+				A10000000000000000000007 /* OperatorRelaunchPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

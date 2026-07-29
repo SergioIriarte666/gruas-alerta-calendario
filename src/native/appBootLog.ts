@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { locationUploadQueue } from '@/services/locationUploadQueue';
 import { takeLastFatalError } from '@/native/fatalErrorStore';
+import { readRelaunchLaunchInfo } from '@/native/operatorRelaunch';
 
 const logger = createLogger('AppBootLog');
 
-export type LaunchReason = 'cold_start' | 'background' | 'url_open';
+export type LaunchReason = 'cold_start' | 'background' | 'url_open' | 'significant_location';
 
 /**
  * Cómo empezó ESTE proceso, capturado al importar el módulo.
@@ -58,15 +59,24 @@ export const recordAppBoot = async (
   bootRecorded = true;
 
   try {
-    const [lastError, appVersion] = await Promise.all([
+    const [lastError, appVersion, relaunch] = await Promise.all([
       readLastFatalError(),
       resolveAppVersion(),
+      readRelaunchLaunchInfo(),
     ]);
+
+    // El sistema manda sobre la heurística: `significant_location` significa que
+    // iOS revivió un proceso muerto, que es exactamente el hecho que el 28/07
+    // no se pudo comprobar. La visibilidad del documento solo distingue
+    // "alguien la abrió" de "despertó sola" cuando el sistema no dice nada.
+    const launchReason: LaunchReason = relaunch?.launchedByLocationAt
+      ? 'significant_location'
+      : initialLaunchReason;
 
     const { error } = await supabase.from('app_boot_log').insert({
       operator_id: operatorId ?? null,
       user_id: userId,
-      launch_reason: initialLaunchReason,
+      launch_reason: launchReason,
       app_version: appVersion,
       platform: Capacitor.getPlatform(),
       last_error: lastError,
@@ -78,7 +88,8 @@ export const recordAppBoot = async (
     if (error) throw new Error(error.message);
 
     logger.debug('Arranque registrado', {
-      launchReason: initialLaunchReason,
+      launchReason,
+      relaunchArmed: relaunch?.armed ?? null,
       hadError: Boolean(lastError),
     });
   } catch (error) {

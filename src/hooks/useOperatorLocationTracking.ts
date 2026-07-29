@@ -16,6 +16,7 @@ import type {
 } from '@/types/operatorLocation';
 import { locationUploadQueue } from '@/services/locationUploadQueue';
 import { recordAppBoot } from '@/native/appBootLog';
+import { armRelaunchOnMovement, disarmRelaunchOnMovement } from '@/native/operatorRelaunch';
 import {
   BackgroundGeolocation,
   checkLocationPermission,
@@ -378,6 +379,11 @@ export const useOperatorLocationTracking = ({
       // esto reabriría la sesión antes de que la BD confirme el corte.
       manualStopRef.current = true;
       setManualStop(true);
+      // El despertador se apaga SOLO acá, en el corte a mano. Un fin de sesión
+      // por horario o por barrido de zombies no significa que el traslado
+      // terminó, y desarmarlo ahí dejaría al operador sin red de seguridad
+      // justo cuando el sistema acaba de matarle algo.
+      void disarmRelaunchOnMovement();
     }
 
     if (activeSessionId) {
@@ -655,6 +661,9 @@ export const useOperatorLocationTracking = ({
 
       beginCapture(session.id, operatorId, userId, effectiveServiceId);
       void keepAwakeSafely();
+      // Despertador: si el sistema mata el proceso, iOS relanza la app al
+      // detectar movimiento y el arranque recupera esta misma sesión.
+      void armRelaunchOnMovement();
 
       if (reason === 'manual') {
         toast.success(effectiveServiceId

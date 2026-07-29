@@ -105,23 +105,51 @@ callback. Ni `toJsError` en `CapacitorBridge.swift` ni `returnResult` en
 `native-bridge.js` borran la llamada guardada cuando es un callback (sí cuando
 es una promesa). El puente sobrevive al error.
 
-## Relanzamiento tras muerte del proceso: pendiente, sin transistorsoft
+### 4. Relanzamiento tras muerte del proceso, sin transistorsoft
 
 `@transistorsoft/capacitor-background-geolocation` está **descartado** (decisión
-del dueño, 2026-07-29). No hace falta: el proyecto ya escribe plugins nativos
-propios —`ios/App/App/OperatorWidgetPlugin.swift`, registrado en el target de la
-app, no en SPM—, así que un plugin local de ~40 líneas de Swift que llame a
-`startMonitoringSignificantLocationChanges` da el mismo relanzamiento, gratis y
-sin licencia. `UIBackgroundModes` ya incluye `location`.
+del dueño, 2026-07-29) y no hizo falta. El proyecto ya escribía plugins nativos
+propios, así que se agregaron dos archivos de Swift al target de la app:
 
-Segunda vía, con infraestructura que ya existe: **push silencioso** desde el
-watchdog del Fix 9. El servidor ya detecta el silencio a los 10 minutos; un
-push `content-available` puede despertar la app terminada por el sistema y
-re-armar el rastreo. Hay funciones de push desplegadas
-(`send-push-notification`, `save-push-subscription`).
+- **`ios/App/App/OperatorRelaunchMonitor.swift`** — envuelve
+  `startMonitoringSignificantLocationChanges()`. SLC es el único mecanismo del
+  sistema que **relanza una app terminada**: iOS la vuelve a lanzar en segundo
+  plano al detectar movimiento y entrega
+  `UIApplication.LaunchOptionsKey.location`. Basta con que la grúa empiece a
+  rodar para que la app vuelva sola.
+- **`ios/App/App/OperatorRelaunchPlugin.swift`** — el puente a JS
+  (`arm`, `disarm`, `getLaunchInfo`, `consumeLaunchReason`), registrado en
+  `OperatorBridgeViewController.capacitorDidLoad()` igual que
+  `OperatorWidgetPlugin`.
 
-Ninguna de las dos se implementó todavía. Con el vigilante de captura arriba, la
-mayor parte del agujero real queda cubierta sin tocar nada nativo.
+Tres decisiones que valen la pena recordar:
+
+1. **El rearme vive en `AppDelegate.didFinishLaunchingWithOptions`, no en el
+   plugin.** Cuando iOS relanza por ubicación hay que volver a pedir la
+   vigilancia de inmediato; si esperara al WebView y el proceso muriera antes,
+   la app perdería su único mecanismo de despertar y no volvería nunca.
+2. **El monitor no sube puntos.** Su único trabajo es despertar el proceso; el
+   pipeline de JS arranca solo, recupera la sesión activa y rearma el watcher
+   fino. Un segundo camino de escritura en nativo habría que mantenerlo en
+   paralelo, y ya hubo un incidente por dos watchers peleando la misma sesión.
+3. **Se desarma SOLO en el corte manual.** Un fin de sesión por horario o por
+   barrido de zombies no significa que el traslado terminó; desarmar ahí dejaría
+   al operador sin red justo cuando el sistema acaba de matarle algo.
+
+SLC no reemplaza al watcher: su resolución es de ~500 m y varios minutos. Es la
+red que enciende la red buena. Y exige autorización **"Siempre"**: con "Mientras
+se usa" el sistema no relanza, así que el monitor ni siquiera se arma.
+
+`app_boot_log.launch_reason` gana el valor `significant_location`, que responde
+la pregunta que el 28/07 no se pudo contestar: ¿la app llegó a relanzarse?
+
+Verificado con `xcodebuild -scheme App -sdk iphonesimulator`: **BUILD
+SUCCEEDED**. Los dos archivos quedaron registrados en `project.pbxproj`
+siguiendo el patrón de `OperatorWidgetPlugin`.
+
+Segunda vía, no implementada y probablemente innecesaria ahora: **push
+silencioso** desde el watchdog del Fix 9, con las funciones de push que ya están
+desplegadas.
 
 ## Mitigación operativa, sin código
 
@@ -141,8 +169,9 @@ Requieren el rebuild iOS pendiente:
 - Modo avión 10 min con transmisión activa → la captura continúa y, al
   reconectar, los puntos suben en lote con `is_offline_sync=true` sin fragmentar
   la sesión.
-- Matar la app → mover el equipo → comprobar qué ocurre (con este plugin, se
-  espera que NO relance hasta que exista el plugin local de SLC).
+- Matar la app → mover el equipo unos cientos de metros → debe relanzarse en
+  segundo plano, y `app_boot_log` debe traer `launch_reason =
+  'significant_location'`. Requiere permiso de ubicación en **"Siempre"**.
 - Watcher mudo forzado (denegar ubicación con la transmisión encendida y
   volver a concederla): a los 5 minutos el vigilante debe re-armar solo, con la
   línea `Captura muda: se re-arma el watcher` en el log.
