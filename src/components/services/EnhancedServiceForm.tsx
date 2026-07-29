@@ -1423,6 +1423,7 @@ export const EnhancedServiceForm = React.memo(({
                       originCatalogId: coords.catalogId,
                     }))}
                     originDepartment={selectedClient?.department}
+                    canEditCatalog={profileUser?.role === 'admin' || profileUser?.role === 'operator'}
                     destination={formData.destination}
                     onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
                     destinationCoords={{
@@ -1450,6 +1451,7 @@ export const EnhancedServiceForm = React.memo(({
                   stops={serviceStops}
                   onStopsChange={setServiceStops}
                   department={selectedClient?.department}
+                  canEditCatalog={profileUser?.role === 'admin' || profileUser?.role === 'operator'}
                   disabled={false}
                 />
               </div>

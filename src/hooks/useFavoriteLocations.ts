@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
@@ -37,6 +37,65 @@ export function useFavoriteLocations() {
       }));
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export const prepareLocationAliases = ({
+  name,
+  previousName,
+  aliases,
+}: {
+  name: string;
+  previousName?: string | null;
+  aliases: string[];
+}): string[] => {
+  const normalizedName = normalizeLocationText(name);
+  const candidates = [
+    ...aliases,
+    ...(previousName && normalizeLocationText(previousName) !== normalizedName
+      ? [previousName]
+      : []),
+  ];
+  const seen = new Set<string>();
+
+  return candidates
+    .map((alias) => alias.trim())
+    .filter(Boolean)
+    .filter((alias) => normalizeLocationText(alias) !== normalizedName)
+    .filter((alias) => {
+      const key = normalizeLocationText(alias);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+export function useUpdateFavoriteLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      name,
+      aliases,
+    }: {
+      id: string;
+      name: string;
+      aliases: string[];
+    }) => {
+      const { error } = await supabase
+        .from('saved_locations')
+        .update({ name: name.trim(), aliases })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-locations'] }),
+      ]);
+    },
   });
 }
 

@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Building2, Loader2, MapPin, MapPinCheck } from 'lucide-react';
+import { Building2, Loader2, MapPin, MapPinCheck, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Command,
   CommandEmpty,
@@ -18,10 +29,17 @@ import {
   useFavoriteLocations,
   matchFavoriteLocations,
   normalizeLocationText,
+  prepareLocationAliases,
+  useUpdateFavoriteLocation,
+  type FavoriteLocation,
 } from '@/hooks/useFavoriteLocations';
 import { useGoogleMaps, type PlaceSuggestion } from '@/hooks/useGoogleMaps';
 import { OriginPinMap } from '@/components/services/OriginPinMap';
 import { parseLocationInput, type ParsedLocation } from '@/lib/locationParser';
+import {
+  formatChileAddress,
+  formatChileLocationLabel,
+} from '@/utils/chileLocationLabel';
 
 const logger = createLogger('OriginLocationField');
 const EXACT_LOCATION_RESOLVE_DEBOUNCE_MS = 400;
@@ -41,6 +59,7 @@ interface OriginLocationFieldProps {
   coords: OriginResolvedCoords;
   onCoordsChange: (coords: OriginResolvedCoords) => void;
   department?: string | null;
+  canEditCatalog?: boolean;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -54,6 +73,7 @@ export function OriginLocationField({
   coords,
   onCoordsChange,
   department,
+  canEditCatalog = false,
   placeholder = 'Direccion de origen del servicio',
   className,
   disabled = false,
@@ -65,9 +85,13 @@ export function OriginLocationField({
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [networkSuggestions, setNetworkSuggestions] = useState<PlaceSuggestion[]>([]);
   const [networkLoading, setNetworkLoading] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<FavoriteLocation | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [editingAliases, setEditingAliases] = useState('');
   const resolvingValueRef = useRef<string | null>(null);
 
   const { data: favoriteLocations = [] } = useFavoriteLocations();
+  const updateFavoriteLocation = useUpdateFavoriteLocation();
   const { autocomplete, getPlaceDetails } = useGoogleMaps();
   const catalogMatches = useMemo(
     () => {
@@ -159,7 +183,7 @@ export function OriginLocationField({
         body: { action: 'reverse_geocode', lat: resolved.lat, lng: resolved.lng },
       });
       const address = !reverseError && typeof reverseData?.address === 'string' ? reverseData.address : null;
-      onChange(address || formatCoordsFallback(resolved.lat, resolved.lng));
+      onChange(address ? formatChileAddress(address) : formatCoordsFallback(resolved.lat, resolved.lng));
     } catch (err) {
       logger.warn('No se pudo resolver la ubicacion exacta', err);
       toast.error('No pudimos resolver esa ubicación. Ingresa la dirección manualmente.');
@@ -190,10 +214,55 @@ export function OriginLocationField({
   const hasConfirmedCoords = coords.lat != null && coords.lng != null;
 
   const selectCatalogMatch = (match: (typeof catalogMatches)[number]) => {
-    onChange(match.name);
+    onChange(formatChileAddress(match.name));
     onCoordsChange({ lat: match.latitude, lng: match.longitude, catalogId: match.id });
     setIsExactLocation(false);
     setOpen(false);
+  };
+
+  const openCatalogEditor = (location: FavoriteLocation) => {
+    setEditingLocation(location);
+    setEditingName(formatChileAddress(location.name));
+    setEditingAliases(location.aliases.join('\n'));
+    setOpen(false);
+  };
+
+  const saveCatalogEditor = async () => {
+    if (!editingLocation) return;
+
+    const name = editingName.trim();
+    if (!name) {
+      toast.error('El nombre visible del lugar es obligatorio.');
+      return;
+    }
+
+    const rawAliases = editingAliases
+      .split(/[\n,;]+/)
+      .map((alias) => alias.trim())
+      .filter(Boolean);
+    const aliases = prepareLocationAliases({
+      name,
+      previousName: editingLocation.name,
+      aliases: rawAliases,
+    });
+
+    try {
+      await updateFavoriteLocation.mutateAsync({
+        id: editingLocation.id,
+        name,
+        aliases,
+      });
+
+      if (coords.catalogId === editingLocation.id) {
+        onChange(name);
+      }
+
+      toast.success('Lugar actualizado');
+      setEditingLocation(null);
+    } catch (updateError) {
+      logger.error('No se pudo actualizar el catálogo de lugares', updateError);
+      toast.error('No se pudo actualizar el lugar.');
+    }
   };
 
   const selectNetworkSuggestion = async (suggestion: PlaceSuggestion) => {
@@ -204,7 +273,7 @@ export function OriginLocationField({
     try {
       if (suggestion.source === 'geocode' && suggestion.coordinates) {
         const [lng, lat] = suggestion.coordinates;
-        onChange(suggestion.text);
+        onChange(formatChileAddress(suggestion.text));
         onCoordsChange({ lat, lng, catalogId: null });
         setIsExactLocation(false);
         return;
@@ -217,7 +286,11 @@ export function OriginLocationField({
         return;
       }
 
-      onChange(place.formattedAddress || suggestion.text);
+      onChange(formatChileLocationLabel({
+        mainText: suggestion.mainText,
+        secondaryText: suggestion.secondaryText,
+        formattedAddress: place.formattedAddress || suggestion.text,
+      }));
       onCoordsChange({ lat: place.lat, lng: place.lng, catalogId: null });
       setIsExactLocation(false);
     } finally {
@@ -296,11 +369,40 @@ export function OriginLocationField({
                     >
                       <Building2 className="size-4 shrink-0 text-info-text" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{match.name}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {formatChileAddress(match.name)}
+                        </p>
                         {match.address ? (
-                          <p className="truncate text-xs text-muted-foreground">{match.address}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {formatChileAddress(match.address)}
+                          </p>
+                        ) : null}
+                        {match.aliases.length > 0 ? (
+                          <p className="truncate text-xs text-muted-foreground">
+                            Alias: {match.aliases.map(formatChileAddress).join(' · ')}
+                          </p>
                         ) : null}
                       </div>
+                      {canEditCatalog ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 shrink-0"
+                          aria-label={`Editar ${match.name}`}
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            openCatalogEditor(match);
+                          }}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                      ) : null}
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -344,6 +446,73 @@ export function OriginLocationField({
       {hasConfirmedCoords && (
         <OriginPinMap lat={coords.lat as number} lng={coords.lng as number} onChange={handlePinDrag} />
       )}
+
+      <Dialog
+        open={editingLocation != null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !updateFavoriteLocation.isPending) setEditingLocation(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar lugar frecuente</DialogTitle>
+            <DialogDescription>
+              El nombre visible aparecerá en origen y destino. Los alias permiten encontrar
+              este mismo punto con otros nombres; sus coordenadas no se modificarán.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={`${id ?? 'location'}-catalog-name`}>Nombre visible</Label>
+              <Input
+                id={`${id ?? 'location'}-catalog-name`}
+                value={editingName}
+                onChange={(event) => setEditingName(event.target.value)}
+                placeholder="Ej: Custodia G5N"
+                disabled={updateFavoriteLocation.isPending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${id ?? 'location'}-catalog-aliases`}>
+                Alias de búsqueda
+              </Label>
+              <Textarea
+                id={`${id ?? 'location'}-catalog-aliases`}
+                value={editingAliases}
+                onChange={(event) => setEditingAliases(event.target.value)}
+                placeholder={'Un alias por línea\nEj: Base G5N\nInstalaciones G5N'}
+                rows={4}
+                disabled={updateFavoriteLocation.isPending}
+              />
+              <p className="text-xs text-muted-foreground">
+                Puedes ingresar uno por línea o separarlos con comas.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingLocation(null)}
+              disabled={updateFavoriteLocation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void saveCatalogEditor()}
+              disabled={updateFavoriteLocation.isPending || !editingName.trim()}
+            >
+              {updateFavoriteLocation.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -24,6 +24,7 @@ interface ServiceStopsSectionProps {
   onStopsChange: Dispatch<SetStateAction<ServiceStopDraft[]>>;
   /** Departamento del cliente: acota la búsqueda híbrida de direcciones. */
   department?: string | null;
+  canEditCatalog?: boolean;
   disabled?: boolean;
 }
 
@@ -37,6 +38,7 @@ export const ServiceStopsSection = ({
   stops,
   onStopsChange,
   department,
+  canEditCatalog = false,
   disabled = false,
 }: ServiceStopsSectionProps) => {
   const isMobile = useIsMobile();
@@ -194,6 +196,7 @@ export const ServiceStopsSection = ({
                     coords={{ lat: stop.lat, lng: stop.lng, catalogId: null }}
                     onCoordsChange={(coords) => updateStop(stop.id, { lat: coords.lat, lng: coords.lng })}
                     department={department}
+                    canEditCatalog={canEditCatalog}
                     placeholder="Dirección de la parada"
                     disabled={disabled}
                   />

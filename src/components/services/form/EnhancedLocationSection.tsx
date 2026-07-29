@@ -9,6 +9,7 @@ interface EnhancedLocationSectionProps {
   originCoords: OriginResolvedCoords;
   onOriginCoordsChange: (coords: OriginResolvedCoords) => void;
   originDepartment?: string | null;
+  canEditCatalog?: boolean;
   destination: string;
   onDestinationChange: (value: string) => void;
   destinationCoords: OriginResolvedCoords;
@@ -26,6 +27,7 @@ export const EnhancedLocationSection = ({
   originCoords,
   onOriginCoordsChange,
   originDepartment,
+  canEditCatalog = false,
   destination,
   onDestinationChange,
   destinationCoords,
@@ -57,6 +59,7 @@ export const EnhancedLocationSection = ({
           coords={originCoords}
           onCoordsChange={onOriginCoordsChange}
           department={originDepartment}
+          canEditCatalog={canEditCatalog}
           placeholder="Direccion de origen del servicio"
           disabled={disabled}
           error={originError}
@@ -82,6 +85,7 @@ export const EnhancedLocationSection = ({
           coords={destinationCoords}
           onCoordsChange={onDestinationCoordsChange}
           department={originDepartment}
+          canEditCatalog={canEditCatalog}
           placeholder="Direccion o enlace de Google Maps del destino"
           disabled={disabled}
           error={destinationError}
