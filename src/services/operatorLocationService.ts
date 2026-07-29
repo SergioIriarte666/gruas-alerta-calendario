@@ -1,7 +1,8 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
+import { LocationUploadError } from '@/services/locationUploadErrors';
 import type {
   BackgroundGeolocationPlugin,
   Location as BackgroundGeolocationPoint,
@@ -18,6 +19,9 @@ import type {
 
 const SESSIONS_TABLE = 'operator_location_sessions';
 const TRACKING_SETTINGS_TABLE = 'tracking_settings';
+const NATIVE_UPLOAD_TIMEOUT_MS = 15000;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 // Bug conocido de WebKit/Safari: GeolocationPosition.timestamp a veces viene
 // referido al epoch de Apple (2001-01-01) en vez del epoch Unix (1970-01-01).
@@ -288,6 +292,24 @@ export const ensureOperatorLocationSession = async (
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      // El índice único decidió la carrera: otra invocación abrió la sesión
+      // entre nuestro SELECT y el INSERT. Esa sesión es la ganadora y es
+      // preferible adoptarla a mostrar un error aunque la transmisión sí partió.
+      const { data: winner, error: winnerError } = await supabase
+        .from(SESSIONS_TABLE)
+        .select('*')
+        .eq('operator_id', operatorId)
+        .eq('status', 'active')
+        .is('ended_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!winnerError && winner) {
+        return winner as OperatorLocationSession;
+      }
+    }
     throw new Error(error.message || 'No se pudo iniciar la sesión de ubicación');
   }
 
@@ -413,58 +435,99 @@ export const findActiveOperatorLocationSession = async (
   return (data as OperatorLocationSession | null) ?? null;
 };
 
+export { LocationUploadError, isPermanentUploadError } from '@/services/locationUploadErrors';
+
+const buildLocationPointRpcArgs = (payload: OperatorLocationPayload) => ({
+  p_session_id: payload.sessionId,
+  p_operator_id: payload.operatorId,
+  p_user_id: payload.userId,
+  p_service_id: payload.serviceId,
+  p_latitude: payload.latitude,
+  p_longitude: payload.longitude,
+  p_accuracy_meters: payload.accuracyMeters,
+  p_speed_mps: payload.speedMps,
+  p_heading_degrees: payload.headingDegrees,
+  p_altitude_meters: payload.altitudeMeters,
+  p_recorded_at: payload.recordedAt,
+  p_is_offline_sync: payload.isOfflineSync ?? false,
+  p_source: payload.source ?? 'mobile_app',
+  p_platform: getLocationPlatform(),
+});
+
+const throwIfAborted = (signal?: AbortSignal): void => {
+  if (!signal?.aborted) return;
+  const error = new Error('La subida del punto fue cancelada');
+  error.name = 'AbortError';
+  throw error;
+};
+
 /**
- * Fallo al subir un punto, con la distinción que importa.
- *
- * `permanent` separa "el servidor lo rechazó por lo que ES" —RLS, constraint,
- * sesión inexistente— de "no llegó". Es la diferencia entre un punto roto, que
- * hay que soltar, y un punto que solo espera cobertura, que hay que guardar
- * indefinidamente. Confundirlas borraba el primer punto de la cola a los diez
- * minutos sin señal, justo en el escenario para el que la cola existe.
+ * Android estrangula después de unos minutos el HTTP iniciado por el WebView.
+ * La captura nativa puede seguir entregando puntos mientras `fetch` deja de
+ * salir. Esta única llamada crítica usa la pila HTTP nativa y timeouts menores
+ * que el watchdog JS, evitando tanto el throttling como peticiones huérfanas.
  */
-export class LocationUploadError extends Error {
-  readonly code: string | null;
-  readonly permanent: boolean;
+const saveOperatorLocationPointOnAndroid = async (
+  payload: OperatorLocationPayload,
+  signal?: AbortSignal,
+): Promise<void> => {
+  throwIfAborted(signal);
 
-  constructor(message: string, code: string | null) {
-    super(message);
-    this.name = 'LocationUploadError';
-    this.code = code;
-    // PostgREST siempre trae código en un rechazo del servidor; una falla de
-    // transporte (fetch abortado, DNS, timeout) llega sin él. La heurística es
-    // deliberadamente conservadora: ante la duda, el punto NO se descarta.
-    this.permanent = Boolean(code);
+  const { data: authData, error: authError } = await supabase.auth.getSession();
+  if (authError || !authData.session?.access_token) {
+    throw new LocationUploadError(
+      authError?.message || 'No hay una sesión autenticada para subir la ubicación',
+      null,
+    );
   }
-}
 
-export const isPermanentUploadError = (error: unknown): boolean =>
-  error instanceof LocationUploadError && error.permanent;
+  throwIfAborted(signal);
+  const response = await CapacitorHttp.post({
+    url: `${SUPABASE_URL}/rest/v1/rpc/record_operator_location_point`,
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${authData.session.access_token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    data: buildLocationPointRpcArgs(payload),
+    connectTimeout: NATIVE_UPLOAD_TIMEOUT_MS,
+    readTimeout: NATIVE_UPLOAD_TIMEOUT_MS,
+    responseType: 'json',
+  });
+
+  if (response.status >= 200 && response.status < 300) return;
+
+  const body = response.data && typeof response.data === 'object'
+    ? response.data as { code?: unknown; message?: unknown }
+    : {};
+  throw new LocationUploadError(
+    typeof body.message === 'string'
+      ? body.message
+      : `El servidor rechazó el punto de ubicación (${response.status})`,
+    typeof body.code === 'string' ? body.code : null,
+  );
+};
 
 export const saveOperatorLocationPoint = async (
   payload: OperatorLocationPayload,
+  options: { signal?: AbortSignal } = {},
 ): Promise<void> => {
   // Una sola llamada, una sola transacción. Antes eran dos escrituras sueltas:
   // si la segunda fallaba, el punto quedaba guardado y la sesión decía que no
   // había llegado nada, y el barrido de zombies la cerraba por "timeout" con
   // puntos entrando.
-  const { error } = await supabase.rpc('record_operator_location_point', {
-    p_session_id: payload.sessionId,
-    p_operator_id: payload.operatorId,
-    p_user_id: payload.userId,
-    p_service_id: payload.serviceId,
-    p_latitude: payload.latitude,
-    p_longitude: payload.longitude,
-    p_accuracy_meters: payload.accuracyMeters,
-    p_speed_mps: payload.speedMps,
-    p_heading_degrees: payload.headingDegrees,
-    p_altitude_meters: payload.altitudeMeters,
-    p_recorded_at: payload.recordedAt,
-    p_is_offline_sync: payload.isOfflineSync ?? false,
-    // 'heartbeat' marca los latidos sin movimiento: sin ellos, un operador
-    // detenido y una app muerta se ven idénticos desde la central.
-    p_source: payload.source ?? 'mobile_app',
-    p_platform: getLocationPlatform(),
-  });
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    return saveOperatorLocationPointOnAndroid(payload, options.signal);
+  }
+
+  const request = supabase.rpc(
+    'record_operator_location_point',
+    buildLocationPointRpcArgs(payload),
+  );
+  const { error } = await (
+    options.signal ? request.abortSignal(options.signal) : request
+  );
 
   if (error) {
     throw new LocationUploadError(

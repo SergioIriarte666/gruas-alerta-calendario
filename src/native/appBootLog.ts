@@ -86,14 +86,18 @@ export const recordAppBoot = async (
       // NULL a propósito cuando no hay plugin: distingue "no está armado" de
       // "este binario ni siquiera puede armarlo". Averiguar eso costó una tarde
       // de leer el log de Xcode buscando una llamada que no aparecía.
-      relaunch_armed: relaunch ? relaunch.armed : null,
+      // `monitoring` existe también en el plugin anterior, cuyo `armed` en
+      // getLaunchInfo significaba sólo "solicitado". Leer el campo operativo
+      // mantiene correcto el diagnóstico incluso durante una actualización
+      // gradual del bundle web sobre binarios nativos antiguos.
+      relaunch_armed: relaunch ? (relaunch.monitoring ?? false) : null,
     } as never);
 
     if (error) throw new Error(error.message);
 
     logger.debug('Arranque registrado', {
       launchReason,
-      relaunchArmed: relaunch?.armed ?? null,
+      relaunchArmed: relaunch ? (relaunch.monitoring ?? false) : null,
       hadError: Boolean(lastError),
     });
   } catch (error) {

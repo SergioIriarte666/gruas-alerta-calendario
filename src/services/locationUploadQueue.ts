@@ -1,6 +1,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { createLogger } from '@/lib/logger';
-import { isPermanentUploadError, saveOperatorLocationPoint } from '@/services/operatorLocationService';
+import { saveOperatorLocationPoint } from '@/services/operatorLocationService';
+import { isPermanentUploadError } from '@/services/locationUploadErrors';
 import type { OperatorLocationPayload } from '@/types/operatorLocation';
 
 const logger = createLogger('LocationUploader');
@@ -111,13 +112,20 @@ export interface UploaderStats {
 
 type StatsListener = (stats: UploaderStats) => void;
 
-const withTimeout = async <T>(promise: Promise<T>, ms: number): Promise<T> => {
+const withTimeout = async <T>(
+  operation: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+): Promise<T> => {
+  const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      promise,
+      operation(controller.signal),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('La subida del punto excedió el tiempo de espera')), ms);
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error('La subida del punto excedió el tiempo de espera'));
+        }, ms);
       }),
     ]);
   } finally {
@@ -286,7 +294,10 @@ class LocationUploadQueue {
 
         try {
           await withTimeout(
-            saveOperatorLocationPoint({ ...item, isOfflineSync: isLate }),
+            (signal) => saveOperatorLocationPoint(
+              { ...item, isOfflineSync: isLate },
+              { signal },
+            ),
             UPLOAD_TIMEOUT_MS,
           );
           uploaded.add(item.localId);
@@ -294,9 +305,9 @@ class LocationUploadQueue {
           this.consecutiveFailures = 0;
         } catch (error) {
           if (isPermanentUploadError(error)) {
-            // El servidor lo rechazó por lo que ES, no por dónde está: RLS,
-            // constraint, sesión inexistente. Reintentarlo mil veces no lo va a
-            // arreglar y taparía la cola.
+            // El servidor demostró que el CONTENIDO es inválido: constraint,
+            // sesión inexistente o relación incoherente. Los demás códigos se
+            // conservan porque pueden resolverse al renovar sesión o servidor.
             rejected.add(item.localId);
             logger.warn('El servidor rechazó el punto', {
               localId: item.localId,

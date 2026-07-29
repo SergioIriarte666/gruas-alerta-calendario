@@ -25,8 +25,13 @@ class FakeUploadError extends Error {
 }
 
 vi.mock('@/services/operatorLocationService', () => ({
-  saveOperatorLocationPoint: (payload: OperatorLocationPayload) =>
-    saveOperatorLocationPoint(payload),
+  saveOperatorLocationPoint: (
+    payload: OperatorLocationPayload,
+    options?: { signal?: AbortSignal },
+  ) => saveOperatorLocationPoint(payload, options),
+}));
+
+vi.mock('@/services/locationUploadErrors', () => ({
   isPermanentUploadError: (error: unknown) =>
     error instanceof FakeUploadError && error.permanent,
 }));
@@ -94,6 +99,28 @@ describe('locationUploadQueue', () => {
     expect(saveOperatorLocationPoint).toHaveBeenCalled();
     expect(queued()).toHaveLength(1);
     expect(uploader.stats().pending).toBe(1);
+  });
+
+  it('el timeout cancela la petición HTTP que quedó colgada', async () => {
+    let uploadSignal: AbortSignal | undefined;
+    saveOperatorLocationPoint.mockImplementation((
+      _payload: OperatorLocationPayload,
+      options?: { signal?: AbortSignal },
+    ) => new Promise<void>((_resolve, reject) => {
+      uploadSignal = options?.signal;
+      uploadSignal?.addEventListener('abort', () => {
+        reject(new DOMException('Aborted', 'AbortError'));
+      });
+    }));
+    const uploader = await loadQueue();
+
+    await uploader.enqueue(point('2026-07-29T14:00:00.000Z'));
+    const draining = uploader.drain();
+    await vi.advanceTimersByTimeAsync(20000);
+    await draining;
+
+    expect(uploadSignal?.aborted).toBe(true);
+    expect(queued()).toHaveLength(1);
   });
 
   it('con la red caída no insiste punto por punto ni pierde nada', async () => {

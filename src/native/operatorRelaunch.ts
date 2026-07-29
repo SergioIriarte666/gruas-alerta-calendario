@@ -9,9 +9,11 @@ export type LocationAuthorization =
 export type BackgroundRefreshStatus = 'available' | 'denied' | 'restricted' | 'unknown';
 
 export interface RelaunchLaunchInfo {
-  /** Se pidió la vigilancia (la decisión sobrevive al proceso). */
+  /** La vigilancia está realmente corriendo. */
   armed: boolean;
-  /** La vigilancia está REALMENTE corriendo. No es lo mismo que `armed`. */
+  /** Se pidió la vigilancia y la decisión sobrevivirá al proceso. */
+  requested?: boolean;
+  /** Alias explícito del estado operativo para diagnósticos detallados. */
   monitoring?: boolean;
   /** Permiso de ubicación. Solo `always` permite que iOS relance. */
   authorizationStatus?: LocationAuthorization;

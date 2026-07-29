@@ -51,6 +51,24 @@ const logger = createLogger('Tracking');
 const UPLOAD_STALE_MS = 2 * 60 * 1000;
 const AGE_TICK_MS = 5000;
 
+export const getRelaunchProtectionHint = (
+  status: RelaunchLaunchInfo | null,
+): string => {
+  if (status?.available === false) {
+    return 'Este dispositivo no admite el relanzamiento por cambios de ubicación. Mantén la app abierta durante el traslado.';
+  }
+  if (
+    status?.backgroundRefreshStatus === 'denied'
+    || status?.backgroundRefreshStatus === 'restricted'
+  ) {
+    return 'Activa Ajustes → General → Actualización en segundo plano. Sin eso, si el sistema cierra la app no vuelve sola.';
+  }
+  if (status?.authorizationStatus !== 'always') {
+    return 'Para transmitir con la pantalla apagada, activa Ubicación → Siempre en Ajustes de iOS.';
+  }
+  return 'La protección de ubicación no quedó activa. Apaga y vuelve a encender la transmisión; si continúa, reinicia la app.';
+};
+
 /**
  * Cadencia con la que se relee si el cliente tiene un link vigente.
  *
@@ -664,10 +682,7 @@ export const TransmissionControl = ({
 
       {showAlwaysHint && (
         <p className="mt-3 rounded-xl border border-info/30 bg-info/10 p-2.5 text-xs text-info">
-          {relaunchStatus?.backgroundRefreshStatus === 'denied'
-            || relaunchStatus?.backgroundRefreshStatus === 'restricted'
-            ? 'Activa Ajustes → General → Actualización en segundo plano. Sin eso, si el sistema cierra la app no vuelve sola.'
-            : 'Para transmitir con la pantalla apagada, activa Ubicación → Siempre en Ajustes de iOS.'}
+          {getRelaunchProtectionHint(relaunchStatus)}
         </p>
       )}
 

@@ -151,8 +151,12 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
      */
     func launchInfo() -> [String: Any] {
         var info: [String: Any] = [
-            "armed": isArmed,
-            // Lo que se pidió vs. lo que efectivamente corre.
+            // `armed` conserva una sola semántica en arm(), getLaunchInfo() y
+            // app_boot_log: la vigilancia quedó REALMENTE corriendo.
+            "armed": monitoring,
+            // La intención persistida va aparte: permite rearmar cuando el
+            // operador conceda "Siempre" más tarde, sin prometer protección.
+            "requested": isArmed,
             "monitoring": monitoring,
             "authorizationStatus": Self.describe(manager.authorizationStatus),
             // Sin "Actualización en segundo plano" iOS NO relanza por ubicación,

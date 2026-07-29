@@ -27,10 +27,8 @@ public class OperatorRelaunchPlugin: CAPPlugin, CAPBridgedPlugin {
             // Se devuelve lo que quedó CORRIENDO, no lo que se pidió: sin
             // permiso "Siempre" la vigilancia no arranca y decir "armado" sería
             // prometer un relanzamiento que no va a ocurrir.
-            let monitoring = OperatorRelaunchMonitor.shared.arm()
-            var result = OperatorRelaunchMonitor.shared.launchInfo()
-            result["armed"] = monitoring
-            call.resolve(result)
+            OperatorRelaunchMonitor.shared.arm()
+            call.resolve(OperatorRelaunchMonitor.shared.launchInfo())
         }
     }
 
