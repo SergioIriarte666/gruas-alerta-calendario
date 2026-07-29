@@ -13,6 +13,8 @@ const location: FavoriteLocation = {
   category: 'recurrente',
   latitude: -27.3464396,
   longitude: -70.6313583,
+  routing_access_latitude: -27.34747,
+  routing_access_longitude: -70.63322,
   usage_count: 4,
 };
 

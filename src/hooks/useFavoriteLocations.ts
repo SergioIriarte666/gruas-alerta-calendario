@@ -12,6 +12,8 @@ export interface FavoriteLocation {
   category: string | null;
   latitude: number | null;
   longitude: number | null;
+  routing_access_latitude: number | null;
+  routing_access_longitude: number | null;
   usage_count: number;
 }
 
@@ -21,7 +23,10 @@ export function useFavoriteLocations() {
     queryFn: async (): Promise<FavoriteLocation[]> => {
       const { data, error } = await supabase
         .from('saved_locations')
-        .select('id, name, aliases, address, category, latitude, longitude, usage_count')
+        .select(`
+          id, name, aliases, address, category, latitude, longitude,
+          routing_access_latitude, routing_access_longitude, usage_count
+        `)
         .eq('is_active', true)
         .order('usage_count', { ascending: false })
         .order('name', { ascending: true });
@@ -78,14 +83,21 @@ export function useUpdateFavoriteLocation() {
       id,
       name,
       aliases,
+      routingAccess,
     }: {
       id: string;
       name: string;
       aliases: string[];
+      routingAccess: { lat: number; lng: number } | null;
     }) => {
       const { error } = await supabase
         .from('saved_locations')
-        .update({ name: name.trim(), aliases })
+        .update({
+          name: name.trim(),
+          aliases,
+          routing_access_latitude: routingAccess?.lat ?? null,
+          routing_access_longitude: routingAccess?.lng ?? null,
+        })
         .eq('id', id);
 
       if (error) throw error;

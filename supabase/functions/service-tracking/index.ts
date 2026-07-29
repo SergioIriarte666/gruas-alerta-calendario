@@ -7,6 +7,13 @@ import {
   STAGE_RANK,
   type JourneyStage,
 } from "../_shared/journeyStage.ts";
+import {
+  connectRouteAccess,
+  findDepartureRoutingAccess,
+  findTargetRoutingAccess,
+  type RoutingAccessLocation,
+  type RoutingAccessPoint,
+} from "../_shared/routingAccess.ts";
 
 /**
  * Seguimiento publico por link con token (Fase 1, sin login).
@@ -51,6 +58,9 @@ const STOP_GEOFENCE_METERS = 300;
 // mark_reached_service_stops.
 const STOP_ARMING_METERS = 1000;
 const ETA_CACHE_MS = 60 * 1000;
+// Los conectores entre el pin real y el acceso vial son recorridos internos
+// cortos. Se estiman a 30 km/h; el tramo principal conserva el ETA de Google.
+const ROUTING_ACCESS_CONNECTOR_SPEED_MPS = 30 / 3.6;
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
@@ -109,6 +119,18 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
+const routingAccessSignature = (
+  departure: RoutingAccessPoint | null,
+  target: RoutingAccessPoint | null,
+): string | null => {
+  if (!departure && !target) return null;
+  const serialize = (point: RoutingAccessPoint | null) =>
+    point
+      ? `${point.locationName}:${point.lat.toFixed(6)},${point.lng.toFixed(6)}`
+      : "-";
+  return `${serialize(departure)}>${serialize(target)}`;
+};
+
 /** Duracion/distancia/polyline via Routes API. La polyline viaja codificada:
  * el cliente la decodifica (mismo algoritmo que usa maps-proxy). */
 async function fetchEta(
@@ -116,6 +138,8 @@ async function fetchEta(
   originLng: number,
   destLat: number,
   destLng: number,
+  routedOrigin: { lat: number; lng: number } = { lat: originLat, lng: originLng },
+  routedDestination: { lat: number; lng: number } = { lat: destLat, lng: destLng },
 ): Promise<Eta> {
   if (!GOOGLE_MAPS_API_KEY) return null;
   try {
@@ -127,8 +151,22 @@ async function fetchEta(
         "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
       },
       body: JSON.stringify({
-        origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
-        destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+        origin: {
+          location: {
+            latLng: {
+              latitude: routedOrigin.lat,
+              longitude: routedOrigin.lng,
+            },
+          },
+        },
+        destination: {
+          location: {
+            latLng: {
+              latitude: routedDestination.lat,
+              longitude: routedDestination.lng,
+            },
+          },
+        },
         travelMode: "DRIVE",
         routingPreference: "TRAFFIC_AWARE",
         computeAlternativeRoutes: false,
@@ -140,10 +178,25 @@ async function fetchEta(
     const data = await res.json();
     const route = Array.isArray(data.routes) ? data.routes[0] : null;
     if (!route?.polyline?.encodedPolyline) return null;
+    const connectedRoute = connectRouteAccess({
+      encodedPolyline: route.polyline.encodedPolyline,
+      actualOrigin: { lat: originLat, lng: originLng },
+      routedOrigin,
+      routedDestination,
+      actualDestination: { lat: destLat, lng: destLng },
+    });
+    const connectorSeconds = Math.round(
+      connectedRoute.connectorDistanceMeters / ROUTING_ACCESS_CONNECTOR_SPEED_MPS,
+    );
+
     return {
-      seconds: parseInt(String(route.duration ?? "0s").replace("s", ""), 10) || 0,
-      distance_meters: Number(route.distanceMeters ?? 0),
-      polyline: route.polyline.encodedPolyline,
+      seconds:
+        (parseInt(String(route.duration ?? "0s").replace("s", ""), 10) || 0) +
+        connectorSeconds,
+      distance_meters:
+        Number(route.distanceMeters ?? 0) +
+        Math.round(connectedRoute.connectorDistanceMeters),
+      polyline: connectedRoute.polyline,
     };
   } catch (error) {
     console.warn("[service-tracking] fetchEta failed:", error);
@@ -185,7 +238,8 @@ Deno.serve(async (req: Request) => {
     .select(`
       id, service_id, revoked_at, expires_at, access_count,
       eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
-      eta_target_stop_id, eta_target_kind, on_site_reached_at, max_stage_reached
+      eta_target_stop_id, eta_target_kind, eta_routing_access_signature,
+      on_site_reached_at, max_stage_reached
     `)
     .eq("token", token)
     .maybeSingle();
@@ -328,6 +382,7 @@ Deno.serve(async (req: Request) => {
           eta_cached_at: null,
           eta_target_stop_id: null,
           eta_target_kind: null,
+          eta_routing_access_signature: null,
         })
         .eq("id", link.id);
     } catch {
@@ -487,7 +542,13 @@ Deno.serve(async (req: Request) => {
     // una parada (de un deploy anterior o de un cambio de estado hacia atras),
     // se limpia aqui para que al armar la ruta se recalcule desde cero en vez
     // de servir una guia calculada antes del inicio.
-    if (link.eta_cached_at || link.eta_polyline || link.eta_target_stop_id || link.eta_target_kind) {
+    if (
+      link.eta_cached_at ||
+      link.eta_polyline ||
+      link.eta_target_stop_id ||
+      link.eta_target_kind ||
+      link.eta_routing_access_signature
+    ) {
       try {
         await supabase
           .from("service_tracking_links")
@@ -498,6 +559,7 @@ Deno.serve(async (req: Request) => {
             eta_cached_at: null,
             eta_target_stop_id: null,
             eta_target_kind: null,
+            eta_routing_access_signature: null,
           })
           .eq("id", link.id);
       } catch {
@@ -663,6 +725,11 @@ Deno.serve(async (req: Request) => {
   }
 
   const etaTargetStopId = hasNavigableStops ? (nextStop?.id ?? null) : null;
+  const etaTargetLabel = hasNavigableStops
+    ? (nextStop?.label ?? null)
+    : etaTargetKind === "destination"
+      ? destination.text
+      : origin.text;
 
   let eta: Eta = null;
   // true cuando el destino existe pero Google no puede rutear la zona (p. ej.
@@ -675,6 +742,59 @@ Deno.serve(async (req: Request) => {
   // corre solo y llega falso. Tampoco se llama a Routes (ni se toca el cache
   // vigente): al reanudar, el ETA se recalcula desde la posicion real.
   if (state === "active" && etaTarget && !openStopEvent) {
+    // El pin público sigue siendo el snapshot real del servicio. El acceso vial
+    // sólo corrige el punto que consume Google cuando su red desconoce retornos,
+    // caminos internos o entradas privadas. Se selecciona por proximidad/nombre,
+    // nunca por folio ni por un caso codificado.
+    const { data: routingAccessRows } = await supabase
+      .from("saved_locations")
+      .select(`
+        name, aliases, latitude, longitude,
+        routing_access_latitude, routing_access_longitude
+      `)
+      .eq("is_active", true)
+      .not("routing_access_latitude", "is", null)
+      .not("routing_access_longitude", "is", null);
+    const routingLocations =
+      (routingAccessRows as RoutingAccessLocation[] | null) ?? [];
+    const journeyPlaces = [
+      ...(origin.lat != null && origin.lng != null
+        ? [{ label: origin.text, lat: origin.lat, lng: origin.lng }]
+        : []),
+      ...(destination.lat != null && destination.lng != null
+        ? [{ label: destination.text, lat: destination.lat, lng: destination.lng }]
+        : []),
+      ...engineStops.map((stop) => ({
+        label: stop.label,
+        lat: stop.lat as number,
+        lng: stop.lng as number,
+      })),
+    ];
+    const relevantAccessNames = new Set(
+      journeyPlaces
+        .map((place) => findTargetRoutingAccess(routingLocations, place)?.locationName)
+        .filter((name): name is string => Boolean(name)),
+    );
+    const departureAccess = findDepartureRoutingAccess(
+      routingLocations.filter((location) => relevantAccessNames.has(location.name)),
+      { lat: point.latitude, lng: point.longitude },
+    );
+    const targetAccess = findTargetRoutingAccess(
+      routingLocations,
+      {
+        label: etaTargetLabel,
+        lat: etaTarget.lat,
+        lng: etaTarget.lng,
+      },
+    );
+    const accessSignature = routingAccessSignature(departureAccess, targetAccess);
+    const routedOrigin = departureAccess
+      ? { lat: departureAccess.lat, lng: departureAccess.lng }
+      : { lat: point.latitude, lng: point.longitude };
+    const routedDestination = targetAccess
+      ? { lat: targetAccess.lat, lng: targetAccess.lng }
+      : etaTarget;
+
     const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
     // El cache (positivo o negativo) solo vale si apunta al MISMO objetivo: al
     // alcanzar una parada, el ETA cacheado hacia ella es invalido aunque el TTL
@@ -684,7 +804,8 @@ Deno.serve(async (req: Request) => {
     // "towing" y se serviria el numero equivocado (Fix 8).
     const targetMatches =
       ((link.eta_target_stop_id as string | null) ?? null) === etaTargetStopId &&
-      ((link.eta_target_kind as EtaTargetKind | null) ?? null) === etaTargetKind;
+      ((link.eta_target_kind as EtaTargetKind | null) ?? null) === etaTargetKind &&
+      ((link.eta_routing_access_signature as string | null) ?? null) === accessSignature;
     const cacheFresh = targetMatches && now - cachedAt < ETA_CACHE_MS;
     if (cacheFresh && link.eta_polyline) {
       // Cache positivo vigente.
@@ -698,7 +819,14 @@ Deno.serve(async (req: Request) => {
       // no es ruteable. No se re-llama a Routes hasta que expire el TTL de 60 s.
       etaUnavailable = true;
     } else {
-      eta = await fetchEta(point.latitude, point.longitude, etaTarget.lat, etaTarget.lng);
+      eta = await fetchEta(
+        point.latitude,
+        point.longitude,
+        etaTarget.lat,
+        etaTarget.lng,
+        routedOrigin,
+        routedDestination,
+      );
       if (eta) {
         try {
           await supabase
@@ -710,6 +838,7 @@ Deno.serve(async (req: Request) => {
               eta_cached_at: new Date().toISOString(),
               eta_target_stop_id: etaTargetStopId,
               eta_target_kind: etaTargetKind,
+              eta_routing_access_signature: accessSignature,
             })
             .eq("id", link.id);
         } catch {
@@ -730,6 +859,7 @@ Deno.serve(async (req: Request) => {
               eta_cached_at: new Date().toISOString(),
               eta_target_stop_id: etaTargetStopId,
               eta_target_kind: etaTargetKind,
+              eta_routing_access_signature: accessSignature,
             })
             .eq("id", link.id);
         } catch {

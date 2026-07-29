@@ -5508,6 +5508,8 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          routing_access_latitude: number | null
+          routing_access_longitude: number | null
           updated_at: string
           usage_count: number
         }
@@ -5523,6 +5525,8 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          routing_access_latitude?: number | null
+          routing_access_longitude?: number | null
           updated_at?: string
           usage_count?: number
         }
@@ -5538,6 +5542,8 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          routing_access_latitude?: number | null
+          routing_access_longitude?: number | null
           updated_at?: string
           usage_count?: number
         }
@@ -6712,6 +6718,7 @@ export type Database = {
           eta_cached_at: string | null
           eta_distance_meters: number | null
           eta_polyline: string | null
+          eta_routing_access_signature: string | null
           eta_seconds: number | null
           eta_target_kind: string | null
           eta_target_stop_id: string | null
@@ -6732,6 +6739,7 @@ export type Database = {
           eta_cached_at?: string | null
           eta_distance_meters?: number | null
           eta_polyline?: string | null
+          eta_routing_access_signature?: string | null
           eta_seconds?: number | null
           eta_target_kind?: string | null
           eta_target_stop_id?: string | null
@@ -6752,6 +6760,7 @@ export type Database = {
           eta_cached_at?: string | null
           eta_distance_meters?: number | null
           eta_polyline?: string | null
+          eta_routing_access_signature?: string | null
           eta_seconds?: number | null
           eta_target_kind?: string | null
           eta_target_stop_id?: string | null

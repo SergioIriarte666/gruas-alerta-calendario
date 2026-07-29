@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Building2, Loader2, MapPin, MapPinCheck, Pencil } from 'lucide-react';
+import {
+  Building2,
+  Loader2,
+  MapPin,
+  MapPinCheck,
+  Pencil,
+  Route,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -88,6 +96,10 @@ export function OriginLocationField({
   const [editingLocation, setEditingLocation] = useState<FavoriteLocation | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingAliases, setEditingAliases] = useState('');
+  const [editingRoutingAccess, setEditingRoutingAccess] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const resolvingValueRef = useRef<string | null>(null);
 
   const { data: favoriteLocations = [] } = useFavoriteLocations();
@@ -224,6 +236,15 @@ export function OriginLocationField({
     setEditingLocation(location);
     setEditingName(formatChileAddress(location.name));
     setEditingAliases(location.aliases.join('\n'));
+    setEditingRoutingAccess(
+      location.routing_access_latitude != null &&
+        location.routing_access_longitude != null
+        ? {
+            lat: location.routing_access_latitude,
+            lng: location.routing_access_longitude,
+          }
+        : null,
+    );
     setOpen(false);
   };
 
@@ -251,6 +272,7 @@ export function OriginLocationField({
         id: editingLocation.id,
         name,
         aliases,
+        routingAccess: editingRoutingAccess,
       });
 
       if (coords.catalogId === editingLocation.id) {
@@ -453,12 +475,12 @@ export function OriginLocationField({
           if (!nextOpen && !updateFavoriteLocation.isPending) setEditingLocation(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar lugar frecuente</DialogTitle>
             <DialogDescription>
               El nombre visible aparecerá en origen y destino. Los alias permiten encontrar
-              este mismo punto con otros nombres; sus coordenadas no se modificarán.
+              este mismo punto con otros nombres. El pin real nunca se modifica aquí.
             </DialogDescription>
           </DialogHeader>
 
@@ -488,6 +510,72 @@ export function OriginLocationField({
               <p className="text-xs text-muted-foreground">
                 Puedes ingresar uno por línea o separarlos con comas.
               </p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info-text">
+                  <Route className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">Acceso vial</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Úsalo cuando el proveedor de rutas desconozca un retorno, portería o
+                    camino interno. El cliente seguirá viendo el pin real del lugar.
+                  </p>
+                </div>
+              </div>
+
+              {editingRoutingAccess ? (
+                <div className="mt-4 space-y-3">
+                  <OriginPinMap
+                    lat={editingRoutingAccess.lat}
+                    lng={editingRoutingAccess.lng}
+                    onChange={(lat, lng) => setEditingRoutingAccess({ lat, lng })}
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                      Arrastra el pin hasta el punto donde la grúa entra o sale de la red vial.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => setEditingRoutingAccess(null)}
+                      disabled={updateFavoriteLocation.isPending}
+                    >
+                      <Trash2 className="mr-1.5 size-3.5" />
+                      Quitar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4 w-full"
+                  onClick={() => {
+                    if (
+                      editingLocation.latitude != null &&
+                      editingLocation.longitude != null
+                    ) {
+                      setEditingRoutingAccess({
+                        lat: editingLocation.latitude,
+                        lng: editingLocation.longitude,
+                      });
+                    }
+                  }}
+                  disabled={
+                    updateFavoriteLocation.isPending ||
+                    editingLocation.latitude == null ||
+                    editingLocation.longitude == null
+                  }
+                >
+                  <MapPin className="mr-2 size-4" />
+                  Definir acceso vial
+                </Button>
+              )}
             </div>
           </div>
 
