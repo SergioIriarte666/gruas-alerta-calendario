@@ -342,6 +342,20 @@ export const TransmissionControl = ({
     }
   };
 
+  /**
+   * Mismo dato con el que se decide QUÉ servicio se comparte: si no hay
+   * servicio, no hay nada que compartir. No se consulta nada aparte —el botón
+   * y la acción tienen que estar de acuerdo siempre—.
+   */
+  const canShare = Boolean(serviceId);
+  const shareLabel = canShare
+    ? 'Compartir seguimiento con el cliente'
+    : 'Sin servicio asignado para compartir';
+
+  const handleShareUnavailable = () => {
+    toast.info('No tienes servicios asignados para compartir');
+  };
+
   const markShared = async () => {
     if (!serviceId) return;
     const { error } = await supabase.rpc('mark_service_tracking_link_shared', {
@@ -360,7 +374,12 @@ export const TransmissionControl = ({
    * que produjo el NotAllowedError del 26/07.
    */
   const handleShare = async () => {
-    if (!serviceId) return;
+    // Red de seguridad: aunque el botón ya va deshabilitado, la acción jamás
+    // termina en un no-op mudo.
+    if (!serviceId) {
+      handleShareUnavailable();
+      return;
+    }
 
     const url = trackingUrlRef.current;
     setIsSharing(true);
@@ -386,20 +405,30 @@ export const TransmissionControl = ({
 
       // Sin URL cacheada (arranque muy temprano o RPC caída) se pide ahora: se
       // pierde el share nativo, pero el operador se lleva el link igual.
-      const fallbackUrl = url ?? await (async () => {
-        const { data, error } = await supabase.rpc('get_operator_service_tracking_token', {
-          p_service_id: serviceId,
-        });
-        if (error || !data) return null;
-        const resolved = buildPublicTrackingUrl(data);
-        trackingUrlRef.current = resolved;
-        return resolved;
-      })();
+      // El motivo del fallo viaja junto al resultado: un "no se pudo" genérico
+      // no le sirve a nadie para saber si es la señal o el servidor.
+      const fallback: { url: string | null; reason: string | null } = url
+        ? { url, reason: null }
+        : await (async () => {
+          const { data, error } = await supabase.rpc('get_operator_service_tracking_token', {
+            p_service_id: serviceId,
+          });
+          if (error) return { url: null, reason: error.message };
+          if (!data) return { url: null, reason: 'El servidor no devolvió un link de seguimiento.' };
+          const resolved = buildPublicTrackingUrl(data);
+          trackingUrlRef.current = resolved;
+          return { url: resolved, reason: null };
+        })();
 
-      if (!fallbackUrl) {
-        toast.error('No se pudo preparar el link. Revisa tu conexión e inténtalo de nuevo.');
+      if (!fallback.url) {
+        logger.error('No se pudo generar el token de seguimiento', fallback.reason);
+        toast.error(fallback.reason ?? 'No se pudo preparar el link de seguimiento.', {
+          description: 'Revisa tu conexión e inténtalo de nuevo.',
+        });
         return;
       }
+
+      const fallbackUrl = fallback.url;
 
       if (await copyToClipboard(fallbackUrl)) {
         toast.success('Link copiado · pégalo en WhatsApp');
@@ -411,6 +440,12 @@ export const TransmissionControl = ({
       // mejor que un error técnico que no deja nada.
       toast.info(fallbackUrl, { description: 'Copia este link y envíaselo al cliente', duration: 30000 });
       await markShared();
+    } catch (error) {
+      // Nada de esto puede terminar en una promesa rechazada sin dueño: si algo
+      // revienta fuera de las rutas previstas, el operador se entera igual.
+      const reason = error instanceof Error ? error.message : String(error);
+      logger.error('Compartir seguimiento falló de forma inesperada', error);
+      toast.error(reason, { description: 'No se pudo compartir el seguimiento.' });
     } finally {
       await Promise.allSettled([keepAwakePromise, resumePromise].filter(Boolean));
       setIsSharing(false);
@@ -609,17 +644,27 @@ export const TransmissionControl = ({
           )}
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => void handleShare()}
-          disabled={!serviceId || isSharing}
-          aria-label="Compartir seguimiento con el cliente"
-          className="size-12 shrink-0 rounded-2xl"
+        {/* El botón deshabilitado no recibe eventos (`disabled:pointer-events-none`),
+            y en móvil no hay hover que explique por qué. La envoltura captura el
+            toque y dice en voz alta lo único que falta: un servicio asignado. */}
+        <span
+          className="shrink-0"
+          onClick={canShare ? undefined : handleShareUnavailable}
         >
-          {isSharing ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => void handleShare()}
+            disabled={!canShare || isSharing}
+            aria-busy={isSharing}
+            aria-label={shareLabel}
+            title={shareLabel}
+            className={cn('size-12 shrink-0 rounded-2xl', !canShare && 'opacity-40')}
+          >
+            {isSharing ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
+          </Button>
+        </span>
       </div>
 
       {/* Recuperación en un toque. Ocupa el ancho completo y va inmediatamente
