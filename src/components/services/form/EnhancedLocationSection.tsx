@@ -1,8 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle } from 'lucide-react';
-import { useFrequentLocations } from '@/hooks/services/useFrequentLocations';
-import { MapboxAddressInput, type QuickAddress } from '@/components/services/MapboxAddressInput';
 import { OriginLocationField, type OriginResolvedCoords } from '@/components/services/OriginLocationField';
 
 interface EnhancedLocationSectionProps {
@@ -10,12 +8,11 @@ interface EnhancedLocationSectionProps {
   onOriginChange: (value: string) => void;
   originCoords: OriginResolvedCoords;
   onOriginCoordsChange: (coords: OriginResolvedCoords) => void;
-  saveOriginToCatalog: boolean;
-  onSaveOriginToCatalogChange: (value: boolean) => void;
   originDepartment?: string | null;
-  isAdmin: boolean;
   destination: string;
   onDestinationChange: (value: string) => void;
+  destinationCoords: OriginResolvedCoords;
+  onDestinationCoordsChange: (coords: OriginResolvedCoords) => void;
   originRequired?: boolean;
   destinationRequired?: boolean;
   disabled?: boolean;
@@ -28,40 +25,17 @@ export const EnhancedLocationSection = ({
   onOriginChange,
   originCoords,
   onOriginCoordsChange,
-  saveOriginToCatalog,
-  onSaveOriginToCatalogChange,
   originDepartment,
-  isAdmin,
   destination,
   onDestinationChange,
+  destinationCoords,
+  onDestinationCoordsChange,
   originRequired = false,
   destinationRequired = false,
   disabled = false,
   originError = false,
   destinationError = false,
 }: EnhancedLocationSectionProps) => {
-  const { frequentOrigins, frequentDestinations } = useFrequentLocations();
-
-  const originSuggestions = useMemo<QuickAddress[]>(
-    () =>
-      frequentOrigins.map((location) => ({
-        label: location.location,
-        address: location.location,
-        usageCount: location.count,
-      })),
-    [frequentOrigins],
-  );
-
-  const destinationSuggestions = useMemo<QuickAddress[]>(
-    () =>
-      frequentDestinations.map((location) => ({
-        label: location.location,
-        address: location.location,
-        usageCount: location.count,
-      })),
-    [frequentDestinations],
-  );
-
   return (
     <div className="space-y-6">
       {/* Origen */}
@@ -72,7 +46,7 @@ export const EnhancedLocationSection = ({
           {originError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
               <AlertTriangle className="size-3" />
-              Requerido
+              {origin.trim() ? 'Ubicacion sin confirmar' : 'Requerido'}
             </span>
           )}
         </Label>
@@ -82,14 +56,10 @@ export const EnhancedLocationSection = ({
           onChange={onOriginChange}
           coords={originCoords}
           onCoordsChange={onOriginCoordsChange}
-          saveToCatalog={saveOriginToCatalog}
-          onSaveToCatalogChange={onSaveOriginToCatalogChange}
           department={originDepartment}
-          isAdmin={isAdmin}
           placeholder="Direccion de origen del servicio"
           disabled={disabled}
           error={originError}
-          quickSuggestions={originSuggestions}
         />
       </div>
 
@@ -101,18 +71,20 @@ export const EnhancedLocationSection = ({
           {destinationError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
               <AlertTriangle className="size-3" />
-              Requerido
+              {destination.trim() ? 'Ubicacion sin confirmar' : 'Requerido'}
             </span>
           )}
         </Label>
-        <MapboxAddressInput
+        <OriginLocationField
           id="destination"
           value={destination}
-          onChange={(value) => onDestinationChange(value)}
-          placeholder="Direccion de destino del servicio"
+          onChange={onDestinationChange}
+          coords={destinationCoords}
+          onCoordsChange={onDestinationCoordsChange}
+          department={originDepartment}
+          placeholder="Direccion o enlace de Google Maps del destino"
           disabled={disabled}
           error={destinationError}
-          quickSuggestions={destinationSuggestions}
         />
       </div>
     </div>

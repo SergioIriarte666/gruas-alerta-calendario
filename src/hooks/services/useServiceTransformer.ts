@@ -145,6 +145,8 @@ export const useServiceTransformer = () => {
         originLat: item.origin_lat ?? null,
         originLng: item.origin_lng ?? null,
         destination: item.destination || '',
+        destinationLat: item.destination_lat ?? null,
+        destinationLng: item.destination_lng ?? null,
         value: parseFloat(item.value) || 0,
         operatorCommission: parseFloat(item.operator_commission) || 0,
         status: item.status || 'pending',

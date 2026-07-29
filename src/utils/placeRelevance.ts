@@ -17,8 +17,9 @@ const normalize = (value: string): string =>
  * Guard de relevancia para resultados de Places Text Search: ante un origin
  * sin sentido ("xyzz123"), Places casi nunca devuelve cero resultados, sino
  * su mejor adivinanza dentro del locationBias (un POI aleatorio cercano).
- * Exige que al menos un token significativo del query original aparezca en
- * el nombre/direccion del resultado antes de confiar en sus coordenadas.
+ * Para consultas con varios términos exige una mayoría real (mínimo dos):
+ * aceptar sólo "custodia" de "Custodia G5N" convirtió una coincidencia débil
+ * en un origen público a 30 km del lugar correcto.
  */
 export const isRelevantPlaceResult = (
   query: string,
@@ -34,5 +35,10 @@ export const isRelevantPlaceResult = (
   const haystack = normalize(`${displayName ?? ''} ${formattedAddress ?? ''}`);
   if (!haystack) return false;
 
-  return tokens.some((token) => haystack.includes(token));
+  const matchedTokens = tokens.filter((token) => haystack.includes(token)).length;
+  const requiredMatches = tokens.length === 1
+    ? 1
+    : Math.max(2, Math.ceil(tokens.length * 0.6));
+
+  return matchedTokens >= requiredMatches;
 };

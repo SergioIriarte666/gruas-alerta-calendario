@@ -52,7 +52,6 @@ const STOP_GEOFENCE_METERS = 300;
 const STOP_ARMING_METERS = 1000;
 const ETA_CACHE_MS = 60 * 1000;
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
-const GEOCODING_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
 
 type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
@@ -94,100 +93,6 @@ const toPublicStop = (stop: ServiceStop) => ({
 const DESTINATION_TARGET_MIN_RANK = STAGE_RANK.towing;
 
 type EtaTargetKind = "origin" | "destination" | "stop";
-
-/** Misma normalizacion que normalizeLocationText del cliente: minusculas, sin
- * diacriticos y espacios colapsados. "MANTOS DE ORO" == " Mantos  de Oro ". */
-const normalizeLocationText = (value: string): string =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-
-/** Geocodifica texto libre a coordenadas. Sesgado a Chile: los destinos son
- * comunas y faenas cuyo nombre se repite en otros paises. */
-async function geocodeText(address: string): Promise<{ lat: number; lng: number } | null> {
-  if (!GOOGLE_MAPS_API_KEY) return null;
-  try {
-    const url = new URL(GEOCODING_BASE);
-    url.searchParams.set("address", address);
-    url.searchParams.set("region", "cl");
-    url.searchParams.set("language", "es");
-    url.searchParams.set("key", GOOGLE_MAPS_API_KEY);
-    const res = await fetch(url.toString());
-    if (!res.ok) return null;
-    const data = await res.json();
-    const location = data?.results?.[0]?.geometry?.location;
-    if (typeof location?.lat !== "number" || typeof location?.lng !== "number") return null;
-    return { lat: location.lat, lng: location.lng };
-  } catch (error) {
-    console.warn("[service-tracking] geocodeText failed:", error);
-    return null;
-  }
-}
-
-/** Coordenadas del DESTINO del servicio, resueltas una sola vez y cacheadas en
- * services.destination_lat/lng.
- *
- * Catalog-first, igual que resolveOriginFromCatalog en el cliente: un match
- * exacto (normalizado) de nombre o alias en saved_locations GANA antes de
- * gastar una llamada de geocoding, porque para nombres coloquiales homonimos
- * ("Mantos de Oro") el geocoder devuelve un punto en otra ciudad.
- *
- * Devuelve null si el destino es solo texto no resoluble: el cliente muestra
- * "en traslado" sin numero, que es honesto, en vez de un ETA al punto que la
- * grua ya dejo atras. */
-async function resolveDestinationCoords(
-  supabase: ReturnType<typeof createClient>,
-  serviceId: string,
-  destinationText: string | null,
-  cachedLat: number | null,
-  cachedLng: number | null,
-): Promise<{ lat: number; lng: number } | null> {
-  if (cachedLat != null && cachedLng != null) return { lat: cachedLat, lng: cachedLng };
-
-  const text = (destinationText ?? "").trim();
-  if (normalizeLocationText(text).length < 2) return null;
-
-  let resolved: { lat: number; lng: number } | null = null;
-
-  try {
-    const { data: catalog } = await supabase
-      .from("saved_locations")
-      .select("name, aliases, latitude, longitude")
-      .eq("is_active", true);
-
-    const needle = normalizeLocationText(text);
-    const match = (catalog ?? []).find((location: Record<string, unknown>) => {
-      const name = typeof location.name === "string" ? normalizeLocationText(location.name) : "";
-      if (name === needle) return true;
-      const aliases = Array.isArray(location.aliases) ? location.aliases : [];
-      return aliases.some((alias: unknown) => typeof alias === "string" && normalizeLocationText(alias) === needle);
-    });
-
-    if (match && match.latitude != null && match.longitude != null) {
-      resolved = { lat: Number(match.latitude), lng: Number(match.longitude) };
-    }
-  } catch (error) {
-    console.warn("[service-tracking] catalogo de destino no consultable:", error);
-  }
-
-  if (!resolved) resolved = await geocodeText(text);
-  if (!resolved) return null;
-
-  try {
-    await supabase
-      .from("services")
-      .update({ destination_lat: resolved.lat, destination_lng: resolved.lng })
-      .eq("id", serviceId);
-  } catch {
-    // no-op: el cache es una optimizacion; con la escritura fallida se
-    // reintenta en el proximo poll y el ETA de este igual sale correcto
-  }
-
-  return resolved;
-}
 
 const jsonResponse = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -349,8 +254,9 @@ Deno.serve(async (req: Request) => {
     text: service.origin ?? null,
   };
 
-  // El destino solo existe como texto libre en la mayoria de los servicios; las
-  // coordenadas se resuelven bajo demanda al entrar en "towing" (Fix 8).
+  // Origen y destino son snapshots confirmados al crear/editar el servicio.
+  // Este endpoint público jamás geocodifica texto ni consulta el catálogo:
+  // hacerlo durante el viaje puede cambiar la ruta que ya recibió el cliente.
   const destination = {
     lat: (service.destination_lat as number | null) ?? null,
     lng: (service.destination_lng as number | null) ?? null,
@@ -710,15 +616,11 @@ Deno.serve(async (req: Request) => {
     etaTarget = nextStop ? { lat: nextStop.lat as number, lng: nextStop.lng as number } : null;
   } else if (STAGE_RANK[journeyStage] >= DESTINATION_TARGET_MIN_RANK) {
     etaTargetKind = "destination";
-    destinationCoords = await resolveDestinationCoords(
-      supabase,
-      link.service_id as string,
-      destination.text,
-      destination.lat,
-      destination.lng,
-    );
-    // Sin destino resoluble no hay ETA: el cliente ve "en traslado" sin numero.
-    // NO se cae de vuelta al origen — ese fallback ES el bug.
+    destinationCoords = destination.lat != null && destination.lng != null
+      ? { lat: destination.lat, lng: destination.lng }
+      : null;
+    // Un enlace nuevo no puede existir sin ambos snapshots (defensa en DB).
+    // Este null sólo protege enlaces legacy; nunca se cae de vuelta al origen.
     etaTarget = destinationCoords;
   } else if (hasOrigin) {
     etaTarget = { lat: origin.lat as number, lng: origin.lng as number };
@@ -814,11 +716,11 @@ Deno.serve(async (req: Request) => {
       recorded_at: point.recorded_at,
     },
     origin,
-    // El destino viaja SIEMPRE (texto + coordenadas resueltas si las hay): es
+    // El destino viaja SIEMPRE (texto + snapshot confirmado): es
     // lo que el cliente necesita leer una vez que su carga va en camino.
     destination: {
-      lat: destinationCoords?.lat ?? destination.lat,
-      lng: destinationCoords?.lng ?? destination.lng,
+      lat: destination.lat,
+      lng: destination.lng,
       text: destination.text,
     },
     journey_stage: journeyStage,

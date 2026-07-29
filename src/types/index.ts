@@ -21,6 +21,8 @@ export interface Service {
   originLat?: number | null;
   originLng?: number | null;
   destination: string;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
   serviceType: ServiceType;
   value: number;
   crane: Crane | null;
@@ -87,6 +89,8 @@ export interface ServiceSnakeCase extends Service {
   service_date?: string;
   origin_lat?: number | null;
   origin_lng?: number | null;
+  destination_lat?: number | null;
+  destination_lng?: number | null;
   purchase_order?: string;
   quote_number?: string;
   vehicle_brand?: string;
@@ -171,9 +175,13 @@ export interface ServiceFormData {
   originLng?: number | null;
   // id de saved_locations si el origen se selecciono del catalogo curado
   originCatalogId?: string | null;
-  // checkbox "Guardar en catalogo de ubicaciones" (solo admin)
-  saveOriginToCatalog?: boolean;
   destination: string;
+  // Igual que el origen: snapshot confirmado al crear/editar el servicio.
+  // El seguimiento publico nunca debe geocodificar este texto por su cuenta.
+  destinationLat?: number | null;
+  destinationLng?: number | null;
+  // El mismo catálogo se usa para destinos recurrentes.
+  destinationCatalogId?: string | null;
   crane?: string;
   operators?: Array<{
     id: string;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Building2, Loader2, MapPin, MapPinCheck, Star } from 'lucide-react';
+import { Building2, Loader2, MapPin, MapPinCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -10,20 +10,22 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
-import { useFavoriteLocations, matchFavoriteLocations } from '@/hooks/useFavoriteLocations';
-import { useOriginSearchCascade } from '@/hooks/useOriginSearchCascade';
+import {
+  useFavoriteLocations,
+  matchFavoriteLocations,
+  normalizeLocationText,
+} from '@/hooks/useFavoriteLocations';
+import { useGoogleMaps, type PlaceSuggestion } from '@/hooks/useGoogleMaps';
 import { OriginPinMap } from '@/components/services/OriginPinMap';
-import type { QuickAddress } from '@/components/services/MapboxAddressInput';
 import { parseLocationInput, type ParsedLocation } from '@/lib/locationParser';
 
 const logger = createLogger('OriginLocationField');
 const EXACT_LOCATION_RESOLVE_DEBOUNCE_MS = 400;
+const PLACE_AUTOCOMPLETE_DEBOUNCE_MS = 300;
 
 const formatCoordsFallback = (lat: number, lng: number) => `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`;
 
@@ -38,12 +40,8 @@ interface OriginLocationFieldProps {
   onChange: (value: string) => void;
   coords: OriginResolvedCoords;
   onCoordsChange: (coords: OriginResolvedCoords) => void;
-  saveToCatalog: boolean;
-  onSaveToCatalogChange: (value: boolean) => void;
   department?: string | null;
-  isAdmin: boolean;
   placeholder?: string;
-  quickSuggestions?: QuickAddress[];
   className?: string;
   disabled?: boolean;
   error?: boolean;
@@ -55,12 +53,8 @@ export function OriginLocationField({
   onChange,
   coords,
   onCoordsChange,
-  saveToCatalog,
-  onSaveToCatalogChange,
   department,
-  isAdmin,
   placeholder = 'Direccion de origen del servicio',
-  quickSuggestions = [],
   className,
   disabled = false,
   error = false,
@@ -69,11 +63,22 @@ export function OriginLocationField({
   const [open, setOpen] = useState(false);
   const [isExactLocation, setIsExactLocation] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const [networkSuggestions, setNetworkSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [networkLoading, setNetworkLoading] = useState(false);
   const resolvingValueRef = useRef<string | null>(null);
 
   const { data: favoriteLocations = [] } = useFavoriteLocations();
+  const { autocomplete, getPlaceDetails } = useGoogleMaps();
   const catalogMatches = useMemo(
-    () => (open ? matchFavoriteLocations(value, favoriteLocations) : []),
+    () => {
+      if (!open) return [];
+      if (normalizeLocationText(value).length < 2) {
+        return favoriteLocations
+          .filter((location) => location.latitude != null && location.longitude != null)
+          .slice(0, 8);
+      }
+      return matchFavoriteLocations(value, favoriteLocations);
+    },
     [open, value, favoriteLocations],
   );
 
@@ -82,11 +87,37 @@ export function OriginLocationField({
   // link de Google Maps), no tiene sentido gastar llamadas a Places/Geocoding
   // en el mientras tanto.
   const parsedLocation = useMemo(() => parseLocationInput(trimmed), [trimmed]);
-  const showNetworkTier = open && !disabled && trimmed.length >= 3 && !parsedLocation;
-  const { result: networkResult, loading: networkLoading } = useOriginSearchCascade(value, {
-    enabled: showNetworkTier,
-    department,
-  });
+  const showNetworkTier = open && !disabled && trimmed.length >= 2 && !parsedLocation;
+
+  useEffect(() => {
+    if (!showNetworkTier) {
+      setNetworkSuggestions([]);
+      setNetworkLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setNetworkLoading(true);
+      try {
+        const query = department ? `${trimmed}, ${department}` : trimmed;
+        const suggestions = await autocomplete(query);
+        if (!cancelled) setNetworkSuggestions(suggestions);
+      } catch (error) {
+        if (!cancelled) {
+          logger.warn('No se pudo buscar la ubicación en Google Places', error);
+          setNetworkSuggestions([]);
+        }
+      } finally {
+        if (!cancelled) setNetworkLoading(false);
+      }
+    }, PLACE_AUTOCOMPLETE_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [autocomplete, department, showNetworkTier, trimmed]);
 
   const handleParsedLocation = async (parsed: ParsedLocation) => {
     if ('error' in parsed) {
@@ -153,39 +184,45 @@ export function OriginLocationField({
     return () => window.clearTimeout(timer);
   }, [trimmed, disabled]);
 
-  const filteredQuickSuggestions = useMemo(() => {
-    const search = trimmed.toLowerCase();
-    if (search.length >= 3) return [];
-
-    return quickSuggestions
-      .filter((suggestion) =>
-        search.length === 0
-          ? true
-          : suggestion.address.toLowerCase().includes(search) ||
-            suggestion.label.toLowerCase().includes(search),
-      )
-      .slice(0, 6);
-  }, [quickSuggestions, trimmed]);
-
   const showCatalog = catalogMatches.length > 0;
-  const showQuickSuggestions = filteredQuickSuggestions.length > 0 && trimmed.length < 3;
-  const showEmpty = showNetworkTier && !networkLoading && !networkResult && !showCatalog;
+  const showEmpty =
+    showNetworkTier && !networkLoading && networkSuggestions.length === 0 && !showCatalog;
   const hasConfirmedCoords = coords.lat != null && coords.lng != null;
-  const showSaveCheckbox = isAdmin && hasConfirmedCoords && !coords.catalogId;
 
   const selectCatalogMatch = (match: (typeof catalogMatches)[number]) => {
     onChange(match.name);
     onCoordsChange({ lat: match.latitude, lng: match.longitude, catalogId: match.id });
-    onSaveToCatalogChange(false);
     setIsExactLocation(false);
     setOpen(false);
   };
 
-  const selectNetworkResult = () => {
-    if (!networkResult) return;
-    onCoordsChange({ lat: networkResult.lat, lng: networkResult.lng, catalogId: null });
-    setIsExactLocation(false);
+  const selectNetworkSuggestion = async (suggestion: PlaceSuggestion) => {
     setOpen(false);
+    setNetworkSuggestions([]);
+    setIsResolvingLocation(true);
+
+    try {
+      if (suggestion.source === 'geocode' && suggestion.coordinates) {
+        const [lng, lat] = suggestion.coordinates;
+        onChange(suggestion.text);
+        onCoordsChange({ lat, lng, catalogId: null });
+        setIsExactLocation(false);
+        return;
+      }
+
+      if (!suggestion.placeId) return;
+      const place = await getPlaceDetails(suggestion.placeId);
+      if (!place) {
+        toast.error('No pudimos obtener la ubicación exacta seleccionada.');
+        return;
+      }
+
+      onChange(place.formattedAddress || suggestion.text);
+      onCoordsChange({ lat: place.lat, lng: place.lng, catalogId: null });
+      setIsExactLocation(false);
+    } finally {
+      setIsResolvingLocation(false);
+    }
   };
 
   const handlePinDrag = (lat: number, lng: number) => {
@@ -205,7 +242,6 @@ export function OriginLocationField({
               onChange={(event) => {
                 onChange(event.target.value);
                 onCoordsChange({ lat: null, lng: null, catalogId: null });
-                onSaveToCatalogChange(false);
                 setIsExactLocation(false);
                 if (!open) setOpen(true);
               }}
@@ -222,7 +258,7 @@ export function OriginLocationField({
             <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
               {isResolvingLocation || networkLoading ? (
                 <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              ) : isExactLocation ? (
+              ) : hasConfirmedCoords ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -230,7 +266,9 @@ export function OriginLocationField({
                         <MapPinCheck className="size-4 text-success-text" />
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Coordenadas exactas del cliente</TooltipContent>
+                    <TooltipContent side="top">
+                      {isExactLocation ? 'Coordenadas exactas del enlace' : 'Ubicacion confirmada en el mapa'}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               ) : (
@@ -268,56 +306,28 @@ export function OriginLocationField({
                 </CommandGroup>
               ) : null}
 
-              {showQuickSuggestions ? (
-                <CommandGroup heading="Sugerencias rapidas">
-                  {filteredQuickSuggestions.map((suggestion) => (
+              {showNetworkTier && networkSuggestions.length > 0 ? (
+                <CommandGroup heading="Resultados de Google">
+                  {networkSuggestions.map((suggestion) => (
                     <CommandItem
-                      key={`${suggestion.label}-${suggestion.address}`}
-                      value={`${suggestion.label}-${suggestion.address}`}
+                      key={suggestion.placeId ?? `${suggestion.source}-${suggestion.text}`}
+                      value={suggestion.placeId ?? `${suggestion.source}-${suggestion.text}`}
                       className="gap-3 px-3 py-3"
-                      onSelect={() => {
-                        onChange(suggestion.address);
-                        onCoordsChange({ lat: null, lng: null, catalogId: null });
-                        setOpen(false);
-                      }}
+                      onSelect={() => void selectNetworkSuggestion(suggestion)}
                     >
-                      <Star className="size-4 shrink-0 text-warning-text" />
+                      <MapPin className="size-4 shrink-0 text-success-text" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{suggestion.label}</p>
-                        {suggestion.address && suggestion.address !== suggestion.label ? (
-                          <p className="truncate text-xs text-muted-foreground">{suggestion.address}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {suggestion.mainText || suggestion.text}
+                        </p>
+                        {suggestion.secondaryText ? (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {suggestion.secondaryText}
+                          </p>
                         ) : null}
                       </div>
-                      {typeof suggestion.usageCount === 'number' && suggestion.usageCount > 0 ? (
-                        <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                          {suggestion.usageCount} usos
-                        </span>
-                      ) : null}
                     </CommandItem>
                   ))}
-                </CommandGroup>
-              ) : null}
-
-              {showNetworkTier && networkResult ? (
-                <CommandGroup heading="Resultado de busqueda">
-                  <CommandItem
-                    value="network-result"
-                    className="gap-3 px-3 py-3"
-                    onSelect={selectNetworkResult}
-                  >
-                    <MapPin className="size-4 shrink-0 text-success-text" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm">{value}</p>
-                      {/* Direccion resuelta: deja que el operador confirme que no cayo
-                          en una calle homonima antes de guardar. */}
-                      {networkResult.formattedAddress &&
-                      networkResult.formattedAddress.trim().toLowerCase() !== value.trim().toLowerCase() ? (
-                        <p className="truncate text-xs text-muted-foreground">
-                          {networkResult.formattedAddress}
-                        </p>
-                      ) : null}
-                    </div>
-                  </CommandItem>
                 </CommandGroup>
               ) : null}
 
@@ -332,18 +342,7 @@ export function OriginLocationField({
       </Popover>
 
       {hasConfirmedCoords && (
-        <div className="space-y-2">
-          <OriginPinMap lat={coords.lat as number} lng={coords.lng as number} onChange={handlePinDrag} />
-          {showSaveCheckbox && (
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Checkbox
-                checked={saveToCatalog}
-                onCheckedChange={(checked) => onSaveToCatalogChange(checked === true)}
-              />
-              <Label className="cursor-pointer font-normal">Guardar en catalogo de ubicaciones</Label>
-            </label>
-          )}
-        </div>
+        <OriginPinMap lat={coords.lat as number} lng={coords.lng as number} onChange={handlePinDrag} />
       )}
     </div>
   );

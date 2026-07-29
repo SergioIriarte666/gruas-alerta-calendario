@@ -26,7 +26,11 @@ export const prepareServiceForDuplication = (service: Service) => {
     
     // Ubicaciones (copiar tal cual)
     origin: service.origin || '',
+    originLat: service.originLat ?? null,
+    originLng: service.originLng ?? null,
     destination: service.destination || '',
+    destinationLat: service.destinationLat ?? null,
+    destinationLng: service.destinationLng ?? null,
     
     // Recursos asignados
     craneId: service.crane?.id || '',

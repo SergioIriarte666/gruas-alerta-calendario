@@ -10,7 +10,8 @@ const logger = createLogger('ServiceFetcher');
 // Only select the columns actually used by the app
 const SERVICE_SELECT = `
   id, folio, request_date, service_date, client_id, purchase_order, purchase_order_number, quote_number,
-  vehicle_brand, vehicle_model, license_plate, origin, origin_lat, origin_lng, destination,
+  vehicle_brand, vehicle_model, license_plate,
+  origin, origin_lat, origin_lng, destination, destination_lat, destination_lng,
   service_type_id, value, crane_id, operator_id, operator_commission,
   status, observations, has_excess, client_covered_amount, excess_amount, third_party_client_id,
   invoice_folio, invoice_numero_fiscal,

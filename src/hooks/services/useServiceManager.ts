@@ -7,7 +7,6 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
-import { resolveClientDepartment, resolveOriginCoordinates } from '@/services/originResolutionService';
 import { planServiceCostChanges } from './serviceCostDiff';
 
 const logger = createLogger('ServiceManager');
@@ -22,36 +21,6 @@ interface UpdateServiceOptions {
   silent?: boolean;
   skipInvalidation?: boolean;
 }
-
-const geocodeOrigin = resolveOriginCoordinates;
-
-// Alimenta el catalogo de ubicaciones (saved_locations) con el pin
-// confirmado por el admin: reutilizar una ubicacion existente incrementa su
-// usage_count, guardar una nueva solo ocurre si el checkbox estaba activo.
-// Best-effort: nunca debe romper la creacion/actualizacion del servicio.
-const syncOriginCatalog = async (serviceData: Pick<
-  ServiceFormData,
-  'origin' | 'originLat' | 'originLng' | 'originCatalogId' | 'saveOriginToCatalog'
->) => {
-  if (serviceData.originLat == null || serviceData.originLng == null) return;
-  if (!serviceData.originCatalogId && !serviceData.saveOriginToCatalog) return;
-
-  try {
-    const { error } = await supabase.rpc('upsert_service_origin_location', {
-      p_matched_id: serviceData.originCatalogId ?? null,
-      p_typed_text: serviceData.origin?.trim() || null,
-      p_lat: serviceData.originLat,
-      p_lng: serviceData.originLng,
-      p_save_new: !!serviceData.saveOriginToCatalog,
-    });
-
-    if (error) {
-      logger.warn('[syncOriginCatalog] No se pudo sincronizar el catalogo de ubicaciones:', error);
-    }
-  } catch (syncError) {
-    logger.warn('[syncOriginCatalog] Error inesperado sincronizando catalogo:', syncError);
-  }
-};
 
 const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
   if (!error) return fallback;
@@ -131,6 +100,8 @@ const transformToService = (data: ServiceSnakeCase): Service => {
     originLat: (data.origin_lat as number | null | undefined) ?? null,
     originLng: (data.origin_lng as number | null | undefined) ?? null,
     destination: data.destination || '',
+    destinationLat: (data.destination_lat as number | null | undefined) ?? null,
+    destinationLng: (data.destination_lng as number | null | undefined) ?? null,
     // Manejo robusto de tipo de servicio
     serviceType: data.serviceType || {
       id: data.service_type_id || '',
@@ -325,23 +296,15 @@ export const useServiceManager = () => {
           created_by: createdBy
         };
 
-        // Si el formulario ya confirmo un pin (catalogo, Places/Geocoding +
-        // arrastre), se usa tal cual. El geocoding en submit es solo una red
-        // de seguridad para flujos que nunca pasaron por esa confirmacion.
-        const hasConfirmedOriginCoords = serviceData.originLat != null && serviceData.originLng != null;
-        const originGeo: { lat: number | null; lng: number | null; catalogId?: string | null } =
-          hasConfirmedOriginCoords
-            ? { lat: serviceData.originLat as number, lng: serviceData.originLng as number, catalogId: serviceData.originCatalogId ?? null }
-            : transformedData.origin
-              ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
-              : { lat: null, lng: null, catalogId: null };
-        // Si la resolucion en submit cayo en el catalogo, se propaga el id para
-        // incrementar usage_count aunque el usuario nunca haya tocado el dropdown.
-        const resolvedOriginCatalogId = originGeo.catalogId ?? serviceData.originCatalogId ?? null;
+        // Las coordenadas son un snapshot explícitamente confirmado en el
+        // formulario. Nunca geocodificar texto silenciosamente durante submit:
+        // una coincidencia aproximada no puede convertirse en una ruta pública.
         const transformedDataWithGeo = {
           ...transformedData,
-          origin_lat: originGeo.lat,
-          origin_lng: originGeo.lng,
+          origin_lat: transformedData.origin ? (serviceData.originLat ?? null) : null,
+          origin_lng: transformedData.origin ? (serviceData.originLng ?? null) : null,
+          destination_lat: transformedData.destination ? (serviceData.destinationLat ?? null) : null,
+          destination_lng: transformedData.destination ? (serviceData.destinationLng ?? null) : null,
         };
 
         const { data: newService, error: serviceError } = await supabase
@@ -493,17 +456,11 @@ export const useServiceManager = () => {
           }
         }
 
-        await syncOriginCatalog({
-          ...serviceData,
-          originLat: originGeo.lat,
-          originLng: originGeo.lng,
-          originCatalogId: resolvedOriginCatalogId,
-        });
-
         if (!options?.skipInvalidation) {
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['services'] }),
-            queryClient.invalidateQueries({ queryKey: ['costs'] })
+            queryClient.invalidateQueries({ queryKey: ['costs'] }),
+            queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
           ]);
         }
 
@@ -801,36 +758,17 @@ export const useServiceManager = () => {
         };
       }
 
-      if (serviceData.origin !== undefined && serviceData.origin && serviceData.origin.trim() !== '') {
-        let resolvedOriginCatalogId = serviceData.originCatalogId ?? null;
-        if (serviceData.originLat != null && serviceData.originLng != null) {
-          // El formulario ya confirmo un pin: se usa tal cual, sin geocodificar.
-          transformedData.origin_lat = serviceData.originLat;
-          transformedData.origin_lng = serviceData.originLng;
-        } else {
-          let clientIdForGeocode = transformedData.client_id as string | null | undefined;
-          if (clientIdForGeocode === undefined) {
-            const { data: currentServiceClient } = await supabase
-              .from('services')
-              .select('client_id')
-              .eq('id', id)
-              .maybeSingle();
-            clientIdForGeocode = currentServiceClient?.client_id ?? null;
-          }
+      if (serviceData.origin !== undefined) {
+        const hasOrigin = serviceData.origin.trim() !== '';
+        transformedData.origin_lat = hasOrigin ? (serviceData.originLat ?? null) : null;
+        transformedData.origin_lng = hasOrigin ? (serviceData.originLng ?? null) : null;
 
-          const originGeo = await geocodeOrigin(serviceData.origin, await resolveClientDepartment(clientIdForGeocode));
-          transformedData.origin_lat = originGeo.lat;
-          transformedData.origin_lng = originGeo.lng;
-          resolvedOriginCatalogId = originGeo.catalogId ?? resolvedOriginCatalogId;
-        }
+      }
 
-        // Mantener usage_count del catalogo al dia tambien en ediciones (best-effort).
-        await syncOriginCatalog({
-          ...serviceData,
-          originLat: transformedData.origin_lat as number | null,
-          originLng: transformedData.origin_lng as number | null,
-          originCatalogId: resolvedOriginCatalogId,
-        });
+      if (serviceData.destination !== undefined) {
+        const hasDestination = serviceData.destination.trim() !== '';
+        transformedData.destination_lat = hasDestination ? (serviceData.destinationLat ?? null) : null;
+        transformedData.destination_lng = hasDestination ? (serviceData.destinationLng ?? null) : null;
       }
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas
@@ -1250,6 +1188,7 @@ export const useServiceManager = () => {
           queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', id] }),
           queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
           queryClient.invalidateQueries({ queryKey: ['costs'] }),
+          queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
           queryClient.invalidateQueries({ queryKey: ['commissions'] }),
           queryClient.invalidateQueries({ queryKey: ['supplier-payments'] }),
           // ✅ Detalle proveedor (modal) usa estas keys, si no, queda cache viejo

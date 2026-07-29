@@ -657,7 +657,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       toast.success('Link de seguimiento copiado');
     } catch (err) {
       logger.error('[ServiceDetailsModal] Error generando link de seguimiento:', err);
-      toast.error('No se pudo generar el link de seguimiento');
+      const message = typeof (err as { message?: unknown })?.message === 'string'
+        ? (err as { message: string }).message
+        : 'No se pudo generar el link de seguimiento';
+      toast.error(message);
     }
   };
 

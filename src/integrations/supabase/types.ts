@@ -5500,6 +5500,7 @@ export type Database = {
           address: string | null
           aliases: string[] | null
           category: string | null
+          coordinate_locked: boolean
           created_at: string
           created_by: string | null
           id: string
@@ -5514,6 +5515,7 @@ export type Database = {
           address?: string | null
           aliases?: string[] | null
           category?: string | null
+          coordinate_locked?: boolean
           created_at?: string
           created_by?: string | null
           id?: string
@@ -5528,6 +5530,7 @@ export type Database = {
           address?: string | null
           aliases?: string[] | null
           category?: string | null
+          coordinate_locked?: boolean
           created_at?: string
           created_by?: string | null
           id?: string

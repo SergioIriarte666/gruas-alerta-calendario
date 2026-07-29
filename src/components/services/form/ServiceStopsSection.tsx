@@ -193,10 +193,7 @@ export const ServiceStopsSection = ({
                     onChange={(value) => updateStop(stop.id, { address: value })}
                     coords={{ lat: stop.lat, lng: stop.lng, catalogId: null }}
                     onCoordsChange={(coords) => updateStop(stop.id, { lat: coords.lat, lng: coords.lng })}
-                    saveToCatalog={false}
-                    onSaveToCatalogChange={() => {}}
                     department={department}
-                    isAdmin={false}
                     placeholder="Dirección de la parada"
                     disabled={disabled}
                   />

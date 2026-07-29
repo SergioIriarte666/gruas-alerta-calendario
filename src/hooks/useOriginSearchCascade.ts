@@ -19,10 +19,9 @@ interface UseOriginSearchCascadeOptions {
 }
 
 /**
- * Nivel 2/3 del origen (Places Text Search -> Geocoding fallback), en vivo
- * mientras el usuario escribe. Misma cascada que resolveOriginCoordinates usa
- * en el submit (src/services/originResolutionService.ts), solo que aqui se
- * expone cada intento por separado para poder mostrar/ocultar el resultado.
+ * Sugerencias de ubicacion (Places Text Search -> Geocoding fallback) mientras
+ * el usuario escribe. El resultado solo se convierte en coordenadas del
+ * servicio cuando el usuario lo selecciona expresamente.
  */
 export function useOriginSearchCascade(
   query: string,

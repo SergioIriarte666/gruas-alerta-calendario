@@ -8,7 +8,11 @@ interface ServiceFormData {
   crane: string;
   operators: ServiceOperator[];
   origin: string;
+  originLat: number | null;
+  originLng: number | null;
   destination: string;
+  destinationLat: number | null;
+  destinationLng: number | null;
   vehicleBrand: string;
   vehicleModel: string;
   licensePlate: string;
@@ -64,26 +68,40 @@ export const useServiceFormValidation = ({
       }
     }
 
-    // Validación de origen
-    if (selectedServiceType.originRequired) {
-      if (!formData.origin || formData.origin.trim() === '') {
+    const hasOriginText = formData.origin.trim() !== '';
+    const hasOriginCoords = formData.originLat != null && formData.originLng != null;
+    const hasDestinationText = formData.destination.trim() !== '';
+    const hasDestinationCoords = formData.destinationLat != null && formData.destinationLng != null;
+
+    // Una ubicación escrita no es una ubicación confirmada. Para cualquier
+    // servicio que tenga origen/destino, se exige seleccionar el resultado o
+    // fijar el pin antes de persistirlo.
+    if (selectedServiceType.originRequired && !hasOriginText) {
         errors.push({
           field: 'origin',
           message: `Debe especificar el lugar de origen para "${serviceTypeName}"`,
           severity: 'error'
         });
-      }
+    } else if (hasOriginText && !hasOriginCoords) {
+      errors.push({
+        field: 'origin',
+        message: 'Selecciona el origen del listado, pega su enlace de Google Maps o fija el pin',
+        severity: 'error'
+      });
     }
 
-    // Validación de destino
-    if (selectedServiceType.destinationRequired) {
-      if (!formData.destination || formData.destination.trim() === '') {
+    if (selectedServiceType.destinationRequired && !hasDestinationText) {
         errors.push({
           field: 'destination',
           message: `Debe especificar el lugar de destino para "${serviceTypeName}"`,
           severity: 'error'
         });
-      }
+    } else if (hasDestinationText && !hasDestinationCoords) {
+      errors.push({
+        field: 'destination',
+        message: 'Selecciona el destino del listado, pega su enlace de Google Maps o fija el pin',
+        severity: 'error'
+      });
     }
 
     // Validación de marca de vehículo

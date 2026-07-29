@@ -45,7 +45,11 @@ export interface ServiceFormData {
   
   // Ubicación
   origin: string;
+  originLat?: number | null;
+  originLng?: number | null;
   destination: string;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
   
   // Recursos
   craneId: string;

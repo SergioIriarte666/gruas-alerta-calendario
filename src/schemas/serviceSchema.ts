@@ -1,6 +1,7 @@
 
 import { z } from 'zod';
 import { ServiceTypeConfig } from '@/types/serviceTypes';
+import { isCoordinateInChile } from '@/lib/chileCoordinates';
 
 // Schema base para servicios
 const baseServiceFormSchema = z.object({
@@ -22,7 +23,11 @@ const baseServiceFormSchema = z.object({
   vehicleModel: z.string().optional(),
   licensePlate: z.string().optional(),
   origin: z.string().optional(),
+  originLat: z.number().nullable().optional(),
+  originLng: z.number().nullable().optional(),
   destination: z.string().optional(),
+  destinationLat: z.number().nullable().optional(),
+  destinationLng: z.number().nullable().optional(),
   serviceTypeId: z.string().min(1, 'El tipo de servicio es requerido'),
   value: z.number().min(0, 'El valor debe ser mayor a 0'),
   craneId: z.string().optional(),
@@ -66,6 +71,34 @@ const baseServiceFormSchema = z.object({
   custodyDiscountPercentage: z.number().min(0).max(100).default(0),
   custodyTotalAmount: z.number().min(0).optional(),
   custodyNotes: z.string().optional()
+}).superRefine((data, context) => {
+  const validateLocation = (
+    label: 'origen' | 'destino',
+    text: string | undefined,
+    lat: number | null | undefined,
+    lng: number | null | undefined,
+    path: 'origin' | 'destination',
+  ) => {
+    if (!text?.trim()) return;
+    if (lat == null || lng == null) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message: `Selecciona y confirma el ${label} en el mapa`,
+      });
+      return;
+    }
+    if (!isCoordinateInChile(lat, lng)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message: `Las coordenadas del ${label} están fuera de Chile o invertidas`,
+      });
+    }
+  };
+
+  validateLocation('origen', data.origin, data.originLat, data.originLng, 'origin');
+  validateLocation('destino', data.destination, data.destinationLat, data.destinationLng, 'destination');
 });
 
 // Función para crear schema dinámico basado en configuración del tipo de servicio

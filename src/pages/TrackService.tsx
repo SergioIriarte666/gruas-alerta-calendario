@@ -18,6 +18,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 import { resolveEtaLabel, type EtaTargetKind } from '@/utils/trackEtaLabel';
+import { trimRouteFromPosition } from '@/utils/routePolyline';
 import { getCraneTypeLabel } from '@/utils/craneType';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,10 +31,6 @@ const COPIAPO_CENTER: [number, number] = [-70.33, -27.37];
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const DEFAULT_ZOOM = 13;
-// Distancia grua-origen mas alla de la cual el dato de origen se considera
-// sospechoso (p.ej. geocoding de baja calidad que devolvio un centroide lejano)
-// y se ignora en el encuadre del mapa.
-const MAX_PLAUSIBLE_ORIGIN_DISTANCE_KM = 300;
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -650,8 +647,8 @@ interface TrackingResponse {
     recorded_at: string;
   } | null;
   origin?: { lat: number | null; lng: number | null; text: string | null };
-  // Destino del servicio. Las coordenadas se resuelven en el servidor recién al
-  // entrar en "towing" y pueden ser null si el destino es texto no geocodable.
+  // Snapshots confirmados del servicio. El endpoint nunca geocodifica estos
+  // textos durante el seguimiento.
   destination?: { lat: number | null; lng: number | null; text: string | null };
   journey_stage?: JourneyStage;
   eta?: { seconds: number; distance_meters: number; polyline: string } | null;
@@ -805,9 +802,16 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   // sirva el mismo trazado (caché de 60 s + polls de 15 s) el resultado es
   // idéntico por identidad, así que el marcador ajustado no se recoloca ni
   // parpadea entre polls.
-  const routeCoords = useMemo(
+  const decodedRouteCoords = useMemo(
     () => (data.eta?.polyline ? decodePolyline(data.eta.polyline) : []),
     [data.eta?.polyline],
+  );
+  const craneCoords: [number, number] | null = data.position
+    ? [data.position.lng, data.position.lat]
+    : null;
+  const routeCoords = useMemo(
+    () => trimRouteFromPosition(decodedRouteCoords, craneCoords),
+    [decodedRouteCoords, data.position?.lat, data.position?.lng],
   );
 
   // Solo la parada OBJETIVO del ETA se ajusta: es la única cuyo destino Google
@@ -958,30 +962,18 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       }
     }
 
-    const craneCoords: [number, number] | null = data.position
-      ? [data.position.lng, data.position.lat]
-      : null;
     const rawOriginCoords: [number, number] | null = data.origin?.lat != null && data.origin?.lng != null
       ? [data.origin.lng, data.origin.lat]
       : null;
 
-    let originCoords = rawOriginCoords;
-    if (craneCoords && rawOriginCoords) {
-      const distanceKm = haversineDistanceKm(craneCoords, rawOriginCoords);
-      if (distanceKm > MAX_PLAUSIBLE_ORIGIN_DISTANCE_KM) {
-        logger.warn('Origen sospechoso: distancia grua-origen supera el umbral, se ignora en el encuadre', {
-          distanceKm: Math.round(distanceKm),
-        });
-        originCoords = null;
-      }
-    }
+    // Snapshot confirmado al crear/editar el servicio. No se valida contra la
+    // posición de la grúa: antes de iniciar puede estar legítimamente a cientos
+    // de kilómetros. La defensa correcta vive al seleccionar y compartir.
+    const originCoords = rawOriginCoords;
 
     // Fix 8: desde que la carga va a bordo, el punto de interés del mapa es el
     // DESTINO, no el origen ya visitado — el trazado del ETA apunta allá y
     // encuadrar contra el origen dejaba la ruta entera fuera de pantalla.
-    // OJO: el umbral de "origen sospechoso" NO se aplica al destino. Nace de
-    // detectar un origen mal geocodificado; en un traslado real (Copiapó ->
-    // Viña, 800 km) una distancia enorme al destino es exactamente lo esperado.
     const toDestination = data.eta_target === 'destination';
     const destinationCoords: [number, number] | null =
       data.destination?.lat != null && data.destination?.lng != null

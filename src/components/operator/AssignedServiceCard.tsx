@@ -76,8 +76,30 @@ const StatusBadge = ({ status }: { status: Service['status'] }) => {
 
 // ── contenido común ────────────────────────────────────────────────────────
 
-const CardBody = ({ service, showNavigation = false }: { service: Service; showNavigation?: boolean }) => (
-  <div className="mt-4 space-y-3">
+const resolveNavigationTarget = (service: Service) => {
+  const goingToDestination =
+    service.status === 'inspection_completed' || service.status === 'completed';
+
+  return goingToDestination
+    ? {
+        kind: 'destino' as const,
+        label: service.destination,
+        lat: service.destinationLat,
+        lng: service.destinationLng,
+      }
+    : {
+        kind: 'origen' as const,
+        label: service.origin,
+        lat: service.originLat,
+        lng: service.originLng,
+      };
+};
+
+const CardBody = ({ service, showNavigation = false }: { service: Service; showNavigation?: boolean }) => {
+  const navigationTarget = resolveNavigationTarget(service);
+
+  return (
+    <div className="mt-4 space-y-3">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0 space-y-1.5">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -105,15 +127,22 @@ const CardBody = ({ service, showNavigation = false }: { service: Service; showN
         <p className="operator-native-eyebrow">Destino</p>
         <p className="truncate text-sm font-medium text-foreground">{service.destination}</p>
       </div>
-      {showNavigation && service.destination && (
+      {showNavigation && navigationTarget.label && (
         <button
           type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); openNavigation(service.destination); }}
-          aria-label={`Abrir navegación a ${service.destination}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openNavigation(navigationTarget.label, {
+              lat: navigationTarget.lat,
+              lng: navigationTarget.lng,
+            });
+          }}
+          aria-label={`Abrir navegación al ${navigationTarget.kind}: ${navigationTarget.label}`}
           className="operator-navigation-button absolute bottom-0 right-0 flex min-h-10 flex-shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-primary transition-all active:scale-95"
         >
           <Navigation className="size-3.5" />
-          Ir
+          Ir al {navigationTarget.kind}
         </button>
       )}
     </div>
@@ -130,8 +159,9 @@ const CardBody = ({ service, showNavigation = false }: { service: Service; showN
         )}
       </div>
     )}
-  </div>
-);
+    </div>
+  );
+};
 
 const CardHeader = ({ service, rightSlot }: { service: Service; rightSlot?: React.ReactNode }) => (
   <div className="flex items-start justify-between gap-3">
