@@ -46,6 +46,10 @@ export const STAGE_FLOOR_BY_SERVICE_STATUS: Record<string, JourneyStage> = {
   inspection_completed: "towing",
 };
 
+export const serviceStatusAllowsJourneyProgress = (
+  status: string | null | undefined,
+): boolean => status === "in_progress" || status === "inspection_completed";
+
 export const stageFloorForStatus = (status: string | null | undefined): JourneyStage | null =>
   (status && STAGE_FLOOR_BY_SERVICE_STATUS[status]) || null;
 

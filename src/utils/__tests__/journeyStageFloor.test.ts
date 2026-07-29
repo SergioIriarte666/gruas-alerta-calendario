@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolveEffectiveStage,
+  serviceStatusAllowsJourneyProgress,
   stageFloorForStatus,
 } from '../../../supabase/functions/_shared/journeyStage';
 
@@ -21,6 +22,18 @@ describe('piso de etapa por estado del servicio', () => {
   it('un servicio asignado pero no iniciado no tiene piso', () => {
     expect(stageFloorForStatus('pending')).toBeNull();
     expect(stageFloorForStatus(null)).toBeNull();
+  });
+});
+
+describe('avance de la línea de tiempo por estado', () => {
+  it('pending no puede consumir hitos de geocerca ni del viaje anterior', () => {
+    expect(serviceStatusAllowsJourneyProgress('pending')).toBe(false);
+  });
+
+  it('solo avanza después de iniciar o completar la inspección de carga', () => {
+    expect(serviceStatusAllowsJourneyProgress('in_progress')).toBe(true);
+    expect(serviceStatusAllowsJourneyProgress('inspection_completed')).toBe(true);
+    expect(serviceStatusAllowsJourneyProgress('completed')).toBe(false);
   });
 });
 

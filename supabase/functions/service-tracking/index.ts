@@ -3,6 +3,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import {
   rankOfStage,
   resolveEffectiveStage,
+  serviceStatusAllowsJourneyProgress,
   STAGE_RANK,
   type JourneyStage,
 } from "../_shared/journeyStage.ts";
@@ -34,7 +35,6 @@ const ACTIVE_TRACKING_STATUSES = ["pending", "in_progress", "inspection_complete
 // OJO: armed_at NO sirve como criterio de "iniciado" — se setea por distancia
 // GPS (>1 km de la parada), asi que el tramo previo del 23/07 lo habria
 // activado igual. El criterio real es el estado del servicio.
-const STARTED_STATUSES = ["in_progress", "inspection_completed"];
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 
 // Journey stage (Fase 2): distancias del ultimo punto al origen que marcan
@@ -301,8 +301,39 @@ Deno.serve(async (req: Request) => {
   // flujo original queda intacto — la Fase 1/2 (ETA al origen mientras el
   // servicio esta `pending`) es justamente el "tu grua va en camino" que ve el
   // cliente, y no se toca.
-  const serviceStarted = STARTED_STATUSES.includes(service.status);
+  const serviceStarted = serviceStatusAllowsJourneyProgress(service.status);
   const routeArmed = hasNavigableStops ? serviceStarted : true;
+
+  // `pending` es una asignación, no una continuación del viaje anterior.
+  // Si el servicio volvió de inspection_completed/in_progress a pending, el
+  // trigger de DB limpia estos hitos. Esta limpieza defensiva cubre links
+  // legacy o una lectura concurrente al cambio de estado.
+  if (
+    !serviceStarted &&
+    (
+      link.on_site_reached_at ||
+      link.max_stage_reached ||
+      link.eta_target_kind === "destination"
+    )
+  ) {
+    try {
+      await supabase
+        .from("service_tracking_links")
+        .update({
+          on_site_reached_at: null,
+          max_stage_reached: null,
+          eta_seconds: null,
+          eta_distance_meters: null,
+          eta_polyline: null,
+          eta_cached_at: null,
+          eta_target_stop_id: null,
+          eta_target_kind: null,
+        })
+        .eq("id", link.id);
+    } catch {
+      // no-op: el trigger es la defensa principal; esta es higiene adicional.
+    }
+  }
 
   // Proxima parada objetivo: primera no alcanzada con coordenadas (una parada
   // sin lat/lng no puede ser geofenceada ni ruteada, se salta).
@@ -529,6 +560,11 @@ Deno.serve(async (req: Request) => {
       const pending = engineStops.filter((s) => s.reached_at === null);
       journeyStage = pending.every((s) => s.stop_type === "final") ? "last_leg" : "en_route";
     }
+  } else if (!serviceStarted) {
+    // Con GPS disponible, un servicio asignado pero aún pendiente sólo puede
+    // mostrar el trayecto hacia el origen. No se arman hitos on_site/towing
+    // hasta que el operador pulse "Iniciar Servicio".
+    journeyStage = "en_route";
   } else {
     const distanceToOriginM = hasOrigin
       ? haversineMeters(point.latitude, point.longitude, origin.lat as number, origin.lng as number)
@@ -572,7 +608,7 @@ Deno.serve(async (req: Request) => {
   // maximo viejo ni un piso. Coherente por construccion: un servicio sin
   // iniciar esta en `pending`, que no tiene piso.
   const guidanceOn = !(hasNavigableStops && !routeArmed);
-  if (guidanceOn) {
+  if (guidanceOn && serviceStarted) {
     const persistedRank = rankOfStage(link.max_stage_reached as string | null);
     const effectiveStage = resolveEffectiveStage(
       journeyStage,
