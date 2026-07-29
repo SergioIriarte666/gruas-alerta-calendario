@@ -571,6 +571,11 @@ export const useOperatorLocationTracking = ({
 
     if (Capacitor.isNativePlatform()) {
       beginNativeWatcher(activeSessionId, activeOperatorId, activeUserId, activeServiceId, generation);
+      // Toda captura nativa debe tener su red de relanzamiento. Antes se armaba
+      // sólo al CREAR una sesión; al recuperar una sesión activa después de
+      // abrir/reiniciar la app arrancaba el watcher, pero no OperatorRelaunch.
+      // Centralizarlo acá cubre también foreground y rearmados del watchdog.
+      void armRelaunchOnMovement();
     } else {
       beginWebPolling(activeSessionId, activeOperatorId, activeUserId, activeServiceId, generation);
     }
@@ -661,9 +666,6 @@ export const useOperatorLocationTracking = ({
 
       beginCapture(session.id, operatorId, userId, effectiveServiceId);
       void keepAwakeSafely();
-      // Despertador: si el sistema mata el proceso, iOS relanza la app al
-      // detectar movimiento y el arranque recupera esta misma sesión.
-      void armRelaunchOnMovement();
 
       if (reason === 'manual') {
         toast.success(effectiveServiceId
