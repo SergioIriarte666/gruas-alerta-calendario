@@ -64,8 +64,12 @@ describe('locationUploadQueue', () => {
     const uploader = await loadQueue();
 
     await uploader.enqueue(point('2026-07-29T14:00:00.000Z'));
-    await vi.waitFor(() => expect(saveOperatorLocationPoint).toHaveBeenCalledTimes(1));
+    // `drain()` devuelve el barrido EN VUELO, así que esperarlo es determinista.
+    // Con vi.waitFor y temporizadores falsos el test dependía de ganarle una
+    // carrera al drain que enqueue dispara sin await, y bajo carga la perdía.
+    await uploader.drain();
 
+    expect(saveOperatorLocationPoint).toHaveBeenCalledTimes(1);
     expect(queued()).toHaveLength(0);
     expect(uploader.stats().pending).toBe(0);
   });
@@ -77,8 +81,9 @@ describe('locationUploadQueue', () => {
     const uploader = await loadQueue();
 
     await expect(uploader.enqueue(point('2026-07-29T14:00:00.000Z'))).resolves.toBeUndefined();
-    await vi.waitFor(() => expect(saveOperatorLocationPoint).toHaveBeenCalled());
+    await uploader.drain();
 
+    expect(saveOperatorLocationPoint).toHaveBeenCalled();
     expect(queued()).toHaveLength(1);
     expect(uploader.stats().pending).toBe(1);
   });
@@ -127,7 +132,7 @@ describe('locationUploadQueue', () => {
     const uploader = await loadQueue();
 
     await uploader.enqueue(point('2026-07-29T14:00:00.000Z'));
-    await vi.waitFor(() => expect(saveOperatorLocationPoint).toHaveBeenCalled());
+    await uploader.drain();
 
     expect(saveOperatorLocationPoint.mock.calls[0][0].isOfflineSync).toBe(false);
   });
@@ -138,6 +143,8 @@ describe('locationUploadQueue', () => {
     const uploader = await loadQueue();
 
     await expect(uploader.enqueue(point('2026-07-29T14:00:00.000Z'))).resolves.toBeUndefined();
-    await vi.waitFor(() => expect(saveOperatorLocationPoint).toHaveBeenCalledTimes(1));
+    await uploader.drain();
+
+    expect(saveOperatorLocationPoint).toHaveBeenCalledTimes(1);
   });
 });
