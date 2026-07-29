@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import UIKit
 
 /**
  Relanzamiento de la app tras la muerte del proceso.
@@ -35,9 +36,31 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
     /// Último despertar entregado por SLC, esté o no relanzada la app.
     private static let lastWakeAtKey = "operator_relaunch_last_wake_at"
 
+    /**
+     Ventana en la que se mantiene viva la captura fina tras un relanzamiento.
+
+     Tras despertar por ubicación, iOS concede muy poco tiempo de ejecución. Con
+     `startUpdatingLocation` y actualizaciones en segundo plano habilitadas, el
+     proceso se sostiene mientras el WebView carga, restaura la sesión de
+     Supabase y arma su propio watcher. Sin este puente, la app podía volver a
+     suspenderse antes de que JavaScript alcanzara a existir: se despertaba y no
+     servía de nada.
+     */
+    private static let launchBridgeSeconds: TimeInterval = 90
+
     private let manager = CLLocationManager()
+    /**
+     Manager separado para el puente de arranque.
+
+     Uno solo no sirve: SLC y `startUpdatingLocation` tienen configuraciones de
+     precisión distintas y apagar el segundo no puede arrastrar al primero, que
+     es el que debe seguir vigilando para siempre.
+     */
+    private let bridgeManager = CLLocationManager()
     private let defaults = UserDefaults.standard
-    private var isMonitoring = false
+    private var monitoring = false
+    private var bridgeActive = false
+    private var bridgeTimer: Timer?
 
     private override init() {
         super.init()
@@ -46,22 +69,39 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
         // sin mejorar nada, porque el sistema decide cuándo entregar el evento.
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         manager.pausesLocationUpdatesAutomatically = false
+
+        bridgeManager.delegate = self
+        bridgeManager.desiredAccuracy = kCLLocationAccuracyBest
+        bridgeManager.pausesLocationUpdatesAutomatically = false
     }
 
     var isArmed: Bool {
         defaults.bool(forKey: Self.armedKey)
     }
 
+    /// ¿La vigilancia está REALMENTE corriendo, no solo pedida?
+    var isMonitoring: Bool { monitoring }
+
     /**
      Empieza a vigilar los cambios significativos y recuerda la decisión.
 
-     Idempotente: llamarlo dos veces no abre dos vigilancias. iOS permite una
-     sola por app, y volver a llamar a `start...` sobre una activa es inofensivo
-     pero conviene no depender de ello.
+     Devuelve si la vigilancia quedó CORRIENDO, que no es lo mismo que haberla
+     pedido. Antes marcaba `armed = true` antes de comprobar nada, así que la app
+     podía informar "protegido" con permiso "Mientras se usa" —con el que iOS
+     no relanza— y la promesa era falsa justo donde más caro sale.
+
+     El estado persistido se conserva aunque el arranque falle: si el operador
+     concede "Siempre" más tarde desde Ajustes, `locationManagerDidChangeAuthorization`
+     lo aprovecha sin que nadie tenga que volver a pedirlo.
      */
-    func arm() {
+    @discardableResult
+    func arm() -> Bool {
         defaults.set(true, forKey: Self.armedKey)
         startMonitoring()
+        // El WebView está vivo y va a armar su propio watcher: el puente de
+        // arranque ya cumplió y deja de gastar batería.
+        endLaunchBridge()
+        return monitoring
     }
 
     /**
@@ -71,9 +111,10 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
      */
     func disarm() {
         defaults.set(false, forKey: Self.armedKey)
-        if isMonitoring {
+        endLaunchBridge()
+        if monitoring {
             manager.stopMonitoringSignificantLocationChanges()
-            isMonitoring = false
+            monitoring = false
         }
     }
 
@@ -92,11 +133,33 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
         }
         guard isArmed else { return }
         startMonitoring()
+
+        // Relanzados por ubicación: sostener el proceso hasta que JavaScript
+        // pueda hacerse cargo. Es la diferencia entre despertar y servir.
+        if launchedByLocation {
+            beginLaunchBridge()
+        }
     }
 
-    /// Datos de arranque para la autopsia (`app_boot_log`).
+    /**
+     Estado real de la protección, para la autopsia y para la UI.
+
+     Tres requisitos independientes, y los tres tienen que cumplirse para que
+     iOS relance de verdad. Se exponen por separado en vez de un booleano
+     porque cada uno se arregla en un lugar distinto de los Ajustes, y el
+     operador necesita saber cuál le falta.
+     */
     func launchInfo() -> [String: Any] {
-        var info: [String: Any] = ["armed": isArmed]
+        var info: [String: Any] = [
+            "armed": isArmed,
+            // Lo que se pidió vs. lo que efectivamente corre.
+            "monitoring": monitoring,
+            "authorizationStatus": Self.describe(manager.authorizationStatus),
+            // Sin "Actualización en segundo plano" iOS NO relanza por ubicación,
+            // por más permiso "Siempre" que haya.
+            "backgroundRefreshStatus": Self.describe(UIApplication.shared.backgroundRefreshStatus),
+            "available": CLLocationManager.significantLocationChangeMonitoringAvailable()
+        ]
         if let launchedAt = defaults.object(forKey: Self.launchedByLocationAtKey) as? Double {
             info["launchedByLocationAt"] = launchedAt * 1000
         }
@@ -104,6 +167,26 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
             info["lastWakeAt"] = wakeAt * 1000
         }
         return info
+    }
+
+    private static func describe(_ status: CLAuthorizationStatus) -> String {
+        switch status {
+        case .authorizedAlways: return "always"
+        case .authorizedWhenInUse: return "whenInUse"
+        case .denied: return "denied"
+        case .restricted: return "restricted"
+        case .notDetermined: return "notDetermined"
+        @unknown default: return "unknown"
+        }
+    }
+
+    private static func describe(_ status: UIBackgroundRefreshStatus) -> String {
+        switch status {
+        case .available: return "available"
+        case .denied: return "denied"
+        case .restricted: return "restricted"
+        @unknown default: return "unknown"
+        }
     }
 
     /// El motivo del arranque se consume una vez: no debe teñir el siguiente.
@@ -116,17 +199,58 @@ final class OperatorRelaunchMonitor: NSObject, CLLocationManagerDelegate {
         // SLC en segundo plano exige autorización "Siempre". Con "Mientras se
         // usa" el sistema no relanza, así que armarlo sería una promesa falsa.
         guard manager.authorizationStatus == .authorizedAlways else { return }
-        guard !isMonitoring else { return }
+        guard !monitoring else { return }
 
         manager.startMonitoringSignificantLocationChanges()
-        isMonitoring = true
+        monitoring = true
+    }
+
+    /**
+     Sostiene el proceso recién despertado con captura fina en segundo plano.
+
+     No sube nada —el pipeline de JS sigue siendo el único que escribe—: lo que
+     compra es TIEMPO DE EJECUCIÓN. Se apaga solo a los 90 segundos, o antes si
+     JavaScript llama a `arm()`, que es la señal de que ya tomó el control.
+     */
+    private func beginLaunchBridge() {
+        guard !bridgeActive else { return }
+        guard bridgeManager.authorizationStatus == .authorizedAlways else { return }
+
+        bridgeManager.allowsBackgroundLocationUpdates = true
+        bridgeManager.startUpdatingLocation()
+        bridgeActive = true
+
+        bridgeTimer?.invalidate()
+        bridgeTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.launchBridgeSeconds,
+            repeats: false
+        ) { [weak self] _ in
+            self?.endLaunchBridge()
+        }
+    }
+
+    private func endLaunchBridge() {
+        bridgeTimer?.invalidate()
+        bridgeTimer = nil
+        guard bridgeActive else { return }
+        bridgeManager.stopUpdatingLocation()
+        bridgeManager.allowsBackgroundLocationUpdates = false
+        bridgeActive = false
     }
 
     // MARK: - CLLocationManagerDelegate
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // Solo se deja constancia. Quien captura y sube es el pipeline de JS.
+        guard manager === self.manager else { return }
+
         defaults.set(Date().timeIntervalSince1970, forKey: Self.lastWakeAtKey)
+
+        // Despertar con la app en segundo plano es el caso que importa: iOS nos
+        // dio unos segundos y hay que estirarlos hasta que JavaScript arranque.
+        // En primer plano no hace falta, la app ya está viva.
+        if UIApplication.shared.applicationState != .active {
+            beginLaunchBridge()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

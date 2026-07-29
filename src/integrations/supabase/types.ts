@@ -9694,6 +9694,25 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: boolean
       }
+      record_operator_location_point: {
+        Args: {
+          p_accuracy_meters?: number
+          p_altitude_meters?: number
+          p_heading_degrees?: number
+          p_is_offline_sync?: boolean
+          p_latitude: number
+          p_longitude: number
+          p_operator_id: string
+          p_platform?: string
+          p_recorded_at: string
+          p_service_id?: string
+          p_session_id: string
+          p_source?: string
+          p_speed_mps?: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       detect_tracking_silence: {
         Args: Record<PropertyKey, never>
         Returns: {

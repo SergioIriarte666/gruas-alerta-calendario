@@ -29,6 +29,11 @@ import { STOP_REASON_LABELS } from '@/types/serviceStopEvent';
 import { resolveTransmissionStopGate } from '@/utils/transmissionStopGate';
 import { buildPublicTrackingUrl } from '@/utils/trackingUrl';
 import {
+  isRelaunchProtected,
+  readRelaunchStatus,
+  type RelaunchLaunchInfo,
+} from '@/native/operatorRelaunch';
+import {
   KEEP_AWAKE_DENIED_MESSAGE,
   keepAwakeSafely,
   subscribeKeepAwake,
@@ -144,6 +149,7 @@ export const TransmissionControl = ({
   const [pinOpen, setPinOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showAlwaysHint, setShowAlwaysHint] = useState(false);
+  const [relaunchStatus, setRelaunchStatus] = useState<RelaunchLaunchInfo | null>(null);
   const [keepAwakeOutcome, setKeepAwakeOutcome] = useState<KeepAwakeOutcome>('idle');
   const [now, setNow] = useState(() => businessClock.now());
   const [isResumingTrip, setIsResumingTrip] = useState(false);
@@ -267,12 +273,36 @@ export const TransmissionControl = ({
     return () => { cancelled = true; };
   }, [refreshLinkState, serviceId]);
 
-  // Sin permiso "Siempre" en iOS el rastreo muere al bloquear la pantalla: es
-  // el único texto que se conserva, porque sin él el control queda en gris sin
-  // que el operador pueda deducir por qué.
+  /**
+   * Estado REAL de la protección en segundo plano.
+   *
+   * Antes esto preguntaba `checkLocationPermission() !== 'granted'`, y el plugin
+   * de Geolocation devuelve `granted` tanto para "Siempre" como para "Mientras
+   * se usa". O sea: el aviso desaparecía en cuanto el operador concedía el
+   * permiso débil, con el que el rastreo muere al bloquear la pantalla y iOS no
+   * relanza la app. La UI decía "todo en orden" sobre una protección inexistente.
+   *
+   * Ahora lo decide el nativo, que sí distingue los tres requisitos.
+   */
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    void checkLocationPermission().then((state) => setShowAlwaysHint(state !== 'granted'));
+    let cancelled = false;
+
+    void readRelaunchStatus().then((status) => {
+      if (cancelled) return;
+      if (status) {
+        setRelaunchStatus(status);
+        setShowAlwaysHint(!isRelaunchProtected(status));
+        return;
+      }
+      // Sin plugin nativo (bundle viejo en terreno) se cae al chequeo antiguo:
+      // es menos preciso, pero mejor que quedarse mudo.
+      void checkLocationPermission().then((state) => {
+        if (!cancelled) setShowAlwaysHint(state !== 'granted');
+      });
+    });
+
+    return () => { cancelled = true; };
   }, [isTracking]);
 
   if (trackingDisabled || !operatorId) return null;
@@ -634,7 +664,10 @@ export const TransmissionControl = ({
 
       {showAlwaysHint && (
         <p className="mt-3 rounded-xl border border-info/30 bg-info/10 p-2.5 text-xs text-info">
-          Para transmitir con la pantalla apagada, activa Ubicación → Siempre en Ajustes de iOS.
+          {relaunchStatus?.backgroundRefreshStatus === 'denied'
+            || relaunchStatus?.backgroundRefreshStatus === 'restricted'
+            ? 'Activa Ajustes → General → Actualización en segundo plano. Sin eso, si el sistema cierra la app no vuelve sola.'
+            : 'Para transmitir con la pantalla apagada, activa Ubicación → Siempre en Ajustes de iOS.'}
         </p>
       )}
 

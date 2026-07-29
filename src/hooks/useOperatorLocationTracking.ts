@@ -1026,7 +1026,10 @@ export const useOperatorLocationTracking = ({
   const recoverTrackingOnForeground = useCallback(async () => {
     if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
 
-    await flushQueue();
+    // Sin await: vaciar la cola puede tardar (o quedarse esperando una red que
+    // no responde) y la recuperación del rastreo no puede ir detrás de eso. El
+    // uploader tiene su propio ritmo; acá lo único urgente es volver a capturar.
+    void flushQueue();
     // La sesión manda: si murió mientras la app estaba suspendida, esto apaga
     // la captura antes de que el resto de la función decida sobre datos viejos.
     await reconcileWithSession();

@@ -17,9 +17,7 @@ import type {
 } from '@/types/operatorLocation';
 
 const SESSIONS_TABLE = 'operator_location_sessions';
-const POINTS_TABLE = 'operator_location_points';
 const TRACKING_SETTINGS_TABLE = 'tracking_settings';
-const POINTS_CONFLICT_TARGET = 'operator_id,recorded_at,latitude,longitude';
 
 // Bug conocido de WebKit/Safari: GeolocationPosition.timestamp a veces viene
 // referido al epoch de Apple (2001-01-01) en vez del epoch Unix (1970-01-01).
@@ -415,44 +413,64 @@ export const findActiveOperatorLocationSession = async (
   return (data as OperatorLocationSession | null) ?? null;
 };
 
+/**
+ * Fallo al subir un punto, con la distinción que importa.
+ *
+ * `permanent` separa "el servidor lo rechazó por lo que ES" —RLS, constraint,
+ * sesión inexistente— de "no llegó". Es la diferencia entre un punto roto, que
+ * hay que soltar, y un punto que solo espera cobertura, que hay que guardar
+ * indefinidamente. Confundirlas borraba el primer punto de la cola a los diez
+ * minutos sin señal, justo en el escenario para el que la cola existe.
+ */
+export class LocationUploadError extends Error {
+  readonly code: string | null;
+  readonly permanent: boolean;
+
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = 'LocationUploadError';
+    this.code = code;
+    // PostgREST siempre trae código en un rechazo del servidor; una falla de
+    // transporte (fetch abortado, DNS, timeout) llega sin él. La heurística es
+    // deliberadamente conservadora: ante la duda, el punto NO se descarta.
+    this.permanent = Boolean(code);
+  }
+}
+
+export const isPermanentUploadError = (error: unknown): boolean =>
+  error instanceof LocationUploadError && error.permanent;
+
 export const saveOperatorLocationPoint = async (
   payload: OperatorLocationPayload,
 ): Promise<void> => {
-  const { error } = await supabase.from(POINTS_TABLE).upsert({
-    session_id: payload.sessionId,
-    operator_id: payload.operatorId,
-    user_id: payload.userId,
-    service_id: payload.serviceId,
-    latitude: payload.latitude,
-    longitude: payload.longitude,
-    accuracy_meters: payload.accuracyMeters,
-    speed_mps: payload.speedMps,
-    heading_degrees: payload.headingDegrees,
-    altitude_meters: payload.altitudeMeters,
-    recorded_at: payload.recordedAt,
-    is_offline_sync: payload.isOfflineSync ?? false,
+  // Una sola llamada, una sola transacción. Antes eran dos escrituras sueltas:
+  // si la segunda fallaba, el punto quedaba guardado y la sesión decía que no
+  // había llegado nada, y el barrido de zombies la cerraba por "timeout" con
+  // puntos entrando.
+  const { error } = await supabase.rpc('record_operator_location_point', {
+    p_session_id: payload.sessionId,
+    p_operator_id: payload.operatorId,
+    p_user_id: payload.userId,
+    p_service_id: payload.serviceId,
+    p_latitude: payload.latitude,
+    p_longitude: payload.longitude,
+    p_accuracy_meters: payload.accuracyMeters,
+    p_speed_mps: payload.speedMps,
+    p_heading_degrees: payload.headingDegrees,
+    p_altitude_meters: payload.altitudeMeters,
+    p_recorded_at: payload.recordedAt,
+    p_is_offline_sync: payload.isOfflineSync ?? false,
     // 'heartbeat' marca los latidos sin movimiento: sin ellos, un operador
     // detenido y una app muerta se ven idénticos desde la central.
-    source: payload.source ?? 'mobile_app',
-    platform: getLocationPlatform(),
-  }, {
-    onConflict: POINTS_CONFLICT_TARGET,
-    ignoreDuplicates: true,
+    p_source: payload.source ?? 'mobile_app',
+    p_platform: getLocationPlatform(),
   });
 
   if (error) {
-    throw new Error(error.message || 'No se pudo guardar el punto de ubicación');
-  }
-
-  const { error: updateError } = await supabase
-    .from(SESSIONS_TABLE)
-    .update({
-      last_point_at: payload.recordedAt,
-    })
-    .eq('id', payload.sessionId);
-
-  if (updateError) {
-    throw new Error(updateError.message || 'No se pudo actualizar la sesión de ubicación');
+    throw new LocationUploadError(
+      error.message || 'No se pudo guardar el punto de ubicación',
+      error.code ?? null,
+    );
   }
 };
 

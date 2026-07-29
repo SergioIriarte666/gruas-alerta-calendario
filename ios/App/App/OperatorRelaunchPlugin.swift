@@ -24,15 +24,20 @@ public class OperatorRelaunchPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func arm(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            OperatorRelaunchMonitor.shared.arm()
-            call.resolve(["armed": OperatorRelaunchMonitor.shared.isArmed])
+            // Se devuelve lo que quedó CORRIENDO, no lo que se pidió: sin
+            // permiso "Siempre" la vigilancia no arranca y decir "armado" sería
+            // prometer un relanzamiento que no va a ocurrir.
+            let monitoring = OperatorRelaunchMonitor.shared.arm()
+            var result = OperatorRelaunchMonitor.shared.launchInfo()
+            result["armed"] = monitoring
+            call.resolve(result)
         }
     }
 
     @objc func disarm(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             OperatorRelaunchMonitor.shared.disarm()
-            call.resolve(["armed": OperatorRelaunchMonitor.shared.isArmed])
+            call.resolve(OperatorRelaunchMonitor.shared.launchInfo())
         }
     }
 
