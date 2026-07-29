@@ -24,6 +24,7 @@ export type Database = {
           launch_reason: string
           operator_id: string | null
           pending_points: number | null
+          relaunch_armed: boolean | null
           platform: string | null
           user_id: string | null
         }
@@ -36,6 +37,7 @@ export type Database = {
           launch_reason?: string
           operator_id?: string | null
           pending_points?: number | null
+          relaunch_armed?: boolean | null
           platform?: string | null
           user_id?: string | null
         }
@@ -48,6 +50,7 @@ export type Database = {
           launch_reason?: string
           operator_id?: string | null
           pending_points?: number | null
+          relaunch_armed?: boolean | null
           platform?: string | null
           user_id?: string | null
         }

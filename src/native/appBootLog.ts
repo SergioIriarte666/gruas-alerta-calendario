@@ -83,6 +83,10 @@ export const recordAppBoot = async (
       // Cola heredada del arranque anterior: con puntos pendientes murió la
       // SUBIDA; con la cola vacía y un hueco en el recorrido, murió la CAPTURA.
       pending_points: locationUploadQueue.stats().pending,
+      // NULL a propósito cuando no hay plugin: distingue "no está armado" de
+      // "este binario ni siquiera puede armarlo". Averiguar eso costó una tarde
+      // de leer el log de Xcode buscando una llamada que no aparecía.
+      relaunch_armed: relaunch ? relaunch.armed : null,
     } as never);
 
     if (error) throw new Error(error.message);
