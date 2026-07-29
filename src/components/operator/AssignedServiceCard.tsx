@@ -26,6 +26,12 @@ import { ServiceHandoffGate } from './ServiceHandoffGate';
 interface AssignedServiceCardProps {
   service: Service;
   showDeliveryAction?: boolean;
+  /**
+   * El operador ve el servicio pero no lo maneja: es Adicional
+   * (service_resources), no el principal. Muestra el expediente y esconde TODA
+   * acción operacional. Ver `selectOperatedServices`.
+   */
+  readOnly?: boolean;
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -140,7 +146,11 @@ const CardHeader = ({ service, rightSlot }: { service: Service; rightSlot?: Reac
 
 // ── componente principal ───────────────────────────────────────────────────
 
-export const AssignedServiceCard = ({ service, showDeliveryAction = false }: AssignedServiceCardProps) => {
+export const AssignedServiceCard = ({
+  service,
+  showDeliveryAction = false,
+  readOnly = false,
+}: AssignedServiceCardProps) => {
   const { status } = service;
   const borderClass = getUrgencyBorder(service.serviceDate, status);
   const baseCard = cn('operator-service-card rounded-3xl border border-l-2 border-border bg-card p-5', borderClass);
@@ -222,6 +232,32 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
       </DialogContent>
     </Dialog>
   );
+
+  // MODO CONSULTA (operador Adicional)
+  //
+  // Va primero de todo: el servicio no es suyo, así que ninguna rama de abajo
+  // debe poder ofrecerle un control. Ve el expediente —folio, ruta, vehículo,
+  // navegación— y nada más. El 28/07 el adicional tenía habilitado "Rodando"
+  // sobre la detención real de un operador a 500 km.
+  if (readOnly) {
+    return (
+      <div className={cn(baseCard, 'opacity-90')}>
+        <CardHeader
+          service={service}
+          rightSlot={
+            <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              Apoyo
+            </span>
+          }
+        />
+        <CardBody service={service} showNavigation />
+        <p className="mt-4 text-xs font-medium text-muted-foreground">
+          Estás como operador de apoyo. {service.operator?.name ?? 'El operador principal'} maneja
+          la transmisión, las detenciones y la entrega de este servicio.
+        </p>
+      </div>
+    );
+  }
 
   // RECEPCIÓN PENDIENTE (relevo con servicio en vuelo)
   //

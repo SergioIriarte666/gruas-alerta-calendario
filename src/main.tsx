@@ -5,6 +5,7 @@ import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import App from './App.tsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { createLogger } from '@/lib/logger'
+import { rememberFatalError } from '@/native/fatalErrorStore'
 import './index.css'
 
 const logger = createLogger('Boot')
@@ -115,6 +116,10 @@ window.addEventListener('unhandledrejection', (ev) => {
     reloadOnce();
     return;
   }
+  // Se persiste ANTES de decidir qué mostrar: si esto termina matando el
+  // proceso, el próximo arranque lo va a subir. Es la única forma de que un
+  // fallo en el teléfono de un operador a 500 km deje algo que leer.
+  rememberFatalError(ev.reason);
   if (!shouldShowBootError()) {
     logger.error('Unhandled promise rejection (post-boot o fuera del portal operador)', { reason: describeError(ev.reason) });
     return;
@@ -130,6 +135,7 @@ window.addEventListener('error', (ev) => {
     reloadOnce();
     return;
   }
+  rememberFatalError(ev.error ?? ev.message);
   if (!shouldShowBootError()) {
     logger.error('Error global (post-boot o fuera del portal operador)', { message: ev.message, error: describeError(ev.error) });
     return;

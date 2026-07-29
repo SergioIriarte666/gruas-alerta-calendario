@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useServiceInspection } from '@/hooks/useServiceInspection';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
+import { ServiceDocumentsSection } from '@/components/services/ServiceDocumentsSection';
 import { PDFProgress } from '@/components/operator/PDFProgress';
 import { InspectionHeader } from '@/components/operator/inspection/InspectionHeader';
 import { InspectionErrorState } from '@/components/operator/inspection/InspectionErrorState';
@@ -131,6 +132,14 @@ const ServiceInspection = () => {
       />
 
       <ServiceDetailsCard service={service} />
+
+      {/* Recuperar y compartir el expediente desde el propio teléfono. Con los
+          envíos automáticos al cliente apagados a propósito, la entrega es
+          manual: hasta hoy obligaba a descargar el PDF y reenviarlo a mano. */}
+      <section className="operator-inspection-card rounded-3xl border border-border bg-card p-4">
+        <h2 className="operator-native-eyebrow mb-3">Documentos del servicio</h2>
+        <ServiceDocumentsSection serviceId={id} folio={service.folio} />
+      </section>
 
       <InspectionForm
         service={service}

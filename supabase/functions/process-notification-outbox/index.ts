@@ -26,12 +26,36 @@ const MAX_ATTEMPTS = 5;
 const TRACKING_BASE_URL = "https://app.gruas5norte.cl/track/";
 const PDF_SIGNED_URL_SECONDS = 10 * 60;
 
+/**
+ * Sufijo del botón de la plantilla `operador_telemetria_caida`.
+ *
+ * En Meta el botón se configura como `https://app.gruas5norte.cl/operador?accion={{1}}`
+ * y aquí se manda solo el valor. Aterriza en el portal operador con el botón
+ * "Reanudar viaje" enfocado (Fix 10).
+ */
+const RESUME_TRIP_BUTTON_PARAM = "reanudar";
+
 type OutboxKind =
   | "tracking_link"
   | "inspection_whatsapp"
   | "inspection_email"
   | "delivery_whatsapp"
-  | "delivery_email";
+  | "delivery_email"
+  | "operator_tracking_silence";
+
+/**
+ * Canales HACIA EL CLIENTE. Son los únicos que el interruptor por servicio
+ * (`client_notifications_enabled`) puede apagar: las alertas internas —hoy el
+ * watchdog de telemetría— salen igual con el interruptor abajo, porque apagar
+ * la voz hacia afuera no puede dejar ciega a la operación.
+ */
+const CLIENT_FACING_KINDS: ReadonlySet<OutboxKind> = new Set<OutboxKind>([
+  "tracking_link",
+  "inspection_whatsapp",
+  "inspection_email",
+  "delivery_whatsapp",
+  "delivery_email",
+]);
 
 interface OutboxRow {
   id: string;
@@ -119,6 +143,29 @@ class OutboxWorker {
   }
 
   private async processRow(row: OutboxRow): Promise<"sent" | "skipped"> {
+    // El cortafuegos va PRIMERO, antes de resolver destinatarios o firmar PDFs:
+    // con el interruptor abajo no se toca nada del servicio ni se consulta a
+    // Meta. Es el cortafuegos de diseño que reemplaza al de datos placeholder
+    // (25/07: un correo salió `sent` hacia un dominio con error de tipeo).
+    if (CLIENT_FACING_KINDS.has(row.kind)) {
+      const { data: enabled, error } = await this.supabase.rpc(
+        "service_client_notifications_enabled",
+        { p_service_id: row.service_id },
+      );
+      if (error) throw new Error(error.message);
+      if (enabled !== true) {
+        await this.markSkipped(row.id, "client_notifications_disabled");
+        return "skipped";
+      }
+    }
+
+    if (row.kind === "operator_tracking_silence") {
+      const dispatched = await this.dispatchTrackingSilence(row);
+      if (!dispatched) return "skipped";
+      await this.markSent(row.id);
+      return "sent";
+    }
+
     if (row.kind === "tracking_link" || row.kind === "inspection_whatsapp" || row.kind === "delivery_whatsapp") {
       const gate = await getWhatsAppGate(this.supabase);
       const gateReason = this.getWhatsAppSkipReason(row.kind, gate);
@@ -255,6 +302,58 @@ class OutboxWorker {
         throw new Error(result.error?.message ?? "No se pudo enviar WhatsApp de seguimiento");
       }
     });
+  }
+
+  /**
+   * Aviso al OPERADOR de que su telemetría se cayó.
+   *
+   * Va sin `withDedupe`: el dedupe de este tipo ya se resolvió al encolar, en
+   * `enqueue_tracking_silence_alerts`, con una llave por EPISODIO (servicio +
+   * último punto conocido). Meterlo aquí también bloquearía el reintento de una
+   * fila cuyo envío falló, que es justo lo que el outbox tiene que poder hacer.
+   *
+   * Tampoco pasa por el gate de WhatsApp del cliente: es un canal interno.
+   */
+  private async dispatchTrackingSilence(row: OutboxRow): Promise<boolean> {
+    const payload = row.payload as {
+      folio?: string;
+      operator_name?: string;
+      operator_phone?: string;
+      silent_minutes?: number;
+      open_stop_reason?: string | null;
+    };
+
+    const normalizedPhone = normalizeChileanPhone(payload.operator_phone ?? null);
+    if (!normalizedPhone.ok) {
+      await this.markSkipped(row.id, "operator_without_valid_phone");
+      return false;
+    }
+
+    const firstName = (payload.operator_name ?? "").trim().split(" ")[0] || "Operador";
+    const minutes = String(Math.max(1, Math.round(payload.silent_minutes ?? 0)));
+
+    const result = await sendWhatsAppTemplate(
+      normalizedPhone.phone,
+      "operador_telemetria_caida",
+      [firstName, payload.folio ?? "", minutes],
+      {
+        event: "operador_telemetria_caida",
+        triggeredBy: null,
+        context: {
+          folio: payload.folio,
+          serviceId: row.service_id,
+          silentMinutes: payload.silent_minutes,
+          openStopReason: payload.open_stop_reason ?? null,
+        },
+      },
+      RESUME_TRIP_BUTTON_PARAM,
+    );
+
+    if (!result.success) {
+      throw new Error(result.error?.message ?? "No se pudo avisar al operador");
+    }
+
+    return true;
   }
 
   private async dispatchInspectionWhatsApp(row: OutboxRow): Promise<boolean> {

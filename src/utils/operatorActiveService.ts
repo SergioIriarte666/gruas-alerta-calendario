@@ -56,12 +56,13 @@ export const IN_FLIGHT_OPERATOR_SERVICE_STATUSES = [
  * ¿Es SUYO el servicio, o solo está autorizado en él?
  *
  * Un servicio tiene muchos operadores autorizados —el principal más los
- * adicionales de service_resources— pero UNA sola grúa transmitiendo. Para
- * decidir de quién es la POSICIÓN del servicio, "estar asignado" es la pregunta
- * equivocada: el 28/07, tras el relevo Sergio -> Jesús, el teléfono de Sergio
- * seguía etiquetando puntos al folio 3262047-1 porque seguía figurando como
- * Adicional. La página del cliente alternaba entre el punto más fresco de cada
- * teléfono y la grúa saltaba 430 km entre el corte y Grúas 5 Norte.
+ * adicionales de service_resources— pero UNA sola grúa haciendo el traslado.
+ * Para decidir de quién es la POSICIÓN del servicio —y de quién son sus
+ * CONTROLES—, "estar asignado" es la pregunta equivocada: el 28/07, tras el
+ * relevo Sergio -> Jesús, el teléfono de Sergio seguía etiquetando puntos al
+ * folio 3262047-1 porque seguía figurando como Adicional. La página del cliente
+ * alternaba entre el punto más fresco de cada teléfono y la grúa saltaba 430 km
+ * entre el corte y Grúas 5 Norte.
  *
  * Sin `operatorId` no se filtra, por compatibilidad con los llamadores que no
  * lo tienen. La guarda de verdad vive en la base
@@ -72,6 +73,25 @@ export const isPrincipalOperatorOfService = (
   service: Service,
   operatorId?: string | null,
 ): boolean => !operatorId || service.operator?.id === operatorId;
+
+/**
+ * Servicios que este operador OPERA, no solo los que puede mirar.
+ *
+ * Segundo episodio de la misma raíz, 28/07 ~18:05: el portal de Sergio —en la
+ * base, sin transmitir, Adicional del folio— mostraba el banner "Detenido ·
+ * Ruta cortada · desde 14:20 · 225 min" CON el botón "Rodando" habilitado, y el
+ * servicio le contaba en "Entrega: 1". Un toque suyo habría cerrado la
+ * detención real del operador que estaba a 500 km, mintiéndole al cliente.
+ *
+ * De ahí que el filtro NO se quede en la transmisión: el adicional ve el
+ * servicio en modo consulta (expediente, historial, fotos) y ningún control
+ * operacional —ni banner de detención, ni "Rodando", ni compartir link, ni
+ * avance de estado— queda a su alcance.
+ */
+export const selectOperatedServices = (
+  services: Service[],
+  operatorId?: string | null,
+): Service[] => services.filter((service) => isPrincipalOperatorOfService(service, operatorId));
 
 export interface OperatorServiceSelection {
   /** Servicios en vuelo, en orden de prioridad operativa. */
@@ -97,10 +117,14 @@ export interface OperatorServiceSelection {
 export const resolveOperatorServiceSelection = (
   services: Service[],
   selectedServiceId?: string | null,
-  /** Operador que mira. Sin él, `trackingService` no se filtra por titularidad. */
+  /** Operador que mira. Sin él, no se filtra por titularidad (compatibilidad). */
   operatorId?: string | null,
 ): OperatorServiceSelection => {
-  const candidates = services
+  // La titularidad se aplica ANTES de resolver nada, y no solo sobre la
+  // transmisión: `candidates` es la lista de servicios que este operador
+  // OPERA. Un adicional no elige, no transmite, no detiene y no reanuda; el
+  // servicio le sigue apareciendo en la jornada, en modo consulta.
+  const candidates = selectOperatedServices(services, operatorId)
     .filter((service) =>
       (IN_FLIGHT_OPERATOR_SERVICE_STATUSES as readonly string[]).includes(service.status))
     .sort((a, b) => {
@@ -109,13 +133,6 @@ export const resolveOperatorServiceSelection = (
       const byRank = rank(a) - rank(b);
       return byRank !== 0 ? byRank : (a.serviceDate || '').localeCompare(b.serviceDate || '');
     });
-
-  // La transmisión solo puede colgar de un servicio PROPIO. El resto de la
-  // resolución no cambia: un adicional sigue viendo el servicio en su jornada,
-  // sigue pudiendo inspeccionar y declarar detenciones. Lo único que no hace es
-  // teñir la posición del traslado con la de su camión.
-  const bindable = (service: Service | null): Service | null =>
-    service && isPrincipalOperatorOfService(service, operatorId) ? service : null;
 
   const selected = selectedServiceId
     ? candidates.find((service) => service.id === selectedServiceId) ?? null
@@ -126,7 +143,7 @@ export const resolveOperatorServiceSelection = (
       candidates,
       requiresSelection: false,
       activeService: isActiveOperatorService(selected) ? selected : null,
-      trackingService: bindable(selected),
+      trackingService: selected,
     };
   }
 
@@ -138,6 +155,6 @@ export const resolveOperatorServiceSelection = (
     candidates,
     requiresSelection: false,
     activeService: selectActiveOperatorService(candidates),
-    trackingService: bindable(selectTrackingService(candidates)),
+    trackingService: selectTrackingService(candidates),
   };
 };

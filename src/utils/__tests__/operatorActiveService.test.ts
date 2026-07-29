@@ -4,6 +4,7 @@ import {
   isActiveOperatorService,
   resolveOperatorServiceSelection,
   selectActiveOperatorService,
+  selectOperatedServices,
   selectTrackingService,
 } from '@/utils/operatorActiveService';
 
@@ -124,15 +125,20 @@ describe('operatorActiveService', () => {
     // El defecto del 28/07: tras el relevo Sergio -> Jesús, el teléfono de
     // Sergio seguía figurando como Adicional del servicio y sus puntos se
     // etiquetaban al folio. El cliente veía la grúa saltar 430 km.
-    it('el adicional no amarra su transmisión al servicio', () => {
+    //
+    // Segundo episodio esa misma tarde (~18:05): el portal del adicional
+    // mostraba el banner "Detenido · Ruta cortada · 225 min" CON el botón
+    // "Rodando" habilitado. Por eso el filtro llegó hasta `activeService`: es
+    // el que gobierna el banner y el botón.
+    it('el adicional no opera el servicio: ni transmisión, ni detenciones', () => {
       const services = [conPrincipal('3262047-1', PRINCIPAL)];
 
       const resuelto = resolveOperatorServiceSelection(services, null, ADICIONAL);
 
       expect(resuelto.trackingService).toBeNull();
-      // Sigue viéndolo y operándolo: lo único que pierde es teñir la posición.
-      expect(resuelto.candidates.map((item) => item.id)).toEqual(['3262047-1']);
-      expect(resuelto.activeService?.id).toBe('3262047-1');
+      expect(resuelto.activeService).toBeNull();
+      expect(resuelto.candidates).toEqual([]);
+      expect(resuelto.requiresSelection).toBe(false);
     });
 
     it('el principal sí amarra su transmisión', () => {
@@ -141,11 +147,11 @@ describe('operatorActiveService', () => {
       const resuelto = resolveOperatorServiceSelection(services, null, PRINCIPAL);
 
       expect(resuelto.trackingService?.id).toBe('3262047-1');
+      expect(resuelto.activeService?.id).toBe('3262047-1');
     });
 
-    // Elegir a mano tampoco habilita el amarre: el gate va después de la
-    // elección, no antes.
-    it('elegir el servicio como adicional tampoco lo amarra', () => {
+    // Elegir a mano tampoco habilita nada: el ajeno ni siquiera es candidato.
+    it('elegir el servicio ajeno como adicional no lo habilita', () => {
       const services = [
         conPrincipal('3262047-1', PRINCIPAL),
         conPrincipal('SRV-6858', ADICIONAL),
@@ -153,14 +159,38 @@ describe('operatorActiveService', () => {
 
       const resuelto = resolveOperatorServiceSelection(services, '3262047-1', ADICIONAL);
 
-      expect(resuelto.trackingService).toBeNull();
-      expect(resuelto.activeService?.id).toBe('3262047-1');
+      expect(resuelto.candidates.map((item) => item.id)).toEqual(['SRV-6858']);
+      expect(resuelto.trackingService?.id).toBe('SRV-6858');
+      expect(resuelto.activeService?.id).toBe('SRV-6858');
+    });
+
+    // Dos operadores transmitiendo a la vez, uno principal y uno adicional: el
+    // servicio solo se amarra al del principal.
+    it('dos operadores simultáneos: solo el principal lleva el servicio', () => {
+      const services = [conPrincipal('3262047-1', PRINCIPAL)];
+
+      expect(resolveOperatorServiceSelection(services, null, PRINCIPAL).trackingService?.id)
+        .toBe('3262047-1');
+      expect(resolveOperatorServiceSelection(services, null, ADICIONAL).trackingService)
+        .toBeNull();
     });
 
     it('sin operador declarado no se filtra (compatibilidad)', () => {
       const services = [conPrincipal('3262047-1', PRINCIPAL)];
 
       expect(resolveOperatorServiceSelection(services, null).trackingService?.id).toBe('3262047-1');
+    });
+
+    it('selectOperatedServices separa lo propio de lo de apoyo', () => {
+      const services = [
+        conPrincipal('3262047-1', PRINCIPAL),
+        conPrincipal('SRV-6858', ADICIONAL),
+      ];
+
+      expect(selectOperatedServices(services, ADICIONAL).map((item) => item.id))
+        .toEqual(['SRV-6858']);
+      expect(selectOperatedServices(services, null).map((item) => item.id))
+        .toEqual(['3262047-1', 'SRV-6858']);
     });
   });
 });

@@ -39,6 +39,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
 import { ServiceChangeHistory } from './ServiceChangeHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
+import { ClientNotificationsToggle } from './ClientNotificationsToggle';
+import { ServiceDocumentsSection } from './ServiceDocumentsSection';
 import { ServiceHandoffPanel } from './ServiceHandoffPanel';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
@@ -777,15 +779,21 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   Marcar en Disputa
                 </Button>
               )}
+              {/* Interruptor, no botón: es un ESTADO del servicio, no una
+                  acción. Va al final de la barra y solo para admin. */}
+              {isAdmin && (
+                <ClientNotificationsToggle serviceId={serviceData.id} className="ml-auto" />
+              )}
           </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6">
           <Tabs defaultValue="general" className="w-full py-6">
-            <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
+            <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-8' : 'sm:grid-cols-7'}`}>
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               {showItemsTab && <TabsTrigger value="items">Desglose</TabsTrigger>}
+              <TabsTrigger value="documents">Documentos</TabsTrigger>
               <TabsTrigger value="costs">Costos</TabsTrigger>
               <TabsTrigger value="disputes">
                 Disputas
@@ -799,6 +807,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               <TabsTrigger value="changes">Cambios</TabsTrigger>
             </TabsList>
             
+            <TabsContent value="documents" className="mt-0">
+              <DetailSection title="Documentos del expediente" icon={FileText} color="blue">
+                <div className="col-span-full">
+                  <ServiceDocumentsSection serviceId={serviceData.id} folio={serviceData.folio} />
+                </div>
+              </DetailSection>
+            </TabsContent>
+
             <TabsContent value="general" className="mt-0">
               <div className="space-y-4">
                   <DetailSection title="Cliente" icon={User} color="blue">

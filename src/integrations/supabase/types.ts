@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_boot_log: {
+        Row: {
+          app_version: string | null
+          booted_at: string
+          created_at: string
+          id: string
+          last_error: string | null
+          launch_reason: string
+          operator_id: string | null
+          pending_points: number | null
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          booted_at?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          launch_reason?: string
+          operator_id?: string | null
+          pending_points?: number | null
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          booted_at?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          launch_reason?: string
+          operator_id?: string | null
+          pending_points?: number | null
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alert_acknowledgements: {
         Row: {
           acknowledged_at: string
@@ -6907,6 +6946,7 @@ export type Database = {
         Row: {
           client_covered_amount: number | null
           client_id: string
+          client_notifications_enabled: boolean
           company_name: string | null
           company_rut: string | null
           contact_person: string | null
@@ -6969,6 +7009,7 @@ export type Database = {
         Insert: {
           client_covered_amount?: number | null
           client_id: string
+          client_notifications_enabled?: boolean
           company_name?: string | null
           company_rut?: string | null
           contact_person?: string | null
@@ -7031,6 +7072,7 @@ export type Database = {
         Update: {
           client_covered_amount?: number | null
           client_id?: string
+          client_notifications_enabled?: boolean | null
           company_name?: string | null
           company_rut?: string | null
           contact_person?: string | null
@@ -9644,6 +9686,27 @@ export type Database = {
       service_has_active_tracking_link: {
         Args: { p_service_id: string }
         Returns: boolean
+      }
+      service_client_notifications_enabled: {
+        Args: { p_service_id: string }
+        Returns: boolean
+      }
+      detect_tracking_silence: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          folio: string
+          last_point_at: string
+          open_stop_reason: string
+          operator_id: string
+          operator_name: string
+          operator_phone: string
+          service_id: string
+          silent_minutes: number
+        }[]
+      }
+      enqueue_tracking_silence_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       service_stops_distance_meters: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }

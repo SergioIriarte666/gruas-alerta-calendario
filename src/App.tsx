@@ -184,7 +184,22 @@ const OPERATOR_MOBILE_ALLOWED_PREFIXES = [
   '/pending',
   '/reset-password',
   '/operator',
+  '/operador',
 ];
+
+/**
+ * Alias en castellano del portal operador, con la query intacta.
+ *
+ * Los avisos de WhatsApp al operador llevan `/operador?accion=reanudar` — es la
+ * URL que el dueño acordó con la plantilla de Meta y la que ve un humano en el
+ * teléfono. Perder el `?accion` al redirigir dejaría al operador en la pantalla
+ * correcta pero sin el botón enfocado, que es justamente lo que el aviso
+ * promete.
+ */
+function OperatorSpanishAlias() {
+  const { search, hash } = useLocation();
+  return <Navigate to={`/operator${search}${hash}`} replace />;
+}
 
 function MobileAppRouteGuard() {
   const location = useLocation();
@@ -317,6 +332,7 @@ function AppContent() {
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}
+        <Route path="/operador" element={<OperatorSpanishAlias />} />
         <Route path="/operator" element={
           <ProtectedRoute allowedRoles={['operator', 'admin']} moduleKey="operator_portal">
             <OperatorLayout />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ChevronRight, Eye, Loader2, Radio, RadioTower, Share2, Square, WifiOff } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { ChevronRight, Eye, Loader2, Play, Radio, RadioTower, Share2, Square, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -53,6 +54,14 @@ const AGE_TICK_MS = 5000;
  * creyendo que nadie miraba hasta las 21:3x.
  */
 const LINK_STATE_REFRESH_MS = 60000;
+
+/**
+ * Deep link de recuperación: `/operador?accion=reanudar` (o `/operator?...`).
+ *
+ * Lo usa el aviso de WhatsApp del watchdog de servidor. El operador toca la
+ * notificación, aterriza aquí con el botón enfocado y resuelve con un gesto.
+ */
+export const RESUME_TRIP_ACTION = 'reanudar';
 
 const SERVICE_STATE_LABELS: Record<string, string> = {
   pending: 'Asignado',
@@ -137,6 +146,9 @@ export const TransmissionControl = ({
   const [showAlwaysHint, setShowAlwaysHint] = useState(false);
   const [keepAwakeOutcome, setKeepAwakeOutcome] = useState<KeepAwakeOutcome>('idle');
   const [now, setNow] = useState(() => businessClock.now());
+  const [isResumingTrip, setIsResumingTrip] = useState(false);
+  const resumeTripRef = useRef<HTMLButtonElement | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   // URL del seguimiento resuelta por adelantado. Compartir tiene que poder
   // llamar a navigator.share SIN una llamada de red por delante: la activación
   // transitoria del gesto expira durante el await y Safari rechaza con
@@ -197,6 +209,33 @@ export const TransmissionControl = ({
   }, [refreshLinkState]);
 
   useEffect(() => subscribeKeepAwake(setKeepAwakeOutcome), []);
+
+  /**
+   * La transmisión está caída y el operador tiene un traslado en curso: la
+   * recuperación deja de ser genérica ("toca para encender") y pasa a ser un
+   * solo gesto que arregla las tres cosas a la vez.
+   *
+   * Las dos reanudaciones exitosas de la semana del 27/07 fueron MANUALES; las
+   * automáticas fallaron o no corrieron. Lo simple y confiable primero: el
+   * rearme automático del Fix 8 queda como capa de conveniencia encima, nunca
+   * como única vía.
+   */
+  const canResumeTrip = !isTracking && Boolean(activeServiceId) && !trackingDisabled;
+
+  // Aterrizaje del deep link: el botón se enfoca y se trae a la vista. El
+  // parámetro se consume una sola vez para que un refresco no vuelva a robar
+  // el foco mientras el operador maneja.
+  useEffect(() => {
+    if (searchParams.get('accion') !== RESUME_TRIP_ACTION) return;
+    if (!canResumeTrip) return;
+
+    resumeTripRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    resumeTripRef.current?.focus({ preventScroll: true });
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('accion');
+    setSearchParams(next, { replace: true });
+  }, [canResumeTrip, searchParams, setSearchParams]);
 
   /**
    * Token del link, pedido apenas hay servicio y cacheado.
@@ -370,6 +409,33 @@ export const TransmissionControl = ({
     setConfirmOpen(true);
   };
 
+  /**
+   * Reanudar viaje: UN toque, la secuencia completa.
+   *
+   * 1. Enciende la transmisión (que a su vez limpia `manual_stop`, en memoria y
+   *    en la base, vía startSession).
+   * 2. Cierra la detención abierta del servicio con `ended_by_source='manual'`.
+   *
+   * Hasta ahora eran dos gestos separados —encender y después "Rodando"—, y el
+   * segundo se olvidaba: el cliente quedaba viendo "detenido" con la grúa
+   * andando. El orden importa: primero la transmisión, porque es lo que el
+   * cliente deja de ver; si el cierre de la detención falla, su propio toast lo
+   * dice y la transmisión ya quedó arriba.
+   */
+  const handleResumeTrip = async () => {
+    // Dentro del gesto y sin await por delante: fuera de él Safari rechaza el
+    // wake lock.
+    void keepAwakeSafely();
+    setIsResumingTrip(true);
+    try {
+      await resumeTracking();
+      if (stopEvent) await resume('manual');
+      toast.success('Viaje reanudado · transmitiendo');
+    } finally {
+      setIsResumingTrip(false);
+    }
+  };
+
   const statusTone = !isTracking
     ? isRollingWithoutTransmitting ? 'rolling' : 'off'
     : isFrozen ? 'frozen' : 'live';
@@ -483,7 +549,9 @@ export const TransmissionControl = ({
               ? ageLabel ? `Último punto subido ${ageLabel}` : 'Esperando primera subida'
               : isRollingWithoutTransmitting
                 ? 'Rodando sin transmitir'
-                : 'Toca para encender'}
+                : canResumeTrip
+                  ? `El cliente no ve tu posición${stopEvent ? ' y te ve detenido' : ''}`
+                  : 'Toca para encender'}
           </p>
           {pendingCount > 0 && (
             <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-warning">
@@ -505,6 +573,24 @@ export const TransmissionControl = ({
           {isSharing ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
         </Button>
       </div>
+
+      {/* Recuperación en un toque. Ocupa el ancho completo y va inmediatamente
+          debajo del estado: cuando la transmisión está caída con un traslado en
+          curso, esta es LA acción de la pantalla. */}
+      {canResumeTrip && (
+        <Button
+          ref={resumeTripRef}
+          type="button"
+          onClick={() => void handleResumeTrip()}
+          disabled={isBusy || isResumingTrip || isStopBusy}
+          className="mt-4 min-h-14 w-full rounded-2xl text-base font-bold"
+        >
+          {isResumingTrip
+            ? <Loader2 className="size-5 animate-spin" />
+            : <Play className="size-5 fill-current" />}
+          {isResumingTrip ? 'Reanudando…' : 'Reanudar viaje'}
+        </Button>
+      )}
 
       {showDrivePanel && <OperatorDrivePanel isTracking={isTracking} point={lastPoint} />}
 

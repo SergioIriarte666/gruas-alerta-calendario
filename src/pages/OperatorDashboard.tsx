@@ -1,4 +1,5 @@
 import { useUser } from '@/contexts/UserContext';
+import type { Service } from '@/types';
 import { RefreshCw, AlertCircle, BriefcaseBusiness, Radio, PackageCheck, ChevronRight } from 'lucide-react';
 import { useOperatorServicesTabs } from '@/hooks/useOperatorServicesTabs';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
@@ -12,7 +13,11 @@ import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspectio
 import { TransmissionControl } from '@/components/operator/TransmissionControl';
 import { DocumentStatusBanner } from '@/components/operator/DocumentStatusBanner';
 import { OperatorActivityPreview } from '@/components/operator/OperatorActivityPreview';
-import { resolveOperatorServiceSelection } from '@/utils/operatorActiveService';
+import {
+  isPrincipalOperatorOfService,
+  resolveOperatorServiceSelection,
+  selectOperatedServices,
+} from '@/utils/operatorActiveService';
 
 /** La elección explícita del servicio en vuelo sobrevive al recargar la app. */
 const SELECTED_SERVICE_KEY = 'operator-selected-service-v1';
@@ -52,12 +57,19 @@ const OperatorDashboard = () => {
     ...serviceTabs.pendientes_entrega,
     ...asignadosSorted,
   ];
-  // El operator_id va como tercer argumento a propósito: la transmisión solo se
-  // amarra a servicios donde este operador es el PRINCIPAL. Un adicional
-  // (service_resources) ve el servicio y opera en él, pero su posición no es la
-  // del traslado.
+  // El operator_id va como tercer argumento a propósito: los controles del
+  // servicio —transmisión, detenciones, link del cliente, entrega— pertenecen
+  // al operador PRINCIPAL. Un adicional (service_resources) ve el servicio en
+  // su jornada, pero no lo maneja.
   const { candidates, requiresSelection, activeService, trackingService } =
     resolveOperatorServiceSelection(operatorServices, selectedServiceId, user?.operator_id);
+
+  // "Pendientes de entrega" es una COLA DE TRABAJO, no un listado: lo que
+  // aparece ahí el operador lo tiene que cerrar. El 28/07 el adicional veía
+  // "Entrega: 1" por un traslado que iba a 500 km de él. El contador y la lista
+  // cuentan solo lo propio; el resto sigue visible en su pestaña, sin acciones.
+  const entregasPropias = selectOperatedServices(serviceTabs.pendientes_entrega, user?.operator_id);
+  const isOperated = (service: Service) => isPrincipalOperatorOfService(service, user?.operator_id);
 
   useEffect(() => {
     if (!selectedServiceId) return;
@@ -87,7 +99,7 @@ const OperatorDashboard = () => {
   const sectionMap: Record<TabKey, { services: typeof serviceTabs.asignados; emptyLabel: string; showDelivery?: boolean }> = {
     asignados:          { services: asignadosSorted,                 emptyLabel: 'No hay servicios asignados' },
     activos:            { services: serviceTabs.activos,             emptyLabel: 'No hay servicios activos' },
-    pendientes_entrega: { services: serviceTabs.pendientes_entrega,  emptyLabel: 'No hay entregas pendientes', showDelivery: true },
+    pendientes_entrega: { services: entregasPropias,                 emptyLabel: 'No hay entregas pendientes', showDelivery: true },
     completados:        { services: completadosRecientes,            emptyLabel: 'No hay servicios completados' },
   };
 
@@ -177,7 +189,7 @@ const OperatorDashboard = () => {
             {[
               { label: 'Asignados', count: serviceTabs.asignados.length, icon: BriefcaseBusiness, tone: 'primary' },
               { label: 'Activos', count: serviceTabs.activos.length, icon: Radio, tone: 'info' },
-              { label: 'Entrega', count: serviceTabs.pendientes_entrega.length, icon: PackageCheck, tone: 'warning' },
+              { label: 'Entrega', count: entregasPropias.length, icon: PackageCheck, tone: 'warning' },
             ].map(({ label, count, icon: Icon, tone }) => (
               <div key={label} className={`operator-native-status operator-native-status--${tone}`}>
                 <div className="flex items-center justify-center gap-1.5">
@@ -254,6 +266,7 @@ const OperatorDashboard = () => {
               key={service.id}
               service={service}
               showDeliveryAction={current.showDelivery}
+              readOnly={!isOperated(service)}
             />
           ))}
         </div>

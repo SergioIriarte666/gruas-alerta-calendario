@@ -14,6 +14,8 @@ import type {
   TrackingSessionStartedReason,
   TrackingSettings,
 } from '@/types/operatorLocation';
+import { locationUploadQueue } from '@/services/locationUploadQueue';
+import { recordAppBoot } from '@/native/appBootLog';
 import {
   BackgroundGeolocation,
   checkLocationPermission,
@@ -28,7 +30,6 @@ import {
   mapBackgroundGeolocationPoint,
   reactivateOperatorLocationSession,
   requestLocationPermission,
-  saveOperatorLocationPoint,
   stopOperatorLocationSession,
   updateOperatorLocationSessionService,
 } from '@/services/operatorLocationService';
@@ -41,13 +42,10 @@ const logger = createLogger('useOperatorLocationTracking');
 // Logger dedicado para detectar regresiones del bug SRV: sesiones auto_service con service_id NULL
 const trackingLogger = createLogger('OperatorTracking');
 
-const LOCATION_QUEUE_KEY = 'operator-location-points-queue-v1';
 const TRACKING_PAUSED_KEY = 'operator-tracking-paused-v1';
 const TRACKING_INTERVAL_MS = 30000;
 const NATIVE_MIN_PERSIST_INTERVAL_MS = 20000;
 const SCHEDULE_CHECK_INTERVAL_MS = 30000;
-const MAX_QUEUED_POINTS = 200;
-const MAX_QUEUE_ATTEMPTS = 10;
 
 /**
  * Latido: máximo tiempo sin enviar un punto, haya o no movimiento.
@@ -131,33 +129,11 @@ const distanceMeters = (
 
 export type TrackingMode = TrackingSessionStartedReason | null;
 
-interface QueuedLocationPoint extends OperatorLocationPayload {
-  localId: string;
-  attempts: number;
-}
-
 interface UseOperatorLocationTrackingOptions {
   operatorId?: string | null;
   userId?: string | null;
   currentService?: Service | null;
 }
-
-const readQueuedPoints = async (): Promise<QueuedLocationPoint[]> => {
-  try {
-    const { value } = await Preferences.get({ key: LOCATION_QUEUE_KEY });
-    if (!value) return [];
-    return JSON.parse(value) as QueuedLocationPoint[];
-  } catch {
-    return [];
-  }
-};
-
-const writeQueuedPoints = async (points: QueuedLocationPoint[]) => {
-  await Preferences.set({
-    key: LOCATION_QUEUE_KEY,
-    value: JSON.stringify(points.slice(-MAX_QUEUED_POINTS)),
-  });
-};
 
 const readPausedFlag = async (): Promise<boolean> => {
   try {
@@ -259,53 +235,40 @@ export const useOperatorLocationTracking = ({
     teardownCapture();
   }, []);
 
-  const refreshPendingCount = useCallback(async () => {
-    const queued = await readQueuedPoints();
-    setPendingCount(queued.length);
+  /** Vaciar la cola a mano: al volver la red, al volver a primer plano. */
+  const flushQueue = useCallback(async () => {
+    await locationUploadQueue.drain();
   }, []);
 
-  const flushQueue = useCallback(async () => {
-    const queued = await readQueuedPoints();
-    if (!queued.length || !navigator.onLine) {
-      await refreshPendingCount();
-      return;
-    }
+  /**
+   * El uploader es el dueño de "cuánto falta por subir" y "cuándo fue la última
+   * subida confirmada". La UI lo escucha en vez de llevar su propia cuenta:
+   * dos contadores del mismo hecho se desincronizan siempre.
+   */
+  useEffect(() => locationUploadQueue.subscribe(({ pending, lastSyncAt: syncedAt }) => {
+    setPendingCount(pending);
+    if (!syncedAt) return;
+    // Nunca retrocede: la sesión en BD también aporta un last_point_at y el
+    // valor bueno es el más reciente de los dos.
+    setLastSyncAt((current) =>
+      !current || new Date(syncedAt) > new Date(current) ? syncedAt : current);
+  }), []);
 
-    const remaining: QueuedLocationPoint[] = [];
-
-    for (const item of queued) {
-      try {
-        await saveOperatorLocationPoint({
-          ...item,
-          isOfflineSync: true,
-        });
-        setLastSyncAt(new Date().toISOString());
-      } catch (error) {
-        const attempts = item.attempts + 1;
-        if (attempts >= MAX_QUEUE_ATTEMPTS) {
-          logger.warn('Discarding queued location point after max attempts', { localId: item.localId, error });
-        } else {
-          logger.warn('Could not flush queued location point', error);
-          remaining.push({ ...item, attempts });
-        }
-      }
-    }
-
-    await writeQueuedPoints(remaining);
-    await refreshPendingCount();
-  }, [refreshPendingCount]);
-
-  const enqueuePoint = useCallback(async (payload: OperatorLocationPayload) => {
-    const queued = await readQueuedPoints();
-    queued.push({
-      ...payload,
-      localId: `${payload.recordedAt}:${queued.length}`,
-      attempts: 0,
-    });
-    await writeQueuedPoints(queued);
-    await refreshPendingCount();
-  }, [refreshPendingCount]);
-
+  /**
+   * Entrega el punto capturado al uploader. NUNCA habla con la red.
+   *
+   * Esta es la separación que faltaba. Antes el watcher intentaba subir el
+   * punto en línea y solo caía a la cola si fallaba; el barrido de la cola
+   * corría además dentro del mismo camino, así que una red muerta se traducía
+   * en decenas de peticiones colgadas por minuto DENTRO del callback de
+   * captura. El 28/07, tras tres horas de corte de ruta con la red intermitente,
+   * la transmisión murió y no dejó ni un punto encolado ni un solo
+   * `is_offline_sync`: nada se recuperó al volver los datos.
+   *
+   * Ahora la captura solo escribe en la cola persistente —una operación local—
+   * y el uploader sube por su cuenta, con reintento y backoff. Una falla de red
+   * no puede alcanzar al watcher.
+   */
   const persistPoint = useCallback(async (
     point: OperatorLocationPoint,
     activeSessionId: string,
@@ -329,27 +292,9 @@ export const useOperatorLocationTracking = ({
       source,
     );
 
-    if (!navigator.onLine) {
-      trackingLogger.debug('Punto encolado sin conexión', { source, recordedAt: point.recordedAt });
-      await enqueuePoint(payload);
-      return;
-    }
-
-    try {
-      await saveOperatorLocationPoint(payload);
-    } catch (error) {
-      // navigator.onLine miente en terreno: en el desierto la interfaz sigue
-      // "en línea" y la petición muere igual. Sin este catch el punto se perdía
-      // en vez de irse a la cola offline que el esquema ya contempla.
-      trackingLogger.warn('Falló la subida del punto, se encola para reintento', { source, error });
-      await enqueuePoint(payload);
-      return;
-    }
-
-    trackingLogger.debug('Punto enviado', { source, recordedAt: point.recordedAt });
-    setLastSyncAt(new Date().toISOString());
-    await flushQueue();
-  }, [enqueuePoint, flushQueue]);
+    await locationUploadQueue.enqueue(payload);
+    trackingLogger.debug('Punto entregado al uploader', { source, recordedAt: point.recordedAt });
+  }, []);
 
   const stopSession = useCallback(async (
     endedReason: TrackingSessionEndedReason,
@@ -867,7 +812,15 @@ export const useOperatorLocationTracking = ({
         return;
       }
 
-      await refreshPendingCount();
+      // Puntos que quedaron en la cola de la sesión anterior —o de antes de que
+      // el sistema matara la app—. Se cuentan y se intentan subir de inmediato.
+      await locationUploadQueue.refresh();
+      void locationUploadQueue.drain();
+
+      // Autopsia: el arranque se registra DESPUÉS de contar la cola heredada,
+      // porque el tamaño de esa cola es justamente el dato que distingue "murió
+      // la captura" de "murió la subida" en el episodio anterior.
+      void recordAppBoot(operatorId, userId);
 
       // Se lee de la BD, no solo del almacenamiento local: el corte manual debe
       // sobrevivir una reinstalación o un cambio de teléfono.
