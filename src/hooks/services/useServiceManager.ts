@@ -415,7 +415,7 @@ export const useServiceManager = () => {
             .from('cost_categories')
             .select('id')
             .eq('name', 'Subcontrataciones')
-            .single();
+            .maybeSingle();
 
           if (existingCategory) {
             categoryId = existingCategory.id;
@@ -425,7 +425,7 @@ export const useServiceManager = () => {
               .from('cost_categories')
               .select('id')
               .eq('name', 'Gastos de Servicios')
-              .single();
+              .maybeSingle();
             categoryId = fallbackCategory?.id || null;
           }
 
@@ -1136,7 +1136,7 @@ export const useServiceManager = () => {
             .from('cost_categories')
             .select('id')
             .eq('name', 'Subcontrataciones')
-            .single();
+            .maybeSingle();
 
           if (existingCategory) {
             categoryId = existingCategory.id;
@@ -1145,7 +1145,7 @@ export const useServiceManager = () => {
               .from('cost_categories')
               .select('id')
               .eq('name', 'Gastos de Servicios')
-              .single();
+              .maybeSingle();
             categoryId = fallbackCategory?.id || null;
           }
 

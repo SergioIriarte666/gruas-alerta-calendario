@@ -1030,6 +1030,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                     </div>
                   )}
 
+                  {/* No tener punto GPS es el estado normal, no una falla: solo
+                      una minoría de los servicios llega a registrar una lectura
+                      que pase el umbral de confianza. Se dice y no se esconde. */}
+                  {!latestOperatorLocation && (
+                    <DetailSection title="Última ubicación del operador" icon={MapPin} color="green">
+                      <DetailItem
+                        icon={MapPin}
+                        label="Posición"
+                        value="Sin posición GPS registrada para este servicio"
+                        isFullWidth={true}
+                      />
+                    </DetailSection>
+                  )}
+
                   <RouteMetricsSection
                     serviceId={serviceData.id}
                     status={serviceData.status}

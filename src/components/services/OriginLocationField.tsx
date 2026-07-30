@@ -469,12 +469,18 @@ export function OriginLocationField({
         <OriginPinMap lat={coords.lat as number} lng={coords.lng as number} onChange={handlePinDrag} />
       )}
 
+      {/* El cuerpo se monta SOLO con editingLocation presente. Los hijos de
+          <Dialog> son JSX que React evalúa en CADA render del campo, esté
+          abierto o no: con editingLocation en null, el `editingLocation.latitude`
+          de "Definir acceso vial" reventaba el formulario entero apenas se
+          pintaba el paso "Ubicación". */}
       <Dialog
         open={editingLocation != null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen && !updateFavoriteLocation.isPending) setEditingLocation(null);
         }}
       >
+        {editingLocation && (
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar lugar frecuente</DialogTitle>
@@ -600,6 +606,7 @@ export function OriginLocationField({
             </Button>
           </DialogFooter>
         </DialogContent>
+        )}
       </Dialog>
     </div>
   );
