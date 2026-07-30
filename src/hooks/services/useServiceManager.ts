@@ -8,6 +8,7 @@ import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { planServiceCostChanges } from './serviceCostDiff';
+import { describeServiceCostError } from '@/utils/serviceCostErrors';
 
 const logger = createLogger('ServiceManager');
 
@@ -882,7 +883,10 @@ export const useServiceManager = () => {
 
             if (updateCostError) {
               logger.error('[updateService] Error updating service cost:', updateCostError);
-              throw new Error(`No se pudo actualizar el costo "${cost.description}": ${updateCostError.message}`);
+              throw new Error(
+                describeServiceCostError(updateCostError) ??
+                  `No se pudo actualizar el costo "${cost.description}": ${updateCostError.message}`
+              );
             }
           }
 
@@ -908,7 +912,10 @@ export const useServiceManager = () => {
             // los costos sin guardar. Un guardado que no guardó no es un éxito.
             if (insertCostsError) {
               logger.error('[updateService] Error inserting service costs:', insertCostsError);
-              throw new Error(`No se pudieron guardar los costos del servicio: ${insertCostsError.message}`);
+              throw new Error(
+                describeServiceCostError(insertCostsError) ??
+                  `No se pudieron guardar los costos del servicio: ${insertCostsError.message}`
+              );
             }
           }
         }

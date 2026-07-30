@@ -34,6 +34,8 @@ import { useOperators } from '@/hooks/useOperators';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 import { OperatorSelectLabel } from '@/components/operators/OperatorAppAccessBadge';
 import { createLogger } from "@/lib/logger";
+import { describeServiceCostError } from '@/utils/serviceCostErrors';
+import { sealPersistedCost } from '@/hooks/services/serviceCostDiff';
 
 
 const logger = createLogger("ServiceCostDetailsSection");
@@ -286,6 +288,11 @@ export const ServiceCostDetailsSection = ({
     setCostPendingRemoval(null);
   };
 
+  // Una sola escritura: id + bandera juntos. Ver sealPersistedCost.
+  const markCostDetailPersisted = (temporaryId: string, persistedId: string) => {
+    onCostDetailsChange(sealPersistedCost(costDetails, temporaryId, persistedId));
+  };
+
   const updateCostDetail = (id: string, field: keyof ServiceCostDetail, value: any) => {
     onCostDetailsChange(
       costDetails.map(cost => {
@@ -444,7 +451,7 @@ export const ServiceCostDetailsSection = ({
         },
         onError: (error) => {
           logger.error('[ServiceCostDetailsSection] Error updating cost:', error);
-          toast.error("Error al actualizar el costo");
+          toast.error(describeServiceCostError(error) ?? "Error al actualizar el costo");
         }
       });
     } else {
@@ -455,16 +462,15 @@ export const ServiceCostDetailsSection = ({
           
           // Update the cost detail with the new ID from database
           if (data && data[0]) {
-            updateCostDetail(costDetail.id, 'id', data[0].id);
-            updateCostDetail(costDetail.id, 'isExisting', true);
+            markCostDetailPersisted(costDetail.id, data[0].id);
           }
-          
+
           refetchCosts();
           toast.success("Costo agregado correctamente");
         },
         onError: (error) => {
           logger.error('[ServiceCostDetailsSection] Error adding cost:', error);
-          toast.error("Error al agregar el costo");
+          toast.error(describeServiceCostError(error) ?? "Error al agregar el costo");
         }
       });
     }

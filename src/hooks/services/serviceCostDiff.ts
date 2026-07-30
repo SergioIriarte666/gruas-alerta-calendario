@@ -30,6 +30,26 @@ export interface ServiceCostPlan<T extends PlannableCost> {
 const isComplete = (cost: PlannableCost) =>
   !!cost.description && String(cost.description).trim() !== '' && Number(cost.amount) > 0;
 
+/**
+ * Sella la fila recién insertada con el id que asignó la base, en UNA sola
+ * escritura de estado.
+ *
+ * Hacerlo en dos pasos (primero el id, después la bandera) no funciona: ambos
+ * parten del mismo arreglo capturado en el render, así que el segundo pisa al
+ * primero y la fila queda marcada como guardada pero conservando su id temporal.
+ * Después el guardado final del servicio decide por id, la trata como alta y la
+ * reinserta — que es exactamente lo que choca contra
+ * idx_costs_unique_service_entry.
+ */
+export const sealPersistedCost = <T extends PlannableCost & { isExisting?: boolean }>(
+  costs: T[],
+  temporaryId: string,
+  persistedId: string
+): T[] =>
+  costs.map(cost =>
+    cost.id === temporaryId ? { ...cost, id: persistedId, isExisting: true } : cost
+  );
+
 export const planServiceCostChanges = <T extends PlannableCost>(
   formCosts: T[],
   persistedIds: Iterable<string>

@@ -1,5 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { planServiceCostChanges } from '../serviceCostDiff';
+import { planServiceCostChanges, sealPersistedCost } from '../serviceCostDiff';
+
+describe('sealPersistedCost', () => {
+  // El bug de producción: al guardar un costo desde el paso 3 se hacían DOS
+  // escrituras de estado seguidas (id, luego isExisting) sobre el mismo arreglo
+  // capturado en el render. La segunda pisaba a la primera, así que la fila
+  // quedaba "(Guardado)" pero con su id temporal. El guardado final decide por
+  // id: la reinsertaba y chocaba contra idx_costs_unique_service_entry.
+  it('escribe el id real y la bandera en un solo paso', () => {
+    const costs = [
+      { id: 'temp-1754000000000', description: 'Combustible', amount: 150000, isExisting: false },
+      { id: 'temp-1754000000001', description: 'Viatico', amount: 10000, isExisting: false },
+    ];
+
+    const sealed = sealPersistedCost(costs, 'temp-1754000000000', '0f9af209-f6b8-4829-801d-35e0a5cdbaaa');
+
+    expect(sealed[0].id).toBe('0f9af209-f6b8-4829-801d-35e0a5cdbaaa');
+    expect(sealed[0].isExisting).toBe(true);
+    // La otra fila no se toca.
+    expect(sealed[1]).toEqual(costs[1]);
+  });
+
+  // La prueba que importa: sellado + plan de escritura no debe reinsertar.
+  it('un costo sellado entra como UPDATE, nunca como alta', () => {
+    const persistedId = '5b7933d7-304c-402e-8dfd-0a8ff5e59882';
+    const sealed = sealPersistedCost(
+      [{ id: 'temp-1754000000042', description: 'Viatico', amount: 10000 }],
+      'temp-1754000000042',
+      persistedId,
+    );
+
+    const plan = planServiceCostChanges(sealed, [persistedId]);
+
+    expect(plan.toInsert).toHaveLength(0);
+    expect(plan.toUpdate.map(c => c.id)).toEqual([persistedId]);
+  });
+});
 
 describe('planServiceCostChanges', () => {
   // El caso que motivó todo: un viático se registra desde Finanzas, después
