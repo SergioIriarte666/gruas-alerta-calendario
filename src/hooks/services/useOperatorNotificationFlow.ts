@@ -126,7 +126,20 @@ export const useOperatorNotificationFlow = ({
         return;
       }
 
-      toast.success('Operador notificado por WhatsApp');
+      // El aviso va a TODOS los operadores del servicio. Decir "Operador
+      // notificado" cuando fueron dos, o cuando el auxiliar quedó fuera por no
+      // tener teléfono, deja a quien asigna creyendo algo que no pasó.
+      const notified = Number((data as any)?.notified ?? 1);
+      const notNotified = ((data as any)?.skippedRecipients ?? []).filter(
+        (item: { code?: string }) => item?.code === 'NO_PHONE' || item?.code === 'INVALID_PHONE',
+      ).length;
+
+      toast.success(
+        notified > 1 ? `${notified} operadores notificados por WhatsApp` : 'Operador notificado por WhatsApp',
+        notNotified > 0
+          ? { description: `${notNotified} sin teléfono válido: no recibieron el aviso.` }
+          : undefined,
+      );
       await registerActivity('service_operator_whatsapp_sent', service);
       completeFlow(service);
     } catch (err) {

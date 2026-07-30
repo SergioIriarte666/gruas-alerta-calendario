@@ -392,16 +392,37 @@ export interface BulkSendOutcome {
 }
 
 /**
- * Envía la misma plantilla a varios destinatarios sin abortar al primer fallo.
+ * Destinatario con parámetros propios. Sirve para plantillas cuyo primer
+ * parámetro es el nombre de quien recibe: mandarle a un auxiliar un mensaje que
+ * lo saluda con el nombre del principal es peor que no mandarlo.
+ */
+export interface BulkRecipient {
+  phone: string;
+  /** Si se omite, se usan los `parameters` comunes de la llamada. */
+  parameters?: string[];
+}
+
+/**
+ * Envía una plantilla a varios destinatarios sin abortar al primer fallo.
+ *
+ * Acepta teléfonos sueltos (mismos parámetros para todos, que es el caso de
+ * casi todos los llamadores) o `BulkRecipient` para personalizar por
+ * destinatario.
  */
 export async function sendWhatsAppTemplateBulk(
-  recipients: string[],
+  recipients: Array<string | BulkRecipient>,
   templateName: string,
   parameters: string[],
   options: WhatsAppSendOptions = {},
 ): Promise<BulkSendOutcome> {
+  const normalized: BulkRecipient[] = recipients.map((recipient) =>
+    typeof recipient === "string" ? { phone: recipient } : recipient,
+  );
+
   const settled = await Promise.allSettled(
-    recipients.map((n) => sendWhatsAppTemplate(n, templateName, parameters, options)),
+    normalized.map(({ phone, parameters: own }) =>
+      sendWhatsAppTemplate(phone, templateName, own ?? parameters, options),
+    ),
   );
 
   const results: WhatsAppSendResult[] = settled.map((s, _i) =>
@@ -417,7 +438,7 @@ export async function sendWhatsAppTemplateBulk(
   );
 
   const failed = results
-    .map((r, i) => ({ r, phone: recipients[i] }))
+    .map((r, i) => ({ r, phone: normalized[i].phone }))
     .filter(({ r }) => !r.success)
     .map(({ r, phone }) => ({ phone, error: r.error }));
 
