@@ -32,6 +32,11 @@ import {
 import { createLogger } from '@/lib/logger';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { resolveThemeColor } from '@/lib/themeColors';
+import {
+  clusterRouteEndpoints,
+  selectClusterLabel,
+  type RouteEndpointCandidate,
+} from '@/utils/routeEndpointClustering';
 
 const logger = createLogger('RouteHistoryPanel');
 
@@ -264,6 +269,7 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
     // que ya usan los marcadores de inicio/fin como borde contra el mapa).
     const casingColor = resolveThemeColor(containerRef.current, '--effect-highlight');
     const gapColor = resolveThemeColor(containerRef.current, '--danger');
+    const endpointCandidates: RouteEndpointCandidate[] = [];
     let colorIndex = 0;
 
     for (const [sessionId, sessionPoints] of bySession.entries()) {
@@ -386,21 +392,76 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
 
       coordinates.forEach((coord) => bounds.extend(coord));
 
-      // Envuelve el punto (dot) con una etiqueta opcional que flota a la derecha
-      // sin mover el ancla (posición absoluta dentro del contenedor). El origen
-      // 'catalog' es autoritativo (nombre operativo); 'mapbox' es aproximado y se
-      // marca con "≈" y estilo atenuado para no leerse como dato cierto.
-      const buildMarkerEl = (dot: HTMLDivElement, label?: ReverseGeocodeLabel) => {
-        if (!label?.name) return dot;
-        const approximate = label.source !== 'catalog';
-        const container = document.createElement('div');
-        container.style.position = 'relative';
-        container.style.width = dot.style.width;
-        container.style.height = dot.style.height;
-        container.appendChild(dot);
+      endpointCandidates.push({
+        key: `${sessionId}:start`,
+        kind: 'start',
+        longitude: coordinates[0][0],
+        latitude: coordinates[0][1],
+        color,
+        recordedAt: sessionPoints[0].recorded_at,
+        label: pointLabels.get(`${sessionId}:start`),
+      });
 
+      if (coordinates.length > 1) {
+        endpointCandidates.push({
+          key: `${sessionId}:end`,
+          kind: 'end',
+          longitude: coordinates[coordinates.length - 1][0],
+          latitude: coordinates[coordinates.length - 1][1],
+          color,
+          recordedAt: sessionPoints[sessionPoints.length - 1].recorded_at,
+          label: pointLabels.get(`${sessionId}:end`),
+        });
+      }
+    }
+
+    // Una jornada puede abrir y cerrar muchas sesiones en la base. El jitter
+    // normal del GPS hacía que cada una dibujara su propio punto y la misma
+    // etiqueta una y otra vez. Se agrupan los extremos cercanos en un solo
+    // marcador con contador; la tabla inferior conserva el detalle por sesión.
+    for (const cluster of clusterRouteEndpoints(endpointCandidates)) {
+      const count = cluster.endpoints.length;
+      const startCount = cluster.endpoints.filter((endpoint) => endpoint.kind === 'start').length;
+      const endCount = count - startCount;
+      const label = selectClusterLabel(cluster.endpoints);
+      const approximate = label?.source === 'mapbox';
+      const firstEndpoint = cluster.endpoints[0];
+
+      const markerEl = document.createElement('div');
+      markerEl.style.display = 'flex';
+      markerEl.style.alignItems = 'center';
+      markerEl.style.justifyContent = 'center';
+      markerEl.style.width = count > 1 ? '1.75rem' : '0.875rem';
+      markerEl.style.height = count > 1 ? '1.75rem' : '0.875rem';
+      markerEl.style.borderRadius = count > 1 || firstEndpoint.kind === 'start' ? '9999px' : '0.125rem';
+      markerEl.style.background = count > 1 ? 'hsl(var(--foreground))' : firstEndpoint.color;
+      markerEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
+      markerEl.style.boxShadow = count > 1
+        ? '0 0.35rem 1rem hsl(var(--overlay) / 0.28)'
+        : 'var(--shadow-sm)';
+      markerEl.style.color = 'hsl(var(--background))';
+      markerEl.style.fontSize = count > 9 ? '0.625rem' : '0.6875rem';
+      markerEl.style.fontWeight = '700';
+      markerEl.style.lineHeight = '1';
+      if (count > 1) markerEl.textContent = String(count);
+
+      const markerContainer = document.createElement('div');
+      markerContainer.style.position = 'relative';
+      markerContainer.style.width = markerEl.style.width;
+      markerContainer.style.height = markerEl.style.height;
+      markerContainer.appendChild(markerEl);
+
+      const markerSummary = count > 1
+        ? `${count} registros (${startCount} inicios · ${endCount} finales)`
+        : firstEndpoint.kind === 'start' ? 'Inicio de sesión' : 'Fin de sesión';
+      markerContainer.title = label?.name ? `${label.name} · ${markerSummary}` : markerSummary;
+
+      if (label?.name || count > 1) {
         const labelEl = document.createElement('div');
-        labelEl.textContent = approximate ? `≈ ${label.name}` : label.name;
+        const labelName = label?.name
+          ? `${approximate ? '≈ ' : ''}${label.name}`
+          : 'Mismo punto';
+        labelEl.textContent = count > 1 ? `${labelName} · ${count} registros` : labelName;
         labelEl.style.position = 'absolute';
         labelEl.style.left = 'calc(100% + 0.375rem)';
         labelEl.style.top = '50%';
@@ -422,37 +483,14 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
         labelEl.style.border = '0.0625rem solid hsl(var(--border))';
         labelEl.style.boxShadow = 'var(--shadow-sm)';
         labelEl.style.pointerEvents = 'none';
-        container.appendChild(labelEl);
-        return container;
-      };
+        markerContainer.appendChild(labelEl);
+      }
 
-      const startEl = document.createElement('div');
-      startEl.style.width = '0.875rem';
-      startEl.style.height = '0.875rem';
-      startEl.style.borderRadius = '9999px';
-      startEl.style.background = color;
-      startEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
-      startEl.style.boxShadow = 'var(--shadow-sm)';
       markersRef.current.push(
-        new mapboxgl.default.Marker({ element: buildMarkerEl(startEl, pointLabels.get(`${sessionId}:start`)) })
-          .setLngLat(coordinates[0])
+        new mapboxgl.default.Marker({ element: markerContainer })
+          .setLngLat([cluster.longitude, cluster.latitude])
           .addTo(map),
       );
-
-      if (coordinates.length > 1) {
-        const endEl = document.createElement('div');
-        endEl.style.width = '0.875rem';
-        endEl.style.height = '0.875rem';
-        endEl.style.borderRadius = '0.125rem';
-        endEl.style.background = color;
-        endEl.style.border = '0.125rem solid hsl(var(--effect-highlight))';
-        endEl.style.boxShadow = 'var(--shadow-sm)';
-        markersRef.current.push(
-          new mapboxgl.default.Marker({ element: buildMarkerEl(endEl, pointLabels.get(`${sessionId}:end`)) })
-            .setLngLat(coordinates[coordinates.length - 1])
-            .addTo(map),
-        );
-      }
     }
 
     // Tooltip del hueco: la recta punteada por sí sola no dice cuánto tiempo

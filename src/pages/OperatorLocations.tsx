@@ -157,11 +157,26 @@ const OperatorLocations = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)}>
-        <TabsList className="resources-tabs h-auto max-w-full justify-start overflow-x-auto p-1">
-          <TabsTrigger value="mapa">Mapa en vivo</TabsTrigger>
-          <TabsTrigger value="historial">Historial de ruta</TabsTrigger>
-          <TabsTrigger value="telemetria">Telemetría de servicios</TabsTrigger>
-          <TabsTrigger value="tiempos-muertos">Tiempos muertos</TabsTrigger>
+        <TabsList
+          className={cn(
+            'resources-tabs h-auto max-w-full p-1',
+            isMobile
+              ? 'grid w-full grid-cols-2 gap-1 overflow-visible whitespace-normal'
+              : 'justify-start overflow-x-auto',
+          )}
+        >
+          <TabsTrigger className={cn(isMobile && 'min-h-11 w-full whitespace-normal px-2 py-2 text-center leading-tight')} value="mapa">
+            Mapa en vivo
+          </TabsTrigger>
+          <TabsTrigger className={cn(isMobile && 'min-h-11 w-full whitespace-normal px-2 py-2 text-center leading-tight')} value="historial">
+            Historial de ruta
+          </TabsTrigger>
+          <TabsTrigger className={cn(isMobile && 'min-h-11 w-full whitespace-normal px-2 py-2 text-center leading-tight')} value="telemetria">
+            Telemetría de servicios
+          </TabsTrigger>
+          <TabsTrigger className={cn(isMobile && 'min-h-11 w-full whitespace-normal px-2 py-2 text-center leading-tight')} value="tiempos-muertos">
+            Tiempos muertos
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="mapa" className="mt-4">

@@ -97,7 +97,6 @@ export const Header = ({
         isMobile ? "min-h-[3.5rem] px-3" : isTablet ? "min-h-[4rem] px-4" : "min-h-[4rem] px-6"
       )}
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
       }}
     >
