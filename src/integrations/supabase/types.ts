@@ -6832,6 +6832,7 @@ export type Database = {
           requires_detail: boolean
           requires_photo_set: boolean
           service_category: string
+          telemetry_mode: string
           updated_at: string | null
           vehicle_brand_required: boolean
           vehicle_info_optional: boolean
@@ -6856,6 +6857,7 @@ export type Database = {
           requires_detail?: boolean
           requires_photo_set?: boolean
           service_category?: string
+          telemetry_mode?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
@@ -6880,6 +6882,7 @@ export type Database = {
           requires_detail?: boolean
           requires_photo_set?: boolean
           service_category?: string
+          telemetry_mode?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
@@ -7014,6 +7017,7 @@ export type Database = {
           service_type_id: string
           start_time: string | null
           status: Database["public"]["Enums"]["service_status"] | null
+          telemetry_mode: string
           third_party_client_id: string | null
           updated_at: string | null
           urgency: string | null
@@ -7077,6 +7081,7 @@ export type Database = {
           service_type_id: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
+          telemetry_mode?: string
           third_party_client_id?: string | null
           updated_at?: string | null
           urgency?: string | null
@@ -7140,6 +7145,7 @@ export type Database = {
           service_type_id?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
+          telemetry_mode?: string
           third_party_client_id?: string | null
           updated_at?: string | null
           urgency?: string | null
@@ -9234,6 +9240,86 @@ export type Database = {
         }[]
       }
       get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
+      get_best_service_location_point: {
+        Args: { p_service_id: string }
+        Returns: {
+          accuracy_meters: number
+          heading_degrees: number | null
+          id: string
+          is_offline_sync: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform: string
+          recorded_at: string
+          service_id: string | null
+          session_id: string
+          source: string
+          speed_mps: number | null
+        }[]
+      }
+      get_best_session_location_point: {
+        Args: { p_session_id: string }
+        Returns: {
+          accuracy_meters: number
+          heading_degrees: number | null
+          id: string
+          is_offline_sync: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform: string
+          recorded_at: string
+          service_id: string | null
+          session_id: string
+          source: string
+          speed_mps: number | null
+        }[]
+      }
+      is_trusted_live_location_point: {
+        Args: {
+          p_accuracy_meters: number
+          p_latitude: number
+          p_longitude: number
+        }
+        Returns: boolean
+      }
+      get_service_telemetry: {
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_speed_limit_kmh?: number
+        }
+        Returns: {
+          average_moving_speed_kmh: number | null
+          coverage_status: string
+          crane_id: string | null
+          crane_label: string
+          end_at: string | null
+          folio: string
+          gaps_count: number
+          low_confidence: boolean
+          max_speed_kmh: number | null
+          operational_started_at: string | null
+          operator_id: string | null
+          operator_name: string
+          over_limit_episodes: number
+          percentile95_speed_kmh: number | null
+          raw_points_count: number
+          reliable_distance_km: number
+          service_date: string
+          service_id: string
+          service_status: string
+          service_type_name: string
+          speed_samples_count: number
+          start_at: string | null
+          telemetry_mode: string
+          total_duration_minutes: number | null
+          tracking_expected: boolean
+          trusted_points_count: number
+          unexpected_telemetry: boolean
+        }[]
+      }
       get_operator_linked_profile: {
         Args: { p_user_id: string }
         Returns: {

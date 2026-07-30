@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { OperatorLiveLocation } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
-import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
+import { isTrustedLiveLocationPoint } from '@/lib/liveLocationQuality';
 
 const logger = createLogger('useOperatorLiveLocations');
 
@@ -18,7 +18,11 @@ const fetchLiveLocations = async (): Promise<OperatorLiveLocation[]> => {
   }
 
   return ((data ?? []) as OperatorLiveLocation[]).map((location) => (
-    hasValidChileCoordinates(location)
+    isTrustedLiveLocationPoint({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracyMeters: location.accuracy_meters,
+    })
       ? location
       : {
           ...location,

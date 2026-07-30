@@ -9,6 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SERVICE_CATEGORY_OPTIONS, type ServiceCategory } from '@/utils/serviceCategoryLabels';
+import {
+  TELEMETRY_MODE_OPTIONS,
+  type TelemetryMode,
+} from '@/utils/telemetryMode';
 
 interface ServiceTypeFormProps {
   serviceType?: ServiceTypeConfig | null;
@@ -25,6 +29,7 @@ const defaultFormData: ServiceTypeFormData = {
   vehicleInfoOptional: false,
   isOutsourced: false,
   serviceCategory: 'traslado',
+  telemetryMode: 'crane',
   purchaseOrderRequired: false,
   originRequired: true,
   destinationRequired: true,
@@ -50,6 +55,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         vehicleInfoOptional: serviceType.vehicleInfoOptional,
         isOutsourced: serviceType.isOutsourced || false,
         serviceCategory: serviceType.serviceCategory || 'traslado',
+        telemetryMode: serviceType.telemetryMode || 'none',
         purchaseOrderRequired: serviceType.purchaseOrderRequired,
         originRequired: serviceType.originRequired,
         destinationRequired: serviceType.destinationRequired,
@@ -86,6 +92,16 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         value === 'externo_tercero' || value === 'excedente'
           ? false
           : current.availableInClientPortal,
+      telemetryMode:
+        value === 'externo_tercero'
+          ? 'external'
+          : current.telemetryMode === 'external'
+            ? current.craneRequired
+              ? 'crane'
+              : current.operatorRequired
+                ? 'operator'
+                : 'none'
+            : current.telemetryMode,
     }));
   };
 
@@ -229,6 +245,36 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 </div>
               </div>
             )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm font-medium">
+                Telemetría esperada
+              </Label>
+              <Select
+                value={formData.telemetryMode}
+                onValueChange={(value: TelemetryMode) => updateField('telemetryMode', value)}
+              >
+                <SelectTrigger className="focus:border-primary">
+                  <SelectValue placeholder="Selecciona el origen de telemetría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TELEMETRY_MODE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define si estos servicios deben aparecer en la cobertura GPS. El valor se copia
+                al servicio cuando se crea, para no alterar reportes históricos al editar este tipo.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

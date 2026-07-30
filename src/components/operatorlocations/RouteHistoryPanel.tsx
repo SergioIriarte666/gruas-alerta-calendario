@@ -601,12 +601,21 @@ function RouteMap({ points, autoFollow, matchingEnabled, matchedBySession, point
 interface RouteHistoryPanelProps {
   initialOperatorId?: string | null;
   initialDate?: string | null;
+  initialServiceId?: string | null;
+  initialServiceFolio?: string | null;
 }
 
-export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHistoryPanelProps) => {
+export const RouteHistoryPanel = ({
+  initialOperatorId,
+  initialDate,
+  initialServiceId,
+  initialServiceFolio,
+}: RouteHistoryPanelProps) => {
   const { operators } = useTrackableOperators();
   const [operatorId, setOperatorId] = useState<string | null>(initialOperatorId ?? null);
   const [dateISO, setDateISO] = useState<string>(initialDate ?? businessClock.today());
+  const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
+  const [serviceFolio, setServiceFolio] = useState<string | null>(initialServiceFolio ?? null);
   const [autoFollow, setAutoFollow] = useState(() => (initialDate ?? businessClock.today()) === businessClock.today());
   const [matchingEnabled, setMatchingEnabled] = useState(true);
   const validOperatorIds = useMemo(() => new Set(operators.map((operator) => operator.id)), [operators]);
@@ -620,6 +629,11 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   }, [initialDate]);
 
   useEffect(() => {
+    setServiceId(initialServiceId ?? null);
+    setServiceFolio(initialServiceFolio ?? null);
+  }, [initialServiceFolio, initialServiceId]);
+
+  useEffect(() => {
     setAutoFollow(dateISO === businessClock.today());
   }, [dateISO]);
 
@@ -629,7 +643,11 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
     }
   }, [operatorId, validOperatorIds]);
 
-  const { points, sessions, stopEvents, isLoading, error } = useOperatorRouteHistory(operatorId, dateISO);
+  const { points, sessions, stopEvents, isLoading, error } = useOperatorRouteHistory(
+    operatorId,
+    dateISO,
+    serviceId,
+  );
 
   const sessionPointCounts = new Map<string, number>();
   for (const point of points) {
@@ -705,7 +723,14 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={operatorId ?? undefined} onValueChange={setOperatorId}>
+        <Select
+          value={operatorId ?? undefined}
+          onValueChange={(value) => {
+            setOperatorId(value);
+            setServiceId(null);
+            setServiceFolio(null);
+          }}
+        >
           <SelectTrigger className="w-full sm:w-56">
             <SelectValue placeholder="Selecciona un operador" />
           </SelectTrigger>
@@ -720,7 +745,11 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
 
         <DatePickerInput
           value={dateISO}
-          onChange={setDateISO}
+          onChange={(value) => {
+            setDateISO(value);
+            setServiceId(null);
+            setServiceFolio(null);
+          }}
           className="w-full sm:w-48"
         />
 
@@ -743,6 +772,26 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
           >
             {freshness.label}
             {freshness.atLabel && freshness.level !== 'lost' ? ` · ${freshness.atLabel}` : ''}
+          </Badge>
+        )}
+
+        {serviceId && (
+          <Badge
+            variant="outline"
+            className="h-9 gap-2 rounded-full border-info/30 bg-info/10 px-3 text-xs font-semibold text-info"
+          >
+            Ruta del servicio {serviceFolio ?? ''}
+            <button
+              type="button"
+              className="rounded-full px-1 hover:bg-info/15"
+              onClick={() => {
+                setServiceId(null);
+                setServiceFolio(null);
+              }}
+              aria-label="Mostrar todas las rutas del día"
+            >
+              ×
+            </button>
           </Badge>
         )}
 

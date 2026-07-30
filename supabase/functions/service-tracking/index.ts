@@ -496,13 +496,19 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const { data: point } = await supabase
-    .from("operator_location_points")
-    .select("latitude, longitude, heading_degrees, speed_mps, recorded_at")
-    .eq("session_id", session.id)
-    .order("recorded_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Nunca mover el mapa del cliente con "el último punto" a secas. La RPC
+  // comparte la misma política del mapa administrativo: coordenadas válidas en
+  // Chile y precisión informada <= 50 m. La lectura cruda se conserva en BD
+  // para auditoría, pero no reemplaza la última posición confiable.
+  const { data: reliablePoints, error: reliablePointError } = await supabase
+    .rpc("get_best_session_location_point", { p_session_id: session.id });
+
+  if (reliablePointError) {
+    console.error("Failed to load reliable operator location", reliablePointError.message);
+    return jsonResponse(req, { error: "Failed to load operator location" }, 500);
+  }
+
+  const point = reliablePoints?.[0] ?? null;
 
   if (!point) {
     return jsonResponse(req, {
@@ -877,6 +883,7 @@ Deno.serve(async (req: Request) => {
     position: {
       lat: point.latitude,
       lng: point.longitude,
+      accuracy: point.accuracy_meters,
       heading: point.heading_degrees,
       speed: point.speed_mps,
       recorded_at: point.recorded_at,

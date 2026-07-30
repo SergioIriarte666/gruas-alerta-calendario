@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isTrustedLiveLocationPoint } from '@/lib/liveLocationQuality';
 
 export interface ServiceLatestOperatorLocation {
   latitude: number;
@@ -15,19 +16,26 @@ export interface ServiceLatestOperatorLocation {
 const fetchServiceLatestOperatorLocation = async (
   serviceId: string,
 ): Promise<ServiceLatestOperatorLocation | null> => {
-  const { data, error } = await (supabase as any)
-    .from('operator_location_points')
-    .select('session_id, operator_id, service_id, latitude, longitude, accuracy_meters, recorded_at, is_offline_sync')
-    .eq('service_id', serviceId)
-    .order('recorded_at', { ascending: false })
-    .limit(1)
+  // La RPC conserva todos los puntos crudos, pero solo permite que una lectura
+  // con precisión <= 50 m y coordenadas válidas desplace el marcador visible.
+  // Compartir esta selección con los demás mapas evita tres umbrales distintos.
+  const { data, error } = await supabase
+    .rpc('get_best_service_location_point', { p_service_id: serviceId })
     .maybeSingle();
 
   if (error) {
-    throw new Error(error.message || 'No se pudo cargar la ultima ubicacion del operador');
+    throw new Error(error.message || 'No se pudo cargar la última ubicación confiable del operador');
   }
 
-  return (data as ServiceLatestOperatorLocation | null) ?? null;
+  if (!data || !isTrustedLiveLocationPoint({
+    latitude: data.latitude,
+    longitude: data.longitude,
+    accuracyMeters: data.accuracy_meters,
+  })) {
+    return null;
+  }
+
+  return data;
 };
 
 export const useServiceLatestOperatorLocation = (serviceId?: string | null) =>

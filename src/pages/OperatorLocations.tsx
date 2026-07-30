@@ -68,7 +68,12 @@ const OperatorLocations = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('mapa');
   const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(null);
   const [liveFilter, setLiveFilter] = useState<LiveFilterKey>('todos');
-  const [routePreset, setRoutePreset] = useState<{ operatorId: string; dateISO: string } | null>(null);
+  const [routePreset, setRoutePreset] = useState<{
+    operatorId: string;
+    dateISO: string;
+    serviceId?: string;
+    serviceFolio?: string;
+  } | null>(null);
   const mapHandleRef = useRef<LiveOperatorsMapHandle>(null);
 
   const { data: liveLocations } = useOperatorLiveLocations();
@@ -133,8 +138,13 @@ const OperatorLocations = () => {
     mapHandleRef.current?.flyToOperator(operatorId);
   };
 
-  const handleViewRoute = (operatorId: string, dateISO: string) => {
-    setRoutePreset({ operatorId, dateISO });
+  const handleViewRoute = (
+    operatorId: string,
+    dateISO: string,
+    serviceId?: string,
+    serviceFolio?: string,
+  ) => {
+    setRoutePreset({ operatorId, dateISO, serviceId, serviceFolio });
     setActiveTab('historial');
   };
 
@@ -276,6 +286,8 @@ const OperatorLocations = () => {
           <RouteHistoryPanel
             initialOperatorId={routePreset?.operatorId ?? selectedOperatorId}
             initialDate={routePreset?.dateISO}
+            initialServiceId={routePreset?.serviceId}
+            initialServiceFolio={routePreset?.serviceFolio}
           />
         </TabsContent>
 

@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { getServiceCategoryLabel, getServiceCategoryBadgeClasses } from '@/utils/serviceCategoryLabels';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getTelemetryModeLabel } from '@/utils/telemetryMode';
 import {
   Table,
   TableBody,
@@ -82,6 +83,9 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   >
                     {getServiceCategoryLabel(serviceType.serviceCategory)}
                   </Badge>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {getTelemetryModeLabel(serviceType.telemetryMode)}
+                  </Badge>
                   <Badge
                     variant={serviceType.availableInClientPortal ? "default" : "secondary"}
                     className="text-xs"
@@ -143,6 +147,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
           <TableRow className="border-border hover:bg-muted/50">
             <TableHead className="text-foreground">Nombre</TableHead>
             <TableHead className="text-foreground">Categoría</TableHead>
+            <TableHead className="text-foreground">Telemetría</TableHead>
             <TableHead className="text-foreground">Descripción</TableHead>
             <TableHead className="text-foreground">Precio Base</TableHead>
             <TableHead className="text-foreground">Estado</TableHead>
@@ -164,6 +169,11 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                   className={cn('text-xs font-normal', getServiceCategoryBadgeClasses(serviceType.serviceCategory))}
                 >
                   {getServiceCategoryLabel(serviceType.serviceCategory)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="whitespace-nowrap text-xs font-normal">
+                  {getTelemetryModeLabel(serviceType.telemetryMode)}
                 </Badge>
               </TableCell>
               <TableCell className="text-foreground">

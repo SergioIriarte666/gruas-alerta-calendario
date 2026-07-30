@@ -21,6 +21,7 @@ import { resolveEtaLabel, type EtaTargetKind } from '@/utils/trackEtaLabel';
 import { trimRouteFromPosition } from '@/utils/routePolyline';
 import { getCraneTypeLabel } from '@/utils/craneType';
 import { cn } from '@/lib/utils';
+import { isTrustedLiveLocationPoint } from '@/lib/liveLocationQuality';
 import { Button } from '@/components/ui/button';
 
 const logger = createLogger('PublicTracking');
@@ -642,6 +643,9 @@ interface TrackingResponse {
   position?: {
     lat: number;
     lng: number;
+    // Opcional durante el despliegue gradual: versiones anteriores de la
+    // función no lo incluían. El backend actualizado siempre lo informa.
+    accuracy?: number;
     heading: number | null;
     speed: number | null;
     recorded_at: string;
@@ -745,6 +749,22 @@ const useServiceTrackingPoll = (token: string | undefined) => {
         }
 
         const json = (await response.json()) as TrackingResponse;
+        // Defensa final en el navegador: aunque una versión antigua o una
+        // regresión del endpoint entregue un punto impreciso, no se dibuja.
+        // La ausencia transitoria de `accuracy` se acepta para que el despliegue
+        // gradual del endpoint y del bundle web no deje el mapa en blanco.
+        if (
+          json.position
+          && typeof json.position.accuracy === 'number'
+          && !isTrustedLiveLocationPoint({
+            latitude: json.position.lat,
+            longitude: json.position.lng,
+            accuracyMeters: json.position.accuracy,
+          })
+        ) {
+          json.position = null;
+          if (json.state === 'active') json.state = 'no_signal';
+        }
         setData(json);
         setStatus('ready');
 

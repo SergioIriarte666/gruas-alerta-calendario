@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
 import { createLogger } from "@/lib/logger";
+import type { TelemetryMode } from '@/utils/telemetryMode';
 
 
 const logger = createLogger("useServiceTypesManagement");
@@ -16,6 +17,7 @@ interface CreateServiceTypeData {
   vehicle_info_optional?: boolean;
   is_outsourced?: boolean;
   service_category?: 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente';
+  telemetry_mode?: TelemetryMode;
   purchase_order_required?: boolean;
   origin_required?: boolean;
   destination_required?: boolean;
@@ -36,6 +38,7 @@ const SERVICE_TYPE_SELECT = `
   vehicle_info_optional,
   is_outsourced,
   service_category,
+  telemetry_mode,
   purchase_order_required,
   origin_required,
   destination_required,
@@ -69,6 +72,7 @@ const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData =
     vehicle_info_optional: data.vehicleInfoOptional,
     is_outsourced: isOutsourced,
     service_category: data.serviceCategory,
+    telemetry_mode: data.telemetryMode,
     purchase_order_required: data.purchaseOrderRequired,
     origin_required: data.originRequired,
     destination_required: data.destinationRequired,
@@ -106,6 +110,7 @@ export const useServiceTypesManagement = () => {
         vehicleInfoOptional: item.vehicle_info_optional || false,
         isOutsourced: item.is_outsourced || false,
         serviceCategory: (item.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') || 'traslado',
+        telemetryMode: (item.telemetry_mode as TelemetryMode) || 'none',
         purchaseOrderRequired: item.purchase_order_required || false,
         originRequired: item.origin_required !== false,
         destinationRequired: item.destination_required !== false,

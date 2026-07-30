@@ -21,4 +21,15 @@ describe('summarizeSpeedSamples', () => {
       samplesCount: 0,
     });
   });
+
+  it('calculates p95 from moving samples so idle readings do not dilute the result', () => {
+    const summary = summarizeSpeedSamples(
+      [...Array.from({ length: 100 }, () => 0), 50, 60, 70, 80],
+      80,
+    );
+
+    expect(summary.averageMovingSpeedKmh).toBe(65);
+    expect(summary.percentile95SpeedKmh).toBe(80);
+    expect(summary.maxSpeedKmh).toBe(80);
+  });
 });

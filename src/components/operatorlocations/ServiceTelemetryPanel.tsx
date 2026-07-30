@@ -22,20 +22,43 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  summarizeSpeedSamples,
   useServiceTelemetry,
   type ServiceTelemetryRecord,
+  type TelemetryCoverageStatus,
 } from '@/hooks/operatorlocations/useServiceTelemetry';
+import { useDebounce } from '@/hooks/useDebounce';
 import { businessClock } from '@/utils/businessClock';
 import { downloadTextFile } from '@/utils/fileDownload';
+import { getServiceStatusLabel } from '@/utils/statusHelpers';
 import { safeDateToDisplaySlashes, toLocalDateString } from '@/utils/timezoneUtils';
+import {
+  TELEMETRY_MODE_OPTIONS,
+  getTelemetryModeLabel,
+} from '@/utils/telemetryMode';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_SPEED_LIMIT_KMH = 80;
 const ALL_VALUE = '__all__';
 
+const COVERAGE_OPTIONS: Array<{
+  value: TelemetryCoverageStatus;
+  label: string;
+}> = [
+  { value: 'reliable', label: 'Confiable' },
+  { value: 'review', label: 'Revisar' },
+  { value: 'missing', label: 'Sin GPS' },
+  { value: 'not_started', label: 'No iniciado' },
+  { value: 'external', label: 'Externo' },
+  { value: 'unexpected', label: 'GPS no esperado' },
+];
+
 interface ServiceTelemetryPanelProps {
-  onViewRoute: (operatorId: string, dateISO: string) => void;
+  onViewRoute: (
+    operatorId: string,
+    dateISO: string,
+    serviceId: string,
+    serviceFolio: string,
+  ) => void;
 }
 
 const formatNumber = (value: number | null, digits = 0): string => (
@@ -58,14 +81,41 @@ const csvCell = (value: string | number | null) => (
   `"${String(value ?? '').replaceAll('"', '""')}"`
 );
 
+const getCoverageLabel = (status: TelemetryCoverageStatus): string => (
+  COVERAGE_OPTIONS.find((option) => option.value === status)?.label ?? status
+);
+
+const getCoverageBadgeClass = (status: TelemetryCoverageStatus): string => {
+  switch (status) {
+    case 'reliable':
+      return 'border-success/30 bg-success/10 text-success';
+    case 'review':
+    case 'missing':
+      return 'border-warning/30 bg-warning/10 text-warning';
+    case 'unexpected':
+      return 'border-danger/30 bg-danger/10 text-danger';
+    default:
+      return 'border-border bg-muted text-muted-foreground';
+  }
+};
+
 export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProps) => {
   const [dateFrom, setDateFrom] = useState(() => toLocalDateString(subDays(businessClock.todayDate(), 6)));
   const [dateTo, setDateTo] = useState(() => businessClock.today());
   const [operatorId, setOperatorId] = useState(ALL_VALUE);
   const [craneId, setCraneId] = useState(ALL_VALUE);
+  const [serviceType, setServiceType] = useState(ALL_VALUE);
+  const [serviceStatus, setServiceStatus] = useState(ALL_VALUE);
+  const [telemetryMode, setTelemetryMode] = useState(ALL_VALUE);
+  const [coverageStatus, setCoverageStatus] = useState(ALL_VALUE);
   const [search, setSearch] = useState('');
   const [speedLimitKmh, setSpeedLimitKmh] = useState(DEFAULT_SPEED_LIMIT_KMH);
-  const { records, isLoading, error, refetch } = useServiceTelemetry(dateFrom, dateTo);
+  const debouncedSpeedLimitKmh = useDebounce(speedLimitKmh, 500);
+  const { records, isLoading, error, refetch } = useServiceTelemetry(
+    dateFrom,
+    dateTo,
+    debouncedSpeedLimitKmh,
+  );
 
   const operatorOptions = useMemo(() => (
     Array.from(new Map(
@@ -87,37 +137,63 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
       .sort((a, b) => a.label.localeCompare(b.label, 'es'))
   ), [records]);
 
+  const serviceTypeOptions = useMemo(() => (
+    Array.from(new Set(records.map((record) => record.serviceTypeName)))
+      .sort((a, b) => a.localeCompare(b, 'es'))
+  ), [records]);
+
+  const serviceStatusOptions = useMemo(() => (
+    Array.from(new Set(records.map((record) => record.serviceStatus)))
+      .sort((a, b) => getServiceStatusLabel(a).localeCompare(getServiceStatusLabel(b), 'es'))
+  ), [records]);
+
   const rows = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase('es');
 
     return records
       .filter((record) => operatorId === ALL_VALUE || record.operatorId === operatorId)
       .filter((record) => craneId === ALL_VALUE || record.craneId === craneId)
+      .filter((record) => serviceType === ALL_VALUE || record.serviceTypeName === serviceType)
+      .filter((record) => serviceStatus === ALL_VALUE || record.serviceStatus === serviceStatus)
+      .filter((record) => telemetryMode === ALL_VALUE || record.telemetryMode === telemetryMode)
+      .filter((record) => coverageStatus === ALL_VALUE || record.coverageStatus === coverageStatus)
       .filter((record) => (
         !normalizedSearch
         || record.folio.toLocaleLowerCase('es').includes(normalizedSearch)
+        || record.serviceTypeName.toLocaleLowerCase('es').includes(normalizedSearch)
         || record.operatorName.toLocaleLowerCase('es').includes(normalizedSearch)
         || record.craneLabel.toLocaleLowerCase('es').includes(normalizedSearch)
-      ))
-      .map((record) => ({
-        ...record,
-        speed: summarizeSpeedSamples(record.speedSamplesKmh, speedLimitKmh),
-      }));
-  }, [craneId, operatorId, records, search, speedLimitKmh]);
+      ));
+  }, [
+    coverageStatus,
+    craneId,
+    operatorId,
+    records,
+    search,
+    serviceStatus,
+    serviceType,
+    telemetryMode,
+  ]);
 
   const summary = useMemo(() => {
-    const withTelemetry = rows.filter((row) => row.speed.samplesCount > 0);
-    const maxSpeed = withTelemetry.reduce<number | null>((current, row) => {
-      const value = row.speed.maxSpeedKmh;
-      if (value === null) return current;
-      return current === null ? value : Math.max(current, value);
+    const expected = rows.filter((row) => row.trackingExpected);
+    const covered = expected.filter((row) => row.trustedPointsCount > 0);
+    const maxSpeed = expected.reduce<number | null>((current, row) => {
+      if (row.maxSpeedKmh === null) return current;
+      return current === null ? row.maxSpeedKmh : Math.max(current, row.maxSpeedKmh);
     }, null);
 
     return {
-      serviceCount: rows.length,
-      withTelemetryCount: withTelemetry.length,
-      totalDistanceKm: rows.reduce((sum, row) => sum + (row.totalDistanceKm ?? 0), 0),
-      overLimitSamples: rows.reduce((sum, row) => sum + row.speed.overLimitSamples, 0),
+      expectedCount: expected.length,
+      coveredCount: covered.length,
+      coveragePercent: expected.length > 0 ? covered.length / expected.length * 100 : null,
+      reliableDistanceKm: expected.reduce((sum, row) => sum + row.reliableDistanceKm, 0),
+      overLimitEpisodes: expected.reduce((sum, row) => sum + row.overLimitEpisodes, 0),
+      incidents: rows.filter((row) => (
+        row.coverageStatus === 'missing'
+        || row.coverageStatus === 'review'
+        || row.coverageStatus === 'unexpected'
+      )).length,
       maxSpeed,
     };
   }, [rows]);
@@ -126,34 +202,44 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
     const header = [
       'Fecha servicio',
       'Folio',
+      'Tipo de servicio',
+      'Estado',
+      'Telemetría esperada',
+      'Cobertura',
       'Grúa',
       'Operador',
-      'Inicio GPS',
-      'Fin GPS',
+      'Inicio GPS confiable',
+      'Fin GPS confiable',
       'Duración',
-      'Distancia km',
+      'Distancia confiable km',
       'Promedio en movimiento km/h',
-      'Percentil 95 km/h',
-      'Máxima km/h',
-      `Muestras sobre ${speedLimitKmh} km/h`,
-      'Puntos GPS',
-      'Calidad',
+      'Percentil 95 en movimiento km/h',
+      'Máxima GPS km/h',
+      `Episodios sobre ${debouncedSpeedLimitKmh} km/h`,
+      'Puntos GPS crudos',
+      'Puntos GPS confiables',
+      'Brechas',
     ];
     const lines = rows.map((row) => [
       row.serviceDate,
       row.folio,
+      row.serviceTypeName,
+      getServiceStatusLabel(row.serviceStatus),
+      getTelemetryModeLabel(row.telemetryMode),
+      getCoverageLabel(row.coverageStatus),
       row.craneLabel,
       row.operatorName,
       row.startAt ? businessClock.format(row.startAt, 'HH:mm') : '',
       row.endAt ? businessClock.format(row.endAt, 'HH:mm') : '',
       formatDuration(row.totalDurationMinutes),
-      row.totalDistanceKm,
-      row.speed.averageMovingSpeedKmh === null ? '' : Math.round(row.speed.averageMovingSpeedKmh),
-      row.speed.percentile95SpeedKmh === null ? '' : Math.round(row.speed.percentile95SpeedKmh),
-      row.speed.maxSpeedKmh === null ? '' : Math.round(row.speed.maxSpeedKmh),
-      row.speed.overLimitSamples,
-      row.gpsPointsCount,
-      row.speed.samplesCount === 0 ? 'Sin telemetría' : row.lowConfidence ? 'Revisar' : 'Confiable',
+      row.reliableDistanceKm,
+      row.averageMovingSpeedKmh === null ? '' : Math.round(row.averageMovingSpeedKmh),
+      row.percentile95SpeedKmh === null ? '' : Math.round(row.percentile95SpeedKmh),
+      row.maxSpeedKmh === null ? '' : Math.round(row.maxSpeedKmh),
+      row.overLimitEpisodes,
+      row.rawPointsCount,
+      row.trustedPointsCount,
+      row.gapsCount,
     ]);
     const content = `\uFEFF${[header, ...lines].map((line) => line.map(csvCell).join(';')).join('\n')}`;
 
@@ -174,7 +260,7 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
               Bitácora GPS
             </p>
             <h2>Telemetría de servicios</h2>
-            <p>Velocidades y trazabilidad por fecha, grúa y operador.</p>
+            <p>Solo servicios que deben generar GPS, más anomalías que requieren auditoría.</p>
           </div>
           <div className="telemetry-ledger__limit">
             <span>Umbral de control</span>
@@ -186,33 +272,36 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
         <div className="telemetry-ledger__metrics">
           <div>
             <Truck className="size-4" />
-            <span>Servicios</span>
-            <strong>{summary.serviceCount}</strong>
-            <small>{summary.withTelemetryCount} con telemetría</small>
+            <span>Servicios iniciados</span>
+            <strong>{summary.expectedCount}</strong>
+            <small>con GPS esperado</small>
+          </div>
+          <div className={cn(summary.coveragePercent !== null && summary.coveragePercent < 100 && 'is-alert')}>
+            <Gauge className="size-4" />
+            <span>Cobertura GPS</span>
+            <strong>{summary.coveragePercent === null ? '—' : `${formatNumber(summary.coveragePercent)}%`}</strong>
+            <small>{summary.coveredCount} de {summary.expectedCount} con señal confiable</small>
           </div>
           <div>
             <Route className="size-4" />
-            <span>Distancia registrada</span>
-            <strong>{formatNumber(summary.totalDistanceKm, 1)}</strong>
-            <small>kilómetros GPS</small>
+            <span>Distancia confiable</span>
+            <strong>{formatNumber(summary.reliableDistanceKm, 1)}</strong>
+            <small>km con precisión ≤ 50 m</small>
           </div>
-          <div>
-            <Gauge className="size-4" />
-            <span>Máxima observada</span>
-            <strong>{formatNumber(summary.maxSpeed)}</strong>
-            <small>km/h</small>
-          </div>
-          <div className={cn(summary.overLimitSamples > 0 && 'is-alert')}>
+          <div className={cn((summary.overLimitEpisodes > 0 || summary.incidents > 0) && 'is-alert')}>
             <AlertTriangle className="size-4" />
-            <span>Sobre el umbral</span>
-            <strong>{summary.overLimitSamples}</strong>
-            <small>muestras GPS</small>
+            <span>Alertas operativas</span>
+            <strong>{summary.overLimitEpisodes}</strong>
+            <small>
+              episodios &gt; {debouncedSpeedLimitKmh} km/h · {summary.incidents} servicios a revisar
+              {summary.maxSpeed !== null ? ` · máx. ${formatNumber(summary.maxSpeed)} km/h` : ''}
+            </small>
           </div>
         </div>
       </section>
 
       <section className="resources-panel p-4">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[11rem_11rem_minmax(11rem,1fr)_minmax(12rem,1fr)_9rem_auto]">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="mb-1 block text-xs font-semibold text-muted-foreground">Desde</label>
             <DatePickerInput value={dateFrom} onChange={setDateFrom} />
@@ -221,30 +310,57 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
             <label className="mb-1 block text-xs font-semibold text-muted-foreground">Hasta</label>
             <DatePickerInput value={dateTo} onChange={setDateTo} />
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">Operador</label>
-            <Select value={operatorId} onValueChange={setOperatorId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>Todos los operadores</SelectItem>
-                {operatorOptions.map((operator) => (
-                  <SelectItem key={operator.id} value={operator.id}>{operator.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">Grúa</label>
-            <Select value={craneId} onValueChange={setCraneId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>Todas las grúas</SelectItem>
-                {craneOptions.map((crane) => (
-                  <SelectItem key={crane.id} value={crane.id}>{crane.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Tipo de servicio"
+            value={serviceType}
+            onValueChange={setServiceType}
+            allLabel="Todos los tipos"
+            options={serviceTypeOptions.map((value) => ({ value, label: value }))}
+          />
+          <FilterSelect
+            label="Estado"
+            value={serviceStatus}
+            onValueChange={setServiceStatus}
+            allLabel="Todos los estados"
+            options={serviceStatusOptions.map((value) => ({
+              value,
+              label: getServiceStatusLabel(value),
+            }))}
+          />
+          <FilterSelect
+            label="Telemetría"
+            value={telemetryMode}
+            onValueChange={setTelemetryMode}
+            allLabel="Todas las modalidades"
+            options={TELEMETRY_MODE_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
+          <FilterSelect
+            label="Cobertura"
+            value={coverageStatus}
+            onValueChange={setCoverageStatus}
+            allLabel="Todos los resultados"
+            options={COVERAGE_OPTIONS}
+          />
+          <FilterSelect
+            label="Operador"
+            value={operatorId}
+            onValueChange={setOperatorId}
+            allLabel="Todos los operadores"
+            options={operatorOptions.map((option) => ({ value: option.id, label: option.name }))}
+          />
+          <FilterSelect
+            label="Grúa"
+            value={craneId}
+            onValueChange={setCraneId}
+            allLabel="Todas las grúas"
+            options={craneOptions.map((option) => ({ value: option.id, label: option.label }))}
+          />
+        </div>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-[9rem_minmax(16rem,1fr)_auto]">
           <div>
             <label htmlFor="speed-threshold" className="mb-1 block text-xs font-semibold text-muted-foreground">
               Umbral km/h
@@ -260,6 +376,21 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
               )}
             />
           </div>
+          <div>
+            <label htmlFor="telemetry-search" className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Buscar
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="telemetry-search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Folio, tipo, patente u operador"
+                className="pl-9"
+              />
+            </div>
+          </div>
           <div className="flex items-end gap-2">
             <Button type="button" variant="outline" size="icon" onClick={() => void refetch()} aria-label="Actualizar telemetría">
               <RefreshCw className={cn('size-4', isLoading && 'animate-spin')} />
@@ -269,16 +400,6 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
               CSV
             </Button>
           </div>
-        </div>
-
-        <div className="relative mt-3">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por folio, patente, grúa u operador"
-            className="pl-9"
-          />
         </div>
       </section>
 
@@ -290,35 +411,37 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
 
       <section className="resources-panel overflow-hidden">
         <div className="overflow-x-auto">
-          <Table className="min-w-[73.75rem]">
+          <Table className="min-w-[102rem]">
             <TableHeader className="telemetry-ledger__table-head">
               <TableRow>
-                <TableHead>Fecha servicio</TableHead>
+                <TableHead>Fecha</TableHead>
                 <TableHead className="min-w-48">Servicio</TableHead>
+                <TableHead>Tipo / modalidad</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead>Grúa</TableHead>
                 <TableHead>Operador</TableHead>
-                <TableHead>Ventana GPS</TableHead>
+                <TableHead>Ventana GPS confiable</TableHead>
                 <TableHead className="text-right">Distancia</TableHead>
                 <TableHead className="text-right">Prom. movimiento</TableHead>
-                <TableHead className="text-right">P95</TableHead>
-                <TableHead className="text-right">Máx. GPS registrada</TableHead>
-                <TableHead className="text-right">&gt; {speedLimitKmh}</TableHead>
-                <TableHead>Calidad</TableHead>
+                <TableHead className="text-right">P95 movimiento</TableHead>
+                <TableHead className="text-right">Máx. GPS</TableHead>
+                <TableHead className="text-right">Episodios &gt; {debouncedSpeedLimitKmh}</TableHead>
+                <TableHead>Cobertura</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={14} className="h-32 text-center text-muted-foreground">
                     Cargando telemetría de servicios…
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-32 text-center text-muted-foreground">
-                    No hay servicios para los filtros seleccionados.
+                  <TableCell colSpan={14} className="h-32 text-center text-muted-foreground">
+                    No hay servicios con telemetría esperada o anomalías para estos filtros.
                   </TableCell>
                 </TableRow>
               )}
@@ -326,6 +449,7 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
                 <TelemetryRow
                   key={row.serviceId}
                   row={row}
+                  speedLimitKmh={debouncedSpeedLimitKmh}
                   onViewRoute={onViewRoute}
                 />
               ))}
@@ -333,35 +457,74 @@ export const ServiceTelemetryPanel = ({ onViewRoute }: ServiceTelemetryPanelProp
           </Table>
         </div>
         <p className="border-t border-border/60 px-4 py-3 text-xs text-muted-foreground">
-          “Prom. movimiento” excluye velocidades menores a 5 km/h. “Máx. GPS registrada” es la mayor muestra que el teléfono
-          alcanzó a guardar y puede diferir del tablero del vehículo. Lecturas superiores a 150 km/h se descartan como saltos GPS.
-          El umbral es una referencia operativa configurable, no una determinación automática de infracción.
+          Cobertura, distancia y velocidades usan solo lecturas dentro de Chile con precisión informada de hasta 50 m.
+          El promedio y P95 consideran movimiento desde 5 km/h. Lecturas superiores a 150 km/h se descartan como saltos GPS.
+          Los excesos consecutivos se agrupan en episodios, en vez de contar cada muestra como una infracción distinta.
         </p>
       </section>
     </div>
   );
 };
 
-interface TelemetryRowProps {
-  row: ServiceTelemetryRecord & {
-    speed: ReturnType<typeof summarizeSpeedSamples>;
-  };
-  onViewRoute: (operatorId: string, dateISO: string) => void;
+interface FilterSelectProps {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  allLabel: string;
+  options: Array<{ value: string; label: string }>;
 }
 
-const TelemetryRow = ({ row, onViewRoute }: TelemetryRowProps) => {
-  const hasAlert = row.speed.overLimitSamples > 0;
-  const hasTelemetry = row.speed.samplesCount > 0;
+const FilterSelect = ({
+  label,
+  value,
+  onValueChange,
+  allLabel,
+  options,
+}: FilterSelectProps) => (
+  <div>
+    <label className="mb-1 block text-xs font-semibold text-muted-foreground">{label}</label>
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL_VALUE}>{allLabel}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
+interface TelemetryRowProps {
+  row: ServiceTelemetryRecord;
+  speedLimitKmh: number;
+  onViewRoute: (
+    operatorId: string,
+    dateISO: string,
+    serviceId: string,
+    serviceFolio: string,
+  ) => void;
+}
+
+const TelemetryRow = ({ row, speedLimitKmh, onViewRoute }: TelemetryRowProps) => {
+  const hasAlert = row.overLimitEpisodes > 0;
 
   return (
-    <TableRow className={cn('telemetry-ledger__row', hasAlert && 'is-alert')}>
+    <TableRow className={cn('telemetry-ledger__row', (hasAlert || row.unexpectedTelemetry) && 'is-alert')}>
       <TableCell className="font-semibold">{safeDateToDisplaySlashes(row.serviceDate)}</TableCell>
       <TableCell className="min-w-48">
         <span className="whitespace-nowrap font-bold text-foreground">{row.folio}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
-          {formatDuration(row.totalDurationMinutes)} · {row.gpsPointsCount} puntos
+          {formatDuration(row.totalDurationMinutes)} · {row.trustedPointsCount}/{row.rawPointsCount} puntos confiables
         </span>
       </TableCell>
+      <TableCell>
+        <span className="block font-medium">{row.serviceTypeName}</span>
+        <span className="block text-xs text-muted-foreground">
+          {getTelemetryModeLabel(row.telemetryMode)}
+        </span>
+      </TableCell>
+      <TableCell>{getServiceStatusLabel(row.serviceStatus)}</TableCell>
       <TableCell className="max-w-52">
         <span className="block truncate font-medium">{row.craneLabel}</span>
       </TableCell>
@@ -372,20 +535,20 @@ const TelemetryRow = ({ row, onViewRoute }: TelemetryRowProps) => {
         {row.endAt ? businessClock.format(row.endAt, 'HH:mm') : '—'}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {row.totalDistanceKm === null ? '—' : `${formatNumber(row.totalDistanceKm, 1)} km`}
+        {row.trustedPointsCount === 0 ? '—' : `${formatNumber(row.reliableDistanceKm, 1)} km`}
       </TableCell>
       <TableCell className="text-right font-medium tabular-nums">
-        {row.speed.averageMovingSpeedKmh === null
+        {row.averageMovingSpeedKmh === null
           ? '—'
-          : `${formatNumber(row.speed.averageMovingSpeedKmh)} km/h`}
+          : `${formatNumber(row.averageMovingSpeedKmh)} km/h`}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {row.speed.percentile95SpeedKmh === null
+        {row.percentile95SpeedKmh === null
           ? '—'
-          : `${formatNumber(row.speed.percentile95SpeedKmh)} km/h`}
+          : `${formatNumber(row.percentile95SpeedKmh)} km/h`}
       </TableCell>
       <TableCell className={cn('text-right font-bold tabular-nums', hasAlert && 'text-warning')}>
-        {row.speed.maxSpeedKmh === null ? '—' : `${formatNumber(row.speed.maxSpeedKmh)} km/h`}
+        {row.maxSpeedKmh === null ? '—' : `${formatNumber(row.maxSpeedKmh)} km/h`}
       </TableCell>
       <TableCell className="text-right">
         <Badge
@@ -396,26 +559,31 @@ const TelemetryRow = ({ row, onViewRoute }: TelemetryRowProps) => {
               ? 'border-warning/35 bg-warning/10 text-warning'
               : 'border-success/30 bg-success/10 text-success',
           )}
+          title={`Episodios sobre ${speedLimitKmh} km/h`}
         >
-          {row.speed.overLimitSamples}
+          {row.overLimitEpisodes}
         </Badge>
       </TableCell>
       <TableCell>
-        {!hasTelemetry ? (
-          <Badge variant="outline" className="border-border bg-muted text-muted-foreground">Sin GPS</Badge>
-        ) : row.lowConfidence || row.gapsCount > 3 ? (
-          <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">Revisar</Badge>
-        ) : (
-          <Badge variant="outline" className="border-success/30 bg-success/10 text-success">Confiable</Badge>
-        )}
+        <Badge
+          variant="outline"
+          className={cn('whitespace-nowrap', getCoverageBadgeClass(row.coverageStatus))}
+        >
+          {getCoverageLabel(row.coverageStatus)}
+        </Badge>
       </TableCell>
       <TableCell className="text-right">
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          disabled={!row.operatorId}
-          onClick={() => row.operatorId && onViewRoute(row.operatorId, row.serviceDate)}
+          disabled={!row.operatorId || row.trustedPointsCount === 0}
+          onClick={() => row.operatorId && onViewRoute(
+            row.operatorId,
+            row.serviceDate,
+            row.serviceId,
+            row.folio,
+          )}
           className="text-info hover:bg-info/10 hover:text-info"
         >
           Ver ruta

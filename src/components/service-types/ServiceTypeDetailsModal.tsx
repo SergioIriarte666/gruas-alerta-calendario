@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { getServiceCategoryLabel, getServiceCategoryBadgeClasses } from "@/utils/serviceCategoryLabels";
+import { getTelemetryModeLabel } from "@/utils/telemetryMode";
 
 interface ServiceTypeDetailsModalProps {
   serviceType: ServiceTypeConfig | null;
@@ -126,6 +127,13 @@ export function ServiceTypeDetailsModal({
                       variant={serviceType.availableInClientPortal ? "default" : "secondary"}
                     >
                       {serviceType.availableInClientPortal ? "Disponible" : "Oculto"}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-muted-foreground">Telemetría esperada</span>
+                    <Badge variant="outline">
+                      {getTelemetryModeLabel(serviceType.telemetryMode)}
                     </Badge>
                   </div>
                 </div>

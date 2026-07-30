@@ -1,4 +1,5 @@
 import type { ServiceCategory } from '@/utils/serviceCategoryLabels';
+import type { TelemetryMode } from '@/utils/telemetryMode';
 
 export interface ServiceTypeRequirements {
   purchaseOrderRequired: boolean;
@@ -21,6 +22,7 @@ export interface ServiceTypeConfig extends ServiceTypeRequirements {
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
   serviceCategory: ServiceCategory;
+  telemetryMode: TelemetryMode;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +36,7 @@ export interface ServiceTypeFormData {
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
   serviceCategory: ServiceCategory;
+  telemetryMode: TelemetryMode;
   purchaseOrderRequired: boolean;
   originRequired: boolean;
   destinationRequired: boolean;

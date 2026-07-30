@@ -29,31 +29,42 @@ const getChileDayRangeUtc = (dateISO: string) => {
 const fetchRouteHistory = async (
   operatorId: string,
   dateISO: string,
+  serviceId?: string | null,
 ): Promise<OperatorRouteHistoryResult> => {
   const { startUtc, endUtc } = getChileDayRangeUtc(dateISO);
 
-  const [pointsResult, sessionsResult, stopEventsResult] = await Promise.all([
-    supabase
+  let pointsQuery = supabase
       .from('operator_location_points')
       .select('session_id, latitude, longitude, accuracy_meters, speed_mps, heading_degrees, recorded_at')
       .eq('operator_id', operatorId)
       .gte('recorded_at', startUtc)
       .lte('recorded_at', endUtc)
-      .order('recorded_at', { ascending: true }),
-    supabase
+      .order('recorded_at', { ascending: true });
+  let sessionsQuery = supabase
       .from('operator_location_sessions')
       .select('id, status, started_reason, ended_reason, service_id, started_at, ended_at')
       .eq('operator_id', operatorId)
       .gte('started_at', startUtc)
       .lte('started_at', endUtc)
-      .order('started_at', { ascending: true }),
-    supabase
+      .order('started_at', { ascending: true });
+  let stopEventsQuery = supabase
       .from('service_stop_events')
       .select('id, service_id, operator_id, reason, note, started_at, ended_at, ended_by_source')
       .eq('operator_id', operatorId)
       .gte('started_at', startUtc)
       .lte('started_at', endUtc)
-      .order('started_at', { ascending: true }),
+      .order('started_at', { ascending: true });
+
+  if (serviceId) {
+    pointsQuery = pointsQuery.eq('service_id', serviceId);
+    sessionsQuery = sessionsQuery.eq('service_id', serviceId);
+    stopEventsQuery = stopEventsQuery.eq('service_id', serviceId);
+  }
+
+  const [pointsResult, sessionsResult, stopEventsResult] = await Promise.all([
+    pointsQuery,
+    sessionsQuery,
+    stopEventsQuery,
   ]);
 
   if (pointsResult.error) {
@@ -75,13 +86,17 @@ const fetchRouteHistory = async (
   };
 };
 
-export const useOperatorRouteHistory = (operatorId: string | null, dateISO: string | null) => {
+export const useOperatorRouteHistory = (
+  operatorId: string | null,
+  dateISO: string | null,
+  serviceId?: string | null,
+) => {
   const queryClient = useQueryClient();
   const debounceRef = useRef<number | null>(null);
 
   const query = useQuery({
-    queryKey: [...ROUTE_QUERY_KEY, operatorId, dateISO],
-    queryFn: () => fetchRouteHistory(operatorId as string, dateISO as string),
+    queryKey: [...ROUTE_QUERY_KEY, operatorId, dateISO, serviceId ?? null],
+    queryFn: () => fetchRouteHistory(operatorId as string, dateISO as string, serviceId),
     enabled: Boolean(operatorId && dateISO),
     staleTime: 30 * 1000,
     refetchInterval: operatorId ? 30 * 1000 : false,
@@ -133,7 +148,7 @@ export const useOperatorRouteHistory = (operatorId: string | null, dateISO: stri
       }
       supabase.removeChannel(channel);
     };
-  }, [operatorId, queryClient]);
+  }, [operatorId, queryClient, serviceId]);
 
   return {
     points: query.data?.points ?? [],
