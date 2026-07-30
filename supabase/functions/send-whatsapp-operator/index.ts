@@ -300,7 +300,9 @@ Deno.serve(async (req: Request) => {
                 ? `Reenvío bloqueado: ya notificado hace menos de ${RESEND_WINDOW_MINUTES} min`
                 : "Operador ya notificado para este servicio",
             });
-            seenPhones.delete(normalized.phone);
+            // El teléfono queda tomado a propósito: si otra ficha de operador
+            // repite el número, esa persona YA recibió el mensaje de este
+            // servicio y no debe recibir un segundo.
             continue;
           }
         }
