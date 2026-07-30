@@ -17,17 +17,24 @@ export const useServiceRequestAlerts = () => {
 
     const channel = supabase
       .channel('service-requests-alerts')
+      // Sin `filter: status=eq.pending`. El filtro server-side lo valida
+      // realtime.subscription_check_filters(), que arma la lista de columnas
+      // permitidas con has_column_privilege(claims->>'role', …): si el canal se
+      // une antes de que el JWT llegue al socket, el rol es `anon` —que no tiene
+      // SELECT sobre public.services— y CUALQUIER columna revienta con
+      // "invalid column for filter status". El estado se filtra acá.
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'services',
-          filter: 'status=eq.pending'
+          table: 'services'
         },
         async (payload) => {
+          if (payload.new?.status !== 'pending') return;
+
           logger.debug('Nueva solicitud de servicio detectada:', payload);
-          
+
           try {
             // Obtener datos del cliente para la notificación
             const { data: serviceData } = await supabase

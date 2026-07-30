@@ -27,6 +27,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
+import { useActiveServiceTrackingLink } from '@/hooks/services/useActiveServiceTrackingLink';
 import { useResourceCompliance, formatComplianceIssueMessage } from '@/hooks/services/useResourceCompliance';
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
@@ -104,6 +105,28 @@ export const EnhancedServiceForm = React.memo(({
   const [isEmptyItemsConfirmSubmitting, setIsEmptyItemsConfirmSubmitting] = useState(false);
   const [pendingEmptyItemsCount, setPendingEmptyItemsCount] = useState(0);
   const [pendingSaveOptions, setPendingSaveOptions] = useState<{ complianceOverrideReason?: string } | null>(null);
+
+  // Campos de ubicación que el usuario tocó en ESTA sesión del formulario.
+  // No se deriva comparando contra el valor renderizado: la hidratación de
+  // enhancedService llega tarde y pisaría cualquier comparación. Sólo los
+  // handlers de cambio —que nacen de una interacción real— marcan aquí.
+  const [locationDirty, setLocationDirty] = useState({ origin: false, destination: false });
+  const markOriginDirty = useCallback(
+    () => setLocationDirty(prev => (prev.origin ? prev : { ...prev, origin: true })),
+    [],
+  );
+  const markDestinationDirty = useCallback(
+    () => setLocationDirty(prev => (prev.destination ? prev : { ...prev, destination: true })),
+    [],
+  );
+
+  useEffect(() => {
+    setLocationDirty({ origin: false, destination: false });
+  }, [service?.id]);
+
+  // Link de seguimiento vivo: el trigger validate_service_location_snapshot
+  // rechaza dejar sin coordenadas a un servicio compartido con el cliente.
+  const { data: hasActiveTrackingLink = false } = useActiveServiceTrackingLink(service?.id);
 
   // Paradas del recorrido (multidestino). Fuera de formData: se sincronizan
   // como colección hija (delete + insert) tras crear/actualizar el servicio,
@@ -593,7 +616,8 @@ export const EnhancedServiceForm = React.memo(({
       vehicleBrand: formData.vehicleBrand,
       vehicleModel: formData.vehicleModel,
       licensePlate: formData.licensePlate,
-      purchaseOrder: formData.purchaseOrder
+      purchaseOrder: formData.purchaseOrder,
+      status: formData.status
     }), [
       formData.serviceType,
       formData.crane,
@@ -607,13 +631,21 @@ export const EnhancedServiceForm = React.memo(({
       formData.vehicleBrand,
       formData.vehicleModel,
       formData.licensePlate,
-      formData.purchaseOrder
+      formData.purchaseOrder,
+      formData.status
     ]);
 
-  const { validationErrors, hasErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
+  const { validationErrors, blockingErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
     formData: validationFormData,
     selectedServiceType,
     complianceIssues,
+    locationEnforcement: {
+      isEditing: !!service,
+      persistedStatus: service?.status ?? null,
+      originDirty: locationDirty.origin,
+      destinationDirty: locationDirty.destination,
+      hasActiveTrackingLink,
+    },
   });
   const _complianceBlockingIssuesByField = useMemo(
     () => validationErrors.filter((error) => error.field.startsWith('compliance:') && error.severity === 'error'),
@@ -974,8 +1006,9 @@ export const EnhancedServiceForm = React.memo(({
       }
 
       // Validación completa del formulario antes de cualquier persistencia:
-      // no se permite guardado parcial desde ninguna fase
-      if (hasErrors) {
+      // no se permite guardado parcial desde ninguna fase. Sólo cuentan los
+      // errores bloqueantes; los avisos informativos no frenan el guardado.
+      if (blockingErrors.length > 0) {
         playRetroErrorSound();
         toast.error('Faltan campos obligatorios. Revisa los campos marcados antes de guardar.');
         const errorStep = getFirstErrorStep();
@@ -1069,7 +1102,36 @@ export const EnhancedServiceForm = React.memo(({
       
       if (service) {
         logger.debug('🔄 Updating existing service...');
-        result = await updateService(service.id, finalData);
+
+        // Las columnas de ubicación viajan SÓLO si el usuario las tocó. Los
+        // triggers de services están declarados como `UPDATE OF origin,
+        // origin_lat, …`: se disparan por la presencia de la columna en el SET,
+        // aunque el valor sea idéntico.
+        //
+        // capture_service_recurrent_locations e
+        // invalidate_tracking_route_on_location_change se protegen solos con
+        // IS DISTINCT FROM, así que reenviarlas no infla usage_count ni borra
+        // rutas. El que no se protege es validate_service_location_snapshot
+        // (BEFORE, sin guarda): revalida el snapshot contra el catálogo bloqueado
+        // y contra el link de seguimiento vivo. O sea, puede rechazar el guardado
+        // por un estado que el servicio YA tenía y que nadie está editando —el
+        // mismo tipo de bloqueo que motivó este cambio. Un campo que no se edita
+        // no se reafirma.
+        const updatePayload: Partial<typeof finalData> = { ...finalData };
+        if (!locationDirty.origin) {
+          delete updatePayload.origin;
+          delete updatePayload.originLat;
+          delete updatePayload.originLng;
+          delete updatePayload.originCatalogId;
+        }
+        if (!locationDirty.destination) {
+          delete updatePayload.destination;
+          delete updatePayload.destinationLat;
+          delete updatePayload.destinationLng;
+          delete updatePayload.destinationCatalogId;
+        }
+
+        result = await updateService(service.id, updatePayload);
         
         if (isProductSalesType && 
             finalData.status === 'completed' && 
@@ -1410,33 +1472,45 @@ export const EnhancedServiceForm = React.memo(({
                 >
                   <EnhancedLocationSection
                     origin={formData.origin}
-                    onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
+                    onOriginChange={(value) => {
+                      markOriginDirty();
+                      setFormData(prev => ({ ...prev, origin: value }));
+                    }}
                     originCoords={{
                       lat: formData.originLat,
                       lng: formData.originLng,
                       catalogId: formData.originCatalogId,
                     }}
-                    onOriginCoordsChange={(coords) => setFormData(prev => ({
-                      ...prev,
-                      originLat: coords.lat,
-                      originLng: coords.lng,
-                      originCatalogId: coords.catalogId,
-                    }))}
+                    onOriginCoordsChange={(coords) => {
+                      markOriginDirty();
+                      setFormData(prev => ({
+                        ...prev,
+                        originLat: coords.lat,
+                        originLng: coords.lng,
+                        originCatalogId: coords.catalogId,
+                      }));
+                    }}
                     originDepartment={selectedClient?.department}
                     canEditCatalog={profileUser?.role === 'admin' || profileUser?.role === 'operator'}
                     destination={formData.destination}
-                    onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+                    onDestinationChange={(value) => {
+                      markDestinationDirty();
+                      setFormData(prev => ({ ...prev, destination: value }));
+                    }}
                     destinationCoords={{
                       lat: formData.destinationLat,
                       lng: formData.destinationLng,
                       catalogId: formData.destinationCatalogId,
                     }}
-                    onDestinationCoordsChange={(coords) => setFormData(prev => ({
-                      ...prev,
-                      destinationLat: coords.lat,
-                      destinationLng: coords.lng,
-                      destinationCatalogId: coords.catalogId,
-                    }))}
+                    onDestinationCoordsChange={(coords) => {
+                      markDestinationDirty();
+                      setFormData(prev => ({
+                        ...prev,
+                        destinationLat: coords.lat,
+                        destinationLng: coords.lng,
+                        destinationCatalogId: coords.catalogId,
+                      }));
+                    }}
                     originRequired={selectedServiceType?.originRequired || false}
                     destinationRequired={selectedServiceType?.destinationRequired || false}
                     disabled={false}
@@ -1867,7 +1941,7 @@ export const EnhancedServiceForm = React.memo(({
                 type="submit"
                 form="enhanced-service-form"
                 size="sm"
-                disabled={hasErrors || isCreating || isUpdating || isSubmitting}
+                disabled={blockingErrors.length > 0 || isCreating || isUpdating || isSubmitting}
                 className="bg-success px-2 text-xs text-success-foreground hover:bg-success/90 sm:px-3 sm:text-sm"
               >
                 {isCreating || isUpdating ? 'Guardando...' : 'Crear Servicio'}

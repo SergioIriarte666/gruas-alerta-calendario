@@ -81,15 +81,20 @@ export const useNotificationTriggers = () => {
     if (user.role === 'admin') {
       const adminChannel = supabase
         .channel('admin-notifications')
+        // Sin `filter: status=eq.completed`: ver la nota en
+        // useServiceRequestAlerts. El filtro server-side falla con
+        // "invalid column for filter status" cuando el canal se une con rol
+        // anon, así que el estado se evalúa en el callback.
         .on(
           'postgres_changes',
           {
             event: 'UPDATE',
             schema: 'public',
-            table: 'services',
-            filter: 'status=eq.completed'
+            table: 'services'
           },
           (payload) => {
+            if (payload.new?.status !== 'completed') return;
+
             if (payload.old.status !== 'completed') {
               
               queryClient.invalidateQueries({ queryKey: ['services'] });

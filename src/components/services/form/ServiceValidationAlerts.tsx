@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, XCircle } from 'lucide-react';
+import { Info, XCircle } from 'lucide-react';
 import { ValidationError } from '@/hooks/services/useServiceFormValidation';
 
 interface ServiceValidationAlertsProps {
@@ -40,18 +40,23 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
         </Alert>
       )}
 
+      {/* Avisos informativos: NO bloquean el guardado. Un servicio cerrado sin
+          pin no puede quedar inmovilizado por un campo que nadie está editando. */}
       {warnings.length > 0 && (
-        <Alert className="border-warning/50 bg-warning-soft">
-          <AlertTriangle className="size-4 text-warning-text flex-shrink-0" />
-          <AlertTitle className="font-semibold text-warning-text text-sm">
-            Advertencias ({warnings.length})
+        <Alert className="border-info/40 bg-info-soft">
+          <Info className="size-4 text-info-text flex-shrink-0" />
+          <AlertTitle className="font-semibold text-info-text text-sm">
+            Avisos ({warnings.length})
           </AlertTitle>
-          <AlertDescription className="text-warning-text">
+          <AlertDescription className="text-info-text">
             <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs">
               {warnings.map((warning, index) => (
                 <li key={index} className="break-words">{warning.message}</li>
               ))}
             </ul>
+            <p className="mt-2 text-xs font-medium">
+              Puedes guardar de todas formas
+            </p>
           </AlertDescription>
         </Alert>
       )}
