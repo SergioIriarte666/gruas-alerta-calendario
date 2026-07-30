@@ -29,11 +29,18 @@ const PDF_SIGNED_URL_SECONDS = 10 * 60;
 /**
  * Sufijo del botón de la plantilla `operador_telemetria_caida`.
  *
- * En Meta el botón se configura como `https://app.gruas5norte.cl/operador?accion={{1}}`
- * y aquí se manda solo el valor. Aterriza en el portal operador con el botón
- * "Reanudar viaje" enfocado (Fix 10).
+ * En Meta el botón está configurado como `https://app.gruas5norte.cl/{{1}}`: la variable
+ * reemplaza la ruta COMPLETA, no un valor dentro de ella. Por eso el sufijo incluye el
+ * path y el query string. Meta concatena este valor literalmente al final de la URL base.
+ *
+ * Resultado: https://app.gruas5norte.cl/operador?accion=reanudar
+ * Aterriza en el portal operador con el botón "Reanudar viaje" enfocado (Fix 10).
+ *
+ * Si algún día se edita la plantilla en Meta para que la base sea
+ * `https://app.gruas5norte.cl/operador?accion={{1}}`, esta constante debe volver a
+ * ser solo "reanudar". Los dos valores están acoplados: no tocar uno sin el otro.
  */
-const RESUME_TRIP_BUTTON_PARAM = "reanudar";
+const RESUME_TRIP_BUTTON_PARAM = "operador?accion=reanudar";
 
 type OutboxKind =
   | "tracking_link"
