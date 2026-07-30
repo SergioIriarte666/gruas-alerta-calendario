@@ -39,3 +39,6 @@ eng.traineddata
 # Tooling local de la skill impeccable (no es código de la app)
 .claude/skills/
 .impeccable/
+
+# Artefacto local de `deno check` sobre las edge functions
+supabase/functions/deno.lock
