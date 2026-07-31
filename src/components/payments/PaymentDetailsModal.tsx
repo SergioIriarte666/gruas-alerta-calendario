@@ -12,7 +12,10 @@ import {
 } from 'lucide-react';
 import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
-import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
+import {
+  generatePaymentReceiptPDF,
+  paymentReceiptFileName,
+} from '@/utils/pdf/paymentReceiptPdfGenerator';
 
 interface PaymentDetailsModalProps {
   payment: any | null;
@@ -29,9 +32,9 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
     generateAndDownload(
       async () => ({
         blob: await generatePaymentReceiptPDF(payment.id),
-        fileName: `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+        fileName: paymentReceiptFileName(payment.id),
       }),
-      `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+      paymentReceiptFileName(payment.id),
     );
 
   return (

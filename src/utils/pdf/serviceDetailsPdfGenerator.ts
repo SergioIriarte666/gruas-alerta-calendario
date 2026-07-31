@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { addPDFHeader } from './pdfHeader';
+import { addPDFHeader, PDF_HEADER_BADGE_COLORS } from './pdfHeader';
 import { fetchCompanyData } from './companyDataFetcher';
 import { formatCurrency, formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { 
@@ -102,12 +102,10 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
   const companyData = await fetchCompanyData();
   
   // 2. Agregar header corporativo
-  let yPosition = await addPDFHeader(doc, {
-    companyData,
-    service: service,
-    inspection: {} as any,
-    isFinal: true,
-    title: 'DETALLES DEL SERVICIO'
+  let yPosition = await addPDFHeader(doc, companyData, {
+    documentTitle: 'DETALLES DEL SERVICIO',
+    badge: { label: 'DOCUMENTO FINAL', color: PDF_HEADER_BADGE_COLORS.final },
+    folio: service.folio,
   });
   
   // 3. Título del documento

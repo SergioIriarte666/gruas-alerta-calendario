@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { usePaymentReconciliation } from '@/hooks/invoices/usePaymentReconciliation';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
-import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
+import {
+  generatePaymentReceiptPDF,
+  paymentReceiptFileName,
+} from '@/utils/pdf/paymentReceiptPdfGenerator';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
 import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
@@ -60,8 +63,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
   const handleDownloadReceipt = (payment: PaymentWithDetails) => {
     generateAndDownload(
-      async () => ({ blob: await generatePaymentReceiptPDF(payment.id), fileName: `comprobante-${String(payment.id).slice(0, 8)}.pdf` }),
-      `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+      async () => ({
+        blob: await generatePaymentReceiptPDF(payment.id),
+        fileName: paymentReceiptFileName(payment.id),
+      }),
+      paymentReceiptFileName(payment.id),
     );
   };
 

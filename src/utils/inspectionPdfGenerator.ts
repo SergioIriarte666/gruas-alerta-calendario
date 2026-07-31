@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
-import { addPDFHeader } from './pdf/pdfHeader';
+import { addPDFHeader, PDF_HEADER_BADGE_COLORS, type PdfHeaderDocument } from './pdf/pdfHeader';
 import { addServiceInfo, addEquipmentChecklist, resolveEquipmentChecklist, addObservationsAndSignatures } from './pdf/pdfSections';
 import { fetchInspectionEquipmentCatalog } from '@/services/inspectionEquipmentCatalog';
 import { addDigitalSignatures } from './pdf/pdfSignatures';
@@ -65,8 +65,29 @@ export const generateInspectionPDF = async (data: {
       photographicSetCount: validPhotos.length
     });
 
+    // El rótulo y el sello se deciden acá, junto a los flags que los definen:
+    // el helper de header ya no adivina nada (así un comprobante de pago salió
+    // rotulado "REPORTE DE INSPECCIÓN PRE-SERVICIO").
+    const headerDocument: PdfHeaderDocument = isInSitu
+      ? {
+          documentTitle: 'ACTA DE SERVICIO',
+          badge: { label: 'SERVICIO COMPLETADO', color: PDF_HEADER_BADGE_COLORS.final },
+          folio: pdfData.service.folio,
+        }
+      : isFinal
+        ? {
+            documentTitle: 'INFORME FINAL DE SERVICIO',
+            badge: { label: 'DOCUMENTO FINAL', color: PDF_HEADER_BADGE_COLORS.final },
+            folio: pdfData.service.folio,
+          }
+        : {
+            documentTitle: 'REPORTE DE INSPECCIÓN PRE-SERVICIO',
+            badge: { label: 'PRE-SERVICIO', color: PDF_HEADER_BADGE_COLORS.provisional },
+            folio: pdfData.service.folio,
+          };
+
     // Add header corporativo (ahora es asíncrono)
-    let yPosition = await addPDFHeader(doc, pdfData);
+    let yPosition = await addPDFHeader(doc, pdfData.companyData, headerDocument);
     logger.debug('Header agregado, yPosition:', yPosition);
 
     // Add service information

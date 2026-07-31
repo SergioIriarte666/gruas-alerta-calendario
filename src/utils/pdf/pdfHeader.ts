@@ -1,6 +1,5 @@
 import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
-import { InspectionPDFData } from './pdfTypes';
 import {
   applyReportTableDefaults,
   DEFAULT_REPORT_LOGO_URL,
@@ -45,10 +44,51 @@ const getImageDimensions = (base64: string): Promise<{ width: number; height: nu
     img.src = base64;
   });
 
-export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
+/** Colores admitidos para el sello de estado de la barra de metadatos. */
+export const PDF_HEADER_BADGE_COLORS = {
+  /** Verde institucional: el mismo de las cabeceras de tabla. */
+  success: REPORT_PDF_COLORS.primary,
+  /** Verde oscuro: documento cerrado/definitivo. */
+  final: REPORT_PDF_COLORS.primaryDark,
+  /** Naranjo: documento provisorio (inspección pre-servicio). */
+  provisional: [180, 100, 0] as [number, number, number],
+} as const;
+
+export interface PdfHeaderCompany {
+  businessName?: string;
+  rut?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+}
+
+/**
+ * Identidad del documento. Es OBLIGATORIA y no tiene valores por defecto: un
+ * comprobante de pago salió a clientes rotulado "REPORTE DE INSPECCIÓN
+ * PRE-SERVICIO" porque este helper deducía el rótulo de los flags de
+ * inspección. Ahora cada generador declara el suyo o no compila.
+ */
+export interface PdfHeaderDocument {
+  /** Tipo de documento, esquina derecha de la banda superior. */
+  documentTitle: string;
+  /** Sello de estado de la barra de metadatos. */
+  badge: {
+    label: string;
+    color: readonly [number, number, number];
+  };
+  /** Número visible en la barra de metadatos. */
+  folio?: string | null;
+  /** Rótulo de ese número. Por defecto "Folio". */
+  folioLabel?: string;
+}
+
+export const addPDFHeader = async (
+  doc: jsPDF,
+  companyData: PdfHeaderCompany,
+  document: PdfHeaderDocument,
+): Promise<number> => {
   applyReportTableDefaults(doc);
-  const isFinal = data.isFinal ?? false;
-  const isInSitu = data.isInSitu ?? false;
 
   // ── Banda superior de color ───────────────────────────────────────────────
   doc.setFillColor(...C.green);
@@ -57,8 +97,8 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   // ── Logo en la banda ─────────────────────────────────────────────────────
   let logoEndX = MARGIN;
   try {
-    const logoBase64 = (data.companyData.logoUrl
-      ? await loadImageAsBase64(data.companyData.logoUrl)
+    const logoBase64 = (companyData.logoUrl
+      ? await loadImageAsBase64(companyData.logoUrl)
       : null)
       || await loadImageAsBase64(DEFAULT_REPORT_LOGO_URL)
       || await loadImageAsBase64(LOCAL_REPORT_LOGO_URL);
@@ -76,24 +116,19 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.setTextColor(...C.white);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(data.companyData?.businessName || 'Grúas 5 Norte', logoEndX, 13);
+  doc.text(companyData?.businessName || 'Grúas 5 Norte', logoEndX, 13);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text(
-    `RUT: ${data.companyData?.rut || ''} · ${data.companyData?.address || ''} · Tel: ${data.companyData?.phone || ''}`,
+    `RUT: ${companyData?.rut || ''} · ${companyData?.address || ''} · Tel: ${companyData?.phone || ''}`,
     logoEndX, 21
   );
 
   // ── Tipo de documento (esquina derecha) ───────────────────────────────────
-  const docLabel = isInSitu
-    ? 'ACTA DE SERVICIO'
-    : isFinal
-      ? 'INFORME FINAL DE SERVICIO'
-      : 'REPORTE DE INSPECCIÓN PRE-SERVICIO';
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.white);
-  doc.text(docLabel, PAGE_W - MARGIN, 16, { align: 'right' });
+  doc.text(document.documentTitle, PAGE_W - MARGIN, 16, { align: 'right' });
 
   const y = 36;
 
@@ -106,25 +141,19 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.green);
-  doc.text(`Folio: ${data.service.folio || 'N/A'}`, MARGIN + 4, y + 6.5);
+  doc.text(`${document.folioLabel ?? 'Folio'}: ${document.folio || 'N/A'}`, MARGIN + 4, y + 6.5);
 
   const now = businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm');
   doc.setTextColor(100, 100, 100);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generado: ${now}`, PAGE_W / 2, y + 6.5, { align: 'center' });
 
-  const badgeLabel = isInSitu ? 'SERVICIO COMPLETADO' : isFinal ? 'DOCUMENTO FINAL' : 'PRE-SERVICIO';
-  const badgeColor: [number, number, number] = isInSitu
-    ? REPORT_PDF_COLORS.primaryDark
-    : isFinal
-      ? REPORT_PDF_COLORS.primaryDark
-      : [180, 100, 0];
-  doc.setFillColor(...badgeColor);
+  doc.setFillColor(...document.badge.color);
   doc.roundedRect(PAGE_W - MARGIN - 38, y + 1.5, 36, 7, 2, 2, 'F');
   doc.setTextColor(...C.white);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.text(badgeLabel, PAGE_W - MARGIN - 20, y + 6.5, { align: 'center' });
+  doc.text(document.badge.label, PAGE_W - MARGIN - 20, y + 6.5, { align: 'center' });
 
   return y + 18;
 };

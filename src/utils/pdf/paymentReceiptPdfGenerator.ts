@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchCompanyData } from './companyDataFetcher';
-import { addPDFHeader } from './pdfHeader';
+import { addPDFHeader, PDF_HEADER_BADGE_COLORS } from './pdfHeader';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 import { addReportFooter, REPORT_PDF_COLORS } from './reportPdfTheme';
@@ -17,6 +17,14 @@ const formatCLP = (n: number) =>
     currency: 'CLP',
     minimumFractionDigits: 0,
   }).format(Math.round(n || 0));
+
+/** Número visible del comprobante. Única fuente: PDF, nombre de archivo y UI. */
+export const paymentReceiptNumber = (paymentId: string) =>
+  `COMP-${String(paymentId).slice(0, 8).toUpperCase()}`;
+
+/** Nombre del archivo descargado, alineado con el número del comprobante. */
+export const paymentReceiptFileName = (paymentId: string) =>
+  `comprobante-${paymentReceiptNumber(paymentId)}.pdf`;
 
 /**
  * Comprobante de Pago. Hace su propio fetch a Supabase para pago + cliente +
@@ -51,14 +59,16 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
   const marginX = 20;
   const contentWidth = pageWidth - marginX * 2;
 
-  let y = await addPDFHeader(doc, {
-    service: { folio: `COMP-${String(payment.id).slice(0, 8).toUpperCase()}` } as any,
-    inspection: {},
-    companyData,
-    title: 'COMPROBANTE DE PAGO',
-  } as any);
+  const receiptNumber = paymentReceiptNumber(payment.id);
 
-  const receiptNumber = `COMP-${String(payment.id).slice(0, 8).toUpperCase()}`;
+  let y = await addPDFHeader(doc, companyData, {
+    documentTitle: 'COMPROBANTE DE PAGO',
+    // Verde institucional: el mismo de las cabeceras de tabla del documento.
+    badge: { label: 'PAGO RECIBIDO', color: PDF_HEADER_BADGE_COLORS.success },
+    folio: receiptNumber,
+    folioLabel: 'N° Comprobante',
+  });
+
   const today = businessClock.today();
 
   // Cabecera del documento
