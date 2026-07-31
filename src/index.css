@@ -1726,6 +1726,92 @@ body.operator-map-expanded {
   box-shadow: 0 0 0 0.2rem hsl(var(--success) / 0.13);
 }
 
+/* Cinta de telemetría en vivo: va entre el encabezado y el mapa porque son los
+   números del viaje EN CURSO, no un resumen. Se desplaza en horizontal con
+   ajuste por chip: en un teléfono en terreno caben tres y el resto se arrastra
+   con el pulgar sin sacar la vista del mapa. El alto es fijo para que la
+   llegada de los datos no empuje el mapa hacia abajo. */
+.operator-progress-strip {
+  /* Fijo, calculado sobre el chip más alto (rótulo + valor + sub-rótulo). */
+  height: 4.9rem;
+  border-top: 1px solid var(--operator-line);
+  background: hsl(var(--card) / 0.6);
+  transition: opacity 200ms ease;
+}
+
+.operator-progress-strip__track {
+  display: flex;
+  height: 100%;
+  align-items: stretch;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0.55rem 0.75rem;
+  scrollbar-width: none;
+}
+
+.operator-progress-strip__track::-webkit-scrollbar {
+  display: none;
+}
+
+.operator-progress-strip__chip {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 5.5rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.85rem;
+  padding: 0.3rem 0.6rem;
+  background: hsl(var(--background) / 0.55);
+  scroll-snap-align: start;
+}
+
+.operator-progress-strip__chip.is-skeleton {
+  min-width: 5.5rem;
+  border-color: hsl(var(--border) / 0.4);
+  background: hsl(var(--muted) / 0.35);
+}
+
+.operator-progress-strip__chip.is-warning {
+  border-color: hsl(var(--warning) / 0.35);
+  background: hsl(var(--warning) / 0.1);
+}
+
+.operator-progress-strip__chip.is-warning .operator-progress-strip__chip-value {
+  color: hsl(var(--warning));
+}
+
+.operator-progress-strip__chip.is-muted {
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+}
+
+.operator-progress-strip__chip-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6rem;
+  font-weight: 750;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.operator-progress-strip__chip-value {
+  color: hsl(var(--foreground));
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.operator-progress-strip__chip-hint {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .operator-drive-panel__body {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(9.4rem, 0.6fr);

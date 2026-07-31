@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils';
 import { STOP_REASON_LABELS } from '@/types/serviceStopEvent';
 import { resolveTransmissionStopGate } from '@/utils/transmissionStopGate';
 import { buildPublicTrackingUrl } from '@/utils/trackingUrl';
+import { isFinalServiceStatus } from '@/utils/serviceTrackingLifecycle';
+import { isActiveOperatorService } from '@/utils/operatorActiveService';
 import {
   isRelaunchProtected,
   readRelaunchStatus,
@@ -156,6 +158,10 @@ export const TransmissionControl = ({
   // servicio" de la tarjeta de resumen (bug del 25/07: el descanso quedó
   // registrado en un servicio de la mañana siguiente).
   const activeServiceId = activeService?.id ?? null;
+  const isServiceUnderway = !!activeService && isActiveOperatorService(activeService);
+  // El servicio de la tarjeta puede haberse cerrado mientras esta pantalla
+  // sigue montada: ninguna rutina "asegura el link" sobre un servicio cerrado.
+  const isCurrentServiceClosed = isFinalServiceStatus(currentService?.status);
   const { stopEvent, minutesStopped, isBusy: isStopBusy, declareStop, resume } = useServiceStopEvent({
     serviceId: activeServiceId,
     operatorId,
@@ -275,6 +281,16 @@ export const TransmissionControl = ({
       return;
     }
 
+    // Guard anti link fantasma: adelantarse a pedir el token es una comodidad,
+    // y sobre un servicio ya cerrado sería la carrera del 31/07 —link nuevo
+    // ocho segundos después de la revocación—. Se sale en silencio: no hay nada
+    // que avisarle al operador de un servicio que acaba de terminar.
+    if (isCurrentServiceClosed) {
+      trackingUrlRef.current = null;
+      logger.debug('Servicio cerrado: no se prepara link de seguimiento', { serviceId });
+      return;
+    }
+
     let cancelled = false;
     void supabase
       .rpc('get_operator_service_tracking_token', { p_service_id: serviceId })
@@ -289,7 +305,7 @@ export const TransmissionControl = ({
       });
 
     return () => { cancelled = true; };
-  }, [refreshLinkState, serviceId]);
+  }, [isCurrentServiceClosed, refreshLinkState, serviceId]);
 
   /**
    * Estado REAL de la protección en segundo plano.
@@ -347,13 +363,19 @@ export const TransmissionControl = ({
    * servicio, no hay nada que compartir. No se consulta nada aparte —el botón
    * y la acción tienen que estar de acuerdo siempre—.
    */
-  const canShare = Boolean(serviceId);
+  const canShare = Boolean(serviceId) && !isCurrentServiceClosed;
   const shareLabel = canShare
     ? 'Compartir seguimiento con el cliente'
-    : 'Sin servicio asignado para compartir';
+    : isCurrentServiceClosed
+      ? 'El servicio ya terminó: no hay seguimiento que compartir'
+      : 'Sin servicio asignado para compartir';
 
   const handleShareUnavailable = () => {
-    toast.info('No tienes servicios asignados para compartir');
+    toast.info(
+      isCurrentServiceClosed
+        ? 'El servicio ya terminó: el seguimiento en vivo se cerró con él'
+        : 'No tienes servicios asignados para compartir',
+    );
   };
 
   const markShared = async () => {
@@ -376,7 +398,7 @@ export const TransmissionControl = ({
   const handleShare = async () => {
     // Red de seguridad: aunque el botón ya va deshabilitado, la acción jamás
     // termina en un no-op mudo.
-    if (!serviceId) {
+    if (!serviceId || isCurrentServiceClosed) {
       handleShareUnavailable();
       return;
     }
@@ -685,7 +707,14 @@ export const TransmissionControl = ({
         </Button>
       )}
 
-      {showDrivePanel && <OperatorDrivePanel isTracking={isTracking} point={lastPoint} />}
+      {showDrivePanel && (
+        <OperatorDrivePanel
+          isTracking={isTracking}
+          point={lastPoint}
+          activeServiceId={activeServiceId}
+          isActiveService={isServiceUnderway}
+        />
+      )}
 
       {(activeServiceId || serviceId) && (
         <div className="mt-3">

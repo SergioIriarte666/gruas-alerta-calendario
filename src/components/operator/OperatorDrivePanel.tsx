@@ -11,6 +11,7 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
+import { ServiceProgressStrip } from '@/components/operator/ServiceProgressStrip';
 import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,9 @@ const PROXYABLE_MAPBOX_RESOURCE_TYPES = new Set([
 interface OperatorDrivePanelProps {
   isTracking: boolean;
   point: OperatorLocationPoint | null;
+  /** Servicio EN CURSO, para la cinta de telemetría. Sin él la cinta no se pinta. */
+  activeServiceId?: string | null;
+  isActiveService?: boolean;
 }
 
 export const speedMpsToKmh = (speedMps: number | null): number | null => {
@@ -94,7 +98,12 @@ const createOperatorMarker = () => {
   return { element, heading };
 };
 
-export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProps) => {
+export const OperatorDrivePanel = ({
+  isTracking,
+  point,
+  activeServiceId = null,
+  isActiveService = false,
+}: OperatorDrivePanelProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const mapboxRef = useRef<MapboxModule | null>(null);
@@ -460,6 +469,10 @@ export const OperatorDrivePanel = ({ isTracking, point }: OperatorDrivePanelProp
           {isTracking ? (point ? 'GPS activo' : 'Buscando GPS') : 'GPS en espera'}
         </span>
       </div>
+
+      {activeServiceId && isActiveService && (
+        <ServiceProgressStrip serviceId={activeServiceId} />
+      )}
 
       <div className="operator-drive-panel__body">
         {isMapExpanded

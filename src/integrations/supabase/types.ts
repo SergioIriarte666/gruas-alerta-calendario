@@ -9484,6 +9484,26 @@ export type Database = {
           resource_type: string
         }[]
       }
+      get_service_live_progress: {
+        Args: { p_service_id: string }
+        Returns: {
+          avg_moving_kmh: number
+          distance_km: number
+          elapsed_minutes: number
+          eta_cached_at: string
+          eta_distance_meters: number
+          eta_seconds: number
+          eta_target_kind: string
+          gaps_count: number
+          last_point_at: string
+          last_speed_kmh: number
+          moving_minutes: number
+          open_stop_reason: string
+          open_stop_started_at: string
+          points_count: number
+          stopped_minutes: number
+        }[]
+      }
       get_service_telemetry: {
         Args: {
           p_date_from: string
@@ -9658,6 +9678,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      journey_stage_rank: { Args: { p_stage: string }; Returns: number }
       list_operators_config: {
         Args: never
         Returns: {

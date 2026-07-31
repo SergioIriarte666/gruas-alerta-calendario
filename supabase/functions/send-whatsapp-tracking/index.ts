@@ -1,6 +1,7 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
 import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { FINAL_SERVICE_STATUSES } from "../_shared/serviceLifecycle.ts";
 
 const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' });
 
@@ -34,6 +35,7 @@ Deno.serve(async (req: Request) => {
       .select(`
         id,
         folio,
+        status,
         contact_person,
         contact_phone,
         operator:operators(name),
@@ -44,6 +46,14 @@ Deno.serve(async (req: Request) => {
 
     if (serviceError || !service) {
       return withHeaders(jsonResponse({ error: 'Servicio no encontrado' }, 404), corsHdrs(req));
+    }
+
+    // Guard anti link fantasma: un servicio cerrado no genera token nuevo. La
+    // base tambien lo rechaza, pero el aviso no tiene sentido igual: nadie
+    // sigue en vivo una grua que ya termino.
+    if (FINAL_SERVICE_STATUSES.includes(service.status as string)) {
+      console.log('[send-whatsapp-tracking] Envio omitido: servicio en estado final', service.status);
+      return withHeaders(jsonResponse({ success: true, skipped: 'service_closed' }), corsHdrs(req));
     }
 
     const normalizedPhone = normalizeChileanPhone(service.contact_phone as string | null);

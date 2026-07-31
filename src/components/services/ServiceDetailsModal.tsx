@@ -64,6 +64,7 @@ import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
+import { isFinalServiceStatus } from '@/utils/serviceTrackingLifecycle';
 import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
 import { useServiceRouteMetrics } from '@/hooks/useServiceRouteMetrics';
 import { CheckCircle2 } from 'lucide-react';
@@ -646,12 +647,24 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   };
 
   const handleShareTracking = async () => {
+    // Guard anti link fantasma: un servicio cerrado no genera token nuevo. La
+    // base lo rechaza igual (trigger reject_tracking_link_on_closed_service),
+    // pero acá el operador recibe una frase en vez de un error de Postgres.
+    if (isFinalServiceStatus(serviceData.status)) {
+      toast.info('El servicio ya terminó: el seguimiento en vivo se cerró con él');
+      return;
+    }
+
     try {
       const { data: token, error } = await supabase.rpc('create_service_tracking_link', {
         p_service_id: serviceData.id,
       });
 
       if (error) throw error;
+      if (!token) {
+        toast.info('El servicio ya terminó: el seguimiento en vivo se cerró con él');
+        return;
+      }
 
       await navigator.clipboard.writeText(`https://app.gruas5norte.cl/track/${token}`);
       toast.success('Link de seguimiento copiado');

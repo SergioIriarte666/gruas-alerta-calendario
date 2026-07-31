@@ -20,6 +20,7 @@ import {
   getEmailNotificationGate,
   getInspectionEmailSkipReason,
 } from "../_shared/emailSettings.ts";
+import { isFinalServiceStatus } from "../_shared/serviceLifecycle.ts";
 
 const BATCH_LIMIT = 10;
 const MAX_ATTEMPTS = 5;
@@ -236,6 +237,7 @@ class OutboxWorker {
       .select(`
         id,
         folio,
+        status,
         contact_person,
         contact_phone,
         service_date,
@@ -263,6 +265,16 @@ class OutboxWorker {
 
   private async dispatchTracking(row: OutboxRow): Promise<boolean> {
     const service = await this.fetchService(row.service_id);
+
+    // Guard anti link fantasma: entre que se encoló el aviso y que se procesa,
+    // el servicio puede haber cerrado. Crear el token ahí sería exactamente el
+    // link vivo sobre servicio terminado del 31/07 — y el aviso tampoco tiene
+    // destinatario útil.
+    if (isFinalServiceStatus(service.status as string | null)) {
+      await this.markSkipped(row.id, "service_closed");
+      return false;
+    }
+
     const normalizedPhone = normalizeChileanPhone(service.contact_phone as string | null);
     if (!normalizedPhone.ok) {
       await this.markSkipped(row.id, "no_contact_phone");
