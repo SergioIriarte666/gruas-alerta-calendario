@@ -26,6 +26,9 @@ const USEFUL_GEOCODE_TYPES = new Set([
 // cuando no se conocen coordenadas del departamento del cliente.
 const DEFAULT_PLACE_BIAS = { lat: -27.366, lng: -70.332 };
 const PLACE_BIAS_RADIUS_METERS = 50000;
+// Places New rechaza con INVALID_ARGUMENT cualquier circle.radius mayor: un
+// sesgo mas amplio no ensancha la busqueda, la rompe entera.
+const PLACE_BIAS_MAX_RADIUS_METERS = 50000;
 
 // Indicadores de que el texto tipeado ES una direccion de calle (y no un nombre
 // de localidad/lugar): si aparecen, un resultado tipo route/street es legitimo.
@@ -57,6 +60,10 @@ interface PlaceSearchResult {
 export const searchPlaceForOrigin = async (
   address: string,
   department?: string | null,
+  locationBias: { lat: number; lng: number; radius: number } = {
+    ...DEFAULT_PLACE_BIAS,
+    radius: PLACE_BIAS_RADIUS_METERS,
+  },
 ): Promise<{ lat: number; lng: number; formattedAddress: string | null } | null> => {
   const textQuery = department ? `${address}, ${department}` : address;
 
@@ -65,7 +72,10 @@ export const searchPlaceForOrigin = async (
       body: {
         action: 'text_search',
         textQuery,
-        locationBias: { ...DEFAULT_PLACE_BIAS, radius: PLACE_BIAS_RADIUS_METERS },
+        locationBias: {
+          ...locationBias,
+          radius: Math.min(locationBias.radius, PLACE_BIAS_MAX_RADIUS_METERS),
+        },
         regionCode: 'CL',
       },
     });

@@ -44,6 +44,10 @@ export const useServicesPage = () => {
   const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
   const defaultListFrom = formatForInput(monthStart);
   const defaultListTo   = formatForInput(monthEnd);
+  // Recuperacion de los servicios historicos sin punto: 419 filas sin
+  // origin_lat, 379 de ellas con direccion escrita. Se abren, se les fija el
+  // pin y se guardan.
+  const [withoutCoordinates, setWithoutCoordinates] = useState(false);
   const [listDateFrom, setListDateFrom] = useState<string>(defaultListFrom);
   const [listDateTo,   setListDateTo]   = useState<string>(defaultListTo);
 
@@ -129,6 +133,14 @@ export const useServicesPage = () => {
       
       if (!matchesStatus) return false;
       
+      // 2b. Sin coordenada: solo tiene sentido sobre servicios que SI tienen
+      // direccion escrita — son los recuperables fijando el pin.
+      if (withoutCoordinates) {
+        const hasOriginText = (service.origin || '').trim() !== '';
+        const hasCoords = service.originLat != null && service.originLng != null;
+        if (!hasOriginText || hasCoords) return false;
+      }
+
       // 3. Future filter from URL param
       const matchesFuture = futureParam !== 'true' || isFutureDate(service.serviceDate);
       if (!matchesFuture) return false;
@@ -269,7 +281,7 @@ export const useServicesPage = () => {
     }
 
     return filtered;
-  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, sortDirection, sortField, statusFilter]);
+  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, sortDirection, sortField, statusFilter, withoutCoordinates]);
 
   const totalPages = Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
 
@@ -564,10 +576,12 @@ export const useServicesPage = () => {
     setIsDeleteDialogOpen,
     
     // List date range
+    withoutCoordinates,
     listDateFrom,
     listDateTo,
     defaultListFrom,
     defaultListTo,
+    setWithoutCoordinates,
     setListDateFrom,
     setListDateTo,
 

@@ -1,5 +1,6 @@
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { shouldEnforceLocation } from '../useServiceFormValidation';
+import { shouldEnforceLocation, useServiceFormValidation } from '../useServiceFormValidation';
 
 const base = {
   fieldRequired: false,
@@ -81,5 +82,70 @@ describe('shouldEnforceLocation', () => {
   // más vale frenar acá que mostrar el error de Postgres después.
   it('bloquea si hay link de seguimiento activo', () => {
     expect(shouldEnforceLocation({ ...base, hasActiveTrackingLink: true })).toBe(true);
+  });
+});
+
+// ── Etiqueta y coordenada desacopladas ───────────────────────────────────────
+// El 99% de los servicios son auxilios en ruta: el vehículo falla donde falla y
+// la mejor referencia posible ("camino a Mantoverde, km 12, poste 45") no es
+// geocodificable. Escribirla no puede frenar el guardado.
+describe('useServiceFormValidation: falta de coordenada', () => {
+  const serviceType = {
+    id: 'st-1',
+    name: 'Auxilio en Ruta',
+    originRequired: true,
+    destinationRequired: false,
+  } as unknown as Parameters<typeof useServiceFormValidation>[0]['selectedServiceType'];
+
+  const formData = {
+    serviceType: 'st-1',
+    crane: '',
+    operators: [],
+    origin: 'CAMINO A MANTOVERDE, ~KM 12, POSTE 45',
+    originLat: null,
+    originLng: null,
+    destination: '',
+    destinationLat: null,
+    destinationLng: null,
+    vehicleBrand: '',
+    vehicleModel: '',
+    licensePlate: '',
+    purchaseOrder: '',
+    status: 'pending',
+  };
+
+  const renderValidation = (
+    enforcement: Parameters<typeof useServiceFormValidation>[0]['locationEnforcement'],
+  ) =>
+    renderHook(() =>
+      useServiceFormValidation({
+        formData,
+        selectedServiceType: serviceType,
+        locationEnforcement: enforcement,
+      }),
+    ).result.current;
+
+  it('avisa pero no bloquea un alta en pending sin coordenada', () => {
+    const { blockingErrors, advisories } = renderValidation({
+      isEditing: false,
+      persistedStatus: null,
+      originDirty: true,
+    });
+
+    expect(blockingErrors.filter((error) => error.field === 'origin')).toEqual([]);
+    expect(advisories.some((error) => error.field === 'origin')).toBe(true);
+  });
+
+  // Única excepción: validate_service_location_snapshot rechaza el UPDATE de un
+  // servicio con seguimiento vivo que se quede sin coordenadas.
+  it('bloquea solo cuando hay link de seguimiento activo', () => {
+    const { blockingErrors } = renderValidation({
+      isEditing: true,
+      persistedStatus: 'in_progress',
+      originDirty: true,
+      hasActiveTrackingLink: true,
+    });
+
+    expect(blockingErrors.some((error) => error.field === 'origin')).toBe(true);
   });
 });

@@ -72,6 +72,10 @@ const baseServiceFormSchema = z.object({
   custodyTotalAmount: z.number().min(0).optional(),
   custodyNotes: z.string().optional()
 }).superRefine((data, context) => {
+  // La falta de coordenada NO es un error de schema: el 99% de los servicios
+  // son auxilios en ruta y "camino a Mantoverde, km 12" nunca va a geocodificar.
+  // El texto se guarda igual; la advertencia vive en el submit del formulario.
+  // Lo que sí sigue siendo inválido es una coordenada imposible.
   const validateLocation = (
     label: 'origen' | 'destino',
     text: string | undefined,
@@ -80,14 +84,7 @@ const baseServiceFormSchema = z.object({
     path: 'origin' | 'destination',
   ) => {
     if (!text?.trim()) return;
-    if (lat == null || lng == null) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [path],
-        message: `Selecciona y confirma el ${label} en el mapa`,
-      });
-      return;
-    }
+    if (lat == null || lng == null) return;
     if (!isCoordinateInChile(lat, lng)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

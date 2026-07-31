@@ -136,9 +136,9 @@ export const useServiceFormValidation = ({
     const hasDestinationText = formData.destination.trim() !== '';
     const hasDestinationCoords = formData.destinationLat != null && formData.destinationLng != null;
 
-    // Una ubicación escrita no es una ubicación confirmada. Pero exigir el pin
-    // en TODO servicio congelaba los cerrados: el aviso sólo frena el guardado
-    // cuando las coordenadas se van a usar (ver shouldEnforceLocation).
+    // Decide si la FALTA DE TEXTO de un campo requerido frena el guardado. La
+    // falta de coordenada ya no bloquea nunca (salvo seguimiento vivo): la
+    // etiqueta y el punto son independientes.
     const originBlocks = shouldEnforceLocation({
       fieldRequired: !!selectedServiceType.originRequired,
       fieldDirty: originDirty,
@@ -157,12 +157,16 @@ export const useServiceFormValidation = ({
         severity: originBlocks ? 'error' : 'warning'
       });
     } else if (hasOriginText && !hasOriginCoords) {
+      // Escribir una referencia que ningún geocodificador puede resolver
+      // ("camino a Mantoverde, km 12, poste 45") es el caso NORMAL del negocio:
+      // avisar sí, bloquear no. La única excepción es el link de seguimiento
+      // vivo, donde el trigger de la base rechaza el UPDATE de todas formas.
       errors.push({
         field: 'origin',
-        message: originBlocks
-          ? 'Selecciona el origen del listado, pega su enlace de Google Maps o fija el pin'
-          : 'El origen no tiene coordenadas confirmadas. Puedes guardarlo igual; confírmalas si vas a usar seguimiento.',
-        severity: originBlocks ? 'error' : 'warning'
+        message: hasActiveTrackingLink
+          ? 'Este servicio tiene seguimiento compartido: fija el pin del origen antes de guardar'
+          : 'El origen no tiene coordenada. Puedes guardarlo igual; sin punto no hay seguimiento ni métricas de ruta.',
+        severity: hasActiveTrackingLink ? 'error' : 'warning'
       });
     }
 
@@ -186,10 +190,10 @@ export const useServiceFormValidation = ({
     } else if (hasDestinationText && !hasDestinationCoords) {
       errors.push({
         field: 'destination',
-        message: destinationBlocks
-          ? 'Selecciona el destino del listado, pega su enlace de Google Maps o fija el pin'
-          : 'El destino no tiene coordenadas confirmadas. Puedes guardarlo igual; confírmalas si vas a usar seguimiento.',
-        severity: destinationBlocks ? 'error' : 'warning'
+        message: hasActiveTrackingLink
+          ? 'Este servicio tiene seguimiento compartido: fija el pin del destino antes de guardar'
+          : 'El destino no tiene coordenada. Puedes guardarlo igual; sin punto no hay seguimiento ni métricas de ruta.',
+        severity: hasActiveTrackingLink ? 'error' : 'warning'
       });
     }
 

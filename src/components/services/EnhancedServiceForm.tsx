@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service, ServiceSnakeCase, ServiceItemDraft, ServiceStopDraft } from '@/types';
+import type { ServiceLocationSource } from '@/types/serviceLocation';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -40,6 +41,16 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save, Trash2, Plus } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
@@ -105,6 +116,7 @@ export const EnhancedServiceForm = React.memo(({
   const [isEmptyItemsConfirmSubmitting, setIsEmptyItemsConfirmSubmitting] = useState(false);
   const [pendingEmptyItemsCount, setPendingEmptyItemsCount] = useState(0);
   const [pendingSaveOptions, setPendingSaveOptions] = useState<{ complianceOverrideReason?: string } | null>(null);
+  const [isMissingCoordsConfirmOpen, setIsMissingCoordsConfirmOpen] = useState(false);
 
   // Campos de ubicación que el usuario tocó en ESTA sesión del formulario.
   // No se deriva comparando contra el valor renderizado: la hidratación de
@@ -196,10 +208,12 @@ export const EnhancedServiceForm = React.memo(({
     originLat: service?.originLat ?? null,
     originLng: service?.originLng ?? null,
     originCatalogId: null as string | null,
+    originLocationSource: (service?.originLocationSource ?? null) as ServiceLocationSource | null,
     destination: service?.destination || '',
     destinationLat: service?.destinationLat ?? null,
     destinationLng: service?.destinationLng ?? null,
     destinationCatalogId: null as string | null,
+    destinationLocationSource: (service?.destinationLocationSource ?? null) as ServiceLocationSource | null,
     crane: service?.crane?.id || '',
     operators: service?.operator ? [{
       id: 'legacy-1',
@@ -259,10 +273,12 @@ export const EnhancedServiceForm = React.memo(({
         originLat: prefilledData.originLat ?? null,
         originLng: prefilledData.originLng ?? null,
         originCatalogId: null,
+        originLocationSource: null,
         destination: prefilledData.destination || '',
         destinationLat: prefilledData.destinationLat ?? null,
         destinationLng: prefilledData.destinationLng ?? null,
         destinationCatalogId: null,
+        destinationLocationSource: null,
         crane: prefilledData.craneId || '',
         operators: prefilledData.operators || [],
         value: 0,
@@ -478,10 +494,12 @@ export const EnhancedServiceForm = React.memo(({
         originLat: service.originLat ?? null,
         originLng: service.originLng ?? null,
         originCatalogId: null,
+        originLocationSource: service.originLocationSource ?? null,
         destination: service.destination,
         destinationLat: service.destinationLat ?? null,
         destinationLng: service.destinationLng ?? null,
         destinationCatalogId: null,
+        destinationLocationSource: service.destinationLocationSource ?? null,
         crane: service.crane?.id || '',
         operators: service.operator ? [{
           id: 'legacy-1',
@@ -973,6 +991,7 @@ export const EnhancedServiceForm = React.memo(({
   const performSave = async (options?: {
     complianceOverrideReason?: string;
     confirmedEmptyItems?: boolean;
+    confirmedMissingCoords?: boolean;
   }) => {
     if (isCreating || isUpdating || isSubmitting) {
       return;
@@ -1015,6 +1034,19 @@ export const EnhancedServiceForm = React.memo(({
         if (errorStep && errorStep !== currentStep) {
           setCurrentStep(errorStep);
         }
+        return;
+      }
+
+      // Sin coordenada de origen se puede guardar, pero no en silencio: quien
+      // toma el servicio tiene que saber que pierde tracking, ETA y peajes.
+      // Confirmación de una sola pasada, no una regla de schema.
+      if (
+        !options?.confirmedMissingCoords &&
+        formData.origin?.trim() &&
+        (formData.originLat == null || formData.originLng == null)
+      ) {
+        setPendingSaveOptions(options ?? null);
+        setIsMissingCoordsConfirmOpen(true);
         return;
       }
 
@@ -1123,12 +1155,14 @@ export const EnhancedServiceForm = React.memo(({
           delete updatePayload.originLat;
           delete updatePayload.originLng;
           delete updatePayload.originCatalogId;
+          delete updatePayload.originLocationSource;
         }
         if (!locationDirty.destination) {
           delete updatePayload.destination;
           delete updatePayload.destinationLat;
           delete updatePayload.destinationLng;
           delete updatePayload.destinationCatalogId;
+          delete updatePayload.destinationLocationSource;
         }
 
         result = await updateService(service.id, updatePayload);
@@ -1278,6 +1312,18 @@ export const EnhancedServiceForm = React.memo(({
     } finally {
       setIsComplianceOverrideSubmitting(false);
     }
+  };
+
+  const handleSaveWithoutCoords = async () => {
+    setIsMissingCoordsConfirmOpen(false);
+    await performSave({ ...(pendingSaveOptions ?? {}), confirmedMissingCoords: true });
+  };
+
+  const handlePickCoordsFromWarning = () => {
+    setIsMissingCoordsConfirmOpen(false);
+    // El picker vive dentro del campo de origen: llevar al paso de ubicación
+    // es lo único que hace falta, el aviso ámbar ya ofrece "Fijar en mapa".
+    setCurrentStep(2);
   };
 
   const handleConfirmEmptyItems = async () => {
@@ -1480,6 +1526,7 @@ export const EnhancedServiceForm = React.memo(({
                       lat: formData.originLat,
                       lng: formData.originLng,
                       catalogId: formData.originCatalogId,
+                      source: formData.originLocationSource,
                     }}
                     onOriginCoordsChange={(coords) => {
                       markOriginDirty();
@@ -1488,10 +1535,13 @@ export const EnhancedServiceForm = React.memo(({
                         originLat: coords.lat,
                         originLng: coords.lng,
                         originCatalogId: coords.catalogId,
+                        originLocationSource: coords.source ?? null,
                       }));
                     }}
                     originDepartment={selectedClient?.department}
                     canEditCatalog={profileUser?.role === 'admin' || profileUser?.role === 'operator'}
+                    canCreateCatalog={profileUser?.role === 'admin'}
+                    canPickOnMap={profileUser?.role === 'admin'}
                     destination={formData.destination}
                     onDestinationChange={(value) => {
                       markDestinationDirty();
@@ -1501,6 +1551,7 @@ export const EnhancedServiceForm = React.memo(({
                       lat: formData.destinationLat,
                       lng: formData.destinationLng,
                       catalogId: formData.destinationCatalogId,
+                      source: formData.destinationLocationSource,
                     }}
                     onDestinationCoordsChange={(coords) => {
                       markDestinationDirty();
@@ -1509,6 +1560,7 @@ export const EnhancedServiceForm = React.memo(({
                         destinationLat: coords.lat,
                         destinationLng: coords.lng,
                         destinationCatalogId: coords.catalogId,
+                        destinationLocationSource: coords.source ?? null,
                       }));
                     }}
                     originRequired={selectedServiceType?.originRequired || false}
@@ -1526,6 +1578,8 @@ export const EnhancedServiceForm = React.memo(({
                   onStopsChange={setServiceStops}
                   department={selectedClient?.department}
                   canEditCatalog={profileUser?.role === 'admin' || profileUser?.role === 'operator'}
+                  canCreateCatalog={profileUser?.role === 'admin'}
+                  canPickOnMap={profileUser?.role === 'admin'}
                   disabled={false}
                 />
               </div>
@@ -1968,6 +2022,28 @@ export const EnhancedServiceForm = React.memo(({
         isSubmitting={isComplianceOverrideSubmitting}
         onConfirm={handleComplianceOverrideConfirm}
       />
+
+      <AlertDialog open={isMissingCoordsConfirmOpen} onOpenChange={setIsMissingCoordsConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Servicio sin coordenada de origen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este servicio se va a guardar solo con la dirección escrita. Sin coordenada
+              no se genera link de seguimiento para el cliente, no se calcula ETA ni
+              distancia, y no entra al cálculo de peajes. Puedes fijar el punto ahora en
+              el mapa o agregarlo después editando el servicio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handlePickCoordsFromWarning}>
+              Fijar en el mapa
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleSaveWithoutCoords()}>
+              Guardar así
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <EmptyItemsConfirmDialog
         open={isEmptyItemsConfirmOpen}

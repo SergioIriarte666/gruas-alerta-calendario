@@ -12,50 +12,33 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      app_boot_log: {
-        Row: {
-          app_version: string | null
-          booted_at: string
-          created_at: string
-          id: string
-          last_error: string | null
-          launch_reason: string
-          operator_id: string | null
-          pending_points: number | null
-          relaunch_armed: boolean | null
-          platform: string | null
-          user_id: string | null
-        }
-        Insert: {
-          app_version?: string | null
-          booted_at?: string
-          created_at?: string
-          id?: string
-          last_error?: string | null
-          launch_reason?: string
-          operator_id?: string | null
-          pending_points?: number | null
-          relaunch_armed?: boolean | null
-          platform?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          app_version?: string | null
-          booted_at?: string
-          created_at?: string
-          id?: string
-          last_error?: string | null
-          launch_reason?: string
-          operator_id?: string | null
-          pending_points?: number | null
-          relaunch_armed?: boolean | null
-          platform?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       alert_acknowledgements: {
         Row: {
           acknowledged_at: string
@@ -85,6 +68,63 @@ export type Database = {
           {
             foreignKeyName: "alert_acknowledgements_acknowledged_by_fkey"
             columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_boot_log: {
+        Row: {
+          app_version: string | null
+          booted_at: string
+          created_at: string
+          id: string
+          last_error: string | null
+          launch_reason: string
+          operator_id: string | null
+          pending_points: number | null
+          platform: string | null
+          relaunch_armed: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          booted_at?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          launch_reason?: string
+          operator_id?: string | null
+          pending_points?: number | null
+          platform?: string | null
+          relaunch_armed?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          booted_at?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          launch_reason?: string
+          operator_id?: string | null
+          pending_points?: number | null
+          platform?: string | null
+          relaunch_armed?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_boot_log_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_boot_log_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6986,6 +7026,7 @@ export type Database = {
           destination: string | null
           destination_lat: number | null
           destination_lng: number | null
+          destination_location_source: string | null
           end_time: string | null
           excess_amount: number | null
           folio: string
@@ -7003,6 +7044,7 @@ export type Database = {
           origin: string | null
           origin_lat: number | null
           origin_lng: number | null
+          origin_location_source: string | null
           outsourced_cost: number | null
           outsourced_notes: string | null
           outsourced_provider_id: string | null
@@ -7050,6 +7092,7 @@ export type Database = {
           destination?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          destination_location_source?: string | null
           end_time?: string | null
           excess_amount?: number | null
           folio: string
@@ -7067,6 +7110,7 @@ export type Database = {
           origin?: string | null
           origin_lat?: number | null
           origin_lng?: number | null
+          origin_location_source?: string | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
@@ -7092,7 +7136,7 @@ export type Database = {
         Update: {
           client_covered_amount?: number | null
           client_id?: string
-          client_notifications_enabled?: boolean | null
+          client_notifications_enabled?: boolean
           company_name?: string | null
           company_rut?: string | null
           contact_person?: string | null
@@ -7114,6 +7158,7 @@ export type Database = {
           destination?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          destination_location_source?: string | null
           end_time?: string | null
           excess_amount?: number | null
           folio?: string
@@ -7131,6 +7176,7 @@ export type Database = {
           origin?: string | null
           origin_lat?: number | null
           origin_lng?: number | null
+          origin_location_source?: string | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
@@ -8689,6 +8735,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      assert_location_matches_locked_catalog: {
+        Args: { p_label: string; p_lat: number; p_lng: number }
+        Returns: undefined
+      }
       assert_no_pending_handoff: {
         Args: { p_service_id: string }
         Returns: undefined
@@ -8696,6 +8746,10 @@ export type Database = {
       assert_service_identity: {
         Args: { p_folio_confirmation: string; p_service_id: string }
         Returns: string
+      }
+      assert_tracking_service_coordinates: {
+        Args: { p_service_id: string }
+        Returns: undefined
       }
       assign_lowboy_container_to_sale: {
         Args: {
@@ -8982,6 +9036,19 @@ export type Database = {
         Args: { p_crane_id?: string }
         Returns: Json
       }
+      detect_tracking_silence: {
+        Args: never
+        Returns: {
+          folio: string
+          last_point_at: string
+          open_stop_reason: string
+          operator_id: string
+          operator_name: string
+          operator_phone: string
+          service_id: string
+          silent_minutes: number
+        }[]
+      }
       diagnose_maintenance_cost_integration: { Args: never; Returns: Json }
       diagnose_mixed_payment_invoices: { Args: never; Returns: Json }
       diagnose_payment_application_conflicts: {
@@ -8993,6 +9060,7 @@ export type Database = {
         Returns: Json
       }
       emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
+      enqueue_tracking_silence_alerts: { Args: never; Returns: number }
       execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       execute_recovery_operation: {
         Args: { p_confirmation: string; p_operation_id: string }
@@ -9129,6 +9197,42 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_best_service_location_point: {
+        Args: { p_service_id: string }
+        Returns: {
+          accuracy_meters: number
+          heading_degrees: number
+          id: string
+          is_offline_sync: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform: string
+          recorded_at: string
+          service_id: string
+          session_id: string
+          source: string
+          speed_mps: number
+        }[]
+      }
+      get_best_session_location_point: {
+        Args: { p_session_id: string }
+        Returns: {
+          accuracy_meters: number
+          heading_degrees: number
+          id: string
+          is_offline_sync: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform: string
+          recorded_at: string
+          service_id: string
+          session_id: string
+          source: string
+          speed_mps: number
+        }[]
+      }
       get_client_id_for_user: { Args: { user_id: string }; Returns: string }
       get_client_payment_history: {
         Args: { p_client_id: string }
@@ -9240,86 +9344,6 @@ export type Database = {
         }[]
       }
       get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
-      get_best_service_location_point: {
-        Args: { p_service_id: string }
-        Returns: {
-          accuracy_meters: number
-          heading_degrees: number | null
-          id: string
-          is_offline_sync: boolean
-          latitude: number
-          longitude: number
-          operator_id: string
-          platform: string
-          recorded_at: string
-          service_id: string | null
-          session_id: string
-          source: string
-          speed_mps: number | null
-        }[]
-      }
-      get_best_session_location_point: {
-        Args: { p_session_id: string }
-        Returns: {
-          accuracy_meters: number
-          heading_degrees: number | null
-          id: string
-          is_offline_sync: boolean
-          latitude: number
-          longitude: number
-          operator_id: string
-          platform: string
-          recorded_at: string
-          service_id: string | null
-          session_id: string
-          source: string
-          speed_mps: number | null
-        }[]
-      }
-      is_trusted_live_location_point: {
-        Args: {
-          p_accuracy_meters: number
-          p_latitude: number
-          p_longitude: number
-        }
-        Returns: boolean
-      }
-      get_service_telemetry: {
-        Args: {
-          p_date_from: string
-          p_date_to: string
-          p_speed_limit_kmh?: number
-        }
-        Returns: {
-          average_moving_speed_kmh: number | null
-          coverage_status: string
-          crane_id: string | null
-          crane_label: string
-          end_at: string | null
-          folio: string
-          gaps_count: number
-          low_confidence: boolean
-          max_speed_kmh: number | null
-          operational_started_at: string | null
-          operator_id: string | null
-          operator_name: string
-          over_limit_episodes: number
-          percentile95_speed_kmh: number | null
-          raw_points_count: number
-          reliable_distance_km: number
-          service_date: string
-          service_id: string
-          service_status: string
-          service_type_name: string
-          speed_samples_count: number
-          start_at: string | null
-          telemetry_mode: string
-          total_duration_minutes: number | null
-          tracking_expected: boolean
-          trusted_points_count: number
-          unexpected_telemetry: boolean
-        }[]
-      }
       get_operator_linked_profile: {
         Args: { p_user_id: string }
         Returns: {
@@ -9460,6 +9484,42 @@ export type Database = {
           resource_type: string
         }[]
       }
+      get_service_telemetry: {
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_speed_limit_kmh?: number
+        }
+        Returns: {
+          average_moving_speed_kmh: number
+          coverage_status: string
+          crane_id: string
+          crane_label: string
+          end_at: string
+          folio: string
+          gaps_count: number
+          low_confidence: boolean
+          max_speed_kmh: number
+          operational_started_at: string
+          operator_id: string
+          operator_name: string
+          over_limit_episodes: number
+          percentile95_speed_kmh: number
+          raw_points_count: number
+          reliable_distance_km: number
+          service_date: string
+          service_id: string
+          service_status: string
+          service_type_name: string
+          speed_samples_count: number
+          start_at: string
+          telemetry_mode: string
+          total_duration_minutes: number
+          tracking_expected: boolean
+          trusted_points_count: number
+          unexpected_telemetry: boolean
+        }[]
+      }
       get_supplier_payment_stats: {
         Args: { p_supplier_id: string }
         Returns: {
@@ -9590,6 +9650,14 @@ export type Database = {
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
       is_test_user_email: { Args: { p_email: string }; Returns: boolean }
+      is_trusted_live_location_point: {
+        Args: {
+          p_accuracy_meters: number
+          p_latitude: number
+          p_longitude: number
+        }
+        Returns: boolean
+      }
       list_operators_config: {
         Args: never
         Returns: {
@@ -9681,6 +9749,10 @@ export type Database = {
       }
       migrate_unsync_crane_parts: { Args: never; Returns: Json }
       migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
+      normalize_service_location_text: {
+        Args: { p_text: string }
+        Returns: string
+      }
       operator_has_pin: { Args: { p_operator_id: string }; Returns: boolean }
       preview_next_invoice_folio: { Args: never; Returns: string }
       preview_recovery_operation: {
@@ -9690,6 +9762,34 @@ export type Database = {
       purge_expired_recovery_audit: { Args: never; Returns: number }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
+      record_confirmed_service_location: {
+        Args: {
+          p_created_by: string
+          p_label: string
+          p_lat: number
+          p_lng: number
+        }
+        Returns: string
+      }
+      record_operator_location_point: {
+        Args: {
+          p_accuracy_meters: number
+          p_altitude_meters: number
+          p_heading_degrees: number
+          p_is_offline_sync?: boolean
+          p_latitude: number
+          p_longitude: number
+          p_operator_id: string
+          p_platform?: string
+          p_recorded_at: string
+          p_service_id: string
+          p_session_id: string
+          p_source?: string
+          p_speed_mps: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       record_operator_sync_completed: {
         Args: { p_synced_count: number }
         Returns: string
@@ -9784,48 +9884,21 @@ export type Database = {
         }
         Returns: undefined
       }
-      service_has_active_tracking_link: {
-        Args: { p_service_id: string }
-        Returns: boolean
-      }
       service_client_notifications_enabled: {
         Args: { p_service_id: string }
         Returns: boolean
       }
-      record_operator_location_point: {
+      service_has_active_tracking_link: {
+        Args: { p_service_id: string }
+        Returns: boolean
+      }
+      service_location_distance_m: {
         Args: {
-          p_accuracy_meters?: number
-          p_altitude_meters?: number
-          p_heading_degrees?: number
-          p_is_offline_sync?: boolean
-          p_latitude: number
-          p_longitude: number
-          p_operator_id: string
-          p_platform?: string
-          p_recorded_at: string
-          p_service_id?: string
-          p_session_id: string
-          p_source?: string
-          p_speed_mps?: number
-          p_user_id: string
+          p_lat_a: number
+          p_lat_b: number
+          p_lng_a: number
+          p_lng_b: number
         }
-        Returns: undefined
-      }
-      detect_tracking_silence: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          folio: string
-          last_point_at: string
-          open_stop_reason: string
-          operator_id: string
-          operator_name: string
-          operator_phone: string
-          service_id: string
-          silent_minutes: number
-        }[]
-      }
-      enqueue_tracking_silence_alerts: {
-        Args: Record<PropertyKey, never>
         Returns: number
       }
       service_stops_distance_meters: {
@@ -10156,6 +10229,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "operator", "viewer", "client"],

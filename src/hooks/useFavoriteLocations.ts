@@ -75,6 +75,64 @@ export const prepareLocationAliases = ({
     });
 };
 
+/**
+ * Alta manual desde el modal de servicios: el punto ya viene resuelto (link,
+ * plus code o coordenadas) y confirmado por quien lo guarda, asi que entra con
+ * coordinate_locked = true — nadie puede re-geocodificarlo despues.
+ */
+export function useCreateFavoriteLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      name,
+      aliases,
+      category,
+      address,
+      lat,
+      lng,
+    }: {
+      name: string;
+      aliases: string[];
+      category: string | null;
+      address: string | null;
+      lat: number;
+      lng: number;
+    }): Promise<string> => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from('saved_locations')
+        .insert({
+          name: name.trim(),
+          aliases,
+          category,
+          address,
+          latitude: lat,
+          longitude: lng,
+          coordinate_locked: true,
+          is_active: true,
+          created_by: user?.id ?? null,
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        logger.error('Error creando ubicación del catálogo', error);
+        throw error;
+      }
+
+      return data.id;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-locations'] }),
+      ]);
+    },
+  });
+}
+
 export function useUpdateFavoriteLocation() {
   const queryClient = useQueryClient();
 

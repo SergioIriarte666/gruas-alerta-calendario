@@ -100,9 +100,12 @@ const transformToService = (data: ServiceSnakeCase): Service => {
     origin: data.origin || '',
     originLat: (data.origin_lat as number | null | undefined) ?? null,
     originLng: (data.origin_lng as number | null | undefined) ?? null,
+    originLocationSource: (data.origin_location_source as Service['originLocationSource']) ?? null,
     destination: data.destination || '',
     destinationLat: (data.destination_lat as number | null | undefined) ?? null,
     destinationLng: (data.destination_lng as number | null | undefined) ?? null,
+    destinationLocationSource:
+      (data.destination_location_source as Service['destinationLocationSource']) ?? null,
     // Manejo robusto de tipo de servicio
     serviceType: data.serviceType || {
       id: data.service_type_id || '',
@@ -300,12 +303,22 @@ export const useServiceManager = () => {
         // Las coordenadas son un snapshot explícitamente confirmado en el
         // formulario. Nunca geocodificar texto silenciosamente durante submit:
         // una coincidencia aproximada no puede convertirse en una ruta pública.
+        const originPoint = transformedData.origin ? (serviceData.originLat ?? null) : null;
+        const destinationPoint = transformedData.destination
+          ? (serviceData.destinationLat ?? null)
+          : null;
+
         const transformedDataWithGeo = {
           ...transformedData,
-          origin_lat: transformedData.origin ? (serviceData.originLat ?? null) : null,
+          origin_lat: originPoint,
           origin_lng: transformedData.origin ? (serviceData.originLng ?? null) : null,
-          destination_lat: transformedData.destination ? (serviceData.destinationLat ?? null) : null,
+          // La procedencia solo tiene sentido si hay punto: sin coordenada
+          // queda NULL, igual que los 419 historicos.
+          origin_location_source: originPoint != null ? (serviceData.originLocationSource ?? null) : null,
+          destination_lat: destinationPoint,
           destination_lng: transformedData.destination ? (serviceData.destinationLng ?? null) : null,
+          destination_location_source:
+            destinationPoint != null ? (serviceData.destinationLocationSource ?? null) : null,
         };
 
         const { data: newService, error: serviceError } = await supabase
@@ -761,15 +774,20 @@ export const useServiceManager = () => {
 
       if (serviceData.origin !== undefined) {
         const hasOrigin = serviceData.origin.trim() !== '';
-        transformedData.origin_lat = hasOrigin ? (serviceData.originLat ?? null) : null;
+        const originLat = hasOrigin ? (serviceData.originLat ?? null) : null;
+        transformedData.origin_lat = originLat;
         transformedData.origin_lng = hasOrigin ? (serviceData.originLng ?? null) : null;
-
+        transformedData.origin_location_source =
+          originLat != null ? (serviceData.originLocationSource ?? null) : null;
       }
 
       if (serviceData.destination !== undefined) {
         const hasDestination = serviceData.destination.trim() !== '';
-        transformedData.destination_lat = hasDestination ? (serviceData.destinationLat ?? null) : null;
+        const destinationLat = hasDestination ? (serviceData.destinationLat ?? null) : null;
+        transformedData.destination_lat = destinationLat;
         transformedData.destination_lng = hasDestination ? (serviceData.destinationLng ?? null) : null;
+        transformedData.destination_location_source =
+          destinationLat != null ? (serviceData.destinationLocationSource ?? null) : null;
       }
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas

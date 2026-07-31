@@ -10,6 +10,8 @@ interface EnhancedLocationSectionProps {
   onOriginCoordsChange: (coords: OriginResolvedCoords) => void;
   originDepartment?: string | null;
   canEditCatalog?: boolean;
+  canCreateCatalog?: boolean;
+  canPickOnMap?: boolean;
   destination: string;
   onDestinationChange: (value: string) => void;
   destinationCoords: OriginResolvedCoords;
@@ -28,6 +30,8 @@ export const EnhancedLocationSection = ({
   onOriginCoordsChange,
   originDepartment,
   canEditCatalog = false,
+  canCreateCatalog = false,
+  canPickOnMap = false,
   destination,
   onDestinationChange,
   destinationCoords,
@@ -60,6 +64,8 @@ export const EnhancedLocationSection = ({
           onCoordsChange={onOriginCoordsChange}
           department={originDepartment}
           canEditCatalog={canEditCatalog}
+          canCreateCatalog={canCreateCatalog}
+          canPickOnMap={canPickOnMap}
           placeholder="Direccion de origen del servicio"
           disabled={disabled}
           error={originError}
@@ -86,6 +92,8 @@ export const EnhancedLocationSection = ({
           onCoordsChange={onDestinationCoordsChange}
           department={originDepartment}
           canEditCatalog={canEditCatalog}
+          canCreateCatalog={canCreateCatalog}
+          canPickOnMap={canPickOnMap}
           placeholder="Direccion o enlace de Google Maps del destino"
           disabled={disabled}
           error={destinationError}

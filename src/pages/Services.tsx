@@ -113,6 +113,9 @@ const Services = () => {
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     
+    withoutCoordinates,
+    setWithoutCoordinates,
+
     // Setters
     setIsCSVUploadOpen,
     setIsFormOpen,
@@ -452,6 +455,8 @@ const Services = () => {
             listDateTo={listDateTo}
             onListDateFromChange={handleManualDateFrom}
             onListDateToChange={handleManualDateTo}
+            withoutCoordinates={withoutCoordinates}
+            onWithoutCoordinatesChange={(value) => { setWithoutCoordinates(value); setCurrentPage(1); }}
           />
 
           {isMobile ? (

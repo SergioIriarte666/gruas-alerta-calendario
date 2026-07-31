@@ -3,7 +3,8 @@ import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -181,7 +182,25 @@ export const ServicesTable = React.memo(({
         ),
         cell: ({ row }) => (
           <div className="max-w-48">
-            <div className="truncate">{row.original.origin}</div>
+            <div className="flex items-center gap-1.5">
+              {/* Sin coordenada: ese servicio no genera seguimiento, ETA ni
+                  peajes. El icono es la unica pista visible en la lista. */}
+              {row.original.originLat == null || row.original.originLng == null ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="shrink-0">
+                        <MapPinOff className="size-3.5 text-muted-foreground/70" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Sin coordenada de origen: sin seguimiento ni métricas de ruta
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : null}
+              <div className="truncate">{row.original.origin}</div>
+            </div>
             <div className="text-sm text-muted-foreground truncate">
               → {row.original.destination}
             </div>

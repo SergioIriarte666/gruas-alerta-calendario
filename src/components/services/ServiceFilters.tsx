@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Search, X } from 'lucide-react';
+import { MapPinOff, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ interface ServiceFiltersProps {
   listDateTo?: string;
   onListDateFromChange?: (val: string) => void;
   onListDateToChange?: (val: string) => void;
+  withoutCoordinates?: boolean;
+  onWithoutCoordinatesChange?: (value: boolean) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -44,6 +46,8 @@ export const ServiceFilters = React.memo(({
   listDateTo = '',
   onListDateFromChange,
   onListDateToChange,
+  withoutCoordinates = false,
+  onWithoutCoordinatesChange,
 }: ServiceFiltersProps) => {
   const { operators } = useOperators();
   const controlClassName =
@@ -61,13 +65,15 @@ export const ServiceFilters = React.memo(({
     onAdvancedFiltersChange(null);
     onListDateFromChange?.('');
     onListDateToChange?.('');
+    onWithoutCoordinatesChange?.(false);
   };
 
   const hasFilters = Boolean(
     searchTerm ||
     (statusFilter && statusFilter !== 'all') ||
     listDateFrom ||
-    listDateTo
+    listDateTo ||
+    withoutCoordinates
   );
 
   return (
@@ -132,6 +138,25 @@ export const ServiceFilters = React.memo(({
         )}
         id="services-date-to"
       />
+
+      {/* Recuperacion de historicos: aisla los servicios con direccion escrita
+          pero sin punto, que son los que no generan seguimiento ni metricas. */}
+      <Button
+        type="button"
+        variant={withoutCoordinates ? 'secondary' : 'ghost'}
+        size="sm"
+        aria-pressed={withoutCoordinates}
+        onClick={() => onWithoutCoordinatesChange?.(!withoutCoordinates)}
+        className={cn(
+          'h-10 rounded-lg px-3',
+          withoutCoordinates
+            ? 'border border-warning/40 bg-warning/10 text-warning-text hover:bg-warning/20'
+            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+        )}
+      >
+        <MapPinOff className="mr-1.5 size-3.5" />
+        Sin coordenada
+      </Button>
 
       {hasFilters && (
         <Button

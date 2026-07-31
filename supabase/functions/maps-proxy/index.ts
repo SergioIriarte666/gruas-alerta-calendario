@@ -16,16 +16,28 @@ const RESOLVE_LINK_ALLOWED_HOSTS = new Set([
   "goo.gl",
   "google.com",
   "www.google.com",
+  "maps.google.com",
+  "consent.google.com",
 ]);
-const RESOLVE_LINK_MAX_HOPS = 3;
+const RESOLVE_LINK_MAX_HOPS = 5;
+
+// google.com/www.google.com/maps.google.com solo son validos bajo /maps (el
+// resto del allowlist son dominios acortadores de proposito unico).
+// consent.google.com queda fuera de esa restriccion a proposito: Google
+// intercala esa pantalla en algunas regiones y lleva el destino en un query
+// param, no en el path — sin este hop la funcion devolvia
+// "redirect_outside_google" en vez de las coordenadas.
+const RESOLVE_LINK_MAPS_PATH_HOSTS = new Set([
+  "google.com",
+  "www.google.com",
+  "maps.google.com",
+]);
 
 const isAllowedResolveLinkUrl = (url: URL): boolean => {
   const host = url.hostname.toLowerCase();
   if (!RESOLVE_LINK_ALLOWED_HOSTS.has(host)) return false;
   if (url.protocol !== "https:") return false;
-  // google.com/www.google.com solo son validos bajo /maps (el resto del
-  // allowlist son dominios acortadores de proposito unico).
-  if ((host === "google.com" || host === "www.google.com") && !url.pathname.startsWith("/maps")) {
+  if (RESOLVE_LINK_MAPS_PATH_HOSTS.has(host) && !url.pathname.startsWith("/maps")) {
     return false;
   }
   return true;
@@ -151,6 +163,53 @@ function paddedBoundsCorners(
     [maxLng + lngPad, maxLat + latPad],
   ];
 }
+
+// Prioridad de granularidad para elegir una direccion legible. Los
+// resultados de tipo plus_code se descartan salvo que no haya nada mas:
+// en zonas remotas Google los devuelve PRIMERO, lo que hacia que el
+// campo mostrara "575FCMMC+QQ" en vez de un nombre util.
+const REVERSE_GEOCODE_TYPE_PRIORITY = [
+  "street_address",
+  "premise",
+  "establishment",
+  "point_of_interest",
+  "route",
+  "intersection",
+  "neighborhood",
+  "sublocality",
+  "locality",
+  "administrative_area_level_3",
+  "administrative_area_level_2",
+];
+
+function pickBestReverseGeocodeResult(
+  results: Array<{ formatted_address: string; types?: string[] }>,
+): { address: string | null; plusCode: string | null } {
+  if (!results?.length) return { address: null, plusCode: null };
+
+  const plusCodeResult = results.find((r) => r.types?.includes("plus_code"));
+  const candidates = results.filter((r) => !r.types?.includes("plus_code"));
+
+  for (const type of REVERSE_GEOCODE_TYPE_PRIORITY) {
+    const match = candidates.find((r) => r.types?.includes(type));
+    if (match) {
+      return {
+        address: match.formatted_address,
+        plusCode: plusCodeResult?.formatted_address ?? null,
+      };
+    }
+  }
+
+  const fallback = candidates[0] ?? results[0];
+  return {
+    address: fallback?.formatted_address ?? null,
+    plusCode: plusCodeResult?.formatted_address ?? null,
+  };
+}
+
+// Alfabeto oficial de Open Location Code. Un plus code global no admite los
+// filtros de pais de la Geocoding API (ver accion geocode).
+const PLUS_CODE_REGEX = /^[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}/i;
 
 function simplifyCoords(coords: [number, number][], maxPoints: number): [number, number][] {
   if (coords.length <= maxPoints) return coords;
@@ -569,7 +628,17 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const coords = parseGoogleMapsLongUrl(finalUrlString);
+      // La pantalla de consentimiento lleva el destino en un query param
+      // percent-encoded (%213d... en vez de !3d...): sin decodificar, el pin
+      // exacto queda invisible para el parser.
+      let decodedFinalUrl = finalUrlString;
+      try {
+        decodedFinalUrl = decodeURIComponent(finalUrlString);
+      } catch {
+        // URL con secuencias % invalidas: se usa la original.
+      }
+
+      const coords = parseGoogleMapsLongUrl(finalUrlString) ?? parseGoogleMapsLongUrl(decodedFinalUrl);
       if (!coords) {
         return new Response(
           JSON.stringify({ error: "unresolvable" }),
@@ -613,9 +682,9 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const address = data.results?.[0]?.formatted_address ?? null;
+      const { address, plusCode } = pickBestReverseGeocodeResult(data.results ?? []);
 
-      return new Response(JSON.stringify({ address }), {
+      return new Response(JSON.stringify({ address, plusCode }), {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
@@ -631,13 +700,22 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // La Geocoding API resuelve plus codes, pero los filtros de pais
+      // (components=country:CL + region=cl) rompen o degradan la resolucion de
+      // un codigo global. Un plus code LOCAL ("M939+CF Copiapo") conserva su
+      // localidad adjunta: sin ella no hay como ubicarlo.
+      const isPlusCode = PLUS_CODE_REGEX.test(String(q).trim());
+
       const params = new URLSearchParams({
-        address: q,
+        address: isPlusCode ? String(q).trim().toUpperCase() : q,
         key: API_KEY,
-        region: "cl",
-        components: "country:CL",
         language: "es",
       });
+
+      if (!isPlusCode) {
+        params.set("region", "cl");
+        params.set("components", "country:CL");
+      }
 
       const res = await fetch(`${GEOCODING_BASE}?${params}`);
       const data = await res.json();

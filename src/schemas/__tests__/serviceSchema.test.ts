@@ -23,25 +23,21 @@ describe('serviceFormSchema location snapshots', () => {
     expect(serviceFormSchema.safeParse(validService).success).toBe(true);
   });
 
-  it('rejects changing a destination label without confirming its coordinates', () => {
+  // El 99% de los servicios son auxilios en ruta: "CAMINO A MANTOVERDE, KM 12"
+  // no existe como lugar geocodificable y aun asi es la mejor referencia que hay.
+  // La falta de coordenada avisa en el submit; el schema no la rechaza.
+  it('accepts a free-text label with no coordinates at all', () => {
     const result = serviceFormSchema.safeParse({
       ...validService,
+      origin: 'CAMINO A MANTOVERDE, ~KM 12, POSTE 45',
+      originLat: null,
+      originLng: null,
       destination: 'Otro destino',
       destinationLat: null,
       destinationLng: null,
     });
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            path: ['destination'],
-            message: 'Selecciona y confirma el destino en el mapa',
-          }),
-        ]),
-      );
-    }
+    expect(result.success).toBe(true);
   });
 
   it('rejects coordinates outside Chile or with latitude and longitude inverted', () => {

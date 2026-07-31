@@ -1,3 +1,4 @@
+import type { ServiceLocationSource } from './serviceLocation';
 
 
 export interface Service {
@@ -20,9 +21,13 @@ export interface Service {
   origin: string;
   originLat?: number | null;
   originLng?: number | null;
+  // Procedencia del punto (catalog | places | client_link | plus_code |
+  // manual_pin | coords). null en servicios sin coordenada o historicos.
+  originLocationSource?: ServiceLocationSource | null;
   destination: string;
   destinationLat?: number | null;
   destinationLng?: number | null;
+  destinationLocationSource?: ServiceLocationSource | null;
   serviceType: ServiceType;
   value: number;
   crane: Crane | null;
@@ -89,8 +94,10 @@ export interface ServiceSnakeCase extends Service {
   service_date?: string;
   origin_lat?: number | null;
   origin_lng?: number | null;
+  origin_location_source?: string | null;
   destination_lat?: number | null;
   destination_lng?: number | null;
+  destination_location_source?: string | null;
   purchase_order?: string;
   quote_number?: string;
   vehicle_brand?: string;
@@ -175,6 +182,9 @@ export interface ServiceFormData {
   originLng?: number | null;
   // id de saved_locations si el origen se selecciono del catalogo curado
   originCatalogId?: string | null;
+  // Via por la que llego la coordenada; se persiste para poder auditar y
+  // recuperar los servicios sin punto.
+  originLocationSource?: ServiceLocationSource | null;
   destination: string;
   // Igual que el origen: snapshot confirmado al crear/editar el servicio.
   // El seguimiento publico nunca debe geocodificar este texto por su cuenta.
@@ -182,6 +192,7 @@ export interface ServiceFormData {
   destinationLng?: number | null;
   // El mismo catálogo se usa para destinos recurrentes.
   destinationCatalogId?: string | null;
+  destinationLocationSource?: ServiceLocationSource | null;
   crane?: string;
   operators?: Array<{
     id: string;
