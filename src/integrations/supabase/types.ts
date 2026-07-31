@@ -7035,8 +7035,10 @@ export type Database = {
           insured_name: string | null
           invoice_folio: string | null
           invoice_numero_fiscal: string | null
+          journey_stage_reached: string | null
           license_plate: string | null
           observations: string | null
+          on_site_reached_at: string | null
           operator_commission: number | null
           operator_id: string | null
           operator_notified_at: string | null
@@ -7101,8 +7103,10 @@ export type Database = {
           insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
+          journey_stage_reached?: string | null
           license_plate?: string | null
           observations?: string | null
+          on_site_reached_at?: string | null
           operator_commission?: number | null
           operator_id?: string | null
           operator_notified_at?: string | null
@@ -7167,8 +7171,10 @@ export type Database = {
           insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
+          journey_stage_reached?: string | null
           license_plate?: string | null
           observations?: string | null
+          on_site_reached_at?: string | null
           operator_commission?: number | null
           operator_id?: string | null
           operator_notified_at?: string | null

@@ -2,6 +2,7 @@
 import ReactDOM from 'react-dom/client'
 import { Capacitor } from '@capacitor/core'
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
+import { SplashScreen } from '@capacitor/splash-screen'
 import App from './App.tsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { createLogger } from '@/lib/logger'
@@ -159,6 +160,20 @@ const rootElement = document.getElementById('root')!;
 const bootObserver = new MutationObserver(() => {
   markBootCompleted();
   bootObserver.disconnect();
+
+  // El splash se cierra ACÁ, cuando ya hay algo pintado. La app nunca llamaba a
+  // hide(), así que Capacitor lo escondía por timeout y evaluaba JS en un
+  // WebView todavía sin contexto: de ahí el "JS Eval error" que aparece en el
+  // log del dispositivo inmediatamente después del "automatically hidden after
+  // default timeout".
+  //
+  // No es cosmético: Capgo escucha ese error para hacer rollback automático de
+  // bundles OTA. Hoy corre el builtin y es inocuo, pero al encender el OTA se
+  // dispararía en CADA arranque y podría tumbar bundles sanos por falsa alarma.
+  //
+  // El catch vacío es deliberado: en web el plugin es un no-op y cerrar un
+  // splash que no existe jamás puede romper el arranque.
+  void SplashScreen.hide().catch(() => {});
 });
 bootObserver.observe(rootElement, { childList: true, subtree: true });
 

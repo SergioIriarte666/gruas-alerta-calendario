@@ -28,7 +28,12 @@ import { cn } from '@/lib/utils';
 import { STOP_REASON_LABELS } from '@/types/serviceStopEvent';
 import { resolveTransmissionStopGate } from '@/utils/transmissionStopGate';
 import { buildPublicTrackingUrl } from '@/utils/trackingUrl';
-import { isFinalServiceStatus } from '@/utils/serviceTrackingLifecycle';
+import {
+  describeTrackingShareFailure,
+  isFinalServiceStatus,
+  resolveTrackingShareBlock,
+  TRACKING_SHARE_BLOCK_COPY,
+} from '@/utils/serviceTrackingLifecycle';
 import { isActiveOperatorService } from '@/utils/operatorActiveService';
 import {
   isRelaunchProtected,
@@ -363,19 +368,25 @@ export const TransmissionControl = ({
    * servicio, no hay nada que compartir. No se consulta nada aparte —el botón
    * y la acción tienen que estar de acuerdo siempre—.
    */
-  const canShare = Boolean(serviceId) && !isCurrentServiceClosed;
+  // Falla temprano y visible: si al servicio le falta la ubicación de origen o
+  // destino, compartir SIEMPRE va a fallar contra
+  // `assert_tracking_service_coordinates`. Dejar el botón activo sólo consigue
+  // que el operador reintente en ruta culpando a la señal.
+  const shareBlock = resolveTrackingShareBlock(currentService);
+  const canShare = Boolean(serviceId) && shareBlock === null;
   const shareLabel = canShare
     ? 'Compartir seguimiento con el cliente'
-    : isCurrentServiceClosed
-      ? 'El servicio ya terminó: no hay seguimiento que compartir'
+    : shareBlock
+      ? TRACKING_SHARE_BLOCK_COPY[shareBlock].label
       : 'Sin servicio asignado para compartir';
 
   const handleShareUnavailable = () => {
-    toast.info(
-      isCurrentServiceClosed
-        ? 'El servicio ya terminó: el seguimiento en vivo se cerró con él'
-        : 'No tienes servicios asignados para compartir',
-    );
+    if (shareBlock) {
+      const copy = TRACKING_SHARE_BLOCK_COPY[shareBlock];
+      toast.info(copy.title, { description: copy.description });
+      return;
+    }
+    toast.info('No tienes servicios asignados para compartir');
   };
 
   const markShared = async () => {
@@ -398,7 +409,7 @@ export const TransmissionControl = ({
   const handleShare = async () => {
     // Red de seguridad: aunque el botón ya va deshabilitado, la acción jamás
     // termina en un no-op mudo.
-    if (!serviceId || isCurrentServiceClosed) {
+    if (!serviceId || shareBlock !== null) {
       handleShareUnavailable();
       return;
     }
@@ -429,23 +440,30 @@ export const TransmissionControl = ({
       // pierde el share nativo, pero el operador se lleva el link igual.
       // El motivo del fallo viaja junto al resultado: un "no se pudo" genérico
       // no le sirve a nadie para saber si es la señal o el servidor.
-      const fallback: { url: string | null; reason: string | null } = url
-        ? { url, reason: null }
+      // El motivo del fallo viaja junto al resultado, y ADEMÁS su SQLSTATE: sin
+      // el código no hay forma de saber si fue la señal o un dato del servicio,
+      // y las dos cosas piden acciones opuestas —reintentar vs. llamar a la
+      // central—.
+      const fallback: { url: string | null; reason: string | null; code: string | null } = url
+        ? { url, reason: null, code: null }
         : await (async () => {
           const { data, error } = await supabase.rpc('get_operator_service_tracking_token', {
             p_service_id: serviceId,
           });
-          if (error) return { url: null, reason: error.message };
-          if (!data) return { url: null, reason: 'El servidor no devolvió un link de seguimiento.' };
+          if (error) return { url: null, reason: error.message, code: error.code ?? null };
+          if (!data) return { url: null, reason: 'El servidor no devolvió un link de seguimiento.', code: null };
           const resolved = buildPublicTrackingUrl(data);
           trackingUrlRef.current = resolved;
-          return { url: resolved, reason: null };
+          return { url: resolved, reason: null, code: null };
         })();
 
       if (!fallback.url) {
-        logger.error('No se pudo generar el token de seguimiento', fallback.reason);
+        logger.error('No se pudo generar el token de seguimiento', {
+          reason: fallback.reason,
+          code: fallback.code,
+        });
         toast.error(fallback.reason ?? 'No se pudo preparar el link de seguimiento.', {
-          description: 'Revisa tu conexión e inténtalo de nuevo.',
+          description: describeTrackingShareFailure(fallback.code),
         });
         return;
       }
@@ -759,6 +777,17 @@ export const TransmissionControl = ({
             <StopReasonPicker disabled={isStopBusy} onSelect={declareStop} />
           )}
         </div>
+      )}
+
+      {/* El bloqueo por ubicación incompleta se explica A LA VISTA, no sólo en
+          el tooltip: en el teléfono no hay hover, y un botón apagado sin motivo
+          es exactamente lo que hace que el operador lo toque diez veces. El
+          cierre del servicio no necesita este aviso — ahí el botón apagado se
+          explica solo. */}
+      {shareBlock && shareBlock !== 'service_closed' && (
+        <p className="mt-3 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
+          {TRACKING_SHARE_BLOCK_COPY[shareBlock].title}. {TRACKING_SHARE_BLOCK_COPY[shareBlock].description}
+        </p>
       )}
 
       {showAlwaysHint && (
