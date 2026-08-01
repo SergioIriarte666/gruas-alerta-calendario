@@ -4,7 +4,7 @@ import { RefreshCw, AlertCircle, BriefcaseBusiness, Radio, PackageCheck, Chevron
 import { useOperatorServicesTabs } from '@/hooks/useOperatorServicesTabs';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NextServiceCard } from '@/components/operator/NextServiceCard';
 import { createLogger } from '@/lib/logger';
@@ -15,12 +15,8 @@ import { DocumentStatusBanner } from '@/components/operator/DocumentStatusBanner
 import { OperatorActivityPreview } from '@/components/operator/OperatorActivityPreview';
 import {
   isPrincipalOperatorOfService,
-  resolveOperatorServiceSelection,
   selectOperatedServices,
 } from '@/utils/operatorActiveService';
-
-/** La elección explícita del servicio en vuelo sobrevive al recargar la app. */
-const SELECTED_SERVICE_KEY = 'operator-selected-service-v1';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -32,9 +28,6 @@ const OperatorDashboard = () => {
   const { pendingCount } = usePendingOfflineInspections();
   const { search } = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
-    () => window.localStorage.getItem(SELECTED_SERVICE_KEY),
-  );
 
   const tabFromUrl = new URLSearchParams(search).get('tab') as TabKey | null;
   const activeTab: TabKey = tabFromUrl || 'asignados';
@@ -45,24 +38,10 @@ const OperatorDashboard = () => {
   const completadosRecientes = [...serviceTabs.completados]
     .sort((a, b) => (b.serviceDate || '').localeCompare(a.serviceDate || ''))
     .slice(0, 5);
-  // Dos servicios distintos y no intercambiables: el que transmite (puede ser
-  // el próximo asignado, "voy en camino") y el que está EN CURSO, único al que
-  // pueden colgarse detenciones. Confundirlos escribió el "Descanso" de las
-  // 21:11 en un servicio de la mañana siguiente (25/07).
-  //
-  // Y con más de un servicio en vuelo no se adivina ninguno de los dos: el
-  // operador elige, y la elección sobrevive al recargar.
-  const operatorServices = [
-    ...serviceTabs.activos,
-    ...serviceTabs.pendientes_entrega,
-    ...asignadosSorted,
-  ];
-  // El operator_id va como tercer argumento a propósito: los controles del
-  // servicio —transmisión, detenciones, link del cliente, entrega— pertenecen
-  // al operador PRINCIPAL. Un adicional (service_resources) ve el servicio en
-  // su jornada, pero no lo maneja.
-  const { candidates, requiresSelection, activeService, trackingService } =
-    resolveOperatorServiceSelection(operatorServices, selectedServiceId, user?.operator_id);
+  // La selección del servicio en vuelo y el estado de la transmisión viven en
+  // OperatorTransmissionProvider, montado sobre el router. Estaban acá, dentro
+  // de una ruta: cada cambio de pestaña los desmontaba y con ellos moría el
+  // watcher GPS.
 
   // "Pendientes de entrega" es una COLA DE TRABAJO, no un listado: lo que
   // aparece ahí el operador lo tiene que cerrar. El 28/07 el adicional veía
@@ -70,24 +49,6 @@ const OperatorDashboard = () => {
   // cuentan solo lo propio; el resto sigue visible en su pestaña, sin acciones.
   const entregasPropias = selectOperatedServices(serviceTabs.pendientes_entrega, user?.operator_id);
   const isOperated = (service: Service) => isPrincipalOperatorOfService(service, user?.operator_id);
-
-  useEffect(() => {
-    if (!selectedServiceId) return;
-    // La elección deja de existir cuando el servicio sale de la jornada.
-    if (!candidates.some((service) => service.id === selectedServiceId)) {
-      setSelectedServiceId(null);
-      window.localStorage.removeItem(SELECTED_SERVICE_KEY);
-    }
-  }, [candidates, selectedServiceId]);
-
-  const handleSelectService = (serviceId: string | null) => {
-    setSelectedServiceId(serviceId);
-    if (serviceId) {
-      window.localStorage.setItem(SELECTED_SERVICE_KEY, serviceId);
-    } else {
-      window.localStorage.removeItem(SELECTED_SERVICE_KEY);
-    }
-  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -215,12 +176,6 @@ const OperatorDashboard = () => {
           dos montajes abren dos watchers y pelean por la misma sesión. */}
       <TransmissionControl
         operatorId={user?.operator_id}
-        userId={user?.id}
-        currentService={trackingService}
-        activeService={activeService}
-        candidates={candidates}
-        requiresSelection={requiresSelection}
-        onSelectService={handleSelectService}
         showDrivePanel={activeTab === 'asignados'}
       />
 

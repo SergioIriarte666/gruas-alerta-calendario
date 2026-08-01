@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOperatorOfflineSync } from '@/hooks/useOperatorOfflineSync';
 import { ThemeSelector } from '@/components/layout/ThemeSelector';
 import { OperatorActivityProvider } from '@/contexts/OperatorActivityContext';
+import { OperatorTransmissionProvider } from '@/contexts/OperatorTransmissionContext';
 
 export const OperatorLayout = () => {
   const { user } = useUser();
@@ -45,6 +46,10 @@ export const OperatorLayout = () => {
 
   return (
     <OperatorActivityProvider>
+      {/* La transmisión se monta ACÁ, por encima del <Outlet/>: atada a la
+          sesión del operador y no a la pestaña visible. Dentro de una ruta, el
+          cleanup de su efecto mataba el watcher GPS en cada navegación. */}
+      <OperatorTransmissionProvider>
       <div className="operator-shell-concept operator-native-shell flex min-h-screen flex-col bg-background text-foreground">
 
         {/* ── Header ── */}
@@ -116,6 +121,7 @@ export const OperatorLayout = () => {
         {/* ── Bottom nav ── */}
         {!isInspection && <OperatorBottomNav />}
       </div>
+      </OperatorTransmissionProvider>
     </OperatorActivityProvider>
   );
 };

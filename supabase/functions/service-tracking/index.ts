@@ -238,8 +238,7 @@ Deno.serve(async (req: Request) => {
     .select(`
       id, service_id, revoked_at, expires_at, access_count,
       eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
-      eta_target_stop_id, eta_target_kind, eta_routing_access_signature,
-      on_site_reached_at, max_stage_reached
+      eta_target_stop_id, eta_target_kind, eta_routing_access_signature
     `)
     .eq("token", token)
     .maybeSingle();
@@ -369,8 +368,6 @@ Deno.serve(async (req: Request) => {
     (
       service.on_site_reached_at ||
       service.journey_stage_reached ||
-      link.on_site_reached_at ||
-      link.max_stage_reached ||
       link.eta_target_kind === "destination"
     )
   ) {
@@ -387,8 +384,6 @@ Deno.serve(async (req: Request) => {
       await supabase
         .from("service_tracking_links")
         .update({
-          on_site_reached_at: null,
-          max_stage_reached: null,
           eta_seconds: null,
           eta_distance_meters: null,
           eta_polyline: null,
@@ -653,9 +648,9 @@ Deno.serve(async (req: Request) => {
 
     // El hito vive en el SERVICIO. Vivia en el link, y por eso un servicio
     // cuyo link nunca se creo (client_notifications_enabled = false por
-    // defecto: el caso mas comun) se quedaba sin hito para siempre. El link
-    // conserva su columna como espejo mientras se termina de retirar.
-    let onSiteReachedAt = (service.on_site_reached_at ?? link.on_site_reached_at) as string | null;
+    // defecto: el caso mas comun) se quedaba sin hito para siempre. El link ya
+    // no tiene copia: una sola fuente, sin espejo que desincronizar.
+    let onSiteReachedAt = service.on_site_reached_at as string | null;
 
     if (distanceToOriginM !== null) {
       if (onSiteReachedAt && distanceToOriginM > TOWING_METERS) {
@@ -665,16 +660,10 @@ Deno.serve(async (req: Request) => {
         if (!onSiteReachedAt) {
           onSiteReachedAt = new Date().toISOString();
           try {
-            await Promise.all([
-              supabase
-                .from("services")
-                .update({ on_site_reached_at: onSiteReachedAt })
-                .eq("id", link.service_id),
-              supabase
-                .from("service_tracking_links")
-                .update({ on_site_reached_at: onSiteReachedAt })
-                .eq("id", link.id),
-            ]);
+            await supabase
+              .from("services")
+              .update({ on_site_reached_at: onSiteReachedAt })
+              .eq("id", link.service_id);
           } catch {
             // no-op: el hito es informativo, nunca debe romper el seguimiento publico
           }
@@ -700,9 +689,8 @@ Deno.serve(async (req: Request) => {
   // iniciar esta en `pending`, que no tiene piso.
   const guidanceOn = !(hasNavigableStops && !routeArmed);
   if (guidanceOn && serviceStarted) {
-    // Igual que el hito: el maximo alcanzado es del SERVICIO. El valor del link
-    // solo entra como respaldo para filas anteriores a la mudanza.
-    const persistedStage = (service.journey_stage_reached ?? link.max_stage_reached) as string | null;
+    // Igual que el hito: el maximo alcanzado es del SERVICIO, sin copia.
+    const persistedStage = service.journey_stage_reached as string | null;
     const persistedRank = rankOfStage(persistedStage);
     const effectiveStage = resolveEffectiveStage(
       journeyStage,
@@ -715,16 +703,10 @@ Deno.serve(async (req: Request) => {
       // la linea de tiempo del cliente no rebota si el proximo poll llega antes
       // de que la posicion confirme el traslado.
       try {
-        await Promise.all([
-          supabase
-            .from("services")
-            .update({ journey_stage_reached: effectiveStage })
-            .eq("id", link.service_id),
-          supabase
-            .from("service_tracking_links")
-            .update({ max_stage_reached: effectiveStage })
-            .eq("id", link.id),
-        ]);
+        await supabase
+          .from("services")
+          .update({ journey_stage_reached: effectiveStage })
+          .eq("id", link.service_id);
       } catch {
         // no-op: el maximo es memoria de la linea de tiempo, nunca debe romper el seguimiento publico
       }

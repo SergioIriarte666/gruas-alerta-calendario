@@ -46,7 +46,7 @@ import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
@@ -65,6 +65,8 @@ import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
 import { isFinalServiceStatus } from '@/utils/serviceTrackingLifecycle';
+import { fetchStopEventsForServices } from '@/services/serviceStopEventService';
+import { STOP_REASON_LABELS, stopEventMinutes } from '@/types/serviceStopEvent';
 import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
 import { useServiceRouteMetrics } from '@/hooks/useServiceRouteMetrics';
 import { CheckCircle2 } from 'lucide-react';
@@ -155,8 +157,28 @@ interface RouteMetricsSectionProps {
 
 const RouteMetricsSection = ({ serviceId, status, isOpen }: RouteMetricsSectionProps) => {
   const { data: routeMetrics, isLoading } = useServiceRouteMetrics(serviceId, isOpen);
+  const { data: stopEvents } = useQuery({
+    queryKey: ['service-stop-events', serviceId],
+    queryFn: () => fetchStopEventsForServices([serviceId]),
+    enabled: isOpen && (routeMetrics?.stopped_minutes ?? 0) > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (isLoading) return null;
+
+  // Duración NETA. El tiempo en servicio incluye las detenciones declaradas, y
+  // presentarlo solo bruto sesga cualquier lectura de productividad: el
+  // traslado de 3266120-1 aparecía a 38 km/h porque 124 de sus 428 minutos
+  // fueron una ruta cortada. La velocidad real fue 53,4 km/h.
+  const stoppedMinutes = routeMetrics?.stopped_minutes ?? 0;
+  const hasStops = stoppedMinutes > 0 && routeMetrics?.moving_duration_minutes != null;
+
+  // Desglose por motivo, en el orden en que ocurrieron.
+  const stopSummary = (stopEvents ?? []).reduce<Record<string, number>>((acc, event) => {
+    const label = STOP_REASON_LABELS[event.reason] ?? event.reason;
+    acc[label] = (acc[label] ?? 0) + stopEventMinutes(event, new Date());
+    return acc;
+  }, {});
 
   const hasBreakdown = routeMetrics?.en_route_distance_km != null && routeMetrics?.towing_distance_km != null;
 
@@ -201,7 +223,30 @@ const RouteMetricsSection = ({ serviceId, status, isOpen }: RouteMetricsSectionP
       {routeMetrics ? (
         <>
           <DetailItem icon={Gauge} label="Distancia recorrida" value={distanceValue} />
-          <DetailItem icon={Timer} label="Tiempo en servicio" value={formatDurationHumanized(routeMetrics.total_duration_minutes)} />
+          <DetailItem
+            icon={Timer}
+            label="Tiempo en servicio"
+            value={hasStops ? (
+              <span>
+                {formatDurationHumanized(routeMetrics.moving_duration_minutes as number)}{' '}
+                <span className="font-normal text-muted-foreground">en movimiento</span>
+                {' · '}
+                <span className="font-normal text-muted-foreground">
+                  {formatDurationHumanized(routeMetrics.total_duration_minutes)} totales
+                </span>
+              </span>
+            ) : formatDurationHumanized(routeMetrics.total_duration_minutes)}
+          />
+          {hasStops && (
+            <p className="col-span-1 text-sm text-muted-foreground md:col-span-2">
+              Detenciones declaradas: {formatDurationHumanized(stoppedMinutes)}
+              {Object.keys(stopSummary).length > 0 && (
+                <> ({Object.entries(stopSummary)
+                  .map(([label, minutes]) => `${label} ${formatDurationHumanized(minutes)}`)
+                  .join(' · ')})</>
+              )}
+            </p>
+          )}
           {hasBreakdown && (
             <p className="col-span-1 text-sm text-muted-foreground md:col-span-2">
               Ida: {formatKmCL(routeMetrics.en_route_distance_km as number)} · {formatDurationHumanized(routeMetrics.en_route_duration_minutes as number)}

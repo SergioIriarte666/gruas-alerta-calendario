@@ -4,11 +4,19 @@ import { useOperatorActivity } from '@/contexts/OperatorActivityContext';
 import { groupOperatorActivities } from '@/lib/operatorActivity';
 import { cn } from '@/lib/utils';
 
+/**
+ * Estado del canal realtime de la BITÁCORA, no del GPS.
+ *
+ * Los dos son estados distintos y ya viven en lugares distintos —el GPS se
+ * rotula en la tarjeta de transmisión—, pero el 01/08 el operador vio
+ * "Reconectando" al entrar acá y lo leyó como pérdida de señal. El rótulo dice
+ * ahora de qué habla: un socket caído no es una grúa sin rastrear.
+ */
 const connectionCopy = {
-  connecting: { label: 'Conectando', icon: RefreshCw },
-  live: { label: 'En directo', icon: Radio },
-  offline: { label: 'Sin conexión', icon: WifiOff },
-  error: { label: 'Reconectando', icon: CloudOff },
+  connecting: { label: 'Bitácora · conectando', icon: RefreshCw },
+  live: { label: 'Bitácora · en directo', icon: Radio },
+  offline: { label: 'Bitácora · sin conexión', icon: WifiOff },
+  error: { label: 'Bitácora · reconectando', icon: CloudOff },
 } as const;
 
 const OperatorActivityPage = () => {

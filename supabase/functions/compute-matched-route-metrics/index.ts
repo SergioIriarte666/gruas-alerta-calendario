@@ -46,27 +46,46 @@ async function firstStatusChange(
   return data?.[0]?.changed_at ?? null;
 }
 
-/** Último hito on_site_reached_at registrado para el servicio. */
+/**
+ * Hito on_site del servicio.
+ *
+ * Salia de service_tracking_links, que era la fuente vieja: si el link nunca se
+ * creaba —lo mas comun, con las notificaciones al cliente apagadas por
+ * defecto— el hito no existia y esta funcion no podia separar ida de traslado.
+ * Desde la migracion 20260731180000 la fuente es `services`.
+ */
 async function latestOnSite(
   supabase: ReturnType<typeof createClient>,
   serviceId: string,
 ): Promise<string | null> {
   const { data, error } = await supabase
-    .from("service_tracking_links")
+    .from("services")
     .select("on_site_reached_at")
-    .eq("service_id", serviceId)
-    .not("on_site_reached_at", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1);
+    .eq("id", serviceId)
+    .maybeSingle();
   if (error) throw new Error(error.message);
-  return data?.[0]?.on_site_reached_at ?? null;
+  return (data as { on_site_reached_at: string | null } | null)?.on_site_reached_at ?? null;
 }
+
+/**
+ * Confianza minima para publicar una distancia matched.
+ *
+ * Un match con confianza 0 no aporta informacion: el 24/07 se guardaron
+ * SRV-6845 (98,6 km crudos, 98,6 "matched", confianza 0 — el crudo copiado) y
+ * 2739510 (4 puntos, confianza 0). Un numero copiado que se presenta como
+ * "ruta ajustada a calles" es peor que no tener el dato: no se puede distinguir
+ * del bueno.
+ */
+const MIN_MATCHING_CONFIDENCE = 0.5;
+
+type SkippedReason = "low_confidence" | "insufficient_points" | "api_error";
 
 interface UpdatePayload {
   matched_total_distance_km: number | null;
   matched_en_route_distance_km: number | null;
   matched_towing_distance_km: number | null;
   matching_confidence: number | null;
+  matched_skipped_reason: SkippedReason | null;
 }
 
 async function markComputed(
@@ -104,6 +123,7 @@ async function computeForService(
       matched_en_route_distance_km: null,
       matched_towing_distance_km: null,
       matching_confidence: null,
+      matched_skipped_reason: "insufficient_points",
     });
     return "skipped";
   }
@@ -194,11 +214,34 @@ async function computeForService(
 
   const confidence = weightMeters > 0 ? Math.round((weightedConf / weightMeters) * 100) / 100 : null;
 
+  // Falla PARCIAL de Mapbox: sobrevivieron algunos tramos, asi que la distancia
+  // matched esta subestimada. Publicarla seria peor que no tenerla —se lee como
+  // "ruta ajustada" y es un recorrido incompleto—. Se marca computed para no
+  // reintentar en bucle cada 10 min; la UI cae a la distancia cruda.
+  const skippedReason: SkippedReason | null = apiErrors > 0
+    ? "api_error"
+    : (confidence == null || confidence < MIN_MATCHING_CONFIDENCE)
+      ? "low_confidence"
+      : null;
+
+  if (skippedReason) {
+    await markComputed(supabase, serviceId, {
+      matched_total_distance_km: null,
+      matched_en_route_distance_km: null,
+      matched_towing_distance_km: null,
+      // La confianza SI se registra: es la evidencia de por que se descarto.
+      matching_confidence: confidence,
+      matched_skipped_reason: skippedReason,
+    });
+    return "skipped";
+  }
+
   await markComputed(supabase, serviceId, {
     matched_total_distance_km: round1(matchedTotalMeters / 1000),
     matched_en_route_distance_km: matchedEnRouteKm,
     matched_towing_distance_km: matchedTowingKm,
     matching_confidence: confidence,
+    matched_skipped_reason: null,
   });
   return "updated";
 }

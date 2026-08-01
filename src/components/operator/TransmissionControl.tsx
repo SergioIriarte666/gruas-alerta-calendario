@@ -16,7 +16,7 @@ import {
 import { OperatorPinDialog } from '@/components/operator/OperatorPinDialog';
 import { OperatorDrivePanel } from '@/components/operator/OperatorDrivePanel';
 import { StopReasonPicker } from '@/components/operator/StopReasonPicker';
-import { useOperatorLocationTracking } from '@/hooks/useOperatorLocationTracking';
+import { useOperatorTransmission } from '@/contexts/OperatorTransmissionContext';
 import { useServiceStopEvent } from '@/hooks/operator/useServiceStopEvent';
 import { useAutoTransmissionOnMovement } from '@/hooks/operator/useAutoTransmissionOnMovement';
 import { checkLocationPermission } from '@/services/operatorLocationService';
@@ -46,7 +46,6 @@ import {
   subscribeKeepAwake,
   type KeepAwakeOutcome,
 } from '@/utils/keepAwake';
-import type { Service } from '@/types';
 
 const logger = createLogger('Tracking');
 
@@ -101,21 +100,8 @@ const SERVICE_STATE_LABELS: Record<string, string> = {
 
 interface TransmissionControlProps {
   operatorId?: string | null;
-  userId?: string | null;
   /** El mapa/velocímetro sólo pertenece a Inicio; el watcher GPS sigue montado en las demás pestañas. */
   showDrivePanel?: boolean;
-  /** Servicio al que se asocia la transmisión (puede ser el próximo asignado). */
-  currentService?: Service | null;
-  /**
-   * Servicio EN CURSO (in_progress / inspection_completed). Es el único al que
-   * pueden colgarse detenciones: el chip se deshabilita si no hay ninguno.
-   */
-  activeService?: Service | null;
-  /** Servicios en vuelo de la jornada, para elegir cuando hay más de uno. */
-  candidates?: Service[];
-  /** true = hay varios en vuelo y nadie eligió: no se asume ninguno. */
-  requiresSelection?: boolean;
-  onSelectService?: (serviceId: string | null) => void;
 }
 
 const formatAge = (iso: string | null, now: Date): string | null => {
@@ -136,14 +122,12 @@ const formatAge = (iso: string | null, now: Date): string | null => {
  */
 export const TransmissionControl = ({
   operatorId,
-  userId,
   showDrivePanel = true,
-  currentService,
-  activeService = null,
-  candidates = [],
-  requiresSelection = false,
-  onSelectService,
 }: TransmissionControlProps) => {
+  // El estado de la transmisión y la selección de servicio se LEEN del
+  // provider, que vive sobre el router. Antes este componente llamaba al hook
+  // directamente y, al ser hijo de una ruta, cada navegación lo desmontaba y
+  // mataba el watcher GPS.
   const {
     isTracking,
     isBusy,
@@ -156,7 +140,12 @@ export const TransmissionControl = ({
     resumeTracking,
     stopTransmission,
     startTransmissionAutomatically,
-  } = useOperatorLocationTracking({ operatorId, userId, currentService });
+    trackingService: currentService,
+    activeService,
+    candidates,
+    requiresSelection,
+    selectService: onSelectService,
+  } = useOperatorTransmission();
 
   const serviceId = currentService?.id ?? null;
   // La detención se cuelga SIEMPRE del servicio en curso, jamás del "próximo

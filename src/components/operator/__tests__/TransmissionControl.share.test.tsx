@@ -20,6 +20,7 @@ const state = vi.hoisted(() => ({
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
   resumeTracking: vi.fn(async () => {}),
+  currentService: null as Service | null,
 }));
 
 vi.mock('sonner', () => ({
@@ -58,8 +59,10 @@ vi.mock('@/components/operator/OperatorDrivePanel', () => ({
   OperatorDrivePanel: () => null,
 }));
 
-vi.mock('@/hooks/useOperatorLocationTracking', () => ({
-  useOperatorLocationTracking: () => ({
+// La transmisión y la selección de servicio ya no las resuelve el componente:
+// las lee del provider que vive sobre el router (OperatorTransmissionProvider).
+vi.mock('@/contexts/OperatorTransmissionContext', () => ({
+  useOperatorTransmission: () => ({
     isTracking: false,
     isBusy: false,
     lastPoint: null,
@@ -71,6 +74,11 @@ vi.mock('@/hooks/useOperatorLocationTracking', () => ({
     resumeTracking: state.resumeTracking,
     stopTransmission: vi.fn(),
     startTransmissionAutomatically: vi.fn(),
+    trackingService: state.currentService,
+    activeService: null,
+    candidates: [],
+    requiresSelection: false,
+    selectService: vi.fn(),
   }),
 }));
 
@@ -97,10 +105,11 @@ const pendingService = {
 } as unknown as Service;
 
 const renderControl = async (currentService: Service | null) => {
+  state.currentService = currentService;
   const { TransmissionControl } = await import('@/components/operator/TransmissionControl');
   return render(
     <MemoryRouter>
-      <TransmissionControl operatorId="op-1" userId="user-1" currentService={currentService} />
+      <TransmissionControl operatorId="op-1" />
     </MemoryRouter>,
   );
 };

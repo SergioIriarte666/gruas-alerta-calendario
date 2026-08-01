@@ -6517,61 +6517,76 @@ export type Database = {
           computed_at: string
           en_route_distance_km: number | null
           en_route_duration_minutes: number | null
+          en_route_stopped_minutes: number | null
           first_point_at: string
           gaps_count: number
           last_point_at: string
           low_confidence: boolean
           matched_computed_at: string | null
           matched_en_route_distance_km: number | null
+          matched_skipped_reason: string | null
           matched_total_distance_km: number | null
           matched_towing_distance_km: number | null
           matching_confidence: number | null
+          moving_duration_minutes: number | null
           points_count: number
           service_id: string
+          stopped_minutes: number | null
           total_distance_km: number
           total_duration_minutes: number
           towing_distance_km: number | null
           towing_duration_minutes: number | null
+          towing_stopped_minutes: number | null
         }
         Insert: {
           computed_at?: string
           en_route_distance_km?: number | null
           en_route_duration_minutes?: number | null
+          en_route_stopped_minutes?: number | null
           first_point_at: string
           gaps_count: number
           last_point_at: string
           low_confidence?: boolean
           matched_computed_at?: string | null
           matched_en_route_distance_km?: number | null
+          matched_skipped_reason?: string | null
           matched_total_distance_km?: number | null
           matched_towing_distance_km?: number | null
           matching_confidence?: number | null
+          moving_duration_minutes?: number | null
           points_count: number
           service_id: string
+          stopped_minutes?: number | null
           total_distance_km: number
           total_duration_minutes: number
           towing_distance_km?: number | null
           towing_duration_minutes?: number | null
+          towing_stopped_minutes?: number | null
         }
         Update: {
           computed_at?: string
           en_route_distance_km?: number | null
           en_route_duration_minutes?: number | null
+          en_route_stopped_minutes?: number | null
           first_point_at?: string
           gaps_count?: number
           last_point_at?: string
           low_confidence?: boolean
           matched_computed_at?: string | null
           matched_en_route_distance_km?: number | null
+          matched_skipped_reason?: string | null
           matched_total_distance_km?: number | null
           matched_towing_distance_km?: number | null
           matching_confidence?: number | null
+          moving_duration_minutes?: number | null
           points_count?: number
           service_id?: string
+          stopped_minutes?: number | null
           total_distance_km?: number
           total_duration_minutes?: number
           towing_distance_km?: number | null
           towing_duration_minutes?: number | null
+          towing_stopped_minutes?: number | null
         }
         Relationships: [
           {
@@ -6765,8 +6780,6 @@ export type Database = {
           expires_at: string
           id: string
           last_accessed_at: string | null
-          max_stage_reached: string | null
-          on_site_reached_at: string | null
           revoked_at: string | null
           service_id: string
           shared_at: string | null
@@ -6786,8 +6799,6 @@ export type Database = {
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
-          max_stage_reached?: string | null
-          on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id: string
           shared_at?: string | null
@@ -6807,8 +6818,6 @@ export type Database = {
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
-          max_stage_reached?: string | null
-          on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id?: string
           shared_at?: string | null
@@ -9053,6 +9062,7 @@ export type Database = {
           operator_phone: string
           service_id: string
           silent_minutes: number
+          suppression_reason: string
         }[]
       }
       diagnose_maintenance_cost_integration: { Args: never; Returns: Json }
