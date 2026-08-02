@@ -4,13 +4,20 @@ import { format, subMonths } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
+import {
+  selectLowStock,
+  selectOutOfStockWithoutMinimum,
+  summarizeStockByProduct,
+} from '@/utils/lowStock';
 
 const _logger = createLogger('useInventoryReports');
 
 const STOCK_REPORT_SELECT = `
+  item_id,
   current_quantity,
   inventory_items (
     name,
+    is_active,
     unit_cost,
     minimum_stock,
     category_id,
@@ -118,6 +125,8 @@ export interface StockReportData {
     item_name: string;
     current_quantity: number;
     minimum_stock: number;
+    /** Unidades que faltan para llegar al mínimo. */
+    missing: number;
     location_name: string;
     category_name: string;
   }>;
@@ -228,15 +237,31 @@ export const useStockReport = (filters?: InventoryReportFilters) => {
       if (stockError) throw stockError;
 
       // Calculate totals
-      const totalItems = stockData?.length || 0;
-      const totalValue = stockData?.reduce((sum, item) => 
+      const totalValue = stockData?.reduce((sum, item) =>
         sum + ((item.current_quantity || 0) * (item.inventory_items?.unit_cost || 0)), 0) || 0;
       
-      const lowStockItems = stockData?.filter(item => 
-        (item.current_quantity || 0) <= (item.inventory_items?.minimum_stock || 0)).length || 0;
-      
-      const outOfStockItems = stockData?.filter(item => 
-        (item.current_quantity || 0) === 0).length || 0;
+      // Stock bajo / agotados: agrupado por producto y sin los que no tienen mínimo
+      // definido. Definición compartida en @/utils/lowStock.
+      const stockSummaries = summarizeStockByProduct(
+        (stockData || [])
+          .filter((row) => !!row.inventory_items)
+          .map((row) => ({
+            itemId: row.item_id,
+            itemName: row.inventory_items?.name || 'Producto sin nombre',
+            isActive: row.inventory_items?.is_active !== false,
+            minimumStock: row.inventory_items?.minimum_stock,
+            quantity: row.current_quantity,
+            locationName: row.inventory_locations?.name ?? null,
+            categoryName: row.inventory_items?.inventory_categories?.name ?? null,
+          })),
+      );
+
+      // Productos únicos activos, no filas de inventory_stock: un producto repartido
+      // en dos ubicaciones es un solo producto.
+      const totalItems = stockSummaries.length;
+      const lowStock = selectLowStock(stockSummaries);
+      const lowStockItems = lowStock.length;
+      const outOfStockItems = selectOutOfStockWithoutMinimum(stockSummaries).length;
 
       // Group by category
       const categoryGroups = stockData?.reduce((acc, item) => {
@@ -271,15 +296,14 @@ export const useStockReport = (filters?: InventoryReportFilters) => {
       }));
 
       // Low stock alert
-      const lowStockAlert = stockData?.filter(item => 
-        (item.current_quantity || 0) <= (item.inventory_items?.minimum_stock || 0)
-      ).map(item => ({
-        item_name: item.inventory_items?.name || '',
-        current_quantity: item.current_quantity || 0,
-        minimum_stock: item.inventory_items?.minimum_stock || 0,
-        location_name: item.inventory_locations?.name || '',
-        category_name: item.inventory_items?.inventory_categories?.name || ''
-      })) || [];
+      const lowStockAlert = lowStock.map((summary) => ({
+        item_name: summary.name,
+        current_quantity: summary.quantity,
+        minimum_stock: summary.minimumStock,
+        missing: summary.missing,
+        location_name: summary.locations.join(', '),
+        category_name: summary.categoryName || '',
+      }));
 
       return {
         totalItems,

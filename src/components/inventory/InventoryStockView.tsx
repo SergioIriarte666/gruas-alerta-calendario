@@ -42,6 +42,7 @@ import { toast } from 'sonner';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { getSalePrice, describeSalePriceSource } from '@/utils/inventoryPricing';
+import { summarizeStockByProduct } from '@/utils/lowStock';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   useInventoryOrphans,
@@ -160,15 +161,28 @@ export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFi
     );
   };
 
+  // Mismo criterio que la tarjeta KPI y el panel de bajo mínimo: se suma el stock de
+  // todas las ubicaciones y sin mínimo definido no hay alerta. Ver @/utils/lowStock.
   const getStockStatus = (item: any) => {
     const totalStock = getItemStock(item.id);
+    const [summary] = summarizeStockByProduct([
+      {
+        itemId: item.id,
+        itemName: item.name,
+        isActive: true,
+        minimumStock: item.minimum_stock,
+        quantity: totalStock,
+      },
+    ]);
 
-    if (totalStock === 0) {
-      return { label: 'Sin Stock', className: 'border-danger/20 bg-danger/10 text-danger', icon: AlertTriangle };
+    if (summary?.status === 'bajo_minimo') {
+      return totalStock === 0
+        ? { label: summary.label, className: 'border-danger/20 bg-danger/10 text-danger', icon: AlertTriangle }
+        : { label: summary.label, className: 'border-warning/20 bg-warning/10 text-warning', icon: AlertTriangle };
     }
 
-    if (totalStock <= item.minimum_stock) {
-      return { label: 'Stock Bajo', className: 'border-warning/20 bg-warning/10 text-warning', icon: AlertTriangle };
+    if (summary?.status === 'agotado_sin_minimo') {
+      return { label: summary.label, className: 'border-danger/20 bg-danger/10 text-danger', icon: AlertTriangle };
     }
 
     return { label: 'Normal', className: 'border-primary/20 bg-primary/10 text-primary', icon: Package };

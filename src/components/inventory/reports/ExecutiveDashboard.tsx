@@ -18,6 +18,7 @@ import {
   InventoryReportFilters 
 } from '@/hooks/useInventoryReports';
 import { formatCurrency } from '@/lib/utils';
+import { stockCoveragePercent } from '@/utils/lowStock';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 interface ExecutiveDashboardProps {
@@ -63,10 +64,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
       trendUp: true
     },
     {
-      title: 'Productos con Stock Bajo',
+      title: 'Productos bajo su mínimo',
       value: stockData?.lowStockItems || 0,
       icon: AlertTriangle,
-      description: 'Requieren reposición urgente',
+      description: 'Con mínimo definido y por debajo de él',
       trend: '-15.8%',
       trendUp: false
     },
@@ -225,38 +226,41 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="size-5 text-warning" />
-              Alertas de Stock Bajo
+              Productos bajo su mínimo
             </CardTitle>
-            <CardDescription>Productos que requieren reposición inmediata</CardDescription>
+            <CardDescription>Con mínimo definido, sumando todas sus ubicaciones</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {lowStockData.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
-                  No hay productos con stock bajo
+                  Ningún producto bajo su mínimo
                 </p>
               ) : (
-                lowStockData.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="font-medium">{item.item_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.location_name} • {item.category_name}
+                lowStockData.map((item, index) => {
+                  // Sin mínimo definido no hay porcentaje. Ver @/utils/lowStock.
+                  const coverage = stockCoveragePercent(item.current_quantity, item.minimum_stock);
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{item.item_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {[item.location_name, item.category_name].filter(Boolean).join(' • ')}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="destructive" className="mb-1">
+                          {item.current_quantity} / {item.minimum_stock}
+                        </Badge>
+                        {coverage !== null && (
+                          <div className="w-24">
+                            <Progress value={coverage} className="h-2" />
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant="destructive" className="mb-1">
-                        {item.current_quantity} / {item.minimum_stock}
-                      </Badge>
-                      <div className="w-24">
-                        <Progress 
-                          value={(item.current_quantity / item.minimum_stock) * 100} 
-                          className="h-2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </CardContent>

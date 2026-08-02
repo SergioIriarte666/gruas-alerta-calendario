@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { InventoryStockView } from '@/components/inventory/InventoryStockView';
+import { LowStockPanel } from '@/components/inventory/LowStockPanel';
 import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTable';
 import { InventoryReportsPage } from '@/components/inventory/reports/InventoryReportsPage';
 import { InventoryMovementForm } from '@/components/inventory/InventoryMovementForm';
@@ -46,7 +47,9 @@ const Inventory = () => {
 
   const { data: stats, isLoading: statsLoading } = useInventoryStats(entityFilter);
   const { data: recentMovements = [], isLoading: movementsLoading } = useInventoryMovements(5, entityFilter);
-  const { data: lowStockData = [] } = useLowStockItems(entityFilter);
+  const { data: lowStockData = [], isLoading: lowStockLoading } = useLowStockItems(entityFilter);
+
+  const lowStockAgotados = lowStockData.filter((item) => item.quantity === 0).length;
 
   const isMobile = useIsMobile();
 
@@ -159,17 +162,21 @@ const Inventory = () => {
             variant="control"
           />
           <MetricCard
-            title="Stock Bajo"
+            title="Bajo mínimo"
             value={stats?.lowStock || 0}
-            description={`${lowStockData.length} productos monitoreados`}
+            description={
+              lowStockAgotados > 0
+                ? `${lowStockAgotados} sin ninguna unidad`
+                : 'Con mínimo definido y por debajo de él'
+            }
             icon={AlertTriangle}
             tone="warning"
             variant="control"
           />
           <MetricCard
-            title="Sin Stock"
+            title="Sin stock"
             value={stats?.outOfStock || 0}
-            description="Requieren reposición inmediata"
+            description="Agotados sin mínimo definido: no avisan"
             icon={Package}
             tone="danger"
             variant="control"
@@ -184,6 +191,12 @@ const Inventory = () => {
           />
         </div>
       )}
+
+      <LowStockPanel
+        items={lowStockData}
+        isLoading={lowStockLoading}
+        withoutMinimumCount={stats?.outOfStock || 0}
+      />
 
       <SectionCard flush className="inventory-panel border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
         <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">

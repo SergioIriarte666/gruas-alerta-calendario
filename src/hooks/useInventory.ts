@@ -9,6 +9,13 @@ import { getBusinessTimestampBounds } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 import type { EntityKey } from '@/lib/entities';
 import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
+import {
+  selectLowStock,
+  selectOutOfStockWithoutMinimum,
+  summarizeStockByProduct,
+  type ProductStockSummary,
+  type StockRowInput,
+} from '@/utils/lowStock';
 
 const logger = createLogger("useInventory");
 
@@ -396,33 +403,62 @@ export const useInventoryStock = (entityFilter: InventoryEntityFilter = 'all') =
   });
 };
 
+/**
+ * Filas de existencia normalizadas para el cálculo de stock bajo.
+ * La definición vive en `@/utils/lowStock`, no acá: la comparten la tarjeta KPI,
+ * el panel de Bodega, la tabla de stock y los reportes.
+ */
+const toStockRowInputs = (rows: InventoryStock[] | null): StockRowInput[] =>
+  (rows || [])
+    .filter((row) => !!row.item)
+    .map((row) => ({
+      itemId: row.item_id,
+      itemName: row.item?.name || 'Producto sin nombre',
+      sku: row.item?.sku ?? null,
+      isActive: row.item?.is_active !== false,
+      minimumStock: row.item?.minimum_stock,
+      quantity: row.current_quantity,
+      locationName: row.location?.name ?? null,
+    }));
+
+const fetchStockSummaries = async (
+  entityFilter: InventoryEntityFilter,
+): Promise<ProductStockSummary[]> => {
+  const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+  if (locationIds && locationIds.length === 0) return [];
+
+  let query = supabase
+    .from('inventory_stock')
+    .select(INVENTORY_STOCK_SELECT)
+    .order('current_quantity', { ascending: true });
+
+  query = applyStockLocationFilter(query, locationIds);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return summarizeStockByProduct(toStockRowInputs(data as InventoryStock[]));
+};
+
 // Hooks for low stock items
+/**
+ * Productos activos bajo su mínimo, agrupados por producto (no por ubicación) y
+ * excluyendo los que no tienen mínimo definido. Ver `@/utils/lowStock`.
+ */
 export const useLowStockItems = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
     queryKey: ['low-stock-items', entityFilter],
-    queryFn: async () => {
-      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
-      if (locationIds && locationIds.length === 0) return [];
+    queryFn: async (): Promise<ProductStockSummary[]> =>
+      selectLowStock(await fetchStockSummaries(entityFilter)),
+  });
+};
 
-      // Get all stock data with item info
-      let query = supabase
-        .from('inventory_stock')
-        .select(INVENTORY_STOCK_SELECT)
-        .order('current_quantity', { ascending: true });
-
-      query = applyStockLocationFilter(query, locationIds);
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      
-      // Filter low stock items in JavaScript since Supabase doesn't support cross-table filters easily
-      const lowStockItems = (data || []).filter(stock => 
-        stock.item && stock.current_quantity <= (stock.item.minimum_stock || 0)
-      );
-      
-      return lowStockItems as InventoryStock[];
-    },
+/** Productos activos agotados que todavía no tienen mínimo cargado. */
+export const useOutOfStockWithoutMinimum = (entityFilter: InventoryEntityFilter = 'all') => {
+  return useQuery({
+    queryKey: ['out-of-stock-no-minimum', entityFilter],
+    queryFn: async (): Promise<ProductStockSummary[]> =>
+      selectOutOfStockWithoutMinimum(await fetchStockSummaries(entityFilter)),
   });
 };
 
@@ -713,30 +749,39 @@ export const useInventoryStats = (entityFilter: InventoryEntityFilter = 'all') =
         };
       }
 
-      // Get low stock count (need to implement this with a better query)
+      // Stock bajo y agotados: se agrupa por producto ANTES de comparar, porque
+      // inventory_stock tiene una fila por producto+ubicación y el mínimo es del
+      // producto. La definición vive en @/utils/lowStock.
       let stockQuery = supabase
         .from('inventory_stock')
         .select(`
           item_id,
           current_quantity,
-          item:inventory_items(minimum_stock)
+          item:inventory_items(name, is_active, minimum_stock)
         `);
 
       if (locationIds) stockQuery = stockQuery.in('location_id', locationIds);
 
       const { data: stockData } = await stockQuery;
 
+      const summaries = summarizeStockByProduct(
+        (stockData || [])
+          .filter((stock) => !!stock.item)
+          .map((stock) => ({
+            itemId: stock.item_id,
+            itemName: stock.item?.name || 'Producto sin nombre',
+            isActive: stock.item?.is_active !== false,
+            minimumStock: stock.item?.minimum_stock,
+            quantity: stock.current_quantity,
+          })),
+      );
+
       if (entityFilter !== 'all') {
-        totalItems = new Set((stockData || []).map((stock) => stock.item_id)).size;
+        totalItems = summaries.length;
       }
 
-      const lowStockCount = stockData?.filter(
-        stock => stock.current_quantity <= (stock.item?.minimum_stock || 0)
-      ).length || 0;
-
-      const outOfStockCount = stockData?.filter(
-        stock => stock.current_quantity === 0
-      ).length || 0;
+      const lowStockCount = selectLowStock(summaries).length;
+      const outOfStockCount = selectOutOfStockWithoutMinimum(summaries).length;
 
       // Calculate total inventory value
       let valueQuery = supabase

@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, Package, TrendingUp, MapPin } from 'lucide-react';
 import { useStockReport, InventoryReportFilters } from '@/hooks/useInventoryReports';
 import { formatCurrency } from '@/lib/utils';
+import { stockCoveragePercent } from '@/utils/lowStock';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
 interface StockReportViewProps {
@@ -34,9 +35,9 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
   }
 
   const stockStatusData = [
-    { name: 'Con Stock Normal', value: stockData.totalItems - stockData.lowStockItems - stockData.outOfStockItems },
-    { name: 'Stock Bajo', value: stockData.lowStockItems },
-    { name: 'Sin Stock', value: stockData.outOfStockItems }
+    { name: 'Normal', value: Math.max(0, stockData.totalItems - stockData.lowStockItems - stockData.outOfStockItems) },
+    { name: 'Bajo mínimo', value: stockData.lowStockItems },
+    { name: 'Sin stock (sin mínimo)', value: stockData.outOfStockItems }
   ];
 
   return (
@@ -67,23 +68,23 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
+            <CardTitle className="text-sm font-medium">Bajo mínimo</CardTitle>
             <AlertTriangle className="size-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-warning">{stockData.lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">Productos bajo mínimo</p>
+            <p className="text-xs text-muted-foreground">Con mínimo definido y por debajo de él</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
+            <CardTitle className="text-sm font-medium">Sin stock</CardTitle>
             <AlertTriangle className="size-4 text-danger" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-danger">{stockData.outOfStockItems}</div>
-            <p className="text-xs text-muted-foreground">Productos agotados</p>
+            <p className="text-xs text-muted-foreground">Agotados sin mínimo definido</p>
           </CardContent>
         </Card>
       </div>
@@ -177,18 +178,18 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="size-5 text-warning" />
-            Alertas de Stock Bajo
+            Productos bajo su mínimo
           </CardTitle>
           <CardDescription>
-            Productos que han alcanzado o están por debajo del stock mínimo
+            Sólo productos activos con mínimo definido, sumando todas sus ubicaciones
           </CardDescription>
         </CardHeader>
         <CardContent>
           {stockData.lowStockAlert.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="size-12 mx-auto mb-4 opacity-50" />
-              <p>No hay productos con stock bajo</p>
-              <p className="text-sm">Todos los productos tienen stock suficiente</p>
+              <p>Ningún producto bajo su mínimo</p>
+              <p className="text-sm">Se controlan sólo los productos con mínimo definido</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -200,30 +201,36 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
                       <Badge variant="outline">{item.category_name}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="size-3" />
-                        {item.location_name}
-                      </span>
+                      {item.location_name && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="size-3" />
+                          {item.location_name}
+                        </span>
+                      )}
                       <span>Stock actual: {item.current_quantity}</span>
                       <span>Stock mínimo: {item.minimum_stock}</span>
+                      <span>Faltan: {item.missing}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <Badge 
+                    <Badge
                       variant={item.current_quantity === 0 ? "destructive" : "secondary"}
                       className="mb-2"
                     >
-                      {item.current_quantity === 0 ? "Sin Stock" : "Stock Bajo"}
+                      {item.current_quantity === 0 ? "Agotado" : "Bajo mínimo"}
                     </Badge>
-                    <div className="w-32">
-                      <Progress 
-                        value={Math.min((item.current_quantity / item.minimum_stock) * 100, 100)}
-                        className="h-2"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {Math.round((item.current_quantity / item.minimum_stock) * 100)}%
-                      </span>
-                    </div>
+                    {(() => {
+                      // Sin mínimo definido no hay porcentaje: dividir por cero daba
+                      // Infinity/NaN en la barra. Ver @/utils/lowStock.
+                      const coverage = stockCoveragePercent(item.current_quantity, item.minimum_stock);
+                      if (coverage === null) return null;
+                      return (
+                        <div className="w-32">
+                          <Progress value={coverage} className="h-2" />
+                          <span className="text-xs text-muted-foreground">{coverage}%</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
