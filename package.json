@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:lan": "vite --host",
     "build": "vite build",
     "build:operator-mobile": "VITE_APP_VARIANT=operator-mobile vite build",
     "build:dev": "vite build --mode development",

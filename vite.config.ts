@@ -4,7 +4,12 @@ import path from "path";
 
 export default defineConfig(({ mode: _mode }) => ({
   server: {
-    host: "::",
+    // Solo esta maquina. Con "::" el servidor de desarrollo escuchaba en todas
+    // las interfaces: en una red ajena (café, coworking) cualquiera en el mismo
+    // wifi lo alcanzaba, y las fallas conocidas del dev server de vite/esbuild
+    // permiten leer archivos del proyecto desde ahí.
+    // Para probar desde el teléfono en la red local: `npm run dev:lan`.
+    host: "localhost",
     port: 8080,
   },
   plugins: [react()],
