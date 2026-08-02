@@ -27,6 +27,7 @@ import { businessClock } from '@/utils/businessClock';
 import { debounce } from 'lodash';
 import { supabase } from '@/integrations/supabase/client';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { useFrequentCostDescriptions, useFrequentCostLocations } from '@/hooks/useFrequentFormData';
 import { useQuery } from '@tanstack/react-query';
 import { CostSubcategory } from '@/types/costs';
@@ -623,11 +624,10 @@ export const ServiceCostDetailsSection = ({
               {/* Fecha del gasto: propia del costo, independiente de la del servicio */}
               <div className="space-y-2">
                 <Label htmlFor={`cost-date-${cost.id}`}>Fecha del gasto *</Label>
-                <Input
+                <DatePickerInput
                   id={`cost-date-${cost.id}`}
-                  type="date"
                   value={cost.date || businessClock.today()}
-                  onChange={(e) => updateCostDetail(cost.id, 'date', e.target.value)}
+                  onChange={(value) => updateCostDetail(cost.id, 'date', value)}
                   disabled={disabled}
                 />
                 <p className="text-xs text-muted-foreground">

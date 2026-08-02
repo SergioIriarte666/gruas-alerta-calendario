@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { RegenerarInspeccionFilters as Filters } from '@/types/regenerar-inspeccion';
 
 interface RegenerarInspeccionFiltersProps {
@@ -23,11 +24,11 @@ export const RegenerarInspeccionFilters = ({ filters, onChange }: RegenerarInspe
       </div>
       <div className="space-y-2">
         <Label htmlFor="filtro-fecha">Fecha</Label>
-        <Input
+        <DatePickerInput
           id="filtro-fecha"
-          type="date"
           value={filters.fecha}
-          onChange={(event) => update('fecha', event.target.value)}
+          onChange={(value) => update('fecha', value)}
+          placeholder="Todas las fechas"
         />
       </div>
       <div className="space-y-2">

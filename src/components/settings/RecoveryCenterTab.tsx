@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
@@ -126,8 +127,8 @@ export const RecoveryCenterTab = () => {
             <SelectTrigger className={inputClassName}><SelectValue placeholder="Usuario" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos los usuarios</SelectItem>{users.map(([id,name])=><SelectItem key={id} value={id}>{name}</SelectItem>)}</SelectContent>
           </Select>
-          <div><Label className="sr-only" htmlFor="recovery-from">Desde</Label><Input className={inputClassName} id="recovery-from" type="date" value={filters.dateFrom} onChange={(event)=>updateFilter('dateFrom',event.target.value)} /></div>
-          <div><Label className="sr-only" htmlFor="recovery-to">Hasta</Label><Input className={inputClassName} id="recovery-to" type="date" value={filters.dateTo} onChange={(event)=>updateFilter('dateTo',event.target.value)} /></div>
+          <div><Label className="sr-only" htmlFor="recovery-from">Desde</Label><DatePickerInput className={inputClassName} id="recovery-from" value={filters.dateFrom} onChange={(value)=>updateFilter('dateFrom',value)} placeholder="Desde" /></div>
+          <div><Label className="sr-only" htmlFor="recovery-to">Hasta</Label><DatePickerInput className={inputClassName} id="recovery-to" value={filters.dateTo} onChange={(value)=>updateFilter('dateTo',value)} placeholder="Hasta" /></div>
         </CardContent>
       </Card>
 
