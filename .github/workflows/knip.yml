@@ -1,0 +1,81 @@
+name: Código muerto (knip)
+
+# Chequeo informativo: cuenta los archivos inalcanzables y los compara contra el
+# baseline registrado en CODIGO_MUERTO.md. NUNCA bloquea el merge.
+# Si el número sube, ese PR dejó restos nuevos: un archivo que dejó de importarse
+# y no se borró.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  archivos-muertos:
+    name: Archivos muertos
+    runs-on: ubuntu-latest
+    # No bloqueante: el job informa, no reprueba.
+    continue-on-error: true
+    env:
+      # Baseline vigente. Mantener igual al de CODIGO_MUERTO.md.
+      BASELINE: 161
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: knip
+        id: knip
+        run: |
+          set +e
+          npx knip --include files --reporter markdown > knip.md
+          echo "salida de knip: $?"
+          set -e
+          total=$(grep -m1 -oE 'Unused files \(([0-9]+)\)' knip.md | grep -oE '[0-9]+' || echo 0)
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+          echo "archivos muertos: $total (baseline $BASELINE)"
+
+      - name: Resumen
+        if: always()
+        run: |
+          total="${{ steps.knip.outputs.total }}"
+          {
+            if [ "$total" -gt "$BASELINE" ]; then
+              echo "## ⚠️ Código muerto: $total archivos (baseline $BASELINE)"
+              echo
+              echo "Subió en $((total - BASELINE)). Es señal de que este cambio dejó restos:"
+              echo "algo dejó de importarse y el archivo quedó en el árbol."
+              echo "Revisar el listado de abajo y borrar lo que sobra, o anotarlo en \`CODIGO_MUERTO.md\`."
+            elif [ "$total" -lt "$BASELINE" ]; then
+              echo "## ✅ Código muerto: $total archivos (baseline $BASELINE)"
+              echo
+              echo "Bajó en $((BASELINE - total)). Actualizar el baseline en \`CODIGO_MUERTO.md\`"
+              echo "y en \`.github/workflows/knip.yml\` dentro de este mismo PR."
+            else
+              echo "## Código muerto: $total archivos — sin cambios respecto del baseline"
+            fi
+            echo
+            echo "<details><summary>Reporte completo de knip</summary>"
+            echo
+            cat knip.md
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar reporte
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-archivos-muertos
+          path: knip.md
+          if-no-files-found: warn
