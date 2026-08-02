@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "index.html",
+    "src/main.tsx",
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "capacitor.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/integrations/supabase/types.ts",
+    "supabase/functions/**",
+    "ios/**",
+    "dist/**",
+    "public/**"
+  ],
+  "ignoreDependencies": [
+    "@capacitor/.*",
+    "@capacitor-community/.*",
+    "@capgo/.*",
+    "tailwindcss-animate"
+  ],
+  "ignoreBinaries": ["cap", "supabase"],
+  "ignoreExportsUsedInFile": true
+}
