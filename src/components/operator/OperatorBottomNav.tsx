@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Play, CheckCircle, Package, Activity } from 'lucide-react';
+import { Home, Play, CheckCircle, Package, Activity, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOperatorActivity } from '@/contexts/OperatorActivityContext';
 
@@ -8,6 +8,7 @@ const tabs = [
   { to: '/operator?tab=activos',       icon: Play,        label: 'Activos'   },
   { to: '/operator?tab=pendientes_entrega', icon: Package, label: 'Entrega'  },
   { to: '/operator?tab=completados',   icon: CheckCircle, label: 'Historial' },
+  { to: '/operator/checklists',        icon: ClipboardList, label: 'Checklists' },
   { to: '/operator/activity',           icon: Activity,    label: 'Actividad' },
 ] as const;
 
@@ -17,7 +18,7 @@ export const OperatorBottomNav = () => {
   const tab = new URLSearchParams(search).get('tab');
 
   const isActive = (to: string) => {
-    if (to === '/operator/activity') return pathname === to;
+    if (to.startsWith('/operator/')) return pathname === to;
     if (to === '/operator') return pathname === '/operator' && !tab;
     return pathname === '/operator' && to.includes(`tab=${tab}`);
   };
@@ -49,7 +50,9 @@ export const OperatorBottomNav = () => {
                   </span>
                 )}
               </span>
-              <span className="text-xs font-semibold">{label}</span>
+              {/* Con 6 pestañas el ancho por celda queda justo en pantallas de
+                  375 px: el rótulo se recorta antes que romper la fila. */}
+              <span className="max-w-full truncate px-0.5 text-xs font-semibold">{label}</span>
             </Link>
           );
         })}

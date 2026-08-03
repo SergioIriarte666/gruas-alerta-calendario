@@ -59,6 +59,7 @@ const routeImports = {
   ServiceInspection: () => import('@/pages/operator/ServiceInspection'),
   OperatorActivity: () => import('@/pages/operator/OperatorActivity'),
   OperatorProfile: () => import('@/pages/operator/OperatorProfile'),
+  OperatorChecklists: () => import('@/pages/operator/OperatorChecklists'),
   PortalDashboard: () => import('@/pages/portal/PortalDashboard'),
   PortalServices: () => import('@/pages/portal/PortalServices'),
   PortalInvoices: () => import('@/pages/portal/PortalInvoices'),
@@ -111,6 +112,7 @@ const OperatorDashboard = lazy(routeImports.OperatorDashboard);
 const ServiceInspection = lazy(routeImports.ServiceInspection);
 const OperatorActivity = lazy(routeImports.OperatorActivity);
 const OperatorProfile = lazy(routeImports.OperatorProfile);
+const OperatorChecklists = lazy(routeImports.OperatorChecklists);
 const PortalDashboard = lazy(routeImports.PortalDashboard);
 const PortalServices = lazy(routeImports.PortalServices);
 const PortalInvoices = lazy(routeImports.PortalInvoices);
@@ -341,6 +343,7 @@ function AppContent() {
           <Route index element={<OperatorDashboard />} />
           <Route path="activity" element={<OperatorActivity />} />
           <Route path="profile" element={<OperatorProfile />} />
+          <Route path="checklists" element={<OperatorChecklists />} />
           <Route path="service/:id/inspection" element={<ServiceInspection />} />
         </Route>
 
