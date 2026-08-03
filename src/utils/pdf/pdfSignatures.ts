@@ -13,7 +13,7 @@ const C = {
 const MARGIN = 14;
 const PAGE_W = 210;
 
-interface SignatureBlock {
+export interface SignatureBlock {
   label: string;
   signature?: string;
   name?: string;
@@ -27,7 +27,12 @@ interface SignatureBlock {
  */
 const RUT_MISSING_LABEL = 'RUT no registrado';
 
-const drawSignatureBox = (
+/**
+ * Dibuja un recuadro de firma. Exportado para que los checklists usen el mismo
+ * bloque que las actas de inspección: son documentos probatorios de la misma
+ * empresa y no tienen por qué verse distintos.
+ */
+export const drawSignatureBox = (
   doc: jsPDF,
   block: SignatureBlock,
   x: number,

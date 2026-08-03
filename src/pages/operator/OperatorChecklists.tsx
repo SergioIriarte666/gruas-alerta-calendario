@@ -21,6 +21,7 @@ import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import type { ChecklistListItem, ChecklistTemplate } from '@/types/checklists';
 import type { ChecklistDraftPatch } from '@/hooks/checklists/useChecklistManager';
+import type { ChecklistPdfSource } from '@/utils/pdf/checklistPdfPlan';
 
 const logger = createLogger('Checklists');
 
@@ -32,8 +33,10 @@ const OperatorChecklists = () => {
     useOperatorChecklistContext(user?.id);
   const { templates, isLoading: isLoadingTemplates } = useChecklistTemplates();
   const { checklists, isLoading: isLoadingList, isFetching, refetch } = useChecklistsFetcher(operatorId);
-  const { createDraft, saveDraft, signChecklist, isCreating, isSaving, isSigning } =
-    useChecklistManager(operatorId);
+  const {
+    createDraft, saveDraft, signChecklist, generatePdf,
+    isCreating, isSaving, isSigning, isGeneratingPdf,
+  } = useChecklistManager(operatorId);
 
   const [activeChecklist, setActiveChecklist] = useState<ChecklistListItem | null>(null);
 
@@ -110,21 +113,66 @@ const OperatorChecklists = () => {
     }
   }, [activeChecklist, saveDraft]);
 
+  const toPdfSource = useCallback((checklist: ChecklistListItem): ChecklistPdfSource => ({
+    id: checklist.id,
+    template_id: checklist.template_id,
+    template_version: checklist.template_version,
+    template_answer_type: checklist.template_answer_type,
+    template_name: checklist.template_name,
+    items_snapshot: checklist.items_snapshot,
+    answers: checklist.answers,
+    header: checklist.header,
+    observations: checklist.observations,
+    is_safe_to_operate: checklist.is_safe_to_operate,
+    operator_signature: checklist.operator_signature,
+    reviewer_name: checklist.reviewer_name,
+    reviewer_signature: checklist.reviewer_signature,
+    performed_at: checklist.performed_at,
+    performed_date: checklist.performed_date,
+  }), []);
+
+  const pdfContext = useCallback((checklist: ChecklistListItem) => ({
+    operatorName: operator?.name ?? '',
+    operatorRut: operator?.rut ?? null,
+    serviceFolio: checklist.service_folio,
+    craneLabel: checklist.crane_label,
+  }), [operator]);
+
+  const handleGeneratePdf = useCallback(async (checklist: ChecklistListItem, silent = false) => {
+    await generatePdf.mutateAsync({
+      checklist: toPdfSource(checklist),
+      context: pdfContext(checklist),
+      silent,
+    });
+  }, [generatePdf, pdfContext, toPdfSource]);
+
   const handleSign = useCallback(async (patch: ChecklistDraftPatch) => {
     if (!activeChecklist) return;
+    let signed: ChecklistListItem;
     try {
-      await signChecklist.mutateAsync({
+      const row = await signChecklist.mutateAsync({
         id: activeChecklist.id,
         templateId: activeChecklist.template_id,
         patch,
       });
+      signed = { ...activeChecklist, ...row } as ChecklistListItem;
       setActiveChecklist(null);
     } catch (error) {
       // Conflicto de unicidad o cierre previo: el manager ya mostró el mensaje
       // traducido. El borrador queda abierto para que el operador decida.
       logger.debug('Firma no completada', error);
+      return;
     }
-  }, [activeChecklist, signChecklist]);
+
+    // El PDF se genera DESPUÉS de que la firma ya está confirmada y fuera del
+    // try de arriba: un error de PDF no puede revertir ni ensuciar una firma.
+    // Si falla, el checklist queda 'signed' y se reintenta con "Regenerar PDF".
+    try {
+      await handleGeneratePdf(signed, true);
+    } catch {
+      /* el manager ya avisó; la firma está a salvo */
+    }
+  }, [activeChecklist, handleGeneratePdf, signChecklist]);
 
   // ── Documento abierto ──
   if (activeChecklist) {
@@ -152,6 +200,8 @@ const OperatorChecklists = () => {
           checklist={activeChecklist}
           operator={operator}
           onExit={() => setActiveChecklist(null)}
+          onRegeneratePdf={() => handleGeneratePdf(activeChecklist).catch(() => {})}
+          isGeneratingPdf={isGeneratingPdf}
         />
       </div>
     );

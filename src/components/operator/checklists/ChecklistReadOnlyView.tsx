@@ -1,11 +1,20 @@
-import React from 'react';
-import { ArrowLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Download, FileText, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChecklistAnswerButtons } from './ChecklistAnswerButtons';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
 import { businessClock } from '@/utils/businessClock';
 import { answerTypeForSnapshotItem } from '@/utils/checklists/checklistLogic';
+import {
+  CHECKLIST_PDF_BUCKET,
+  getChecklistPdfSignedUrl,
+} from '@/utils/checklists/checklistPdfUpload';
+import { extractStoragePath } from '@/utils/storagePath';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ChecklistPDF');
 import type { ChecklistListItem } from '@/types/checklists';
 import type { ChecklistOperator } from '@/hooks/checklists/useOperatorChecklistContext';
 
@@ -13,6 +22,8 @@ interface ChecklistReadOnlyViewProps {
   checklist: ChecklistListItem;
   operator: ChecklistOperator | null;
   onExit: () => void;
+  onRegeneratePdf: () => void;
+  isGeneratingPdf: boolean;
 }
 
 const HEADER_FIELDS: Array<[keyof ChecklistListItem['header'], string]> = [
@@ -26,9 +37,33 @@ const HEADER_FIELDS: Array<[keyof ChecklistListItem['header'], string]> = [
 ];
 
 /** Un checklist firmado no se edita: se lee tal cual quedó. */
-export const ChecklistReadOnlyView = ({ checklist, operator, onExit }: ChecklistReadOnlyViewProps) => {
+export const ChecklistReadOnlyView = ({
+  checklist,
+  operator,
+  onExit,
+  onRegeneratePdf,
+  isGeneratingPdf,
+}: ChecklistReadOnlyViewProps) => {
   const isPreoperacional = checklist.template_id === CHECKLIST_TEMPLATE_IDS.preoperacional;
   const headerEntries = HEADER_FIELDS.filter(([key]) => Boolean(checklist.header?.[key]));
+  const [isOpeningPdf, setIsOpeningPdf] = useState(false);
+
+  // El bucket es privado y lo persistido es el PATH: la URL firmada se pide al
+  // momento de abrir, porque una guardada caduca a los 7 días.
+  const handleDownloadPdf = async () => {
+    if (!checklist.pdf_url) return;
+    setIsOpeningPdf(true);
+    try {
+      const path = extractStoragePath(checklist.pdf_url, CHECKLIST_PDF_BUCKET) ?? checklist.pdf_url;
+      const signedUrl = await getChecklistPdfSignedUrl(path);
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      logger.error('No se pudo abrir el PDF del checklist', error);
+      toast.error('No se pudo abrir el PDF');
+    } finally {
+      setIsOpeningPdf(false);
+    }
+  };
 
   return (
     <div className="space-y-4 pb-6">
@@ -57,6 +92,37 @@ export const ChecklistReadOnlyView = ({ checklist, operator, onExit }: Checklist
           </Badge>
           {checklist.crane_label && <Badge variant="outline">{checklist.crane_label}</Badge>}
           {checklist.service_folio && <Badge variant="outline">Folio {checklist.service_folio}</Badge>}
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          {checklist.pdf_url ? (
+            <Button
+              type="button"
+              size="sm"
+              className="min-h-11 flex-1 rounded-xl font-bold"
+              disabled={isOpeningPdf}
+              onClick={handleDownloadPdf}
+            >
+              <Download className="mr-2 size-4" />
+              {isOpeningPdf ? 'Abriendo…' : 'Descargar PDF'}
+            </Button>
+          ) : (
+            <span className="flex flex-1 items-center gap-1.5 text-sm text-muted-foreground">
+              <FileText className="size-4" />
+              Sin PDF generado
+            </span>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="min-h-11 rounded-xl"
+            disabled={isGeneratingPdf}
+            onClick={onRegeneratePdf}
+          >
+            <RefreshCw className={`mr-2 size-4 ${isGeneratingPdf ? 'animate-spin' : ''}`} />
+            {isGeneratingPdf ? 'Generando…' : 'Regenerar PDF'}
+          </Button>
         </div>
 
         {headerEntries.length > 0 && (

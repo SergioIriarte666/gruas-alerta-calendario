@@ -8,7 +8,14 @@ import {
   isUniqueViolation,
   resolvePerformedMoment,
 } from '@/utils/checklists/checklistLogic';
+import { businessClock } from '@/utils/businessClock';
+import { generateChecklistPDF } from '@/utils/pdf/checklistPdfGenerator';
+import { uploadChecklistPdf } from '@/utils/checklists/checklistPdfUpload';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
+import type {
+  ChecklistPdfContext,
+  ChecklistPdfSource,
+} from '@/utils/pdf/checklistPdfPlan';
 import type {
   Checklist,
   ChecklistAnswers,
@@ -224,13 +231,75 @@ export const useChecklistManager = (operatorId?: string | null) => {
     },
   });
 
+  /**
+   * Genera el PDF, lo sube al bucket y guarda la referencia.
+   *
+   * OJO con el guard de status: el resto de las mutaciones filtra por
+   * status='draft' para que un autoguardado tardío no pise un documento
+   * cerrado. Acá NO se puede filtrar así — el PDF se escribe justamente sobre un
+   * checklist ya 'signed' — por eso la condición es solo por id.
+   *
+   * Nunca lanza hacia arriba en el flujo de firma: si el PDF falla, el checklist
+   * ya quedó firmado y eso es lo que no se puede perder. Se avisa y se reintenta
+   * desde el botón "Regenerar PDF".
+   */
+  const generatePdf = useMutation({
+    mutationFn: async ({
+      checklist,
+      context,
+    }: {
+      checklist: ChecklistPdfSource;
+      context: ChecklistPdfContext;
+      silent?: boolean;
+    }): Promise<string> => {
+      const blob = await generateChecklistPDF({ checklist, context });
+      const { path } = await uploadChecklistPdf(
+        blob,
+        checklist.id,
+        checklist.template_id,
+        checklist.performed_date,
+      );
+
+      // Se persiste el PATH, no la URL firmada: las signed URL caducan a los 7
+      // días y el documento tiene que seguir accesible años después.
+      const { error } = await supabase
+        .from('checklists')
+        .update({ pdf_url: path, pdf_uploaded_at: businessClock.nowISO() })
+        .eq('id', checklist.id);
+
+      if (error) {
+        logger.error('Error persistiendo la referencia al PDF:', error);
+        throw error;
+      }
+
+      return path;
+    },
+    onSuccess: (_path, variables) => {
+      invalidate();
+      if (!variables.silent) toast.success('PDF generado');
+    },
+    onError: (error, variables) => {
+      logger.error('No se pudo generar el PDF del checklist', error);
+      if (variables?.silent) {
+        // Firma exitosa, PDF fallido: el checklist NO se pierde.
+        toast.warning('El checklist quedó firmado, pero el PDF no se generó', {
+          description: 'Puede reintentarlo desde el detalle con "Regenerar PDF".',
+        });
+        return;
+      }
+      toast.error('No se pudo generar el PDF');
+    },
+  });
+
   return {
     operatorId,
     createDraft,
     saveDraft,
     signChecklist,
+    generatePdf,
     isCreating: createDraft.isPending,
     isSaving: saveDraft.isPending,
     isSigning: signChecklist.isPending,
+    isGeneratingPdf: generatePdf.isPending,
   };
 };
