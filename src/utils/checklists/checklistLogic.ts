@@ -5,13 +5,55 @@
  */
 
 import { businessClock } from '@/utils/businessClock';
+import { getCraneTypeLabel } from '@/utils/craneType';
 import type {
   ChecklistAnswer,
   ChecklistAnswerType,
   ChecklistAnswers,
   ChecklistItemsSnapshot,
+  ChecklistSnapshotItem,
+  ChecklistSnapshotSection,
   ChecklistTemplate,
+  ChecklistTemplateItem,
+  ChecklistTemplateSection,
 } from '@/types/checklists';
+
+/**
+ * Resuelve el tipo de respuesta en cascada: del nivel más específico al más
+ * general. NULL en cualquier nivel significa "hereda".
+ *
+ *   ítem.answer_type -> sección.answer_type -> plantilla.answer_type
+ *
+ * Existe porque una plantilla puede mezclar naturalezas. En el pre-operacional,
+ * la sección documental (permiso de circulación, revisión técnica, SOAP,
+ * licencia) se responde vigente/no vigente: un permiso no está "bueno" ni
+ * "malo", y firmar "M" en un SOAP equivale a declarar que el camión salió sin
+ * seguro.
+ *
+ * El nivel de ÍTEM todavía no lo usa nadie, pero la cascada ya lo contempla para
+ * que la pantalla de administración del maestro (Fase 5) pueda editar ambos
+ * niveles sin otra migración.
+ */
+export const resolveAnswerType = (
+  item: Pick<ChecklistTemplateItem, 'answer_type'> | null | undefined,
+  section: Pick<ChecklistTemplateSection, 'answer_type'> | null | undefined,
+  template: Pick<ChecklistTemplate, 'answer_type'>,
+): ChecklistAnswerType =>
+  item?.answer_type ?? section?.answer_type ?? template.answer_type;
+
+/**
+ * Tipo de respuesta con el que se DEBE renderizar un ítem ya guardado.
+ *
+ * Lee el valor congelado en el snapshot y solo cae al de la plantilla cuando el
+ * documento es anterior a que el snapshot guardara answer_type. Nunca recalcula
+ * la cascada contra el maestro vivo.
+ */
+export const answerTypeForSnapshotItem = (
+  item: Pick<ChecklistSnapshotItem, 'answer_type'>,
+  section: Pick<ChecklistSnapshotSection, 'answer_type'> | null | undefined,
+  templateAnswerType: ChecklistAnswerType,
+): ChecklistAnswerType =>
+  item.answer_type ?? section?.answer_type ?? templateAnswerType;
 
 /**
  * Congela la plantilla viva en el snapshot que se guarda con el documento.
@@ -20,9 +62,11 @@ import type {
  * secciones. Una sección que se queda sin ítems activos NO se incluye: sería un
  * paso vacío en el formulario y un bloque vacío en el PDF de la Fase 3.
  *
- * A partir de acá el formulario renderiza desde el snapshot y nunca vuelve a
- * mirar el maestro: si un admin desactiva un ítem mientras el operador llena,
- * el borrador abierto sigue mostrando exactamente lo que empezó a responder.
+ * El answer_type se guarda YA RESUELTO en cada ítem. A partir de acá el
+ * formulario renderiza desde el snapshot y nunca vuelve a mirar el maestro: si
+ * un admin desactiva un ítem o le cambia el tipo de respuesta mientras el
+ * operador llena, el borrador abierto sigue mostrando exactamente lo que empezó
+ * a responder.
  */
 export const buildItemsSnapshot = (template: ChecklistTemplate): ChecklistItemsSnapshot =>
   [...template.sections]
@@ -31,6 +75,7 @@ export const buildItemsSnapshot = (template: ChecklistTemplate): ChecklistItemsS
       id: section.id,
       title: section.title,
       sort_order: section.sort_order,
+      answer_type: resolveAnswerType(null, section, template),
       items: [...section.items]
         .filter((item) => item.is_active)
         .sort((a, b) => a.sort_order - b.sort_order)
@@ -39,6 +84,7 @@ export const buildItemsSnapshot = (template: ChecklistTemplate): ChecklistItemsS
           label: item.label,
           sort_order: item.sort_order,
           risk_answer: item.risk_answer,
+          answer_type: resolveAnswerType(item, section, template),
         })),
     }))
     .filter((section) => section.items.length > 0);
@@ -64,9 +110,23 @@ const BUENO_MALO_NA: ChecklistAnswerOption[] = [
   { value: 'na', label: 'N/A', ariaLabel: 'No aplica', tone: 'neutral' },
 ];
 
-/** Opciones que ve el operador según el answer_type de la plantilla. */
-export const getAnswerOptions = (answerType: ChecklistAnswerType): ChecklistAnswerOption[] =>
-  answerType === 'bueno_malo_na' ? BUENO_MALO_NA : SI_NO_NA;
+// Documentación del vehículo: un permiso de circulación no está "bueno" ni
+// "malo". El rótulo va completo aunque sea largo — es la palabra que queda en el
+// documento firmado y no se abrevia.
+const VIGENTE_NO_NA: ChecklistAnswerOption[] = [
+  { value: 'vigente', label: 'VIGENTE', ariaLabel: 'Vigente', tone: 'positive' },
+  { value: 'no_vigente', label: 'NO VIGENTE', ariaLabel: 'No vigente', tone: 'negative' },
+  { value: 'na', label: 'N/A', ariaLabel: 'No aplica', tone: 'neutral' },
+];
+
+/** Opciones que ve el operador según el answer_type ya resuelto. */
+export const getAnswerOptions = (answerType: ChecklistAnswerType): ChecklistAnswerOption[] => {
+  switch (answerType) {
+    case 'bueno_malo_na': return BUENO_MALO_NA;
+    case 'vigente_no_na': return VIGENTE_NO_NA;
+    default: return SI_NO_NA;
+  }
+};
 
 /** Etiqueta legible de una respuesta guardada (listado y vista de solo lectura). */
 export const getAnswerLabel = (answer: ChecklistAnswer): string => {
@@ -75,6 +135,8 @@ export const getAnswerLabel = (answer: ChecklistAnswer): string => {
     case 'no': return 'No';
     case 'bueno': return 'Bueno';
     case 'malo': return 'Malo';
+    case 'vigente': return 'Vigente';
+    case 'no_vigente': return 'No vigente';
     case 'na': return 'No aplica';
     default: return String(answer);
   }
@@ -161,6 +223,42 @@ export const resolvePerformedMoment = (): { performed_at: string; performed_date
 
 /** Hora 'HH:mm' del negocio, para prellenar el encabezado. */
 export const businessTimeNow = (): string => businessClock.format(businessClock.now(), 'HH:mm');
+
+// ── Derivación desde la grúa ───────────────────────────────────────────────
+
+export interface ChecklistCraneSource {
+  license_plate: string;
+  brand?: string | null;
+  model?: string | null;
+  type?: string | null;
+}
+
+/**
+ * Patente y tipo de vehículo derivados del catálogo `cranes`.
+ *
+ * En el formulario en papel el operador escribía ambos a mano porque no había
+ * catálogo; acá la grúa es la fuente de verdad y escribirlos de nuevo solo
+ * ofrece la ocasión de equivocarse.
+ *
+ * Se DERIVAN en pantalla pero se CONGELAN en la fila: si mañana se corrige la
+ * ficha de la grúa, el documento ya firmado tiene que seguir diciendo lo que se
+ * firmó.
+ */
+export const deriveCraneHeader = (
+  crane: ChecklistCraneSource | null | undefined,
+): { patente: string; tipo_vehiculo: string } => ({
+  patente: crane?.license_plate?.trim() ?? '',
+  tipo_vehiculo: crane ? getCraneTypeLabel(crane.type) : '',
+});
+
+/** Rótulo de una línea: "TDCJ-46 · Mercedes-Benz Actros · Pesada". */
+export const describeCrane = (crane: ChecklistCraneSource | null | undefined): string => {
+  if (!crane) return '';
+  const marcaModelo = [crane.brand, crane.model].filter(Boolean).join(' ');
+  return [crane.license_plate?.trim(), marcaModelo, getCraneTypeLabel(crane.type)]
+    .filter(Boolean)
+    .join(' · ');
+};
 
 /**
  * 23505 = unique_violation. Al firmar un pre-operacional puede chocar con

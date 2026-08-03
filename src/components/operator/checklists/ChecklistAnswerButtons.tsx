@@ -29,6 +29,10 @@ export const ChecklistAnswerButtons = ({
   itemLabel,
 }: ChecklistAnswerButtonsProps) => {
   const options = getAnswerOptions(answerType);
+  // "NO VIGENTE" no cabe a text-lg en un tercio de una pantalla de 375 px, y no
+  // se abrevia porque es la palabra que queda en el documento firmado: baja de
+  // cuerpo y se le permite envolver a dos líneas, conservando la altura táctil.
+  const hasLongLabel = options.some((option) => option.label.length > 3);
 
   return (
     <div
@@ -48,7 +52,8 @@ export const ChecklistAnswerButtons = ({
             disabled={disabled}
             onClick={() => onChange?.(option.value)}
             className={cn(
-              'flex min-h-14 items-center justify-center rounded-2xl border-2 text-lg font-extrabold tracking-wide transition-colors',
+              'flex min-h-14 items-center justify-center rounded-2xl border-2 px-1 text-center font-extrabold leading-tight transition-colors',
+              hasLongLabel ? 'text-sm tracking-normal' : 'text-lg tracking-wide',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               disabled && 'cursor-default opacity-90',
               selected

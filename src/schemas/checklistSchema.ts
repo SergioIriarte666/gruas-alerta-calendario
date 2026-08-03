@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
-import { countSnapshotItems, getAnswerOptions } from '@/utils/checklists/checklistLogic';
+import {
+  answerTypeForSnapshotItem,
+  countSnapshotItems,
+  isAnswerValidFor,
+} from '@/utils/checklists/checklistLogic';
 import type { ChecklistAnswerType, ChecklistItemsSnapshot } from '@/types/checklists';
 
 /**
@@ -17,17 +21,40 @@ export const buildChecklistFormSchema = (
   answerType: ChecklistAnswerType,
   templateId: string,
 ) => {
-  const validAnswers = getAnswerOptions(answerType).map((option) => option.value);
   const totalItems = countSnapshotItems(snapshot);
   const isPreoperacional = templateId === CHECKLIST_TEMPLATE_IDS.preoperacional;
 
   return z.object({
+    // Cada ítem se valida contra SU tipo de respuesta congelado, no contra uno
+    // único de plantilla: la sección documental del pre-operacional admite
+    // vigente/no_vigente y las de estado físico bueno/malo.
     answers: z
-      .record(z.string(), z.enum(validAnswers as [string, ...string[]]))
-      .refine(
-        (answers) => snapshot.every((section) => section.items.every((item) => Boolean(answers[item.id]))),
-        { message: `Responda los ${totalItems} ítems antes de firmar` },
-      ),
+      .record(z.string(), z.string())
+      .superRefine((answers, ctx) => {
+        let missing = 0;
+        for (const section of snapshot) {
+          for (const item of section.items) {
+            const answer = answers[item.id];
+            if (!answer) {
+              missing += 1;
+              continue;
+            }
+            const itemType = answerTypeForSnapshotItem(item, section, answerType);
+            if (!isAnswerValidFor(itemType, answer)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Respuesta inválida en "${item.label}"`,
+              });
+            }
+          }
+        }
+        if (missing > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Responda los ${totalItems} ítems antes de firmar`,
+          });
+        }
+      }),
     header: z.object({
       area_empresa: z.string().optional(),
       faena: z.string().optional(),

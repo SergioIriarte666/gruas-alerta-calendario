@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { describeCrane } from '@/utils/checklists/checklistLogic';
 
 const logger = createLogger('Checklists');
 
@@ -13,6 +14,9 @@ export interface ChecklistOperator {
 export interface ChecklistCraneOption {
   id: string;
   license_plate: string;
+  brand: string | null;
+  model: string | null;
+  type: string | null;
   label: string;
 }
 
@@ -59,7 +63,7 @@ export const useOperatorChecklistContext = (userId?: string | null) => {
     queryFn: async (): Promise<ChecklistCraneOption[]> => {
       const { data, error } = await supabase
         .from('cranes')
-        .select('id, license_plate, brand, model')
+        .select('id, license_plate, brand, model, type')
         .eq('status', 'active')
         .order('license_plate');
 
@@ -68,12 +72,16 @@ export const useOperatorChecklistContext = (userId?: string | null) => {
         throw error;
       }
 
+      // La grúa es la fuente de verdad de patente y tipo: se trae la ficha
+      // completa para poder derivar el encabezado sin que el operador teclee
+      // datos que ya están en el catálogo.
       return (data ?? []).map((crane) => ({
         id: crane.id,
         license_plate: crane.license_plate,
-        label: [crane.license_plate, [crane.brand, crane.model].filter(Boolean).join(' ')]
-          .filter(Boolean)
-          .join(' · '),
+        brand: crane.brand ?? null,
+        model: crane.model ?? null,
+        type: crane.type ?? null,
+        label: describeCrane(crane),
       }));
     },
   });

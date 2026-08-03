@@ -25,11 +25,21 @@ export const CHECKLIST_TEMPLATE_IDS = {
 export type ChecklistTemplateId =
   (typeof CHECKLIST_TEMPLATE_IDS)[keyof typeof CHECKLIST_TEMPLATE_IDS];
 
-/** Tipo de respuesta de la plantilla. Determina las opciones que ve el operador. */
-export type ChecklistAnswerType = 'si_no_na' | 'bueno_malo_na';
+/**
+ * Tipo de respuesta. Determina las opciones que ve el operador.
+ *
+ * Se resuelve en cascada — ítem -> sección -> plantilla — porque una misma
+ * plantilla puede mezclar naturalezas: en el pre-operacional la sección
+ * documental se responde 'vigente_no_na' y las cinco de estado físico
+ * 'bueno_malo_na'. Ver resolveAnswerType().
+ */
+export type ChecklistAnswerType = 'si_no_na' | 'bueno_malo_na' | 'vigente_no_na';
 
-/** Universo cerrado de respuestas de ambas plantillas. */
-export type ChecklistAnswer = 'si' | 'no' | 'na' | 'bueno' | 'malo';
+/** Universo cerrado de respuestas de todas las plantillas. */
+export type ChecklistAnswer =
+  | 'si' | 'no' | 'na'
+  | 'bueno' | 'malo'
+  | 'vigente' | 'no_vigente';
 
 export type ChecklistStatus = 'draft' | 'signed' | 'sent' | 'void';
 
@@ -46,12 +56,24 @@ export interface ChecklistSnapshotItem {
   label: string;
   sort_order: number;
   risk_answer: ChecklistRiskAnswer;
+  /**
+   * Tipo de respuesta YA RESUELTO al crear el documento. Se congela acá para que
+   * el formulario y el PDF nunca tengan que recalcular la cascada contra la
+   * plantilla viva: un documento firmado con la v1 sigue mostrando las opciones
+   * con las que se firmó aunque la plantilla vaya en la v2.
+   *
+   * Opcional solo por retrocompatibilidad: los snapshots creados antes de esta
+   * columna no lo traen y caen al answer_type de su plantilla.
+   */
+  answer_type?: ChecklistAnswerType;
 }
 
 export interface ChecklistSnapshotSection {
   id: string;
   title: string;
   sort_order: number;
+  /** answer_type de la sección ya resuelto; los ítems mandan sobre este. */
+  answer_type?: ChecklistAnswerType;
   items: ChecklistSnapshotItem[];
 }
 
@@ -73,14 +95,18 @@ export interface ChecklistHeader {
 
 // ── Plantilla hidratada (catálogo vivo) ────────────────────────────────────
 
-export interface ChecklistTemplateItem extends ChecklistSnapshotItem {
+// En el catálogo vivo, answer_type NULL significa "hereda". En el snapshot ya
+// viene resuelto: son dos cosas distintas y por eso el tipo es distinto.
+export interface ChecklistTemplateItem extends Omit<ChecklistSnapshotItem, 'answer_type'> {
   is_active: boolean;
+  answer_type: ChecklistAnswerType | null;
 }
 
 export interface ChecklistTemplateSection {
   id: string;
   title: string;
   sort_order: number;
+  answer_type: ChecklistAnswerType | null;
   items: ChecklistTemplateItem[];
 }
 

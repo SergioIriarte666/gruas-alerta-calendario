@@ -14,7 +14,7 @@ import {
 import { ChecklistForm } from '@/components/operator/checklists/ChecklistForm';
 import { ChecklistListCard } from '@/components/operator/checklists/ChecklistListCard';
 import { ChecklistReadOnlyView } from '@/components/operator/checklists/ChecklistReadOnlyView';
-import { businessTimeNow } from '@/utils/checklists/checklistLogic';
+import { businessTimeNow, deriveCraneHeader } from '@/utils/checklists/checklistLogic';
 import { businessClock } from '@/utils/businessClock';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
 import { createLogger } from '@/lib/logger';
@@ -79,8 +79,10 @@ const OperatorChecklists = () => {
         operatorId,
         craneId: suggestedCrane?.id ?? null,
         serviceId: null,
+        // Patente y tipo se derivan del catálogo `cranes` y quedan congelados en
+        // la fila; el operador no los teclea.
         header: {
-          patente: suggestedCrane?.license_plate ?? '',
+          ...deriveCraneHeader(suggestedCrane),
           hora: businessTimeNow(),
         },
       });

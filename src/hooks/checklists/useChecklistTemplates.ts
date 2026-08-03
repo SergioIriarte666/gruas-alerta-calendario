@@ -20,12 +20,14 @@ interface RawTemplate {
     id: string;
     title: string;
     sort_order: number;
+    answer_type: string | null;
     checklist_template_items: Array<{
       id: string;
       label: string;
       sort_order: number;
       is_active: boolean;
       risk_answer: string | null;
+      answer_type: string | null;
     }>;
   }> | null;
 }
@@ -50,12 +52,14 @@ export const fetchChecklistTemplates = async (): Promise<ChecklistTemplate[]> =>
         id,
         title,
         sort_order,
+        answer_type,
         checklist_template_items (
           id,
           label,
           sort_order,
           is_active,
-          risk_answer
+          risk_answer,
+          answer_type
         )
       )
     `)
@@ -80,6 +84,8 @@ export const fetchChecklistTemplates = async (): Promise<ChecklistTemplate[]> =>
         id: section.id,
         title: section.title,
         sort_order: section.sort_order,
+        // NULL = hereda de la plantilla. La cascada la resuelve resolveAnswerType.
+        answer_type: (section.answer_type as ChecklistAnswerType | null) ?? null,
         // El filtro de activos se aplica acá y no en PostgREST: es un catálogo de
         // 38 filas y así el contrato del hook no depende de que el embed anidado
         // acepte filtros. buildItemsSnapshot vuelve a filtrar, que es lo que
@@ -93,6 +99,7 @@ export const fetchChecklistTemplates = async (): Promise<ChecklistTemplate[]> =>
             sort_order: item.sort_order,
             is_active: item.is_active,
             risk_answer: (item.risk_answer as ChecklistRiskAnswer) ?? null,
+            answer_type: (item.answer_type as ChecklistAnswerType | null) ?? null,
           })),
       })),
   }));

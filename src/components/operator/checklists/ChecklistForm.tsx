@@ -18,7 +18,11 @@ import {
 import { SignaturePad } from '@/components/operator/SignaturePad';
 import { ChecklistAnswerButtons } from './ChecklistAnswerButtons';
 import { buildChecklistFormSchema, type ChecklistFormValues } from '@/schemas/checklistSchema';
-import { getChecklistReadiness } from '@/utils/checklists/checklistLogic';
+import {
+  answerTypeForSnapshotItem,
+  deriveCraneHeader,
+  getChecklistReadiness,
+} from '@/utils/checklists/checklistLogic';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -146,6 +150,26 @@ export const ChecklistForm = ({
     form.setValue(`answers.${itemId}` as never, answer as never, { shouldDirty: true });
   };
 
+  const selectedCrane = useMemo(
+    () => cranes.find((crane) => crane.id === values.crane_id) ?? null,
+    [cranes, values.crane_id],
+  );
+
+  const derivedHeader = useMemo(() => deriveCraneHeader(selectedCrane), [selectedCrane]);
+
+  /**
+   * Cambiar de grúa re-deriva patente y tipo de vehículo. Se escriben en el
+   * header —no solo en pantalla— porque el documento debe conservar los valores
+   * del momento en que se firmó, aunque después se corrija la ficha de la grúa.
+   */
+  const handleCraneChange = (craneId: string | null) => {
+    form.setValue('crane_id', craneId, { shouldDirty: true });
+    const crane = craneId ? cranes.find((c) => c.id === craneId) ?? null : null;
+    const { patente, tipo_vehiculo } = deriveCraneHeader(crane);
+    form.setValue('header.patente', patente, { shouldDirty: true });
+    form.setValue('header.tipo_vehiculo', tipo_vehiculo, { shouldDirty: true });
+  };
+
   const handleSign = form.handleSubmit(
     async (formValues) => {
       await onSign(toPatch(formValues));
@@ -226,8 +250,11 @@ export const ChecklistForm = ({
                   <span className="mr-1.5 font-bold text-muted-foreground">{index + 1}.</span>
                   {item.label}
                 </p>
+                {/* El tipo sale del snapshot del propio ítem: la sección
+                    documental se responde vigente/no vigente y las de estado
+                    físico bueno/malo, dentro de la misma plantilla. */}
                 <ChecklistAnswerButtons
-                  answerType={answerType}
+                  answerType={answerTypeForSnapshotItem(item, currentSection, answerType)}
                   value={answers[item.id]}
                   onChange={(answer) => handleAnswer(item.id, answer)}
                   itemLabel={item.label}
@@ -248,13 +275,11 @@ export const ChecklistForm = ({
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="checklist-crane">Grúa</Label>
                 <Select
                   value={values.crane_id ?? NO_SERVICE}
-                  onValueChange={(value) =>
-                    form.setValue('crane_id', value === NO_SERVICE ? null : value, { shouldDirty: true })
-                  }
+                  onValueChange={(value) => handleCraneChange(value === NO_SERVICE ? null : value)}
                 >
                   <SelectTrigger id="checklist-crane" className="min-h-12 rounded-xl">
                     <SelectValue placeholder="Seleccione la grúa" />
@@ -266,6 +291,33 @@ export const ChecklistForm = ({
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Patente y tipo salen del catálogo `cranes`, no se vuelven a
+                    teclear. Se muestran derivados y se guardan congelados en la
+                    fila: si mañana se corrige la ficha de la grúa, el documento
+                    firmado conserva lo que se firmó. */}
+                {selectedCrane ? (
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl bg-muted/50 p-3">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Patente</dt>
+                      <dd className="text-sm font-bold text-foreground">{derivedHeader.patente || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipo de vehículo</dt>
+                      <dd className="text-sm font-bold text-foreground">{derivedHeader.tipo_vehiculo || '—'}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Marca y modelo</dt>
+                      <dd className="text-sm font-medium text-foreground">
+                        {[selectedCrane.brand, selectedCrane.model].filter(Boolean).join(' ') || '—'}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Elija la grúa y la patente y el tipo se completan solos.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -295,14 +347,6 @@ export const ChecklistForm = ({
               <div className="space-y-1.5">
                 <Label htmlFor="checklist-area">Área / Empresa</Label>
                 <Input id="checklist-area" className="min-h-12 rounded-xl" {...form.register('header.area_empresa')} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="checklist-tipo">Tipo de vehículo</Label>
-                <Input id="checklist-tipo" className="min-h-12 rounded-xl" {...form.register('header.tipo_vehiculo')} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="checklist-patente">Patente</Label>
-                <Input id="checklist-patente" className="min-h-12 rounded-xl" {...form.register('header.patente')} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="checklist-km">Kilometraje / Horas</Label>

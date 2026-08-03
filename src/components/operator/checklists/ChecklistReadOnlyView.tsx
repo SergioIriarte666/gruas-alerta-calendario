@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChecklistAnswerButtons } from './ChecklistAnswerButtons';
 import { CHECKLIST_TEMPLATE_IDS } from '@/types/checklists';
 import { businessClock } from '@/utils/businessClock';
+import { answerTypeForSnapshotItem } from '@/utils/checklists/checklistLogic';
 import type { ChecklistListItem } from '@/types/checklists';
 import type { ChecklistOperator } from '@/hooks/checklists/useOperatorChecklistContext';
 
@@ -80,8 +81,11 @@ export const ChecklistReadOnlyView = ({ checklist, operator, onExit }: Checklist
                   <span className="mr-1.5 font-bold text-muted-foreground">{index + 1}.</span>
                   {item.label}
                 </p>
+                {/* Se renderiza con el answer_type congelado en el snapshot:
+                    un documento firmado con la v1 de la plantilla conserva sus
+                    opciones aunque el maestro ya vaya en la v2. */}
                 <ChecklistAnswerButtons
-                  answerType={checklist.template_answer_type}
+                  answerType={answerTypeForSnapshotItem(item, section, checklist.template_answer_type)}
                   value={checklist.answers[item.id]}
                   itemLabel={item.label}
                   disabled

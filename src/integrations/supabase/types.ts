@@ -459,6 +459,7 @@ export type Database = {
       }
       checklist_template_items: {
         Row: {
+          answer_type: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -469,6 +470,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          answer_type?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -479,6 +481,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          answer_type?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -500,6 +503,7 @@ export type Database = {
       }
       checklist_template_sections: {
         Row: {
+          answer_type: string | null
           created_at: string
           id: string
           sort_order: number
@@ -508,6 +512,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          answer_type?: string | null
           created_at?: string
           id?: string
           sort_order: number
@@ -516,6 +521,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          answer_type?: string | null
           created_at?: string
           id?: string
           sort_order?: number
