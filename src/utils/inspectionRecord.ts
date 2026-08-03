@@ -248,6 +248,19 @@ export const persistInspection = async (
     throw new Error('La entrega requiere al menos una fotografía antes de guardar.');
   }
 
+  // Cada fase escribe SU firmante y solo el suyo. La entrega no manda
+  // client_name/client_rut ni por accidente: son la identidad de quien entregó
+  // el vehículo en el retiro y pisarla borra una prueba (folio 3266120-1).
+  const signerIdentity = phase === 'initial'
+    ? {
+        client_name: normalizePersonNameOrNull(values.clientName),
+        client_rut: values.clientRut?.trim() ? normalizeRut(values.clientRut) : null,
+      }
+    : {
+        receiver_name: normalizePersonNameOrNull(values.receptionPersonName),
+        receiver_rut: values.receptionPersonRut?.trim() ? normalizeRut(values.receptionPersonRut) : null,
+      };
+
   const payload = {
     // equipment_checklist = solo los presentes (compatibilidad con consumidores
     // existentes). equipment_status = el catálogo completo con true/false, que
@@ -256,8 +269,7 @@ export const persistInspection = async (
     ...(values.equipmentStatus ? { equipment_status: values.equipmentStatus } : {}),
     vehicle_observations: values.vehicleObservations || null,
     operator_signature: values.operatorSignature || '',
-    client_name: normalizePersonNameOrNull(values.clientName),
-    client_rut: values.clientRut ? normalizeRut(values.clientRut) : null,
+    ...signerIdentity,
     ...(phase === 'initial' ? {
       initial_vehicle_state: {
         equipment: values.equipment || [],

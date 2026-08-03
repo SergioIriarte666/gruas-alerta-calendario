@@ -457,6 +457,243 @@ export type Database = {
           },
         ]
       }
+      checklist_template_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          risk_answer: string | null
+          section_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          risk_answer?: string | null
+          section_id: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          risk_answer?: string | null
+          section_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_template_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_template_sections: {
+        Row: {
+          created_at: string
+          id: string
+          sort_order: number
+          template_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sort_order: number
+          template_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          template_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_template_sections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_templates: {
+        Row: {
+          answer_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          subtitle: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          answer_type: string
+          created_at?: string
+          id: string
+          is_active?: boolean
+          name: string
+          subtitle?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          answer_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subtitle?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      checklists: {
+        Row: {
+          answers: Json
+          crane_id: string | null
+          created_at: string
+          deleted_at: string | null
+          email_sent_at: string | null
+          header: Json
+          id: string
+          is_safe_to_operate: boolean | null
+          items_snapshot: Json
+          observations: string | null
+          operator_id: string
+          operator_signature: string | null
+          pdf_uploaded_at: string | null
+          pdf_url: string | null
+          performed_at: string
+          performed_date: string
+          reviewer_name: string | null
+          reviewer_signature: string | null
+          service_id: string | null
+          status: string
+          template_id: string
+          template_version: number
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          crane_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email_sent_at?: string | null
+          header?: Json
+          id?: string
+          is_safe_to_operate?: boolean | null
+          items_snapshot: Json
+          observations?: string | null
+          operator_id: string
+          operator_signature?: string | null
+          pdf_uploaded_at?: string | null
+          pdf_url?: string | null
+          performed_at: string
+          performed_date: string
+          reviewer_name?: string | null
+          reviewer_signature?: string | null
+          service_id?: string | null
+          status?: string
+          template_id: string
+          template_version: number
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          crane_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email_sent_at?: string | null
+          header?: Json
+          id?: string
+          is_safe_to_operate?: boolean | null
+          items_snapshot?: Json
+          observations?: string | null
+          operator_id?: string
+          operator_signature?: string | null
+          pdf_uploaded_at?: string | null
+          pdf_url?: string | null
+          performed_at?: string
+          performed_date?: string
+          reviewer_name?: string | null
+          reviewer_signature?: string | null
+          service_id?: string | null
+          status?: string
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "checklists_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_billing_contacts: {
         Row: {
           client_id: string
@@ -2582,6 +2819,8 @@ export type Database = {
           r2_pdf_path: string | null
           r2_pdf_retiro_path: string | null
           r2_photos: Json
+          receiver_name: string | null
+          receiver_rut: string | null
           service_id: string
           storage_tier: string
           vehicle_observations: string | null
@@ -2609,6 +2848,8 @@ export type Database = {
           r2_pdf_path?: string | null
           r2_pdf_retiro_path?: string | null
           r2_photos?: Json
+          receiver_name?: string | null
+          receiver_rut?: string | null
           service_id: string
           storage_tier?: string
           vehicle_observations?: string | null
@@ -2636,6 +2877,8 @@ export type Database = {
           r2_pdf_path?: string | null
           r2_pdf_retiro_path?: string | null
           r2_photos?: Json
+          receiver_name?: string | null
+          receiver_rut?: string | null
           service_id?: string
           storage_tier?: string
           vehicle_observations?: string | null

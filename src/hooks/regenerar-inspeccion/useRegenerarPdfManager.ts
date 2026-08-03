@@ -59,6 +59,8 @@ const SERVICE_SELECT = `
     operator_signature,
     client_name,
     client_rut,
+    receiver_name,
+    receiver_rut,
     photos_before_service,
     photos_client_vehicle,
     pdf_url,
@@ -256,14 +258,18 @@ const buildInspectionValues = (
     operatorSignature: rawInspection?.operator_signature && rawInspection.operator_signature !== BLANK_SIGNATURE
       ? rawInspection.operator_signature
       : undefined,
-    clientName: rawInspection?.client_name || service.client.name || '',
-    clientRut: rawInspection?.client_rut || service.client.rut || '',
+    // Identidad del firmante tal como quedó persistida. Sin fallback a la razón
+    // social del cliente: si nadie la capturó, el acta debe decir que falta, no
+    // inventar un firmante que nunca firmó.
+    clientName: rawInspection?.client_name || '',
+    clientRut: rawInspection?.client_rut || '',
     // La firma del cliente y la de recepción de vehículo nunca se persisten en
     // inspections (solo viven en el PDF original al momento de la captura) —
     // no hay forma de recuperarlas administrativamente, ni con row existente.
     clientSignature: undefined,
     vehicleReceptionSignature: undefined,
-    receptionPersonName: service.client.name || 'Recepción',
+    receptionPersonName: rawInspection?.receiver_name || '',
+    receptionPersonRut: rawInspection?.receiver_rut || '',
     photographicSet: photos.map((photo) => ({
       fileName: photo.fileName,
       category: photo.category,

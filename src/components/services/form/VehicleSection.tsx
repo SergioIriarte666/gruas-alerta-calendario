@@ -629,7 +629,10 @@ export const VehicleSection = ({
             <Input
               id="licensePlate"
               value={licensePlate}
-              onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase())}
+              // trimStart y no trim: recortar por la derecha en cada tecla
+              // impediría escribir un espacio. El recorte final lo hace
+              // normalizeLicensePlate al persistir.
+              onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase().trimStart())}
               placeholder="Ej: AB-CD-12 o VIN"
               required={licensePlateRequired}
               disabled={disabled}

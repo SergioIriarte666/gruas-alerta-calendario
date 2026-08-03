@@ -4,6 +4,7 @@ import { InspectionPDFData } from '../pdfTypes';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { formatShortAddress } from '@/utils/addressFormat';
+import { normalizeLicensePlate } from '@/utils/licensePlate';
 import { createLogger } from "@/lib/logger";
 import { REPORT_PDF_COLORS } from '../reportPdfTheme';
 
@@ -35,7 +36,11 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
     };
 
     const vehiculo = formatVehicleInfo(data.service);
-    const patente = shouldShowVehicleInfo(data.service) ? data.service.licensePlate || 'S/P' : 'S/P';
+    // Defensa en profundidad: filas anteriores al saneamiento todavía traen
+    // patentes con espacio final ('TZSR-94 ') y no deben imprimirse así.
+    const patente = shouldShowVehicleInfo(data.service)
+      ? normalizeLicensePlate(data.service.licensePlate) || 'S/P'
+      : 'S/P';
 
     const leftData = [
       ['Cliente', data.service.client?.name || 'N/A'],

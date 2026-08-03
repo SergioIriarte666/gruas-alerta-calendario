@@ -1,4 +1,5 @@
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
+import { validateRut } from '@/utils/csvValidations';
 
 interface InspectionFlags {
   requiresDetail?: boolean;
@@ -19,15 +20,21 @@ export const validateFormBeforeSubmit = (
       errors.push('La firma del operador es obligatoria');
     }
 
-    // Servicios in-situ: una sola fase. La firma y el nombre del cliente
-    // son obligatorios (única evidencia del cliente recibiendo el servicio).
-    if (isInSitu) {
-      if (!values.clientSignature?.trim()) {
-        errors.push('La firma del cliente es obligatoria');
-      }
-      if (!values.clientName?.trim()) {
-        errors.push('El nombre del cliente es obligatorio');
-      }
+    // Identidad de quien ENTREGA el vehículo: nombre y RUT quedan impresos bajo
+    // su firma en el acta. Sin ellos el documento no identifica al firmante.
+    if (!values.clientName?.trim()) {
+      errors.push('El nombre de quien entrega el vehículo es obligatorio');
+    }
+    if (!values.clientRut?.trim()) {
+      errors.push('El RUT de quien entrega el vehículo es obligatorio');
+    } else if (!validateRut(values.clientRut.trim())) {
+      errors.push('El RUT de quien entrega el vehículo es inválido. Use el formato 12.345.678-9');
+    }
+
+    // Servicios in-situ: una sola fase. La firma del cliente es obligatoria
+    // (única evidencia del cliente recibiendo el servicio).
+    if (isInSitu && !values.clientSignature?.trim()) {
+      errors.push('La firma del cliente es obligatoria');
     }
 
     if (requiresDetail) {
@@ -63,6 +70,11 @@ export const validateFormBeforeSubmit = (
     }
     if (!values.receptionPersonName?.trim()) {
       errors.push('El nombre de quien recibe el vehículo es obligatorio');
+    }
+    if (!values.receptionPersonRut?.trim()) {
+      errors.push('El RUT de quien recibe el vehículo es obligatorio');
+    } else if (!validateRut(values.receptionPersonRut.trim())) {
+      errors.push('El RUT de quien recibe el vehículo es inválido. Use el formato 12.345.678-9');
     }
   }
 

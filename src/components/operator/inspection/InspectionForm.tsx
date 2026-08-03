@@ -1,9 +1,9 @@
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInspectionPersistence } from '@/hooks/useInspectionPersistence';
-import { inspectionFormSchema, InspectionFormValues } from '@/schemas/inspectionSchema';
+import { buildInspectionFormSchema, InspectionFormValues } from '@/schemas/inspectionSchema';
 import { validateFormBeforeSubmit } from '@/utils/inspectionValidation';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -88,8 +88,19 @@ export const InspectionForm = ({
   const toastShownRef = useRef(false);
   const isAdmin = user?.role === 'admin';
 
+  // El esquema depende de la fase (cada una exige SU firmante), pero el
+  // resolver que recibe useForm se captura una sola vez: se lee la fase desde
+  // un ref para que la validación siga a la pantalla sin recrear el formulario.
+  const phaseRef = useRef<'initial' | 'final'>(currentPhase);
+  phaseRef.current = currentPhase;
+  const resolver = useCallback<Resolver<InspectionFormValues>>(
+    (values, context, options) =>
+      zodResolver(buildInspectionFormSchema(phaseRef.current))(values, context, options),
+    [],
+  );
+
   const form = useForm<InspectionFormValues>({
-    resolver: zodResolver(inspectionFormSchema),
+    resolver,
     defaultValues: {
       equipment: [],
       vehicleObservations: '',
@@ -99,11 +110,14 @@ export const InspectionForm = ({
       documentacion: undefined,
       operatorSignature: '',
       operatorName: service.operator?.name || '',
-      clientName: service.client?.name || '',
+      // Sin prellenar: quien firma el acta es la persona que está entregando o
+      // recibiendo el vehículo, no la razón social del cliente del servicio.
+      clientName: '',
       clientRut: '',
       clientSignature: '',
       vehicleReceptionSignature: '',
-      receptionPersonName: service.client?.name || '',
+      receptionPersonName: '',
+      receptionPersonRut: '',
       photographicSet: [],
     },
   });
@@ -204,8 +218,13 @@ export const InspectionForm = ({
             documentacion: initialState.documentacion || savedData?.documentacion,
             vehicleObservations: savedData?.vehicleObservations || '',
             operatorName: service.operator?.name || '',
-            clientName: service.client?.name || savedData?.clientName || '',
-            receptionPersonName: service.client?.name || '',
+            // La identidad del retiro ya está persistida en la fila y no se
+            // vuelve a capturar: dejarla en el formulario de entrega solo
+            // ofrece la ocasión de pisarla.
+            clientName: '',
+            clientRut: '',
+            receptionPersonName: savedData?.receptionPersonName || '',
+            receptionPersonRut: savedData?.receptionPersonRut || '',
             operatorSignature: '',
             clientSignature: '',
             vehicleReceptionSignature: '',
@@ -343,7 +362,8 @@ export const InspectionForm = ({
           formData.documentacion ||
           formData.clientName ||
           formData.clientRut ||
-          formData.receptionPersonName
+          formData.receptionPersonName ||
+          formData.receptionPersonRut
         );
 
         if (hasMeaningfulContent) {
@@ -520,7 +540,6 @@ export const InspectionForm = ({
           requiresDetail={requiresDetail}
           requiresPhotoSet={requiresPhotoSet}
           isInSitu={isInSitu}
-          clientName={service.client?.name || ''}
           operatorName={service.operator?.name || ''}
         />
 

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 import { REPORT_PDF_COLORS } from './reportPdfTheme';
+import { normalizeRut } from '@/utils/rutFormatter';
 
 const C = {
   green:     REPORT_PDF_COLORS.primary,
@@ -16,7 +17,15 @@ interface SignatureBlock {
   label: string;
   signature?: string;
   name?: string;
+  rut?: string;
 }
+
+/**
+ * El acta es un documento probatorio: una firma con nombre pero sin RUT no
+ * identifica a nadie. Cuando el RUT falta se dice que falta —en gris, bajo el
+ * nombre— en vez de dejar el hueco que hizo creer que el dato no existía.
+ */
+const RUT_MISSING_LABEL = 'RUT no registrado';
 
 const drawSignatureBox = (
   doc: jsPDF,
@@ -28,6 +37,8 @@ const drawSignatureBox = (
   const labelH = 8;
   const sigH = 32;
   const totalH = labelH + sigH + 8;
+  // Alto reservado para la línea del RUT, bajo el nombre.
+  const rutH = 5;
 
   // Etiqueta superior con fondo verde
   doc.setFillColor(...C.green);
@@ -68,7 +79,18 @@ const drawSignatureBox = (
   doc.setTextColor(...C.black);
   doc.text(block.name || '—', x + w / 2, y + totalH + 2, { align: 'center' });
 
-  return totalH + 6;
+  const rut = block.rut?.trim();
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  if (rut) {
+    doc.setTextColor(...C.black);
+    doc.text(`RUT ${normalizeRut(rut)}`, x + w / 2, y + totalH + 2 + rutH, { align: 'center' });
+  } else {
+    doc.setTextColor(...C.gray);
+    doc.text(RUT_MISSING_LABEL, x + w / 2, y + totalH + 2 + rutH, { align: 'center' });
+  }
+
+  return totalH + 6 + rutH;
 };
 
 export const addDigitalSignatures = async (
@@ -92,22 +114,31 @@ export const addDigitalSignatures = async (
   doc.text('FIRMAS DIGITALES', MARGIN + 10, yPosition + 7);
   yPosition += 14;
 
+  // El RUT del operador es el de su ficha (operators.rut), no uno capturado en
+  // terreno: quien firma el acta es el operador asignado al servicio.
+  const operatorRut = data.service.operator?.rut;
+
   const initialBlocks: SignatureBlock[] = [
     {
       label: 'Firma del Operador',
       signature: data.inspection.operatorSignature,
       name: data.inspection.operatorName || data.service.operator?.name || 'Operador',
+      rut: operatorRut,
     },
     {
       label: 'Firma del Cliente',
       signature: data.inspection.clientSignature,
       name: data.inspection.clientName || 'Cliente',
+      rut: data.inspection.clientRut,
     },
   ];
+  // La entrega identifica a QUIEN RECIBE (receiver_*), nunca a quien entregó en
+  // el retiro: son dos personas y cada acta muestra la suya.
   const finalBlocks: SignatureBlock[] = [{
     label: 'Recepción del Vehículo',
     signature: data.inspection.vehicleReceptionSignature,
     name: data.inspection.receptionPersonName || 'Recepción',
+    rut: data.inspection.receptionPersonRut,
   }];
   const blocks = data.isFinal ? finalBlocks : initialBlocks;
 

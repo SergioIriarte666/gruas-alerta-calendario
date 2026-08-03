@@ -15,10 +15,13 @@ export interface InspectionPDFData {
     operatorName?: string;
     operatorSignature?: string;
     clientSignature?: string;
+    /** Identidad de quien ENTREGA el vehículo (inspections.client_name/client_rut). */
     clientName?: string;
     clientRut?: string;
     vehicleReceptionSignature?: string;
+    /** Identidad de quien RECIBE el vehículo (inspections.receiver_name/receiver_rut). */
     receptionPersonName?: string;
+    receptionPersonRut?: string;
     photographicSet?: Array<{
       fileName: string;
       category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';

@@ -22,7 +22,6 @@ interface InspectionFormSectionsProps {
   requiresDetail?: boolean;
   requiresPhotoSet?: boolean;
   isInSitu?: boolean;
-  clientName?: string;
   operatorName?: string;
 }
 
@@ -42,7 +41,6 @@ export const InspectionFormSections = ({
   requiresDetail = true,
   requiresPhotoSet = true,
   isInSitu = false,
-  clientName = '',
   operatorName = '',
 }: InspectionFormSectionsProps) => {
   const { user } = useUser();
@@ -311,15 +309,26 @@ export const InspectionFormSections = ({
                 name="clientSignature"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
+                    {/* Identidad de la PERSONA que entrega el vehículo, escrita
+                        por el operador. No se prellena con la razón social del
+                        cliente: el acta la usa como firmante. */}
                     <FormField control={form.control} name="clientName" render={({ field: nameField }) => (
                       <FormItem>
-                        <FormLabel>Nombre del cliente</FormLabel>
-                        <FormControl><Input {...nameField} placeholder="Nombre del cliente" className="min-h-12 rounded-xl text-base" /></FormControl>
+                        <FormLabel>Nombre de quien entrega el vehículo *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...nameField}
+                            value={nameField.value ?? ''}
+                            placeholder="Nombre y apellido"
+                            className="min-h-12 rounded-xl text-base"
+                          />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="clientRut" render={({ field: rutField }) => (
                       <FormItem>
-                        <FormLabel>RUT del cliente</FormLabel>
+                        <FormLabel>RUT de quien entrega *</FormLabel>
                         <FormControl>
                           <Input
                             {...rutField}
@@ -337,7 +346,7 @@ export const InspectionFormSections = ({
                     <SignaturePad
                       ref={clientSignatureRef}
                       label="Firma del Cliente"
-                      personName={form.watch('clientName') || clientName || 'Cliente'}
+                      personName={form.watch('clientName') || 'Cliente'}
                       onSignatureChange={field.onChange}
                       signature={field.value}
                     />
@@ -353,16 +362,26 @@ export const InspectionFormSections = ({
                 name="vehicleReceptionSignature"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
+                    {/* Identidad del RECEPTOR. Par propio (receiver_name /
+                        receiver_rut): escribirla sobre client_* borraría a
+                        quien entregó el vehículo en el retiro. */}
                     <FormField control={form.control} name="receptionPersonName" render={({ field: nameField }) => (
                       <FormItem>
-                        <FormLabel>Nombre de quien recibe el vehículo</FormLabel>
-                        <FormControl><Input {...nameField} placeholder="Nombre de quien recibe el vehículo" className="min-h-12 rounded-xl text-base" /></FormControl>
+                        <FormLabel>Nombre de quien recibe el vehículo *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...nameField}
+                            value={nameField.value ?? ''}
+                            placeholder="Nombre y apellido"
+                            className="min-h-12 rounded-xl text-base"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={form.control} name="clientRut" render={({ field: rutField }) => (
+                    <FormField control={form.control} name="receptionPersonRut" render={({ field: rutField }) => (
                       <FormItem>
-                        <FormLabel>RUT de quien recibe</FormLabel>
+                        <FormLabel>RUT de quien recibe *</FormLabel>
                         <FormControl>
                           <Input
                             {...rutField}

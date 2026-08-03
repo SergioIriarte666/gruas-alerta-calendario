@@ -7,6 +7,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
+import { normalizeLicensePlate } from '@/utils/licensePlate';
 import { planServiceCostChanges } from './serviceCostDiff';
 import { describeServiceCostError } from '@/utils/serviceCostErrors';
 
@@ -191,6 +192,10 @@ export const useServiceManager = () => {
           (custodyTotalAmount > 0 && (serviceData.value || 0) === custodyTotalAmount);
         const normalizedBaseValue = shouldZeroBaseValue ? 0 : serviceData.value;
 
+        // La patente se persiste sin espacios de sobra: un 'TZSR-94 ' con espacio
+        // final rompe las búsquedas por patente y sale así impreso en el acta.
+        const normalizedLicensePlate = normalizeLicensePlate(serviceData.licensePlate);
+
         
 
         // Obtener el usuario actual para created_by
@@ -226,9 +231,9 @@ export const useServiceManager = () => {
           vehicle_model: (!serviceTypeConfig?.vehicle_model_required && !serviceData.vehicleModel) 
             ? null 
             : serviceData.vehicleModel || null,
-          license_plate: (!serviceTypeConfig?.license_plate_required && !serviceData.licensePlate) 
-            ? null 
-            : serviceData.licensePlate || null,
+          license_plate: (!serviceTypeConfig?.license_plate_required && !normalizedLicensePlate)
+            ? null
+            : normalizedLicensePlate || null,
 
           // VALIDACIÓN INTEGRAL DE ORIGEN/DESTINO  
           // Tipos especiales: Custodia, Lavado, Servicios Mecánicos (origin/destination false)
@@ -672,7 +677,7 @@ export const useServiceManager = () => {
             vehicle_model: serviceData.vehicleModel
           }),
           ...(serviceData.licensePlate !== undefined && {
-            license_plate: serviceData.licensePlate
+            license_plate: normalizeLicensePlate(serviceData.licensePlate)
           }),
           ...(serviceData.origin !== undefined && {
             origin: serviceData.origin
