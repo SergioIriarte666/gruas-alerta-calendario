@@ -217,15 +217,13 @@ describe('plan del PDF de checklist', () => {
     expect(plan.sections[0].rows.every((row) => row.markedColumn === -1)).toBe(true);
   });
 
-  it('32 ítems en 6 secciones y columna de observaciones solo en el pre-operacional', () => {
+  it('32 ítems en 6 secciones; el de fatiga trae 6', () => {
     const preop = buildChecklistPdfPlan(preopChecklist(), CONTEXT);
     expect(preop.sections).toHaveLength(6);
     expect(preop.totalItems).toBe(32);
-    expect(preop.hasItemObservationColumn).toBe(true);
 
     const fatiga = buildChecklistPdfPlan(fatigaChecklist(), CONTEXT);
     expect(fatiga.totalItems).toBe(6);
-    expect(fatiga.hasItemObservationColumn).toBe(false);
   });
 
   it('antecedentes con .trim() y RUT normalizado', () => {
@@ -343,14 +341,29 @@ describe('PDF realmente dibujado', () => {
   });
 
   it('MIXTO en el papel: ambos juegos de cabeceras conviven en el mismo PDF', () => {
-    // Una celda de cabecera puede envolverse en dos líneas dentro de su columna
-    // (eso NO es truncar): se compara con los saltos normalizados.
-    const flat = preopText.replace(/\n/g, ' ');
-    expect(flat).toContain('VIGENTE');
-    expect(flat).toContain('NO VIGENTE');
-    expect(flat).toContain('BUENO (B)');
-    expect(flat).toContain('MALO (M)');
-    expect(flat).toContain('NO APLICA (N/A)');
+    expect(preopText).toContain('VIGENTE');
+    expect(preopText).toContain('NO VIGENTE');
+    expect(preopText).toContain('BUENO (B)');
+    expect(preopText).toContain('MALO (M)');
+    expect(preopText).toContain('NO APLICA (N/A)');
+  });
+
+  it('ninguna cabecera de respuesta envuelve a dos líneas', () => {
+    // Al envolverse, autoTable dibuja cada línea como una cadena aparte: la
+    // etiqueta completa dejaría de aparecer entera. Que se encuentre tal cual,
+    // sin normalizar los saltos, prueba que entra en una sola línea.
+    ['VIGENTE', 'NO VIGENTE', 'BUENO (B)', 'MALO (M)', 'NO APLICA (N/A)'].forEach((label) => {
+      expect(preopText.split('\n')).toContain(label);
+    });
+  });
+
+  it('NO se dibuja columna de observaciones por ítem', () => {
+    // Se dibujaba vacía y ante un revisor de faena se leía como formulario
+    // incompleto. La cabecera de columna ya no existe...
+    expect(preopText.split('\n')).not.toContain('OBSERVACIONES');
+    // ...pero el bloque de observaciones generales sigue en su lugar.
+    expect(preopText).toContain('OBSERVACIONES GENERALES');
+    expect(preopText).toContain('filtraci');
   });
 
   it('"NO VIGENTE" se imprime completo, sin truncar ni abreviar', () => {

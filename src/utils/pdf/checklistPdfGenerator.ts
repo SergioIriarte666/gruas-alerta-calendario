@@ -103,22 +103,31 @@ const addSections = (doc: jsPDF, plan: ChecklistPdfPlan, y: number): number => {
 
     cursor = sectionHeading(doc, section.title, cursor);
 
-    const head = plan.hasItemObservationColumn
-      ? [['N°', 'Ítem', section.columns.positive, section.columns.negative, section.columns.na, 'OBSERVACIONES']]
-      : [['N°', 'Ítem', section.columns.positive, section.columns.negative, section.columns.na]];
+    const head = [[
+      'N°',
+      'Ítem',
+      section.columns.positive,
+      section.columns.negative,
+      section.columns.na,
+    ]];
 
     const body = section.rows.map((row) => {
       const marks = [0, 1, 2].map((column) => (row.markedColumn === column ? 'X' : ''));
-      return plan.hasItemObservationColumn
-        ? [String(row.index), row.label, ...marks, '']
-        : [String(row.index), row.label, ...marks];
+      return [String(row.index), row.label, ...marks];
     });
 
+    // El ancho se reparte entre el ítem y las tres respuestas, sin columna de
+    // observaciones por ítem: se dibujaba vacía para anotar a mano y, con el
+    // flujo real (se llena en pantalla y se envía el PDF), ante un revisor de
+    // faena se leía como formulario incompleto. Las observaciones generales
+    // siguen intactas más abajo.
+    //
     // Las columnas de respuesta se dimensionan para que "NO VIGENTE" y
-    // "NO APLICA (N/A)" quepan enteros: el rótulo nunca se abrevia.
-    const answerColW = 24;
-    const obsW = plan.hasItemObservationColumn ? 34 : 0;
-    const labelW = CONTENT_W - 10 - answerColW * 3 - obsW;
+    // "NO APLICA (N/A)" quepan enteros: el rótulo nunca se abrevia. Lo que
+    // sobra va al ítem, que es donde hay etiquetas largas de verdad
+    // ("Caja de invierno (Cadenas para nieve del tamaño correcto)").
+    const answerColW = 26;
+    const labelW = CONTENT_W - 10 - answerColW * 3;
 
     autoTable(doc, {
       startY: cursor,
@@ -132,7 +141,6 @@ const addSections = (doc: jsPDF, plan: ChecklistPdfPlan, y: number): number => {
         2: { cellWidth: answerColW, halign: 'center', fontStyle: 'bold' },
         3: { cellWidth: answerColW, halign: 'center', fontStyle: 'bold' },
         4: { cellWidth: answerColW, halign: 'center', fontStyle: 'bold' },
-        ...(plan.hasItemObservationColumn ? { 5: { cellWidth: obsW, fontSize: 7 } } : {}),
       },
       headStyles: {
         fillColor: REPORT_PDF_COLORS.primary,

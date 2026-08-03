@@ -90,8 +90,6 @@ export interface ChecklistPdfPlan {
   antecedents: Array<[string, string]>;
   sections: ChecklistPdfSection[];
   totalItems: number;
-  /** El pre-operacional lleva una columna de observaciones por ítem. */
-  hasItemObservationColumn: boolean;
   observations: string | null;
   closingQuestion: { text: string; answer: 'SI' | 'NO' | null } | null;
   footerNote: string | null;
@@ -226,7 +224,6 @@ export const buildChecklistPdfPlan = (
     antecedents,
     sections,
     totalItems: sections.reduce((total, section) => total + section.rows.length, 0),
-    hasItemObservationColumn: isPreoperacional,
     observations: clean(checklist.observations) || null,
     closingQuestion: isPreoperacional
       ? {
