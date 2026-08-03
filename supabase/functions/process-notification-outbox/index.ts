@@ -13,13 +13,20 @@ import {
 } from "../_shared/dedupe.ts";
 import {
   sanitizeInspectionEmailAddress,
+  sendChecklistEmailWithPdf,
   sendInspectionEmailWithPdf,
+  type ChecklistEmailData,
   type InspectionEmailData,
 } from "../_shared/email.ts";
 import {
   getEmailNotificationGate,
   getInspectionEmailSkipReason,
 } from "../_shared/emailSettings.ts";
+import {
+  DEFAULT_EMAIL_LOGO_URL,
+  getChecklistDispatchSkipReason,
+  parseRecipientList,
+} from "../_shared/checklistEmailContent.ts";
 import { isFinalServiceStatus } from "../_shared/serviceLifecycle.ts";
 
 const BATCH_LIMIT = 10;
@@ -49,7 +56,8 @@ type OutboxKind =
   | "inspection_email"
   | "delivery_whatsapp"
   | "delivery_email"
-  | "operator_tracking_silence";
+  | "operator_tracking_silence"
+  | "checklist_email";
 
 /**
  * Canales HACIA EL CLIENTE. Son los únicos que el interruptor por servicio
@@ -68,7 +76,13 @@ const CLIENT_FACING_KINDS: ReadonlySet<OutboxKind> = new Set<OutboxKind>([
 interface OutboxRow {
   id: string;
   kind: OutboxKind;
-  service_id: string;
+  /**
+   * NULL para `checklist_email`: un checklist de seguridad no tiene servicio, y
+   * esa independencia es la decisión de diseño del módulo. El resto de los kinds
+   * lo traen siempre — lo garantiza notification_outbox_reference_check.
+   */
+  service_id: string | null;
+  checklist_id: string | null;
   inspection_id: string | null;
   payload: Record<string, unknown>;
   attempts: number;
@@ -158,7 +172,7 @@ class OutboxWorker {
     if (CLIENT_FACING_KINDS.has(row.kind)) {
       const { data: enabled, error } = await this.supabase.rpc(
         "service_client_notifications_enabled",
-        { p_service_id: row.service_id },
+        { p_service_id: row.service_id! },
       );
       if (error) throw new Error(error.message);
       if (enabled !== true) {
@@ -194,6 +208,24 @@ class OutboxWorker {
 
     if (row.kind === "tracking_link") {
       const dispatched = await this.dispatchTracking(row);
+      if (!dispatched) return "skipped";
+      await this.markSent(row.id);
+      return "sent";
+    }
+
+    // Los checklists van ANTES del guard de inspection_id: no tienen inspección
+    // ni servicio, así que ahí abajo caerían como "missing_inspection_id".
+    if (row.kind === "checklist_email") {
+      // Solo el interruptor maestro de correo. Los toggles
+      // send_inspection_completed / send_vehicle_pickup son de inspección y no
+      // deben poder apagar un documento de seguridad interno.
+      const gate = await getEmailNotificationGate(this.supabase);
+      if (!gate.enabled) {
+        await this.markSkipped(row.id, "email_disabled");
+        return "skipped";
+      }
+
+      const dispatched = await this.dispatchChecklistEmail(row);
       if (!dispatched) return "skipped";
       await this.markSent(row.id);
       return "sent";
@@ -264,7 +296,7 @@ class OutboxWorker {
   }
 
   private async dispatchTracking(row: OutboxRow): Promise<boolean> {
-    const service = await this.fetchService(row.service_id);
+    const service = await this.fetchService(row.service_id!);
 
     // Guard anti link fantasma: entre que se encoló el aviso y que se procesa,
     // el servicio puede haber cerrado. Crear el token ahí sería exactamente el
@@ -312,7 +344,7 @@ class OutboxWorker {
         {
           event: "tracking_link",
           triggeredBy: null,
-          context: { folio: service.folio, serviceId: row.service_id, trackingUrl: `${TRACKING_BASE_URL}${token}` },
+          context: { folio: service.folio, serviceId: row.service_id!, trackingUrl: `${TRACKING_BASE_URL}${token}` },
         },
         token as string,
       );
@@ -360,7 +392,7 @@ class OutboxWorker {
         triggeredBy: null,
         context: {
           folio: payload.folio,
-          serviceId: row.service_id,
+          serviceId: row.service_id!,
           silentMinutes: payload.silent_minutes,
           openStopReason: payload.open_stop_reason ?? null,
         },
@@ -376,7 +408,7 @@ class OutboxWorker {
   }
 
   private async dispatchInspectionWhatsApp(row: OutboxRow): Promise<boolean> {
-    const service = await this.fetchService(row.service_id);
+    const service = await this.fetchService(row.service_id!);
     const inspection = await this.fetchInspection(row.inspection_id!);
     const phase = row.kind === "delivery_whatsapp" ? "final" : "initial";
     const client = one(service.client);
@@ -418,7 +450,7 @@ class OutboxWorker {
         {
           event: phase === "final" ? "retiro_completado" : "inspeccion_completada",
           triggeredBy: null,
-          context: { folio: service.folio, serviceId: row.service_id, inspectionId: row.inspection_id, phase },
+          context: { folio: service.folio, serviceId: row.service_id!, inspectionId: row.inspection_id, phase },
         },
       );
 
@@ -429,7 +461,7 @@ class OutboxWorker {
   }
 
   private async dispatchInspectionEmail(row: OutboxRow): Promise<boolean> {
-    const service = await this.fetchService(row.service_id);
+    const service = await this.fetchService(row.service_id!);
     const inspection = await this.fetchInspection(row.inspection_id!);
     const phase = row.kind === "delivery_email" ? "final" : "initial";
     const client = one(service.client);
@@ -461,7 +493,7 @@ class OutboxWorker {
       source: "process-notification-outbox",
     }, async () => {
       const inspectionData: InspectionEmailData = {
-        serviceId: row.service_id,
+        serviceId: row.service_id!,
         folio: service.folio,
         clientName: client?.name || "Cliente",
         clientEmail,
@@ -472,6 +504,103 @@ class OutboxWorker {
       };
       await sendInspectionEmailWithPdf(inspectionData, pdfBytes);
     });
+  }
+
+  /**
+   * Correo INTERNO con el checklist firmado.
+   *
+   * SIN withDedupe a propósito: el dedupe de `whatsapp_alert_dedupe` usa la llave
+   * `kind:id` y mataría el reenvío manual desde la UI, que es un requisito del
+   * módulo. La idempotencia acá la da la app, que no vuelve a encolar si ya hay
+   * una fila pending o processing para el mismo checklist.
+   */
+  private async dispatchChecklistEmail(row: OutboxRow): Promise<boolean> {
+    const { data: checklist, error } = await this.supabase
+      .from("checklists")
+      .select(`
+        id, template_id, performed_date, performed_at, header,
+        is_safe_to_operate, pdf_url, status,
+        checklist_templates ( name ),
+        operators ( name, rut ),
+        cranes ( license_plate )
+      `)
+      .eq("id", row.checklist_id!)
+      .single();
+    if (error || !checklist) throw new Error(error?.message ?? "Checklist no encontrado");
+
+    const { data: company } = await this.supabase
+      .from("company_data")
+      .select("daily_report_emails, logo_url")
+      .limit(1)
+      .maybeSingle();
+
+    const recipients = parseRecipientList(company?.daily_report_emails);
+    const skipReason = getChecklistDispatchSkipReason({ pdfUrl: checklist.pdf_url, recipients });
+    if (skipReason) {
+      // Sin PDF no es un error: pudo fallar la generación tras la firma y se
+      // reintenta desde el botón de la UI. Lanzar consumiría reintentos en vano.
+      await this.markSkipped(row.id, skipReason);
+      return false;
+    }
+
+    const pdfBytes = await this.downloadPdf("checklist-pdfs", checklist.pdf_url);
+
+    const template = one<{ name: string }>(checklist.checklist_templates);
+    const operator = one<{ name: string; rut: string }>(checklist.operators);
+    const crane = one<{ license_plate: string }>(checklist.cranes);
+    const header = (checklist.header ?? {}) as Record<string, unknown>;
+    const headerText = (key: string): string | null => {
+      const value = header[key];
+      return typeof value === "string" && value.trim() ? value.trim() : null;
+    };
+
+    const emailData: ChecklistEmailData = {
+      checklistId: checklist.id,
+      templateId: checklist.template_id,
+      templateName: template?.name ?? "Checklist de seguridad",
+      // Mismo membrete que los informes PDF: la ficha de la empresa manda y, si
+      // no tiene logo cargado, cae al de por defecto.
+      logoUrl: company?.logo_url ?? null,
+      recipients,
+      operatorName: operator?.name ?? "Operador",
+      operatorRut: operator?.rut ?? null,
+      // La patente del catálogo manda; el header es el respaldo congelado al firmar.
+      licensePlate: crane?.license_plate?.trim() ?? headerText("patente"),
+      faena: headerText("faena"),
+      areaEmpresa: headerText("area_empresa"),
+      performedDate: checklist.performed_date,
+      performedTime: headerText("hora"),
+      isSafeToOperate: checklist.is_safe_to_operate,
+    };
+
+    // El membrete se descarga para mandarlo INLINE. Si el archivo no responde,
+    // el correo sale igual con la URL remota: un logo nunca puede bloquear el
+    // envío de un documento de seguridad.
+    const logoBytes = await this.fetchLogoBytes(company?.logo_url ?? DEFAULT_EMAIL_LOGO_URL);
+
+    await sendChecklistEmailWithPdf(emailData, pdfBytes, logoBytes);
+
+    await this.supabase
+      .from("checklists")
+      .update({ email_sent_at: new Date().toISOString(), status: "sent" })
+      .eq("id", checklist.id);
+
+    return true;
+  }
+
+  /** Bytes del membrete, o null si no se pudo traer. Nunca lanza. */
+  private async fetchLogoBytes(url: string): Promise<Uint8Array | null> {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`[checklist_email] logo no disponible (${response.status}): ${url}`);
+        return null;
+      }
+      return new Uint8Array(await response.arrayBuffer());
+    } catch (cause) {
+      console.warn(`[checklist_email] no se pudo descargar el logo: ${errorMessage(cause)}`);
+      return null;
+    }
   }
 
   private async withDedupe(

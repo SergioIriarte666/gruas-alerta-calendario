@@ -4557,6 +4557,7 @@ export type Database = {
       notification_outbox: {
         Row: {
           attempts: number
+          checklist_id: string | null
           created_at: string
           id: string
           inspection_id: string | null
@@ -4564,11 +4565,12 @@ export type Database = {
           last_error: string | null
           payload: Json
           processed_at: string | null
-          service_id: string
+          service_id: string | null
           status: string
         }
         Insert: {
           attempts?: number
+          checklist_id?: string | null
           created_at?: string
           id?: string
           inspection_id?: string | null
@@ -4576,11 +4578,12 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           processed_at?: string | null
-          service_id: string
+          service_id?: string | null
           status?: string
         }
         Update: {
           attempts?: number
+          checklist_id?: string | null
           created_at?: string
           id?: string
           inspection_id?: string | null
@@ -4588,10 +4591,17 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           processed_at?: string | null
-          service_id?: string
+          service_id?: string | null
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notification_outbox_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notification_outbox_inspection_id_fkey"
             columns: ["inspection_id"]
@@ -9131,6 +9141,7 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: {
           attempts: number
+          checklist_id: string | null
           created_at: string
           id: string
           inspection_id: string | null
@@ -9138,7 +9149,7 @@ export type Database = {
           last_error: string | null
           payload: Json
           processed_at: string | null
-          service_id: string
+          service_id: string | null
           status: string
         }[]
         SetofOptions: {
@@ -9325,6 +9336,10 @@ export type Database = {
         Returns: Json
       }
       emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
+      enqueue_checklist_email: {
+        Args: { p_checklist_id: string }
+        Returns: string
+      }
       enqueue_tracking_silence_alerts: { Args: never; Returns: number }
       execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       execute_recovery_operation: {
@@ -9496,6 +9511,15 @@ export type Database = {
           session_id: string
           source: string
           speed_mps: number
+        }[]
+      }
+      get_checklist_email_status: {
+        Args: { p_checklist_id: string }
+        Returns: {
+          created_at: string
+          last_error: string
+          processed_at: string
+          status: string
         }[]
       }
       get_client_id_for_user: { Args: { user_id: string }; Returns: string }

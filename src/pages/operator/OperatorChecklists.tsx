@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useChecklistEmailSender,
   useChecklistManager,
   useChecklistTemplates,
   useChecklistsFetcher,
@@ -37,6 +38,7 @@ const OperatorChecklists = () => {
     createDraft, saveDraft, signChecklist, generatePdf,
     isCreating, isSaving, isSigning, isGeneratingPdf,
   } = useChecklistManager(operatorId);
+  const { enqueue, isEnqueueing } = useChecklistEmailSender();
 
   const [activeChecklist, setActiveChecklist] = useState<ChecklistListItem | null>(null);
 
@@ -170,9 +172,15 @@ const OperatorChecklists = () => {
     try {
       await handleGeneratePdf(signed, true);
     } catch {
-      /* el manager ya avisó; la firma está a salvo */
+      // Sin PDF NO se encola el correo: no tendría nada que adjuntar. El botón
+      // "Reenviar correo" de la vista de solo lectura cubre ese caso.
+      return;
     }
-  }, [activeChecklist, handleGeneratePdf, signChecklist]);
+
+    // Encolado en silencio: el operador ya vio el toast de la firma y este
+    // envío es interno. Si falla, queda el botón de reenvío.
+    await enqueue.mutateAsync({ checklistId: signed.id, silent: true }).catch(() => {});
+  }, [activeChecklist, enqueue, handleGeneratePdf, signChecklist]);
 
   // ── Documento abierto ──
   if (activeChecklist) {
@@ -202,6 +210,8 @@ const OperatorChecklists = () => {
           onExit={() => setActiveChecklist(null)}
           onRegeneratePdf={() => handleGeneratePdf(activeChecklist).catch(() => {})}
           isGeneratingPdf={isGeneratingPdf}
+          onResendEmail={() => enqueue.mutate({ checklistId: activeChecklist.id })}
+          isSendingEmail={isEnqueueing}
         />
       </div>
     );

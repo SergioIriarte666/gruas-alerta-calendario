@@ -1,6 +1,12 @@
 import { Resend } from "npm:resend@6";
-
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+import {
+  buildChecklistAttachmentName,
+  buildChecklistEmailHtml,
+  buildChecklistEmailSubject,
+  CHECKLIST_LOGO_CID,
+  EMAIL_REGEX,
+  type ChecklistEmailContent,
+} from "./checklistEmailContent.ts";
 
 export interface InspectionEmailData {
   serviceId: string;
@@ -37,6 +43,67 @@ function bytesToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...chunk);
   }
   return btoa(binary);
+}
+
+export interface ChecklistEmailData extends ChecklistEmailContent {
+  checklistId: string;
+  recipients: string[];
+}
+
+/**
+ * Correo INTERNO con el checklist de seguridad firmado.
+ *
+ * Va a la casilla propia de la empresa (company_data.daily_report_emails), no al
+ * cliente: por eso 'checklist_email' NO entra en CLIENT_FACING_KINDS del worker
+ * y no pasa por el interruptor de notificaciones al cliente.
+ *
+ * El asunto, el cuerpo y el nombre del adjunto se arman en
+ * checklistEmailContent.ts, que no depende de Resend y por eso sí se puede
+ * probar en la suite.
+ */
+export async function sendChecklistEmailWithPdf(
+  data: ChecklistEmailData,
+  pdfBytes: Uint8Array,
+  logoBytes?: Uint8Array | null,
+): Promise<InspectionEmailResult> {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  const recipients = data.recipients.map((email) => sanitizeInspectionEmailAddress(email));
+  if (recipients.length === 0) throw new Error("Sin destinatarios para el checklist");
+
+  const attachments = [
+    {
+      filename: buildChecklistAttachmentName(data),
+      content: bytesToBase64(pdfBytes),
+      contentType: "application/pdf",
+    },
+  ];
+
+  // El membrete viaja INLINE (contentId + `cid:` en el HTML). Con una URL remota
+  // dependía de que el cliente aceptara cargar imágenes externas, y la mayoría
+  // las bloquea: así llegó el primer correo, sin logo.
+  const hasInlineLogo = Boolean(logoBytes && logoBytes.length > 0);
+  if (hasInlineLogo) {
+    attachments.push({
+      filename: "logo.png",
+      content: bytesToBase64(logoBytes as Uint8Array),
+      contentType: "image/png",
+      contentId: CHECKLIST_LOGO_CID,
+    } as typeof attachments[number]);
+  }
+
+  const emailResponse = await resend.emails.send({
+    from: "Grúas 5 Norte <noreply@gruas5norte.cl>",
+    to: recipients,
+    subject: buildChecklistEmailSubject(data),
+    html: buildChecklistEmailHtml({ ...data, logoInline: hasInlineLogo }),
+    attachments,
+  });
+
+  if (emailResponse.error) {
+    throw new Error(`Error de Resend: ${emailResponse.error.message}`);
+  }
+
+  return { success: true, messageId: emailResponse.data?.id };
 }
 
 export async function sendInspectionEmailWithPdf(

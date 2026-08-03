@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, FileText, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Mail, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import {
 } from '@/utils/checklists/checklistPdfUpload';
 import { extractStoragePath } from '@/utils/storagePath';
 import { createLogger } from '@/lib/logger';
+import { useChecklistEmailStatus } from '@/hooks/useChecklists';
 
 const logger = createLogger('ChecklistPDF');
 import type { ChecklistListItem } from '@/types/checklists';
@@ -24,7 +25,22 @@ interface ChecklistReadOnlyViewProps {
   onExit: () => void;
   onRegeneratePdf: () => void;
   isGeneratingPdf: boolean;
+  onResendEmail: () => void;
+  isSendingEmail: boolean;
 }
+
+/**
+ * Badge del envío interno. Los estados salen tal cual del outbox: 'skipped' no
+ * es un fallo —el worker lo usa cuando falta el PDF o no hay destinatario— así
+ * que se muestra como pendiente de resolver y no como error.
+ */
+const EMAIL_BADGE: Record<string, { label: string; className: string }> = {
+  pending:    { label: 'Correo pendiente',  className: 'border-warning/30 bg-warning/10 text-warning-text' },
+  processing: { label: 'Enviando correo',   className: 'border-warning/30 bg-warning/10 text-warning-text' },
+  sent:       { label: 'Correo enviado',    className: 'border-success/30 bg-success/10 text-success-text' },
+  failed:     { label: 'Correo falló',      className: 'border-danger/30 bg-danger/10 text-danger-text' },
+  skipped:    { label: 'Correo no enviado', className: 'border-warning/30 bg-warning/10 text-warning-text' },
+};
 
 const HEADER_FIELDS: Array<[keyof ChecklistListItem['header'], string]> = [
   ['faena', 'Faena'],
@@ -43,7 +59,11 @@ export const ChecklistReadOnlyView = ({
   onExit,
   onRegeneratePdf,
   isGeneratingPdf,
+  onResendEmail,
+  isSendingEmail,
 }: ChecklistReadOnlyViewProps) => {
+  const { emailState } = useChecklistEmailStatus(checklist.id);
+  const emailBadge = emailState ? EMAIL_BADGE[emailState.status] : null;
   const isPreoperacional = checklist.template_id === CHECKLIST_TEMPLATE_IDS.preoperacional;
   const headerEntries = HEADER_FIELDS.filter(([key]) => Boolean(checklist.header?.[key]));
   const [isOpeningPdf, setIsOpeningPdf] = useState(false);
@@ -90,6 +110,11 @@ export const ChecklistReadOnlyView = ({
           <Badge variant="outline" className="border-success/30 bg-success/10 text-success-text">
             Firmado
           </Badge>
+          {emailBadge && (
+            <Badge variant="outline" className={emailBadge.className} title={emailState?.last_error ?? undefined}>
+              {emailBadge.label}
+            </Badge>
+          )}
           {checklist.crane_label && <Badge variant="outline">{checklist.crane_label}</Badge>}
           {checklist.service_folio && <Badge variant="outline">Folio {checklist.service_folio}</Badge>}
         </div>
@@ -122,6 +147,17 @@ export const ChecklistReadOnlyView = ({
           >
             <RefreshCw className={`mr-2 size-4 ${isGeneratingPdf ? 'animate-spin' : ''}`} />
             {isGeneratingPdf ? 'Generando…' : 'Regenerar PDF'}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="min-h-11 rounded-xl"
+            disabled={isSendingEmail || !checklist.pdf_url}
+            onClick={onResendEmail}
+          >
+            <Mail className="mr-2 size-4" />
+            {isSendingEmail ? 'Encolando…' : 'Reenviar correo'}
           </Button>
         </div>
 

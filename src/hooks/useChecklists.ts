@@ -27,3 +27,14 @@ export type {
 } from './checklists/useChecklistManager';
 
 export { useOperatorChecklistContext } from './checklists/useOperatorChecklistContext';
+
+export {
+  useChecklistEmailStatus,
+  useChecklistEmailSender,
+} from './checklists/useChecklistEmail';
+
+export type {
+  ChecklistEmailState,
+  ChecklistEmailStatus,
+  EnqueueResult,
+} from './checklists/useChecklistEmail';
