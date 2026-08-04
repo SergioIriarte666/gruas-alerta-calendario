@@ -11,11 +11,12 @@ import {
   REPORT_PDF_COLORS,
 } from './reportUtils';
 import { sendBlobToDownloadWindow } from './downloadWindow';
-import { getDisplayServiceValue, getServiceValueBreakdown } from '../serviceValueCalculations';
+import { getServiceValueBreakdown } from '../serviceValueCalculations';
 import { isEquipmentRentalService } from '../serviceValueCalculations';
 import { getCustodyDisplayInfo } from '../custodyCalculations';
+import { buildServiceReportAmounts, computeServiceReportTotals } from './serviceReportRows';
 import { Service } from '@/types';
-import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
+import { defaultReportColumnConfig, ColumnKey, columnOrder, lockedLabelColumns, ReportColumnsConfig } from '@/types/reportColumnConfig';
 import { createLogger } from "@/lib/logger";
 
 
@@ -76,7 +77,17 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
         : '-';
     }
     case 'valor':
-      return `$${getDisplayServiceValue(service).toLocaleString('es-CL')}`;
+      return `$${buildServiceReportAmounts(service).covered.toLocaleString('es-CL')}`;
+    case 'excedente': {
+      const excess = buildServiceReportAmounts(service).excess;
+      return excess > 0 ? `$${excess.toLocaleString('es-CL')}` : '-';
+    }
+    case 'valorTotal':
+      return `$${buildServiceReportAmounts(service).total.toLocaleString('es-CL')}`;
+    case 'pagaExcedente': {
+      const payer = buildServiceReportAmounts(service).excessPayer;
+      return payer ? truncate(payer, maxChars) : '-';
+    }
     default:
       return '-';
   }
@@ -167,13 +178,22 @@ export const exportServiceReport = async ({
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
   // Usar configuración proporcionada, mezclando con defaults para columnas faltantes
-  const config: ReportColumnsConfig = {
-    columns: {
-      ...defaultReportColumnConfig.columns,
-      ...(reportColumnConfig?.columns || {})
-    }
+  const mergedColumns = {
+    ...defaultReportColumnConfig.columns,
+    ...(reportColumnConfig?.columns || {})
   };
-  
+
+  // Las columnas de montos conservan siempre el rótulo del default: una config
+  // guardada de antes del desglose diría "Valor" sobre lo cubierto por la aseguradora.
+  lockedLabelColumns.forEach(key => {
+    mergedColumns[key] = {
+      ...mergedColumns[key],
+      label: defaultReportColumnConfig.columns[key].label
+    };
+  });
+
+  const config: ReportColumnsConfig = { columns: mergedColumns };
+
   // Obtener solo las columnas visibles en el orden correcto (con fallback para columnas faltantes)
   const visibleColumns = columnOrder.filter(key => {
     const columnConfig = config.columns[key];
@@ -187,9 +207,7 @@ export const exportServiceReport = async ({
     return dateA - dateB;
   });
   
-  const totalValue = sortedServices.reduce((acc, service) => {
-    return acc + getDisplayServiceValue(service);
-  }, 0);
+  const { totalCubierto, totalExcedente, totalGeneral } = computeServiceReportTotals(sortedServices);
 
   if (format === 'pdf') {
     try {
@@ -215,7 +233,9 @@ export const exportServiceReport = async ({
 
       const summaryData = [
         ['Total Servicios', sortedServices.length.toString()],
-        ['Valor Total', `$${totalValue.toLocaleString('es-CL')}`]
+        ['Total Cubierto Aseguradora', `$${totalCubierto.toLocaleString('es-CL')}`],
+        ['Total Excedente (terceros)', `$${totalExcedente.toLocaleString('es-CL')}`],
+        ['Valor Total Servicios', `$${totalGeneral.toLocaleString('es-CL')}`]
       ];
       doc.setFontSize(11);
       autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
@@ -239,15 +259,38 @@ export const exportServiceReport = async ({
         columnStyles[index] = { cellWidth: availableWidth * widthPercent };
       });
 
+      // Fila de totales alineada con las columnas monetarias que quedaron visibles.
+      const footRow = visibleColumns.map(() => '');
+      if (footRow.length > 0) footRow[0] = 'TOTALES';
+      const putTotal = (key: ColumnKey, amount: number) => {
+        const index = visibleColumns.indexOf(key);
+        if (index > 0) footRow[index] = `$${amount.toLocaleString('es-CL')}`;
+      };
+      putTotal('valor', totalCubierto);
+      putTotal('excedente', totalExcedente);
+      putTotal('valorTotal', totalGeneral);
+
       autoTable(doc, {
         head: [headers],
         body,
+        foot: [footRow],
         startY: lastY + 10,
         headStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 7 },
+        footStyles: { fillColor: REPORT_PDF_COLORS.primary, fontSize: 7 },
         styles: { fontSize: 6, cellPadding: 1 },
         tableWidth: availableWidth,
         columnStyles
       });
+
+      if (totalExcedente > 0) {
+        const noteY = (doc as any).lastAutoTable.finalY + 6;
+        doc.setFontSize(7);
+        doc.text(
+          'Los servicios con excedente se informan por el monto cubierto por la aseguradora. El excedente se factura al tercero responsable.',
+          14,
+          noteY
+        );
+      }
 
       // Mantiene el detalle adicional aislado para no afectar la descarga principal.
       const rentalRows = buildEquipmentRentalExportRows(sortedServices);
@@ -306,6 +349,7 @@ export const exportServiceReport = async ({
     // Hoja principal: Detalle completo de servicios - con Asegurado y desglose de valores
     const services_data = sortedServices.map(s => {
       const breakdown = getServiceValueBreakdown(s);
+      const amounts = buildServiceReportAmounts(s);
       return {
         'Fecha Servicio': formatReportDate(s.serviceDate, 'yyyy-MM-dd'),
         'Hora Inicio': s.startTime || '-',
@@ -332,10 +376,25 @@ export const exportServiceReport = async ({
         'Fin Custodia': (s as any).custodyEndDate || '-',
         'Días Custodia': (s as any).custodyDays || 0,
         'Valor Custodia': breakdown.custodyValue,
-        'Valor Total': getDisplayServiceValue(s),
+        'Valor Cubierto Aseguradora': amounts.covered,
+        'Excedente': amounts.excess,
+        'Valor Total Servicio': amounts.total,
+        'Paga Excedente': amounts.excessPayer,
         'Observaciones': s.observations,
       };
     });
+    // Fila de totales al pie del detalle, con las mismas claves para que caiga
+    // bajo la columna correcta.
+    if (services_data.length > 0) {
+      services_data.push({
+        ...Object.fromEntries(Object.keys(services_data[0]).map(key => [key, ''])),
+        'Folio': 'TOTALES',
+        'Valor Cubierto Aseguradora': totalCubierto,
+        'Excedente': totalExcedente,
+        'Valor Total Servicio': totalGeneral,
+      } as (typeof services_data)[number]);
+    }
+
     const services_ws = XLSX.utils.json_to_sheet(services_data);
     XLSX.utils.book_append_sheet(wb, services_ws, 'Detalle de Servicios');
 
@@ -349,7 +408,12 @@ export const exportServiceReport = async ({
       ['Resumen'],
       ['Métrica', 'Valor'],
       ['Total Servicios', sortedServices.length],
-      ['Valor Total', totalValue],
+      ['Total Cubierto Aseguradora', totalCubierto],
+      ['Total Excedente (terceros)', totalExcedente],
+      ['Valor Total Servicios', totalGeneral],
+      [],
+      ['Los servicios con excedente se informan por el monto cubierto por la aseguradora.'],
+      ['El excedente se factura al tercero responsable.'],
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen');

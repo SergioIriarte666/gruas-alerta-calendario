@@ -43,6 +43,8 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       custody_rate_type,
       has_excess,
       client_covered_amount,
+      excess_amount,
+      third_party_client_id,
       vehicle_brand,
       vehicle_model,
       license_plate,
@@ -53,6 +55,11 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       invoice_folio,
       invoice_numero_fiscal,
       client:clients!services_client_id_fkey(
+        id,
+        name,
+        rut
+      ),
+      thirdPartyClient:clients!services_third_party_client_id_fkey(
         id,
         name,
         rut
@@ -125,6 +132,9 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
     craneMileage: s.crane_mileage,
     hasExcess: s.has_excess,
     clientCoveredAmount: s.client_covered_amount,
+    excessAmount: s.excess_amount,
+    thirdPartyClientId: s.third_party_client_id,
+    thirdPartyClient: s.thirdPartyClient || null,
     custodyTotalAmount: s.custody_total_amount || 0,
     custodyStartDate: s.custody_start_date || null,
     custodyEndDate: s.custody_end_date || null,

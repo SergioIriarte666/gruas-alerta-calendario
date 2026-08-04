@@ -25,8 +25,19 @@ export interface ReportColumnsConfig {
     custodiaDias: ReportColumnConfig;
     valorCustodia: ReportColumnConfig;
     valor: ReportColumnConfig;
+    excedente: ReportColumnConfig;
+    valorTotal: ReportColumnConfig;
+    pagaExcedente: ReportColumnConfig;
   };
 }
+
+/**
+ * Columnas cuyo rotulo NO se puede sobrescribir desde la configuracion guardada:
+ * el texto describe que monto trae la celda y un label heredado (p. ej. "Valor"
+ * sobre la columna que ahora informa solo lo cubierto por la aseguradora) seria
+ * enganoso. El ancho y la visibilidad si respetan lo que el usuario configuro.
+ */
+export const lockedLabelColumns: ColumnKey[] = ['valor', 'excedente', 'valorTotal', 'pagaExcedente'];
 
 export type ColumnKey = keyof ReportColumnsConfig['columns'];
 
@@ -49,12 +60,16 @@ export const defaultReportColumnConfig: ReportColumnsConfig = {
     custodiaFin: { visible: true, width: 5, label: 'Fin Custodia' },
     custodiaDias: { visible: true, width: 4, label: 'Días Custodia' },
     valorCustodia: { visible: true, width: 5, label: 'Custodia' },
-    valor: { visible: true, width: 6, label: 'Total' }
+    valor: { visible: true, width: 6, label: 'Cubierto Aseg.' },
+    excedente: { visible: true, width: 5, label: 'Excedente' },
+    valorTotal: { visible: true, width: 5, label: 'Total Servicio' },
+    pagaExcedente: { visible: true, width: 8, label: 'Paga Excedente' }
   }
 };
 
 export const columnOrder: ColumnKey[] = [
   'fecha', 'folio', 'cliente', 'asegurado', 'cotizacion', 'oc', 'factura',
   'tipoServicio', 'patente', 'origen', 'destino', 'estado', 'valorBase',
-  'custodiaInicio', 'custodiaFin', 'custodiaDias', 'valorCustodia', 'valor'
+  'custodiaInicio', 'custodiaFin', 'custodiaDias', 'valorCustodia',
+  'valor', 'excedente', 'valorTotal', 'pagaExcedente'
 ];

@@ -49,6 +49,7 @@ import { Button } from '@/components/ui/button';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
+import { getCoveredAmount, getExcessAmount } from '@/utils/serviceAmounts';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1140,16 +1141,16 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                         )}
                         {serviceData.hasExcess && serviceData.clientCoveredAmount && (
                           <>
-                            <DetailItem 
-                              icon={DollarSign} 
-                              label="Monto Cubierto Cliente" 
-                              value={formatCurrency(serviceData.clientCoveredAmount)} 
-                              valueClass="text-md text-info font-medium" 
+                            <DetailItem
+                              icon={DollarSign}
+                              label="Monto Cubierto Cliente"
+                              value={formatCurrency(getCoveredAmount(serviceData))}
+                              valueClass="text-md text-info font-medium"
                             />
                             <DetailItem
                               icon={DollarSign}
                               label="Excedente"
-                              value={formatCurrency(displayServiceValue - (serviceData.clientCoveredAmount || 0))}
+                              value={formatCurrency(getExcessAmount(serviceData))}
                               valueClass="text-md text-warning font-medium"
                             />
                           </>

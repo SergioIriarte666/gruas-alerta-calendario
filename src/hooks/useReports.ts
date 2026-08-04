@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Operator, Service } from '@/types';
 import { Cost, CostCategory } from '@/types/costs';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { getCoveredAmount } from '@/utils/serviceAmounts';
 import { createLogger } from "@/lib/logger";
 import { CompanyReference, normalizeCompanyRut, resolveCanonicalCompany } from '@/utils/companyCanonicalization';
 
@@ -513,7 +514,7 @@ export const useReports = (filters?: ReportFilters) => {
         origin: service.origin || '-',
         destination: service.destination || '-',
         status: service.status,
-        value: getServiceValueForClosure(service),
+        value: getCoveredAmount(service),
       }));
   };
 

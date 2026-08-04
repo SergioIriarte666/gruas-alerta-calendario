@@ -40,6 +40,8 @@ export interface Service {
   clientCoveredAmount?: number;
   excessAmount?: number;
   thirdPartyClientId?: string | null;
+  // Tercero que paga el excedente, cuando el fetcher lo trae embebido.
+  thirdPartyClient?: Pick<Client, 'id' | 'name' | 'rut'> | null;
   // Invoice information
   invoiceFolio?: string;
   invoiceNumeroFiscal?: string;
