@@ -9,7 +9,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, toTitleCase } from '@/lib/utils';
@@ -83,7 +82,10 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
     </CardHeader>
 
     <CardContent className="min-h-0 gap-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
-      <ScrollArea className="h-full pr-3">
+      <div
+        aria-label="Parámetros de ingreso"
+        className="h-full overflow-y-auto overscroll-contain pr-3 [scrollbar-gutter:stable]"
+      >
         <div className="space-y-4 pb-4">
           <div className="space-y-2">
             <Label>Ubicación de Bodega</Label>
@@ -248,7 +250,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </CardContent>
 
     <div className="space-y-2 border-t bg-muted/20 p-4">

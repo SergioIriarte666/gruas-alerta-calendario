@@ -116,12 +116,14 @@ export const LocationPickerDialog = ({
     setPosition({ lat: start.lat, lng: start.lng });
     setAddress(null);
     setMapStyle('satellite');
+    setMapReady(false);
     if (hasInitialPoint) scheduleReverseGeocode(start.lat, start.lng);
 
     // El contenedor del mapa solo existe una vez que el Dialog monto su
     // contenido, de ahi el rAF antes de instanciar Mapbox.
     let cancelled = false;
     let localMap: import('mapbox-gl').Map | null = null;
+    let resizeObserver: ResizeObserver | null = null;
 
     const frame = window.requestAnimationFrame(() => {
       if (cancelled || !containerRef.current || !MAPBOX_TOKEN) return;
@@ -142,6 +144,30 @@ export const LocationPickerDialog = ({
             new mapboxgl.default.NavigationControl({ showCompass: false }),
             'top-right',
           );
+
+          // El modal se anima y su área útil cambia con el encabezado y el
+          // pie. Mantener Mapbox sincronizado con el tamaño real evita que el
+          // canvas conserve las dimensiones (a veces 0px) de su primer frame.
+          if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => localMap?.resize());
+            resizeObserver.observe(containerRef.current);
+          }
+
+          localMap.once('load', () => {
+            if (cancelled) return;
+            localMap?.resize();
+            localMap?.triggerRepaint();
+            setMapReady(true);
+
+            // Radix termina la animación del modal después del evento load.
+            // Un segundo frame garantiza el canvas final incluso con zoom de
+            // pantalla o cuando este diálogo está sobre otro diálogo.
+            window.requestAnimationFrame(() => {
+              if (cancelled) return;
+              localMap?.resize();
+              localMap?.triggerRepaint();
+            });
+          });
 
           const marker = new mapboxgl.default.Marker({
             color: 'hsl(var(--destructive))',
@@ -165,7 +191,6 @@ export const LocationPickerDialog = ({
 
           markerRef.current = marker;
           mapRef.current = localMap;
-          setMapReady(true);
         })
         .catch((mapError) => {
           logger.error('No se pudo cargar el mapa', mapError);
@@ -179,6 +204,7 @@ export const LocationPickerDialog = ({
       reverseRequestRef.current += 1;
       setMapReady(false);
       setLoadingAddress(false);
+      resizeObserver?.disconnect();
       markerRef.current?.remove();
       markerRef.current = null;
       localMap?.remove();
@@ -204,7 +230,7 @@ export const LocationPickerDialog = ({
       {open && (
         <DialogContent
           className={cn(
-            'flex max-h-[92vh] flex-col gap-3 overflow-hidden p-4 sm:p-6',
+            'flex h-[calc(100dvh-2rem)] max-h-[92dvh] flex-col gap-3 overflow-hidden p-4 sm:h-[92dvh] sm:p-6',
             isMobile ? 'w-screen max-w-none' : 'w-[95vw] max-w-4xl',
           )}
         >
@@ -223,8 +249,12 @@ export const LocationPickerDialog = ({
               <p>Mapa no disponible: falta configurar VITE_MAPBOX_PUBLIC_TOKEN.</p>
             </div>
           ) : (
-            <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-xl border border-border">
-              <div ref={containerRef} className="size-full" />
+            <div className="relative min-h-[18rem] flex-1 overflow-hidden rounded-xl border border-border sm:min-h-[22rem]">
+              <div
+                ref={containerRef}
+                className="size-full"
+                style={{ position: 'absolute', inset: 0 }}
+              />
 
               <Button
                 type="button"
