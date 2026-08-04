@@ -1,9 +1,12 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { createR2Config, headVerifiedObject, putAndVerifyObject } from "../_shared/r2.ts";
 import { assertCronRequest, errorMessage, json } from "../_shared/retention.ts";
 
 const PHOTO_BUCKET = "inspection-photos";
 const PDF_BUCKET = "inspection-pdfs";
+const ARCHIVE_AFTER_DAYS = 30;
+const DEFAULT_BATCH_LIMIT = 10;
+const MAX_BATCH_LIMIT = 25;
 
 type PhotoGroup = "before_service" | "client_vehicle" | "equipment_used";
 type SourceFile = {
@@ -72,7 +75,7 @@ const keyFor = (serviceId: string, file: SourceFile): string => {
   return `inspections/${serviceId}/${segment}/${orderedName}`;
 };
 
-const audit = async (supabase: ReturnType<typeof createClient>, row: InspectionRow, status: string, details: unknown, error?: string) => {
+const audit = async (supabase: SupabaseClient<any, "public", any>, row: InspectionRow, status: string, details: unknown, error?: string) => {
   const { error: auditError } = await supabase.from("inspection_retention_audit").insert({
     inspection_id: row.id,
     service_id: row.service_id,
@@ -99,10 +102,14 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
   const r2 = createR2Config();
-  const requestedLimit = Number(new URL(req.url).searchParams.get("limit") || "50");
-  const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 50, 1), 200);
-  const archiveCutoff = new Date();
-  archiveCutoff.setUTCMonth(archiveCutoff.getUTCMonth() - 6);
+  const requestedLimit = Number(new URL(req.url).searchParams.get("limit") || DEFAULT_BATCH_LIMIT);
+  const limit = Math.min(
+    Math.max(Number.isFinite(requestedLimit) ? requestedLimit : DEFAULT_BATCH_LIMIT, 1),
+    MAX_BATCH_LIMIT,
+  );
+  const archiveCutoff = new Date(
+    Date.now() - ARCHIVE_AFTER_DAYS * 24 * 60 * 60 * 1000,
+  );
 
   const { data, error } = await supabase
     .from("inspections")
@@ -202,5 +209,10 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json({ processed: results.length, results });
+  return json({
+    archiveAfterDays: ARCHIVE_AFTER_DAYS,
+    cutoff: archiveCutoff.toISOString(),
+    processed: results.length,
+    results,
+  });
 });

@@ -4,8 +4,8 @@ La fila de `public.inspections` es permanente. Esta política administra únicam
 
 ## Política
 
-- `hot`: desde la creación hasta los 6 meses, los archivos permanecen en los buckets privados `inspection-pdfs` e `inspection-photos` de Supabase Storage.
-- `cold`: al cumplir 6 meses, todos los archivos se copian y verifican en Cloudflare R2; solo después se eliminan de Supabase Storage.
+- `hot`: desde la creación hasta los 30 días, los archivos permanecen en los buckets privados `inspection-pdfs` e `inspection-photos` de Supabase Storage.
+- `cold`: al cumplir 30 días, todos los archivos se copian y verifican en Cloudflare R2; solo después se eliminan de Supabase Storage.
 - `deleted`: 2 años después de `archived_at`, los objetos se eliminan de R2. La fila y la auditoría permanecen.
 
 El archivado usa una ruta determinista `inspections/{service_id}/...` y un manifiesto con tamaño y SHA-256. El orden obligatorio es: copiar todo, verificar todo, guardar el manifiesto y recién entonces borrar desde Storage. Un reintento reutiliza objetos ya verificados.
@@ -46,7 +46,7 @@ npx supabase functions deploy get-archived-inspection-files --project-ref jqszxl
 
 La migración agenda:
 
-- `archive-inspections-to-r2-monthly`: día 1 de cada mes, 03:30 UTC.
+- `archive-inspections-to-r2-daily`: todos los días, 03:30 UTC, en lotes de hasta 10 inspecciones.
 - `purge-cold-inspections-monthly`: día 2 de cada mes, 04:30 UTC.
 
 Los IDs reales asignados por `pg_cron` quedan documentados en `public.inspection_retention_cron_jobs` y pueden consultarse con:
@@ -63,7 +63,7 @@ Los resultados por inspección se guardan en `public.inspection_retention_audit`
 
 Usar una inspección de prueba con archivos prescindibles y conservar sus IDs antes de modificar las fechas.
 
-1. Ajustar temporalmente `created_at` a más de 6 meses.
+1. Ajustar temporalmente `created_at` a más de 30 días.
 2. Invocar `archive-inspections-to-r2` con `x-cron-secret` y, si se desea aislar una corrida pequeña, `?limit=1`.
 3. Confirmar el objeto en R2, su ausencia en Supabase Storage y `storage_tier = 'cold'` con rutas R2.
 4. Abrir el servicio en el TMS y comprobar PDF y fotografías.

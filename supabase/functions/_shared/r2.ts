@@ -36,7 +36,8 @@ export const createR2Config = (): R2Config => {
 };
 
 export const sha256Base64 = async (bytes: Uint8Array): Promise<string> => {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const digestInput = Uint8Array.from(bytes);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", digestInput));
   let binary = "";
   for (const byte of digest) binary += String.fromCharCode(byte);
   return btoa(binary);
