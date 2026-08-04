@@ -4,10 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { createLogger } from '@/lib/logger';
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 const _logger = createLogger('useInventoryOrphans');
-
-const INVENTORY_QUERY_KEYS = ['inventory-items', 'inventory-stock', 'inventory-movements'];
 
 export interface OrphanItem {
   id: string;
@@ -57,9 +56,7 @@ export const useInventoryOrphans = (
   };
 
   const invalidate = () => {
-    INVENTORY_QUERY_KEYS.forEach((key) =>
-      queryClient.invalidateQueries({ queryKey: [key] }),
-    );
+    invalidateStockDependentQueries(queryClient);
   };
 
   const deactivateMutation = useMutation({
@@ -121,9 +118,7 @@ export const useInventoryItemHardDelete = () => {
   const [preparingId, setPreparingId] = useState<string | null>(null);
 
   const invalidate = () => {
-    INVENTORY_QUERY_KEYS.forEach((key) =>
-      queryClient.invalidateQueries({ queryKey: [key] }),
-    );
+    invalidateStockDependentQueries(queryClient);
   };
 
   const prepareDelete = async (

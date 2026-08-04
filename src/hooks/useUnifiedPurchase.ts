@@ -39,8 +39,9 @@ export const useUnifiedPurchase = () => {
     },
     onSuccess: (result) => {
       if (result.success) {
-        // Invalidate all related queries for synchronization
-        invalidateAll();
+        // La compra crea entradas de bodega y toca proveedores: 'full' o las
+        // vistas de stock siguen mostrando el número anterior.
+        invalidateAll('full');
       }
     },
     onError: createMutationErrorHandler({
@@ -64,8 +65,8 @@ export const useUnifiedPurchase = () => {
       return await UnifiedPurchaseService.createConsumption(params);
     },
     onSuccess: () => {
-      // Invalidate all related queries
-      invalidateAll();
+      // El consumo descuenta stock.
+      invalidateAll('with-inventory');
     },
     onError: createMutationErrorHandler({
       title: 'Error al Registrar Consumo',

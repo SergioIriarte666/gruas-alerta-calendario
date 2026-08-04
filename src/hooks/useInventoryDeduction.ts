@@ -1,7 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 
 const logger = createLogger("useInventoryDeduction");
@@ -47,6 +49,8 @@ const resolveFifoUnitCost = async (itemId: string, locationId: string): Promise<
 };
 
 export const useInventoryDeduction = () => {
+  const queryClient = useQueryClient();
+
   const processInventoryDeduction = async ({ serviceId, serviceFolio, salesItems }: InventoryDeductionParams) => {
     if (!salesItems || salesItems.length === 0) {
       return { success: true, message: 'No hay productos para descontar del inventario' };
@@ -137,6 +141,10 @@ export const useInventoryDeduction = () => {
       }
 
       logger.debug(`✅ Inventory exit completed for service ${serviceFolio}`);
+
+      // La venta acaba de mover stock: Bodega y el selector de productos deben
+      // mostrar el número nuevo sin recargar la página.
+      invalidateStockDependentQueries(queryClient);
 
       return {
         success: true,

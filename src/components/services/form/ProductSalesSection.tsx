@@ -12,7 +12,9 @@ import { toast } from 'sonner';
 import { ProductCombobox, type ProductComboboxItem } from '@/components/inventory/ProductCombobox';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { getSalePrice } from '@/utils/inventoryPricing';
+import { sumAvailableStock } from '@/utils/availableStock';
 import { createLogger } from '@/lib/logger';
+import { inventoryQueryKeys } from '@/lib/queryKeys/inventory';
 import { cn } from '@/lib/utils';
 
 const logger = createLogger('ProductSalesSection');
@@ -60,7 +62,7 @@ interface ProductSalesSectionProps {
 const buildQuantitySchema = (maxStock: number) =>
   z.number({ invalid_type_error: 'La cantidad debe ser un número' })
     .min(1, 'La cantidad debe ser mayor a 0')
-    .max(maxStock, `Stock disponible: ${maxStock}`);
+    .max(maxStock, `Stock disponible en bodega: ${maxStock}`);
 
 export const ProductSalesSection = ({
   salesItems,
@@ -75,10 +77,23 @@ export const ProductSalesSection = ({
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const { systemSettings } = useSystemSettings();
   const hydratedRef = useRef(false);
+  const quantityToastShownRef = useRef(false);
 
-  // Fetch available inventory items
+  // Productos vendibles con su stock disponible.
+  //
+  // Fuente de verdad única: `inventory_stock` (la misma tabla que pinta Bodega),
+  // sumando `available_quantity` cuando el producto existe en más de una
+  // ubicación. Nunca se recalcula stock agregando `inventory_movements` en el
+  // cliente: eso contaba también los movimientos anulados y el selector
+  // mostraba un número distinto al de Bodega.
+  //
+  // `staleTime: 0` + `refetchOnMount: 'always'`: abrir el formulario siempre
+  // trae stock fresco. La llave la comparten los managers de Bodega vía
+  // `invalidateStockDependentQueries`, así que también se actualiza en vivo.
   const { data: inventoryItems = [], isLoading } = useQuery({
-    queryKey: ['inventory-items-for-sales'],
+    queryKey: inventoryQueryKeys.salesSelector,
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async (): Promise<InventoryItem[]> => {
       const { data, error } = await supabase
         .from('inventory_items')
@@ -90,18 +105,14 @@ export const ProductSalesSection = ({
           sale_markup_percent,
           sale_price_fixed,
           unit_of_measure,
-          inventory_stock(current_quantity)
+          inventory_stock(current_quantity, reserved_quantity, available_quantity)
         `)
         .eq('is_active', true);
 
       if (error) throw error;
 
       return data.map(item => {
-        // Sum stock from all locations for this item
-        const totalStock = item.inventory_stock?.reduce(
-          (sum: number, stock: any) => sum + (stock.current_quantity || 0),
-          0
-        ) || 0;
+        const totalStock = sumAvailableStock(item.inventory_stock);
 
         return {
           id: item.id,
@@ -161,10 +172,28 @@ export const ProductSalesSection = ({
     hydratedRef.current = true;
   }, [initialItems, isLoading, initialItemsLoading, inventoryItems, salesItems.length, onSalesItemsChange]);
 
-  const validateQuantity = (value: number, maxStock: number): boolean => {
+  /**
+   * `notify`: además del error en línea, avisa con toast. El toast se emite una
+   * sola vez por episodio de desborde (tipear "12" no debe disparar uno por
+   * tecla); se rearma cuando la cantidad vuelve a ser válida o cambia el
+   * producto.
+   */
+  const validateQuantity = (value: number, maxStock: number, notify = false): boolean => {
     const result = buildQuantitySchema(maxStock).safeParse(value);
-    setQuantityError(result.success ? null : result.error.issues[0].message);
-    return result.success;
+
+    if (result.success) {
+      setQuantityError(null);
+      quantityToastShownRef.current = false;
+      return true;
+    }
+
+    const message = result.error.issues[0].message;
+    setQuantityError(message);
+    if (notify && !quantityToastShownRef.current) {
+      toast.error(message);
+      quantityToastShownRef.current = true;
+    }
+    return false;
   };
 
   const addProduct = () => {
@@ -178,7 +207,7 @@ export const ProductSalesSection = ({
       return;
     }
 
-    if (!validateQuantity(quantity, selectedProduct.current_stock)) {
+    if (!validateQuantity(quantity, selectedProduct.current_stock, true)) {
       return;
     }
 
@@ -219,12 +248,21 @@ export const ProductSalesSection = ({
     toast.success('Producto eliminado de la venta');
   };
 
+  /**
+   * Stock vigente del producto según la última lectura de `inventory_stock`.
+   * `availableStock` de la línea es un valor congelado al momento de agregarla;
+   * para validar y para mostrar manda siempre el número vivo.
+   */
+  const liveStockFor = (productId: string, fallback: number): number =>
+    inventoryItems.find(p => p.id === productId)?.current_stock ?? fallback;
+
   const updateQuantity = (itemId: string, newQuantity: number) => {
     const item = salesItems.find(s => s.id === itemId);
     if (!item) return;
 
-    if (newQuantity > item.availableStock) {
-      toast.error(`Stock disponible: ${item.availableStock}`);
+    const availableStock = liveStockFor(item.productId, item.availableStock);
+    if (newQuantity > availableStock) {
+      toast.error(`Stock disponible en bodega: ${availableStock}`);
       return;
     }
 
@@ -308,6 +346,7 @@ export const ProductSalesSection = ({
               value={selectedProductId}
               onChange={(id) => {
                 setSelectedProductId(id);
+                quantityToastShownRef.current = false;
                 const product = inventoryItems.find(item => item.id === id);
                 if (product) validateQuantity(quantity, product.current_stock);
               }}
@@ -326,13 +365,17 @@ export const ProductSalesSection = ({
               onChange={(e) => {
                 const newQuantity = Math.max(1, parseInt(e.target.value) || 1);
                 setQuantity(newQuantity);
-                if (selectedProduct) validateQuantity(newQuantity, selectedProduct.current_stock);
+                if (selectedProduct) validateQuantity(newQuantity, selectedProduct.current_stock, true);
               }}
               disabled={disabled}
             />
-            {quantityError && (
+            {quantityError ? (
               <p className="text-sm text-destructive">{quantityError}</p>
-            )}
+            ) : selectedProduct ? (
+              <p className="text-xs text-muted-foreground">
+                Disponible: {selectedProduct.current_stock} {selectedProduct.unit_of_measure}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -408,7 +451,7 @@ export const ProductSalesSection = ({
                     <Input
                       type="number"
                       min="1"
-                      max={item.availableStock}
+                      max={liveStockFor(item.productId, item.availableStock)}
                       value={item.quantity}
                       onChange={(e) => updateQuantity(item.id, Math.max(1, parseInt(e.target.value) || 1))}
                       disabled={disabled}
@@ -433,7 +476,7 @@ export const ProductSalesSection = ({
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    {item.availableStock} {item.unitOfMeasure}
+                    {liveStockFor(item.productId, item.availableStock)} {item.unitOfMeasure}
                   </div>
 
                   <div>

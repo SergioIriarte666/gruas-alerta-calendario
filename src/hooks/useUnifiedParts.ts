@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 
 const logger = createLogger("useUnifiedParts");
@@ -288,10 +289,7 @@ export const useUnifiedPartsPurchase = () => {
     onSuccess: (_data) => {
       // Use centralized invalidation
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
@@ -324,8 +322,7 @@ export const useInventoryConsumption = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
       toast.success('Consumo de inventario registrado exitosamente');
     },
@@ -449,8 +446,7 @@ export const useMigrateUnsyncParts = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['inventory-sync-stats'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
       queryClient.invalidateQueries({ queryKey: ['bidirectional-sync-stats'] });
       
@@ -496,7 +492,7 @@ export const useMigrateConsumptionMovements = () => {
       
       // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['inventory-sync-stats'] });
       queryClient.invalidateQueries({ queryKey: ['bidirectional-sync-stats'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
@@ -543,8 +539,7 @@ export const useForceResyncPart = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['inventory-sync-stats'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
       
       if (data.success) {

@@ -7,6 +7,7 @@ import { useUniversalSync } from './useUniversalSync';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 
 const logger = createLogger("useSupplierPayments");
@@ -443,7 +444,8 @@ export const useSupplierPayments = () => {
       return payment as SupplierPayment;
     },
     onSuccess: () => {
-      invalidateAll();
+      // El pago puede registrar la pieza como entrada de bodega.
+      invalidateAll('with-inventory');
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
       toast.success('Pago creado exitosamente');
@@ -516,7 +518,7 @@ export const useSupplierPayments = () => {
       return typedPayment;
     },
     onSuccess: () => {
-      invalidateAll();
+      invalidateAll('with-inventory');
       toast.success('Pago actualizado exitosamente');
     },
     onError: (error) => {
@@ -581,9 +583,7 @@ export const useSupplierPayments = () => {
       invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateStockDependentQueries(queryClient);
       
       const message = variables.partDetails 
         ? 'Pago marcado como pagado - Se registró automáticamente en costos, piezas e inventario'

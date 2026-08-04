@@ -7,6 +7,7 @@ import { useUniversalSync } from './useUniversalSync';  // FASE 5
 import { businessClock } from '@/utils/businessClock';
 import { getBusinessTimestampBounds } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { inventoryQueryKeys, invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 import type { EntityKey } from '@/lib/entities';
 import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
 import {
@@ -304,7 +305,7 @@ const INVENTORY_SUPPLIER_SELECT = `
 // Hooks for inventory items
 export const useInventoryItems = () => {
   return useQuery({
-    queryKey: ['inventory-items'],
+    queryKey: inventoryQueryKeys.items,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_items')
@@ -320,7 +321,7 @@ export const useInventoryItems = () => {
 
 export const usePagedInventoryItems = (page: number, pageSize: number) => {
   return useQuery({
-    queryKey: ['inventory-items', 'paged', page, pageSize],
+    queryKey: [...inventoryQueryKeys.items, 'paged', page, pageSize],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -383,7 +384,7 @@ const applyStockLocationFilter = <T extends { in: (column: string, values: strin
 // Hooks for inventory stock
 export const useInventoryStock = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-stock', entityFilter],
+    queryKey: [...inventoryQueryKeys.stock, entityFilter],
     queryFn: async () => {
       const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
       if (locationIds && locationIds.length === 0) return [];
@@ -447,7 +448,7 @@ const fetchStockSummaries = async (
  */
 export const useLowStockItems = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['low-stock-items', entityFilter],
+    queryKey: [...inventoryQueryKeys.lowStock, entityFilter],
     queryFn: async (): Promise<ProductStockSummary[]> =>
       selectLowStock(await fetchStockSummaries(entityFilter)),
   });
@@ -456,7 +457,7 @@ export const useLowStockItems = (entityFilter: InventoryEntityFilter = 'all') =>
 /** Productos activos agotados que todavía no tienen mínimo cargado. */
 export const useOutOfStockWithoutMinimum = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['out-of-stock-no-minimum', entityFilter],
+    queryKey: [...inventoryQueryKeys.outOfStockWithoutMinimum, entityFilter],
     queryFn: async (): Promise<ProductStockSummary[]> =>
       selectOutOfStockWithoutMinimum(await fetchStockSummaries(entityFilter)),
   });
@@ -465,7 +466,7 @@ export const useOutOfStockWithoutMinimum = (entityFilter: InventoryEntityFilter 
 // Hooks for inventory movements
 export const useInventoryMovements = (limit = 50, entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-movements', limit, entityFilter],
+    queryKey: [...inventoryQueryKeys.movements, limit, entityFilter],
     queryFn: async () => {
       const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
       if (locationIds && locationIds.length === 0) return [];
@@ -489,7 +490,7 @@ export const useInventoryMovements = (limit = 50, entityFilter: InventoryEntityF
 
 export const useInventoryMovementsByReference = (reference: string | null) => {
   return useQuery({
-    queryKey: ['inventory-movements', 'reference', reference],
+    queryKey: [...inventoryQueryKeys.movements, 'reference', reference],
     queryFn: async () => {
       if (!reference) return [];
       
@@ -611,7 +612,7 @@ export const usePagedInventoryMovements = (
   filters: InventoryMovementQueryFilters = {},
 ) => {
   return useQuery({
-    queryKey: ['inventory-movements', 'paged', page, pageSize, filters],
+    queryKey: [...inventoryQueryKeys.movements, 'paged', page, pageSize, filters],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -727,7 +728,7 @@ export const useInventorySuppliers = () => {
 // Hook for inventory statistics
 export const useInventoryStats = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-stats', entityFilter],
+    queryKey: [...inventoryQueryKeys.stats, entityFilter],
     queryFn: async () => {
       // Get total items count
       let totalItems = 0;
@@ -927,8 +928,10 @@ export const useCreateInventoryMovement = () => {
       return data;
     },
     onSuccess: () => {
-      // FASE 5: Invalidar todas las queries relacionadas
-      invalidateAll();
+      // FASE 5: Invalidar todas las queries relacionadas.
+      // 'with-inventory' es obligatorio: sin el modo, invalidateAll sólo toca
+      // costos y el movimiento recién creado no se ve en ninguna vista de stock.
+      invalidateAll('with-inventory');
       toast.success('Movimiento de inventario registrado correctamente');
     },
     onError: createMutationErrorHandler({
@@ -958,8 +961,9 @@ export const useCreateInventoryItem = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      // El selector de Servicios lista `inventory_items`: un producto nuevo,
+      // renombrado o desactivado también le cambia el contenido.
+      invalidateStockDependentQueries(queryClient);
       toast.success('Producto agregado al inventario correctamente');
     },
     onError: createMutationErrorHandler({
@@ -990,8 +994,7 @@ export const useUpdateInventoryItem = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateStockDependentQueries(queryClient);
       toast.success('Producto actualizado correctamente');
     },
     onError: createMutationErrorHandler({
@@ -1028,11 +1031,7 @@ export const useMergeInventoryItems = () => {
       return data as unknown as MergeInventoryItemsResult;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      invalidateStockDependentQueries(queryClient);
       toast.success('Productos fusionados correctamente', {
         description: `${result.duplicate_items_merged} duplicado(s) consolidados en "${result.master_name}"`,
       });
@@ -1065,10 +1064,7 @@ export const useUpdateInventoryMovement = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['supplier-detail-inventory'] });
       toast.success('Movimiento actualizado correctamente');
     },
@@ -1097,10 +1093,8 @@ export const useCancelInventoryMovement = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      // Anular devuelve stock: el selector de Servicios tiene que verlo sin F5.
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['supplier-detail-inventory'] });
       toast.success('Movimiento anulado correctamente');
     },
@@ -1129,8 +1123,7 @@ export const useDeleteInventoryItem = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateStockDependentQueries(queryClient);
       toast.success('Producto desactivado correctamente');
     },
     onError: createMutationErrorHandler({

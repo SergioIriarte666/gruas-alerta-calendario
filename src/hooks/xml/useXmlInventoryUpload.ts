@@ -487,7 +487,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
         }
       }
 
-      invalidateAll();
+      invalidateAll('full');
       await refetchCritical();
       const importSuccessMessage = buildImportSuccessMessage({ importedCount, hasImmediateConsumption: Boolean(selectedCraneId), craneLabel: selectedCrane?.licensePlate || null });
       toast.success(importSuccessMessage.title, { description: importSuccessMessage.description });

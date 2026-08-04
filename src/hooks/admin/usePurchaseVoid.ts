@@ -178,7 +178,8 @@ export const useVoidPurchase = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['voidable-purchases'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-void-impact'] });
-      invalidateAll();
+      // La anulación revierte movimientos de bodega, no sólo el costo.
+      invalidateAll('full');
     },
     onError: (err: any) => {
       toast.error('No se pudo anular la compra', {

@@ -8,6 +8,7 @@ import type { SystemSettings, NotificationSettings } from '@/types/settings';
 import { defaultReportColumnConfig } from '@/types/reportColumnConfig';
 import type { Json } from '@/integrations/supabase/types';
 import { createLogger } from "@/lib/logger";
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 
 const logger = createLogger("useSystemSettings");
@@ -171,8 +172,8 @@ export const useSystemSettings = () => {
       }
 
       // El margen por defecto afecta el precio de venta sugerido en el
-      // catálogo y en "Productos a Vender"; refrescar ese cache.
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+      // catálogo y en "Productos a Vender"; refrescar ambos caches.
+      invalidateStockDependentQueries(queryClient);
 
       return { success: true };
     } catch (error) {

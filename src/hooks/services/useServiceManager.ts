@@ -6,6 +6,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 import { businessClock } from '@/utils/businessClock';
 import { normalizeLicensePlate } from '@/utils/licensePlate';
 import { planServiceCostChanges } from './serviceCostDiff';
@@ -1286,6 +1287,9 @@ export const useServiceManager = () => {
       
       await queryClient.invalidateQueries({ queryKey: ['services'] });
       await queryClient.invalidateQueries({ queryKey: ['costs'] });
+      // El servicio pudo tener venta de productos: sus salidas de bodega quedan
+      // desligadas (service_id → NULL) y cualquier vista de stock debe releer.
+      invalidateStockDependentQueries(queryClient);
     },
     onSuccess: () => {
       toast.success('Servicio eliminado correctamente');

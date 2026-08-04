@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { inventoryQueryKeys, invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 /**
  * FASE 5: Hook de Sincronización Universal
@@ -25,11 +26,8 @@ export const useUniversalSync = () => {
     queryClient.invalidateQueries({ queryKey: ['commissions'] });
 
     if (mode === 'with-inventory' || mode === 'full') {
-      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      // Incluye el selector de productos de Servicios. Ver @/lib/queryKeys/inventory.
+      invalidateStockDependentQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
       queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
@@ -58,12 +56,7 @@ export const useUniversalSync = () => {
    * Invalida queries específicas de inventario
    */
   const invalidateInventory = () => {
-    
-    queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+    invalidateStockDependentQueries(queryClient);
   };
 
   /**
@@ -96,8 +89,9 @@ export const useUniversalSync = () => {
     
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ['costs'] }),
-      queryClient.refetchQueries({ queryKey: ['inventory-stock'] }),
-      queryClient.refetchQueries({ queryKey: ['inventory-stats'] }),
+      queryClient.refetchQueries({ queryKey: inventoryQueryKeys.stock }),
+      queryClient.refetchQueries({ queryKey: inventoryQueryKeys.stats }),
+      queryClient.refetchQueries({ queryKey: inventoryQueryKeys.salesSelector }),
       queryClient.refetchQueries({ queryKey: ['supplier-invoices'] }),
       queryClient.refetchQueries({ queryKey: ['crane-consumptions'] }),
     ]);

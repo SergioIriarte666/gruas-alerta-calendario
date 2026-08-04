@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
+import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 
 
 const logger = createLogger("useInventorySyncWatcher");
@@ -46,8 +47,7 @@ export const useInventorySyncWatcher = (craneId?: string) => {
         },
         (payload) => {
           logger.debug('🔄 Real-time: Cambio en inventory_movements', payload);
-          queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+          invalidateStockDependentQueries(queryClient);
           queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
           queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
           queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
@@ -68,8 +68,7 @@ export const useInventorySyncWatcher = (craneId?: string) => {
         },
         (payload) => {
           logger.debug('🔄 Real-time: Cambio en inventory_items', payload);
-          queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+          invalidateStockDependentQueries(queryClient);
         }
       )
       .subscribe();
@@ -104,8 +103,7 @@ export const useInventorySyncWatcher = (craneId?: string) => {
           queryClient.invalidateQueries({ queryKey: ['purchase-invoice-items'] });
           queryClient.invalidateQueries({ queryKey: ['supplier-invoice-details'] });
           queryClient.invalidateQueries({ queryKey: ['costs'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+          invalidateStockDependentQueries(queryClient);
         }
       )
       .subscribe();
