@@ -8961,6 +8961,14 @@ export type Database = {
         Args: { p_version: string }
         Returns: undefined
       }
+      admin_add_checklist_item: {
+        Args: { p_label: string; p_section_id: string }
+        Returns: string
+      }
+      admin_add_checklist_section: {
+        Args: { p_template_id: string; p_title: string }
+        Returns: string
+      }
       admin_create_user: {
         Args: {
           p_client_id?: string
@@ -8969,6 +8977,18 @@ export type Database = {
           p_role: Database["public"]["Enums"]["app_role"]
         }
         Returns: string
+      }
+      admin_delete_checklist_section: {
+        Args: { p_confirm_items?: boolean; p_section_id: string }
+        Returns: number
+      }
+      admin_reorder_checklist_items: {
+        Args: { p_item_ids: string[]; p_section_id: string }
+        Returns: undefined
+      }
+      admin_reorder_checklist_sections: {
+        Args: { p_section_ids: string[]; p_template_id: string }
+        Returns: undefined
       }
       advance_operator_service_status: {
         Args: {

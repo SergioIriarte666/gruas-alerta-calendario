@@ -41,6 +41,7 @@ import { CategoriesTab } from "@/components/settings/CategoriesTab";
 import { CompanySettingsTab } from "@/components/settings/CompanySettingsTab";
 import { EmailNotificationSettingsSection } from "@/components/settings/EmailNotificationSettingsSection";
 import { InspectionEquipmentTab } from "@/components/settings/InspectionEquipmentTab";
+import { ChecklistMasterTab } from "@/components/settings/ChecklistMasterTab";
 import { NotificationSettingsTab } from "@/components/settings/NotificationSettingsTab";
 import { PaymentTermsSettings } from "@/components/settings/PaymentTermsSettings";
 import { RecoveryCenterTab } from "@/components/settings/RecoveryCenterTab";
@@ -180,6 +181,14 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
         description: "Checklist operativo por tipo de grúa.",
         icon: ClipboardCheck,
         keywords: ["equipamiento", "inspección", "checklist", "grúa"],
+      },
+      {
+        value: "checklist-master",
+        label: "Checklists de Seguridad",
+        description: "Ítems del pre-operacional y del control de fatiga.",
+        icon: ShieldCheck,
+        keywords: ["checklist", "seguridad", "pre-operacional", "fatiga", "faena"],
+        adminOnly: true,
       },
     ],
   },
@@ -414,6 +423,10 @@ const Settings = () => {
         return <CategoriesTab />;
       case "inspection-equipment":
         return <InspectionEquipmentTab />;
+      case "checklist-master":
+        // adminOnly en la definición esconde la entrada; este guard evita que se
+        // renderice si alguien llega por URL con el estado ya restaurado.
+        return isAdmin ? <ChecklistMasterTab /> : null;
       case "audit":
         return isAdmin ? <AuditTab /> : null;
       case "recovery":
