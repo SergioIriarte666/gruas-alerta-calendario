@@ -28,6 +28,7 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import * as XLSX from 'xlsx';
 import { createLogger } from "@/lib/logger";
+import { isCommissionCategory } from '@/lib/costCategories';
 
 const logger = createLogger("CostBatchUpdateModal");
 interface CostBatchUpdateModalProps {
@@ -216,6 +217,11 @@ export const CostBatchUpdateModal = ({
   const handleMarkPaidSubmit = async () => {
     setMarkPaidError('');
     setMarkPaidResult(null);
+
+    if (selectedCosts.some((cost) => isCommissionCategory(cost.cost_categories))) {
+      setMarkPaidError('Las comisiones se pagan exclusivamente mediante un lote en el módulo Comisiones.');
+      return;
+    }
 
     batchProgress.start('Marcando como pagados', selectedCosts.length);
 

@@ -116,12 +116,13 @@ UI: `src/components/admin/ServiceLiberationTool.tsx`
 
 **Caso de uso:** comisiones de operadores.
 
-- **Fuente canónica:** tabla `costs` con `category_id = comisiones`.
-- **Campos legacy** en `services.operator_id` y `services.operator_commission` se mantienen sincronizados pero **no son la fuente de verdad** — solo un caché para queries rápidas.
-- Cualquier reporte, dashboard o liquidación de comisiones consulta `costs`, nunca el campo legacy.
+- **Fuente canónica del monto y asignación:** `service_resources.commission_amount` dentro del servicio.
+- **Elegibilidad:** `operators.commission_exempt`, administrado desde el módulo Operadores.
+- **Proyección contable:** `costs`, categoría `Comisión Operador`; se genera no pagada sin filtrar por estado del servicio.
+- **Pago:** solo mediante un lote persistido en `commission_batches`, que asigna `payment_date` y `payment_batch_id` al costo en la misma transacción.
+- `services.operator_id` y `services.operator_commission` permanecen como compatibilidad para servicios legacy, no como una segunda fuente independiente.
 
-**Memoria de referencia:** [`commissions-overhaul`](mem://features/commissions/system-overhaul)
-**Sync legacy:** `src/hooks/services/useAdvancedServiceSync.ts → syncCommissionsRobust()`
+**Implementación:** `public.sync_service_commissions(uuid)` y triggers sobre `services`, `service_resources` y la elegibilidad en `operators`.
 
 ---
 
@@ -129,13 +130,9 @@ UI: `src/components/admin/ServiceLiberationTool.tsx`
 
 **Caso de uso:** detectar y corregir desfases entre tablas.
 
-El hook `useAdvancedServiceSync` ofrece dos funciones:
+La función `sync_service_commissions(serviceId)` compara el servicio, sus recursos y la proyección en `costs`. Los cambios relevantes disparan la reconciliación en base de datos; las comisiones ya pagadas quedan inmutables como hechos contables.
 
-- **`verifyConsistency(serviceId)`** — Compara `services` ↔ `service_resources` ↔ `costs` y devuelve la lista de issues encontrados (ej. "operador X tiene comisión en `service_resources` pero no en `costs`").
-- **`autoRepair(serviceId)`** — Si hay issues, ejecuta el sync robusto completo y los resuelve.
-
-**Implementación:** `src/hooks/services/useAdvancedServiceSync.ts`
-**RPC equivalente a nivel BD:** `validate_payment_system_integrity` y `fix_payment_system_inconsistencies`.
+La auditoría administrativa permite detectar diferencias históricas y la migración vigente ejecuta un backfill conservador de asignaciones legacy equivalentes.
 
 ---
 

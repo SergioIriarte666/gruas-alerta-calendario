@@ -9276,6 +9276,17 @@ export type Database = {
         }
         Returns: string
       }
+      create_commission_payment_batch: {
+        Args: {
+          p_commission_ids: string[]
+          p_notes?: string
+          p_operator_id: string
+          p_payment_date: string
+          p_payment_method?: string
+          p_payment_reference?: string
+        }
+        Returns: Json
+      }
       create_notification: {
         Args: {
           p_action_data?: Json

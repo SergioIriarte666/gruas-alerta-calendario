@@ -52,6 +52,7 @@ export const CostFormStep2 = ({
   const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
   const isPiezasYRepuestos = isMantenimiento && selectedSubcategory === 'Piezas y Repuestos';
   const isInventario = selectedCategory?.name === 'Inventario';
+  const isCommission = selectedCategory?.name === 'Comisión Operador';
   
   const hasSubcategories = subcategories.length > 0;
   const selectedSubcategoryRow = subcategories.find(s => s.name === selectedSubcategory);
@@ -149,6 +150,7 @@ export const CostFormStep2 = ({
         <CostAmountSection
           form={form}
           isServiceExpense={isGastosDeServicios}
+          isCommission={isCommission}
           onServiceExpenseClick={onServiceExpenseSelect}
           calculatedTotal={calculatedServiceTotal}
           showServiceButton={isNewCost && isGastosDeServicios && !!onServiceExpenseSelect}

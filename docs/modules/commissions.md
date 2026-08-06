@@ -3,7 +3,7 @@
 ## Resumen
 Modulo de **comisiones** para revisar comisiones calculadas, agruparlas por operador, exportarlas y generar lotes de pago.
 
-La fuente de datos vigente no es solo una RPC: el flujo actual usa `useCommissions` con estrategia `RPC + fallback a costs`.
+El servicio define la comisión en `service_resources`; `costs` es su proyección contable para listado y pago. El flujo de lectura usa `useCommissions` con estrategia `RPC + fallback a costs`.
 
 ## Entrypoints vigentes
 - Pagina: [Commissions](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Commissions.tsx)
@@ -32,7 +32,9 @@ Ademas integra:
 
 ## Datos y dependencias principales
 - RPC `get_commissions_with_details`
+- RPC transaccional `create_commission_payment_batch`
 - fallback sobre `costs` cuando la RPC falla o no retorna datos
+- tabla `commission_batches` para trazabilidad del lote
 - relacion con servicios y detalle desde `ServiceDetailsModal`
 
 ## Flujos vigentes
@@ -45,13 +47,20 @@ Ademas integra:
 - Ambas vistas soportan exportacion y acciones operativas relacionadas.
 
 ### 3. Lotes y pagos
-- Se pueden seleccionar registros y generar lotes de pago.
-- Existe edicion de fecha de pago para registros relacionados.
+- Toda comisión del servicio se proyecta inicialmente sin `payment_date`, independientemente del estado del servicio.
+- Se pueden seleccionar registros pendientes de un solo operador y generar un lote de pago persistente.
+- La creación del lote y el cambio a pagado ocurren en una única transacción.
+- La edición posterior de fecha solo acepta comisiones ya pagadas y conserva el identificador del lote original.
 
-### 4. Navegacion a servicio
+### 4. Elegibilidad
+- `operators.commission_exempt` define si el trabajador recibe comisiones.
+- Cambiar esa condición reconcilia automáticamente sus comisiones no pagadas.
+- Las ya pagadas se conservan como historial contable.
+
+### 5. Navegacion a servicio
 - Desde la tabla se puede abrir `ServiceDetailsModal`.
 - Ese detalle puede disparar sincronizacion relacionada con comisiones.
 
 ## Consideraciones de mantenimiento
 - No documentar `useCommissionSync` como eje principal si no participa de la UI actual.
-- Mantener claro que la fuente real es `RPC + fallback`, no solo RPC pura.
+- Mantener separadas la fuente operacional (`service_resources`) y la proyección contable/pago (`costs`).

@@ -257,7 +257,8 @@ Si no: queda en stock, se descuenta después con movimiento manual
 - Formulario rápido de costo (QuickCostForm) para registro express
 
 ### 9. Comisiones (`/commissions`)
-- Fuente única: tabla `costs` filtrada por categoría "Comisión Operador"
+- Fuente operacional: comisión configurada en el servicio (`service_resources`)
+- Proyección para listado y pago: tabla `costs`, categoría "Comisión Operador"
 - Vista "Todas" y "Por Operador"
 - Selección múltiple para crear lote de pago
 - Lotes de pago con método (efectivo, transferencia, cheque)
@@ -373,19 +374,20 @@ Si no: queda en stock, se descuenta después con movimiento manual
 ### Triggers SQL (PostgreSQL)
 
 ```sql
--- Al completar un servicio → crear comisión del operador en costs
-TRIGGER: generate_commission_on_service_completion
-  ON services AFTER UPDATE
-  WHEN NEW.status = 'completed' AND OLD.status != 'completed'
-  AND NEW.operator_commission > 0
-  → INSERT INTO costs (category='Comisión Operador', amount=operator_commission)
+-- Al configurar una comisión en el servicio → proyectarla no pagada en costs,
+-- sin depender del estado del servicio.
+TRIGGERS: trigger_services_commission_sync / trigger_service_resources_commission_sync
+  → sync_service_commissions(service_id)
 
--- Al insertar costo en categoría 'Comisión Operador' →
--- sincronizar con services.operator_commission
-TRIGGER: sync_commission_cost_to_service
-  ON costs AFTER INSERT
-  WHEN category = 'Comisión Operador'
-  → UPDATE services SET operator_commission = amount
+-- Al cambiar la elegibilidad desde Operadores → reconciliar los servicios del trabajador.
+TRIGGER: trigger_operator_commission_eligibility_sync
+  ON operators AFTER UPDATE OF commission_exempt
+  → sync_service_commissions(service_id)
+
+-- Solo el lote de Comisiones marca costos como pagados.
+RPC: create_commission_payment_batch
+  → INSERT commission_batches + UPDATE costs(payment_date, payment_batch_id)
+  en una única transacción
 
 -- Auditoría: capturar cambios en services, invoices, costs, closures
 TRIGGER: audit_log_trigger ON services/invoices/costs/closures

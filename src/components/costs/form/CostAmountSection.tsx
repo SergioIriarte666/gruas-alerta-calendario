@@ -14,6 +14,7 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 interface CostAmountSectionProps {
   form: UseFormReturn<CostFormValues>;
   isServiceExpense: boolean;
+  isCommission?: boolean;
   onServiceExpenseClick?: () => void;
   calculatedTotal?: number;
   showServiceButton?: boolean;
@@ -22,6 +23,7 @@ interface CostAmountSectionProps {
 export const CostAmountSection = ({ 
   form, 
   isServiceExpense, 
+  isCommission = false,
   onServiceExpenseClick, 
   calculatedTotal = 0,
   showServiceButton = false 
@@ -81,18 +83,23 @@ export const CostAmountSection = ({
             <FormControl>
               <Checkbox
                 checked={field.value}
+                disabled={isCommission}
                 onCheckedChange={(checked) => field.onChange(Boolean(checked))}
               />
             </FormControl>
             <div className="space-y-1">
               <Label
-                className="text-sm font-medium text-foreground !mt-0 cursor-pointer"
-                onClick={() => field.onChange(!field.value)}
+                className={`text-sm font-medium text-foreground !mt-0 ${isCommission ? '' : 'cursor-pointer'}`}
+                onClick={() => {
+                  if (!isCommission) field.onChange(!field.value);
+                }}
               >
                 Marcar como pagado
               </Label>
               <p className="text-xs text-muted-foreground">
-                Por defecto, se usa la fecha del costo. Puedes indicar abajo la fecha real si fue distinta.
+                {isCommission
+                  ? 'Las comisiones solo se pagan mediante un lote en el módulo Comisiones.'
+                  : 'Por defecto, se usa la fecha del costo. Puedes indicar abajo la fecha real si fue distinta.'}
               </p>
             </div>
           </FormItem>
@@ -113,6 +120,7 @@ export const CostAmountSection = ({
                 <DatePickerInput
                   value={field.value || ''}
                   onChange={(date) => field.onChange(date)}
+                  disabled={isCommission}
                 />
               </FormControl>
               <p className="text-xs text-muted-foreground">

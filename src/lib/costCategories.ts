@@ -4,7 +4,7 @@ import type { CostCategory } from '@/types/costs';
  * Categoría "Comisión Operador".
  *
  * Las comisiones tienen un dueño único: el trigger que las deriva de
- * service_resources al completar el servicio. Crearlas a mano como un costo
+ * service_resources al configurar el servicio, sin depender de su estado. Crearlas a mano como un costo
  * cualquiera produce dos filas para el mismo hecho —una que se recalcula sola y
  * otra que no— y así apareció "Comisión Juan Carlos Sanchez" duplicada en el
  * folio 3263006-1 el 27/07.
@@ -15,7 +15,7 @@ import type { CostCategory } from '@/types/costs';
 export const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
 
 export const COMMISSION_CATEGORY_NOTICE =
-  'Las comisiones se generan automáticamente al completar el servicio.';
+  'Las comisiones se generan desde el servicio y se pagan exclusivamente en el módulo Comisiones.';
 
 export const isCommissionCategory = (category: Pick<CostCategory, 'id' | 'name'>): boolean =>
   category.id === COMMISSION_CATEGORY_ID ||

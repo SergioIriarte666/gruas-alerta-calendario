@@ -62,6 +62,7 @@ export const CostFormInputs = ({
     const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
     const isPiezasYRepuestos = isMantenimiento && selectedSubcategory === 'Piezas y Repuestos';
     const isInventario = selectedCategory?.name === 'Inventario';  // FASE 3: Detectar categoría Inventario
+    const isCommission = selectedCategory?.name === 'Comisión Operador';
     
     // Determinar si la categoría tiene subcategorías predefinidas en DB
     const hasSubcategories = subcategories.length > 0;
@@ -186,6 +187,7 @@ export const CostFormInputs = ({
                     <CostAmountSection
                         form={form}
                         isServiceExpense={isGastosDeServicios}
+                        isCommission={isCommission}
                         onServiceExpenseClick={onServiceExpenseSelect}
                         calculatedTotal={calculatedServiceTotal}
                         showServiceButton={isNewCost && isGastosDeServicios && !!onServiceExpenseSelect}

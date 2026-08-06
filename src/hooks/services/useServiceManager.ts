@@ -989,6 +989,7 @@ export const useServiceManager = () => {
             
             if (deleteResourcesError) {
               logger.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
+              throw new Error(`No se pudo quitar la asignación anterior del operador: ${deleteResourcesError.message}`);
             }
           }
         }
@@ -1015,6 +1016,7 @@ export const useServiceManager = () => {
             
             if (updateResourceError) {
               logger.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
+              throw new Error(`No se pudo actualizar la comisión del operador: ${updateResourceError.message}`);
             }
           } else {
             // Crear nuevo registro
@@ -1031,6 +1033,7 @@ export const useServiceManager = () => {
             
             if (createResourceError) {
               logger.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
+              throw new Error(`No se pudo crear la asignación del operador: ${createResourceError.message}`);
             }
           }
         }

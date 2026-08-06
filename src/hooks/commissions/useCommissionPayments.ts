@@ -9,24 +9,21 @@ const logger = createLogger("useCommissionPayments");
 interface UpdateCommissionPaymentDateParams {
   commissionIds: string[];
   paymentDate: Date;
-  paymentBatchId?: string;
 }
 
 export const useCommissionPayments = () => {
   const queryClient = useQueryClient();
 
   const updatePaymentDateMutation = useMutation({
-    mutationFn: async ({ commissionIds, paymentDate, paymentBatchId }: UpdateCommissionPaymentDateParams) => {
+    mutationFn: async ({ commissionIds, paymentDate }: UpdateCommissionPaymentDateParams) => {
       logger.debug('🔄 [useCommissionPayments] Actualizando fechas de pago:', {
         commissionIds,
-        paymentDate,
-        paymentBatchId
+        paymentDate
       });
 
       const { data, error } = await supabase.rpc('update_commission_payment_date', {
         p_commission_ids: commissionIds,
         p_payment_date: formatForDatabase(paymentDate), // Usar utilidad de zona horaria
-        p_payment_batch_id: paymentBatchId
       });
 
       if (error) {

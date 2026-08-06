@@ -16,42 +16,9 @@ interface CreatePaymentBatchData {
 
 const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   logger.debug('📦 [usePaymentBatches] Datos recibidos:', JSON.stringify(data, null, 2));
-  
-  // Generate batch number
-  const batchNumber = `LOTE-${Date.now()}`;
-  
-  // Calculate total amount
-  const { data: commissions, error: commissionsError } = await supabase
-    .from('costs')
-    .select('amount')
-    .in('id', data.commission_ids);
-    
-  if (commissionsError) {
-    logger.error('❌ [usePaymentBatches] Error fetching commissions:', commissionsError);
-    throw new Error(`Error al obtener comisiones: ${commissionsError.message}`);
-  }
-  
-  if (!commissions || commissions.length === 0) {
-    throw new Error(`No se encontraron comisiones con los IDs proporcionados (${data.commission_ids.length} IDs)`);
-  }
-  
-  logger.debug(`✅ [usePaymentBatches] Encontradas ${commissions.length} comisiones de ${data.commission_ids.length} solicitadas`);
-  
-  const totalAmount = commissions.reduce((sum, c) => sum + Number(c.amount), 0);
-  
-  const batchData = {
-    batch_number: batchNumber,
-    operator_id: data.operator_id,
-    total_amount: totalAmount,
-    commission_count: data.commission_ids.length,
-    status: 'paid',
-    payment_method: data.payment_method,
-    payment_reference: data.payment_reference,
-    notes: data.notes,
-    commission_ids: data.commission_ids
-  };
-  
-  // Marcar comisiones como pagadas usando la fecha seleccionada por el usuario
+
+  // El lote y el pago se crean juntos en BD. Así no puede existir un lote sin
+  // costos pagados ni costos pagados sin su lote persistente.
   let paymentDateFormatted: string;
   try {
     paymentDateFormatted = formatForDatabase(data.payment_date);
@@ -63,21 +30,23 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
     throw new Error(`Fecha de pago inválida: ${dateError.message}`);
   }
   logger.debug('📅 [usePaymentBatches] Fecha formateada:', paymentDateFormatted, 'desde:', data.payment_date);
-  
-  const { data: rpcResult, error: updateError } = await supabase.rpc('update_commission_payment_date', {
+
+  const { data: rpcResult, error: updateError } = await supabase.rpc('create_commission_payment_batch', {
+    p_operator_id: data.operator_id,
     p_commission_ids: data.commission_ids,
     p_payment_date: paymentDateFormatted,
-    p_payment_batch_id: batchNumber,
+    p_payment_method: data.payment_method,
+    p_payment_reference: data.payment_reference,
+    p_notes: data.notes,
   });
     
   if (updateError) {
-    logger.error('❌ [usePaymentBatches] Error RPC update_commission_payment_date:', updateError);
-    throw new Error(`Error al actualizar comisiones: ${updateError.message}`);
+    logger.error('❌ [usePaymentBatches] Error RPC create_commission_payment_batch:', updateError);
+    throw new Error(`Error al crear el lote de pago: ${updateError.message}`);
   }
-  
-  logger.debug('✅ [usePaymentBatches] RPC result:', rpcResult);
-  
-  return batchData;
+
+  logger.debug('✅ [usePaymentBatches] Lote persistido:', rpcResult);
+  return rpcResult;
 };
 
 export const useCreatePaymentBatch = () => {

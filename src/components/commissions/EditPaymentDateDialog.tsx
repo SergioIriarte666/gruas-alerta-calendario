@@ -46,7 +46,6 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
     updateCommissionPaymentDate({
       commissionIds,
       paymentDate,
-      paymentBatchId: `EDIT-${Date.now()}` // ID único para el cambio
     }, {
       onSuccess: () => {
         toast.success(`Fechas actualizadas para ${commissions.length} comisión(es)`);
