@@ -137,4 +137,22 @@ describe('contrato del sistema de comisiones', () => {
       'throw new Error(`No se pudo quitar la asignación anterior del operador:',
     );
   });
+
+  it('filtra fechas localmente sin recargar las comisiones', () => {
+    const commissionsPage = readWorkspaceFile('src/pages/Commissions.tsx');
+    const commissionsHook = readWorkspaceFile(
+      'src/hooks/commissions/useCommissions.ts',
+    );
+    const useCommissionsBlock = commissionsHook.slice(
+      commissionsHook.indexOf('export const useCommissions ='),
+      commissionsHook.indexOf('export const useCommissionsByOperator ='),
+    );
+
+    expect(commissionsPage).toContain('useCommissions();');
+    expect(commissionsPage).not.toContain('useCommissions(filters)');
+    expect(useCommissionsBlock).toContain("queryKey: ['commissions']");
+    expect(useCommissionsBlock).toContain('queryFn: () => fetchCommissions()');
+    expect(useCommissionsBlock).not.toContain('dateFrom');
+    expect(useCommissionsBlock).not.toContain('dateTo');
+  });
 });

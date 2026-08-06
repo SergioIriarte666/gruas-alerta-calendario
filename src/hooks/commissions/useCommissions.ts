@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Commission, CommissionFilters } from '@/types/commissions';
-import { businessClock } from '@/utils/businessClock';
+import { Commission } from '@/types/commissions';
 import { createLogger } from "@/lib/logger";
 
 
@@ -346,17 +345,13 @@ const fetchCommissions = async (dateFrom?: string, dateTo?: string, operatorId?:
   }
 };
 
-export const useCommissions = (filters?: CommissionFilters) => {
-  const dateFrom = filters?.date_from 
-    ? businessClock.format(filters.date_from, 'yyyy-MM-dd')
-    : undefined;
-  const dateTo = filters?.date_to
-    ? businessClock.format(filters.date_to, 'yyyy-MM-dd')
-    : undefined;
-
+export const useCommissions = () => {
   return useQuery<Commission[], Error>({
-    queryKey: ['commissions', { dateFrom, dateTo }],
-    queryFn: () => fetchCommissions(dateFrom, dateTo),
+    // El conjunto es pequeño y la pantalla ya aplica todos los filtros en memoria.
+    // Mantener una clave estable evita una recarga de varias consultas cada vez
+    // que el usuario cambia una fecha.
+    queryKey: ['commissions'],
+    queryFn: () => fetchCommissions(),
   });
 };
 
