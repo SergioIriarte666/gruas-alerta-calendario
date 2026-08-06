@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { BellOff, BellRing, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,7 @@ export const ClientNotificationsToggle = ({
   initialEnabled = null,
   className,
 }: ClientNotificationsToggleProps) => {
+  const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState<boolean | null>(initialEnabled);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -66,6 +68,7 @@ export const ClientNotificationsToggle = ({
       // que enciende envíos a terceros no se da por bueno con el optimismo del
       // cliente.
       await refresh();
+      await queryClient.invalidateQueries({ queryKey: ['service-change-history', serviceId] });
       toast.success(next
         ? 'Notificaciones al cliente activadas'
         : 'Notificaciones al cliente desactivadas');

@@ -94,6 +94,21 @@ La pagina puede abrir o filtrarse desde:
 - Incluye historial de cambios, vehiculo e informacion relacionada.
 - Puede disparar sincronizacion silenciosa de comisiones.
 
+La pestana **Cambios** se alimenta de `service_change_history` mediante triggers
+de base de datos:
+
+- `track_service_changes` registra creacion, eliminacion y cambios de los datos
+  operativos, comerciales, vehiculares, de ubicacion, custodia y facturacion del
+  servicio.
+- El evento de creacion conserva un snapshot de los valores iniciales.
+- `track_service_item_changes` registra altas, modificaciones y eliminaciones
+  del desglose (`service_items`).
+- `track_service_resource_changes` registra altas, bajas, rol, condicion de
+  principal y comision de operadores desde `service_resources`, su fuente
+  vigente.
+- Los cambios se agrupan por `event_id`, muestran autor y fecha, y la UI invalida
+  la consulta de historial inmediatamente despues de guardar.
+
 ## Consideraciones de mantenimiento
 - Si un cambio toca la pagina de servicios, revisar siempre `useServicesPage` antes de asumir que el estado vive en componentes sueltos.
 - Documentar por separado los flujos realmente montados en `/services` y tooling o componentes legacy.

@@ -1220,6 +1220,7 @@ export const useServiceManager = () => {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['services'] }),
           queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', id] }),
+          queryClient.invalidateQueries({ queryKey: ['service-change-history', id] }),
           queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
           queryClient.invalidateQueries({ queryKey: ['costs'] }),
           queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
