@@ -235,8 +235,10 @@ const addCost = async (costData: CostFormData) => {
   logger.debug('[useCosts - addCost] Attempting to create cost with data:', costData);
   
   try {
-    // Get current user for created_by
-    const { data: { user } } = await supabase.auth.getUser();
+    // La sesión ya está en memoria en el navegador. Evitar getUser() aquí
+    // elimina una solicitud de red secuencial antes de insertar el costo.
+    // La identidad sigue siendo validada por el JWT y las políticas RLS.
+    const { data: { session } } = await supabase.auth.getSession();
     
     // VALIDACIÓN ROBUSTA DE DATOS REQUERIDOS
     if (!costData.category_id) {
@@ -290,7 +292,7 @@ const addCost = async (costData: CostFormData) => {
       purchase_quantity: costData.purchase_quantity,
       purchase_unit_cost: costData.purchase_unit_cost,
       immediate_consumption: costData.immediate_consumption || false,
-      created_by: user?.id || null,
+      created_by: session?.user.id || null,
       // FASE 3: Campos para sincronización con proveedores
       supplier_id: costData.supplier_id || null,
       payment_date: costData.payment_date || null,

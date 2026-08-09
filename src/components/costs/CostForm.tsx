@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Cost, CostFormData } from '@/types/costs';
+import { Cost, CostFormData, CostSubcategory } from '@/types/costs';
 import { useAddCost, useUpdateCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
@@ -58,7 +58,9 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
     const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [calculatedServiceTotal, setCalculatedServiceTotal] = useState(0);
     const [receiptUrls, setReceiptUrls] = useState<string[]>([]);
+    const [isSubmitStarting, setIsSubmitStarting] = useState(false);
     const isInitialMount = useRef(true);
+    const submissionLockRef = useRef(false);
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, operationalCranes, loading: isLoadingCranes } = useCranes();
@@ -178,6 +180,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
         if (isOpen) {
             setCurrentStep(1);
             isInitialMount.current = true; // reset para la próxima apertura
+            submissionLockRef.current = false;
+            setIsSubmitStarting(false);
         }
     }, [isOpen]);
 
@@ -360,76 +364,82 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
         }
     }, [cost, prefilledData, reset, isOpen]);
     
+    const finishSubmission = () => {
+        submissionLockRef.current = false;
+        setIsSubmitStarting(false);
+    };
+
+    const rejectSubmission = (step: number, title: string, description: string) => {
+        toast.error(title, { description });
+        setCurrentStep(step);
+        finishSubmission();
+    };
+
     const onSubmit = async (values: CostFormValues) => {
         try {
             if (!values.category_id) {
-                toast.error("Campo Requerido", { description: "Debe seleccionar una categoría" });
-                setCurrentStep(1);
-                return;
+                return rejectSubmission(1, "Campo Requerido", "Debe seleccionar una categoría");
             }
             
             if (!values.description || values.description.trim() === '') {
-                toast.error("Campo Requerido", { description: "La descripción es obligatoria" });
-                setCurrentStep(1);
-                return;
+                return rejectSubmission(1, "Campo Requerido", "La descripción es obligatoria");
             }
             
             const validAmount = typeof values.amount === 'number' ? values.amount : parseFloat(String(values.amount)) || 0;
             if (validAmount <= 0) {
-                toast.error("Valor Inválido", { description: "El monto debe ser mayor a 0" });
-                setCurrentStep(2);
-                return;
+                return rejectSubmission(2, "Valor Inválido", "El monto debe ser mayor a 0");
             }
 
             if (values.subcategory) {
-                const { data: subcategoryConfig, error: subcategoryError } = await supabase
-                    .from('cost_subcategories')
-                    .select('requires_crane, requires_operator, requires_supplier, requires_document, requires_location, requires_other_reason, routes_to_inventory')
-                    .eq('category_id', values.category_id)
-                    .eq('name', values.subcategory)
-                    .maybeSingle();
+                // La configuración ya se carga al pasar por el paso 2. Reutilizarla
+                // evita una consulta de red adicional justo después de pulsar Guardar.
+                const cachedSubcategories = queryClient.getQueryData<CostSubcategory[]>([
+                    'cost-subcategories',
+                    values.category_id,
+                ]);
+                let subcategoryConfig = cachedSubcategories?.find(
+                    subcategory => subcategory.name === values.subcategory,
+                );
+                let subcategoryError: unknown = null;
+
+                // Fallback para aperturas con datos precargados donde el paso 2 no
+                // alcanzó a poblar la caché antes de guardar.
+                if (cachedSubcategories === undefined) {
+                    const result = await supabase
+                        .from('cost_subcategories')
+                        .select('requires_crane, requires_operator, requires_supplier, requires_document, requires_location, requires_other_reason, routes_to_inventory')
+                        .eq('category_id', values.category_id)
+                        .eq('name', values.subcategory)
+                        .maybeSingle();
+                    subcategoryConfig = result.data as CostSubcategory | undefined;
+                    subcategoryError = result.error;
+                }
 
                 if (!subcategoryError && subcategoryConfig) {
                     if (subcategoryConfig.requires_crane && !values.crane_id) {
-                        toast.error("Campo Requerido", { description: "Debe seleccionar una grúa" });
-                        setCurrentStep(3);
-                        return;
+                        return rejectSubmission(3, "Campo Requerido", "Debe seleccionar una grúa");
                     }
                     if (subcategoryConfig.requires_operator && !values.operator_id) {
-                        toast.error("Campo Requerido", { description: "Debe seleccionar un operador" });
-                        setCurrentStep(3);
-                        return;
+                        return rejectSubmission(3, "Campo Requerido", "Debe seleccionar un operador");
                     }
                     if (subcategoryConfig.requires_supplier && !values.supplier_id) {
-                        toast.error("Campo Requerido", { description: "Debe seleccionar un proveedor" });
-                        setCurrentStep(3);
-                        return;
+                        return rejectSubmission(3, "Campo Requerido", "Debe seleccionar un proveedor");
                     }
                     if (subcategoryConfig.requires_location && !values.location_text) {
-                        toast.error("Campo Requerido", { description: "Debe indicar ubicación o tramo" });
-                        setCurrentStep(2);
-                        return;
+                        return rejectSubmission(2, "Campo Requerido", "Debe indicar ubicación o tramo");
                     }
                     if (subcategoryConfig.requires_document && !values.document_number) {
-                        toast.error("Campo Requerido", { description: "Debe indicar número de documento" });
-                        setCurrentStep(2);
-                        return;
+                        return rejectSubmission(2, "Campo Requerido", "Debe indicar número de documento");
                     }
                     if (subcategoryConfig.requires_other_reason && !values.other_reason) {
-                        toast.error("Campo Requerido", { description: "Debe seleccionar un motivo" });
-                        setCurrentStep(2);
-                        return;
+                        return rejectSubmission(2, "Campo Requerido", "Debe seleccionar un motivo");
                     }
                     if (subcategoryConfig.routes_to_inventory) {
                         if (!values.purchase_quantity || values.purchase_quantity <= 0) {
-                            toast.error("Campo Requerido", { description: "Debe indicar cantidad de compra" });
-                            setCurrentStep(2);
-                            return;
+                            return rejectSubmission(2, "Campo Requerido", "Debe indicar cantidad de compra");
                         }
                         if (!values.purchase_unit_cost || values.purchase_unit_cost <= 0) {
-                            toast.error("Campo Requerido", { description: "Debe indicar costo unitario" });
-                            setCurrentStep(2);
-                            return;
+                            return rejectSubmission(2, "Campo Requerido", "Debe indicar costo unitario");
                         }
                     }
                 }
@@ -447,41 +457,33 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             const requiresInventorySync = !isFinancialCategory && (isInventoryCategory || values.immediate_consumption === true);
             if (requiresInventorySync) {
                 if (!values.purchase_quantity || values.purchase_quantity <= 0) {
-                    toast.error("Cantidad requerida", {
-                        description: "Para registrar entrada a bodega y consumo inmediato, debes indicar la cantidad comprada.",
-                    });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(
+                        2,
+                        "Cantidad requerida",
+                        "Para registrar entrada a bodega y consumo inmediato, debes indicar la cantidad comprada.",
+                    );
                 }
                 if (!values.purchase_unit_cost || values.purchase_unit_cost <= 0) {
-                    toast.error("Precio unitario requerido", {
-                        description: "Debes indicar el precio unitario para sincronizar con bodega.",
-                    });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(
+                        2,
+                        "Precio unitario requerido",
+                        "Debes indicar el precio unitario para sincronizar con bodega.",
+                    );
                 }
             }
             
             if (values.subcategory === 'Piezas y Repuestos') {
                 if (!values.part_name || values.part_name.trim() === '') {
-                    toast.error("Campo Requerido", { description: "El nombre de la pieza es obligatorio" });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(2, "Campo Requerido", "El nombre de la pieza es obligatorio");
                 }
                 if (!values.supplier || values.supplier.trim() === '') {
-                    toast.error("Campo Requerido", { description: "El proveedor es obligatorio" });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(2, "Campo Requerido", "El proveedor es obligatorio");
                 }
                 if (!values.quantity || values.quantity <= 0) {
-                    toast.error("Valor Inválido", { description: "La cantidad debe ser mayor a 0" });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(2, "Valor Inválido", "La cantidad debe ser mayor a 0");
                 }
                 if (!values.unit_price || values.unit_price <= 0) {
-                    toast.error("Valor Inválido", { description: "El precio unitario debe ser mayor a 0" });
-                    setCurrentStep(2);
-                    return;
+                    return rejectSubmission(2, "Valor Inválido", "El precio unitario debe ser mayor a 0");
                 }
             }
             
@@ -519,6 +521,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
                     onSuccess: async (_data) => {
+                        finishSubmission();
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
@@ -611,6 +614,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                         }
                     },
                     onError: (error) => {
+                        finishSubmission();
                         const errorMessage = error?.message || 'Error desconocido';
                         toast.error("Error al Actualizar", { 
                             description: `No se pudo actualizar el costo: ${errorMessage}` 
@@ -620,6 +624,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             } else {
                 addCost(submissionData, {
                     onSuccess: async (data) => {
+                        finishSubmission();
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
@@ -698,6 +703,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                         onClose();
                     },
                     onError: (error) => {
+                        finishSubmission();
                         const errorMessage = error?.message || 'Error desconocido';
                         toast.error("Error al Agregar", { 
                             description: `No se pudo registrar el nuevo costo: ${errorMessage}` 
@@ -706,11 +712,22 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 });
             }
         } catch (validationError: unknown) {
+            finishSubmission();
             const err = validationError as { message?: string };
             toast.error("Error de Validación", { 
                 description: err.message || "Revise los datos ingresados" 
             });
         }
+    };
+
+    const handleSave = () => {
+        if (submissionLockRef.current || isAdding || isUpdating) return;
+
+        // El bloqueo y el indicador se activan antes de cualquier validación o
+        // consulta así el primer clic siempre obtiene respuesta visual inmediata.
+        submissionLockRef.current = true;
+        setIsSubmitStarting(true);
+        void form.handleSubmit(onSubmit, finishSubmission)();
     };
 
     const handleNextStep = () => {
@@ -725,7 +742,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
         }
     };
 
-    const isSubmitting = isAdding || isUpdating;
+    const isSubmitting = isSubmitStarting || isAdding || isUpdating;
 
     return (
         <>
@@ -854,7 +871,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                             type="button"
                                                             variant="outline"
                                                             disabled={isSubmitting}
-                                                            onClick={form.handleSubmit(onSubmit)}
+                                                            onClick={handleSave}
+                                                            aria-busy={isSubmitting}
                                                             className="gap-2 border-success/30 text-success-text hover:bg-success-soft"
                                                         >
                                                             {isSubmitting ? (
@@ -878,7 +896,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                         <Button
                                                             type="button"
                                                             disabled={isSubmitting}
-                                                            onClick={form.handleSubmit(onSubmit)}
+                                                            onClick={handleSave}
+                                                            aria-busy={isSubmitting}
                                                             className="gap-2"
                                                         >
                                                             {isSubmitting ? (
