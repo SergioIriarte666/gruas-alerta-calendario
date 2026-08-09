@@ -8,6 +8,7 @@ import { createLogger } from '@/lib/logger';
 import { operatorServicesKeys } from './operatorServicesQueryKeys';
 import { cacheOperatorServices, getCachedOperatorServices } from '@/utils/operatorOffline';
 import { syncOperatorWidgets } from '@/native/operatorWidget';
+import { OPERATOR_HIDDEN_STATUSES_POSTGREST } from '@/constants/operatorVisibility';
 
 const logger = createLogger('useOperatorServices');
 
@@ -119,14 +120,15 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
 
     logger.debug('Found operator:', operatorData.id);
 
-    const statusFilter = ['pending', 'in_progress', 'inspection_completed', 'completed'] as const;
-
+    // Se excluye por lo que ya NO se puede trabajar, no por estado comercial:
+    // un 'quoted' con operador asignado es un servicio que hay que salir a
+    // hacer. Ver OPERATOR_HIDDEN_SERVICE_STATUSES.
     const [{ data: directServices, error: directError }, { data: resourceServices, error: resourceServicesError }] = await Promise.all([
       supabase
         .from('services')
         .select(OPERATOR_SERVICES_SELECT)
         .eq('operator_id', operatorData.id)
-        .in('status', statusFilter)
+        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
         .order('service_date', { ascending: true }),
       // Servicios asignados vía service_resources (multi-operador), filtrados server-side
       // para nunca traer el historial completo del operador (puede tener cientos de filas).
@@ -135,7 +137,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         .select(`${OPERATOR_SERVICES_SELECT}, service_resources!inner(operator_id, resource_type)`)
         .eq('service_resources.operator_id', operatorData.id)
         .eq('service_resources.resource_type', 'operator')
-        .in('status', statusFilter)
+        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
         .order('service_date', { ascending: true }),
     ]);
 

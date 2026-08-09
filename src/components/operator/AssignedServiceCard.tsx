@@ -22,6 +22,7 @@ import {
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 import { usePendingServiceHandoff } from '@/hooks/operator/useServiceHandoff';
 import { ServiceHandoffGate } from './ServiceHandoffGate';
+import { isStartableByOperator } from '@/constants/operatorVisibility';
 
 interface AssignedServiceCardProps {
   service: Service;
@@ -68,6 +69,11 @@ const StatusBadge = ({ status }: { status: Service['status'] }) => {
     in_progress:          { label: 'En curso',     className: 'bg-info-soft text-info-text' },
     inspection_completed: { label: 'Por entregar', className: 'bg-warning-soft text-warning-text' },
     completed:            { label: 'Completado',   className: 'bg-success-soft text-success-text' },
+    // Comerciales: el operador los ve y los puede iniciar; el chip explica
+    // por que el servicio aparece antes de estar confirmado con el cliente.
+    quoted:                 { label: 'Cotizado',    className: 'bg-muted text-muted-foreground' },
+    purchase_order_pending: { label: 'Esperando OC', className: 'bg-muted text-muted-foreground' },
+    with_purchase_order:    { label: 'Con OC',      className: 'bg-muted text-muted-foreground' },
   };
   const chip = map[status];
   if (!chip) return null;
@@ -345,8 +351,10 @@ export const AssignedServiceCard = ({
     );
   }
 
-  // PENDIENTE
-  if (status === 'pending') {
+  // POR INICIAR — incluye los estados comerciales ('quoted', OC pendiente...).
+  // Antes solo entraba 'pending' y un servicio cotizado caia al fallback: se
+  // veia en la lista pero no habia forma de arrancarlo.
+  if (isStartableByOperator(status)) {
     return (
       <div className={baseCard}>
         <CardHeader service={service} rightSlot={<ChevronRight className="size-4 flex-shrink-0 text-muted-foreground" />} />

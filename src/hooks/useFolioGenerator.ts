@@ -12,78 +12,46 @@ export const useFolioGenerator = () => {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Pide el folio a la secuencia de Postgres (RPC next_service_folio).
+   *
+   * Antes esto era un leer-y-escribir en dos viajes contra
+   * company_data.next_service_folio_number: dos formularios abiertos a la vez
+   * sacaban el mismo número, y bajar el contador reciclaba folios ya usados y
+   * borrados — así SRV-6887 se emitió dos veces.
+   *
+   * Ya no hay fallback por timestamp: ese camino fue el que produjo el folio
+   * anómalo SRV-826894 (`SRV-${Date.now().slice(-6)}`). Si la base no entrega
+   * folio, el error sube y el formulario no inventa uno.
+   */
   const generateNextFolio = useCallback(async (): Promise<string> => {
     setLoading(true);
     try {
-      logger.debug('🔄 Generating new folio with correlative numbering...');
-      
-      // Obtener el formato de folio y próximo número de la configuración de la empresa
-      const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
-      const nextNumber = settings.company?.nextServiceFolioNumber || 1000;
-      
-      logger.debug('📋 Using folio format:', folioFormat);
-      logger.debug('🔢 Next number from settings:', nextNumber);
-      
-      // Obtener los datos actuales de la empresa para usar la transacción
-      const { data: companyData, error: fetchError } = await supabase
-        .from('company_data')
-        .select('id, next_service_folio_number')
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('next_service_folio');
 
-      if (fetchError) {
-        logger.error('❌ Error fetching company data:', fetchError);
-        throw fetchError;
+      if (error) throw error;
+      if (!data || typeof data !== 'string') {
+        throw new Error('La base de datos no devolvió un folio válido');
       }
 
-      if (!companyData) {
-        throw new Error('No se encontraron datos de la empresa');
-      }
+      logger.debug('Folio emitido por la secuencia:', data);
 
-      // Usar el número más actualizado de la base de datos
-      const currentNumber = companyData.next_service_folio_number || 1000;
-      logger.debug('📊 Current number from database:', currentNumber);
-
-      // Generar el nuevo folio
-      const newFolio = folioFormat.replace('{number}', String(currentNumber).padStart(4, '0'));
-      logger.debug('✅ Generated new folio:', newFolio);
-
-      // Actualizar el próximo número en la base de datos
-      const { error: updateError } = await supabase
-        .from('company_data')
-        .update({ 
-          next_service_folio_number: currentNumber + 1,
-          updated_at: businessClock.nowISO()
-        })
-        .eq('id', companyData.id);
-
-      if (updateError) {
-        logger.error('❌ Error updating next folio number:', updateError);
-        throw updateError;
-      }
-
-      logger.debug('🔄 Updated next folio number to:', currentNumber + 1);
-      
-      // Disparar evento para actualizar la configuración en memoria
+      // La configuración en memoria muestra el correlativo: refrescarla.
       setTimeout(() => {
         window.dispatchEvent(new Event('settings-updated'));
       }, 100);
-      
-      return newFolio;
-    } catch (error: any) {
-      logger.error('❌ Error generating folio:', error);
-      toast.error("Error", {
-        description: "No se pudo generar el folio automáticamente.",
+
+      return data;
+    } catch (error: unknown) {
+      logger.error('Error generando folio:', error);
+      toast.error('No se pudo generar el folio', {
+        description: 'Reintenta en unos segundos. No se creará un folio provisorio.',
       });
-      // Retornar un folio por defecto basado en timestamp como fallback
-      const timestamp = Date.now();
-      const fallbackFolio = `SRV-${String(timestamp).slice(-4)}`;
-      logger.debug('🔧 Using fallback folio:', fallbackFolio);
-      return fallbackFolio;
+      throw error instanceof Error ? error : new Error('No se pudo generar el folio');
     } finally {
       setLoading(false);
     }
-  }, [settings.company]);
+  }, []);
 
   const validateFolioUniqueness = useCallback(async (folio: string): Promise<boolean> => {
     try {

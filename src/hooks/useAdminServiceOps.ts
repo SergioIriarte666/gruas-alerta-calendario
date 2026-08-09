@@ -1,5 +1,6 @@
 import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
+import { ServiceDeleteBlockedError } from '@/hooks/services/useServiceManager';
 
 interface ServiceInfo {
   id: string;
@@ -67,6 +68,17 @@ export function useAdminServiceOps() {
   };
 
   const deleteServiceCascade = async (serviceId: string): Promise<void> => {
+    // Misma guarda que el flujo normal: ser admin no vuelve recuperable una
+    // inspección firmada ni una sesión de GPS.
+    const { data: blockReason, error: guardError } = await supabase.rpc(
+      'service_delete_block_reason',
+      { p_service_id: serviceId },
+    );
+    if (guardError) throw guardError;
+    if (blockReason) {
+      throw new ServiceDeleteBlockedError(blockReason);
+    }
+
     const { error } = await supabase.rpc('delete_service_cascade', { p_service_id: serviceId });
     if (error) throw error;
   };

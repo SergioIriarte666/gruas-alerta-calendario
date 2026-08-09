@@ -26,6 +26,18 @@ interface UpdateServiceOptions {
   skipInvalidation?: boolean;
 }
 
+/**
+ * Un servicio con evidencia de terreno (inspección firmada, etapa de traslado
+ * alcanzada, sesiones GPS…) no se elimina: se anula. `reason` viene de
+ * `service_delete_block_reason()`, que es la fuente única del motivo.
+ */
+export class ServiceDeleteBlockedError extends Error {
+  constructor(public readonly reason: string) {
+    super(`No se puede eliminar el servicio: ${reason}`);
+    this.name = 'ServiceDeleteBlockedError';
+  }
+}
+
 const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
   if (!error) return fallback;
   if (typeof error === 'string' && error.trim()) return error;
@@ -1285,14 +1297,38 @@ export const useServiceManager = () => {
   // ELIMINAR SERVICIO - Usa RPC delete_service_cascade para eliminar en cascada
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      
-      
+      // Guarda de UI: el backend bloquea igual (assert_service_deletable +
+      // trigger a_guard_service_delete), pero preguntar antes permite decir QUÉ
+      // bloquea y ofrecer Anular en vez de un error crudo de Postgres.
+      const { data: blockReason, error: guardError } = await supabase.rpc(
+        'service_delete_block_reason',
+        { p_service_id: id },
+      );
+
+      if (guardError) {
+        logger.error('No se pudo verificar si el servicio es eliminable:', guardError);
+        throw new Error(
+          `No se pudo verificar si el servicio es eliminable: ${guardError.message}`,
+        );
+      }
+
+      if (blockReason) {
+        throw new ServiceDeleteBlockedError(blockReason);
+      }
+
       const { error } = await supabase.rpc('delete_service_cascade', {
         p_service_id: id
       });
 
       if (error) {
         logger.error('Error eliminando servicio:', error);
+        // El backend es la última palabra: si la guarda de UI se saltó (carrera
+        // con un operador en terreno), el mensaje sigue siendo el mismo.
+        if (error.message?.includes('service_delete_blocked')) {
+          throw new ServiceDeleteBlockedError(
+            error.message.replace(/^.*service_delete_blocked:\s*/, '').replace(/\s*\.\s*Anula.*$/, ''),
+          );
+        }
         throw new Error(`Error al eliminar el servicio: ${error.message}`);
       }
       
@@ -1308,6 +1344,17 @@ export const useServiceManager = () => {
     },
     onError: (error: Error) => {
       logger.error('Error eliminando servicio:', error);
+
+      if (error instanceof ServiceDeleteBlockedError) {
+        // El servicio tiene evidencia de terreno: eliminarlo la destruye. La
+        // salida correcta es anularlo, que conserva folio, inspección y GPS.
+        toast.error('Este servicio no se puede eliminar', {
+          description: `${error.reason}. Anúlalo (estado "Cancelado") para conservar la evidencia.`,
+          duration: 10000,
+        });
+        return;
+      }
+
       toast.error(error.message || 'Error al eliminar el servicio');
     }
   });

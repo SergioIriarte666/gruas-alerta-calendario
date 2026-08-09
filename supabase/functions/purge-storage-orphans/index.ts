@@ -18,6 +18,15 @@ type OrphanRow = {
 
 const BATCH_LIMIT = 200;
 
+// Cuarentena entre detección y borrado definitivo.
+//
+// El detector no escanea Storage: las filas las escribe la app al reemplazar o
+// reintentar una subida (registerStorageOrphan en src/utils/inspectionRecord.ts).
+// Aun así, una fila registrada por error borraba el archivo en la corrida de
+// esa misma madrugada, y las fotos y el PDF de terreno no se pueden rehacer.
+// Con la cuarentena hay una semana para notar el error y limpiar el ledger.
+const QUARANTINE_DAYS = 7;
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
   try {
@@ -33,10 +42,15 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
+  const quarantineCutoff = new Date(Date.now() - QUARANTINE_DAYS * 24 * 60 * 60 * 1000)
+    .toISOString();
+
   const { data, error } = await supabase
     .from("inspection_storage_orphans")
     .select("id,bucket_id,storage_path")
     .is("resolved_at", null)
+    // Solo lo detectado hace mas de QUARANTINE_DAYS: lo reciente espera.
+    .lt("detected_at", quarantineCutoff)
     .order("detected_at", { ascending: true })
     .limit(BATCH_LIMIT);
   if (error) return json({ error: error.message }, 500);
@@ -83,5 +97,11 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json({ processed: rows.length, purged, failed });
+  return json({
+    processed: rows.length,
+    purged,
+    failed,
+    quarantineDays: QUARANTINE_DAYS,
+    quarantineCutoff,
+  });
 });

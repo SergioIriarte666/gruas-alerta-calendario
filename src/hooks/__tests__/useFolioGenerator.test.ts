@@ -26,17 +26,21 @@ vi.mock('sonner', () => ({
 
 const mockSupabase = {
   from: vi.fn(),
+  rpc: vi.fn(),
 };
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: any[]) => mockSupabase.from(...args),
+    rpc: (...args: any[]) => mockSupabase.rpc(...args),
   },
 }));
 
 describe('useFolioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // El folio lo emite la secuencia de Postgres (next_service_folio).
+    mockSupabase.rpc.mockResolvedValue({ data: 'SRV-6904', error: null });
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         limit: vi.fn().mockReturnValue({
@@ -55,35 +59,7 @@ describe('useFolioGenerator', () => {
     });
   });
 
-  it('generates folio with correct format SRV-XXXX', async () => {
-    const { result } = renderHook(() => useFolioGenerator());
-
-    let generatedFolio: string | null = null;
-
-    await act(async () => {
-      generatedFolio = await result.current.generateNextFolio();
-    });
-
-    await waitFor(() => {
-      expect(generatedFolio).toMatch(/^SRV-\d{4}$/);
-    });
-  });
-
-  it('uses next number from database', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'company-uuid', next_service_folio_number: 2080 },
-            error: null,
-          }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    });
-
+  it('devuelve el folio que emitió la secuencia', async () => {
     const { result } = renderHook(() => useFolioGenerator());
 
     let folio = '';
@@ -91,104 +67,44 @@ describe('useFolioGenerator', () => {
       folio = await result.current.generateNextFolio();
     });
 
-    expect(folio).toBe('SRV-2080');
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('next_service_folio');
+    expect(folio).toBe('SRV-6904');
   });
 
-  it('pads number to 4 digits', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'company-uuid', next_service_folio_number: 42 },
-            error: null,
-          }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    });
-
-    const { result } = renderHook(() => useFolioGenerator());
-
-    let folio = '';
-    await act(async () => {
-      folio = await result.current.generateNextFolio();
-    });
-
-    expect(folio).toBe('SRV-0042');
-  });
-
-  it('increments next number after generation', async () => {
-    const updateSpy = vi.fn().mockResolvedValue({ error: null });
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'company-uuid', next_service_folio_number: 1050 },
-            error: null,
-          }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: updateSpy,
-      }),
-    });
-
+  it('no calcula el correlativo en el cliente', async () => {
     const { result } = renderHook(() => useFolioGenerator());
 
     await act(async () => {
       await result.current.generateNextFolio();
     });
 
-    expect(updateSpy).toHaveBeenCalled();
+    // Leer company_data y escribirlo +1 en dos viajes es lo que permitió que
+    // dos formularios sacaran el mismo folio y que borrar reciclara números.
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('company_data');
   });
 
-  it('handles fetch error gracefully and returns fallback', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: null,
-            error: { message: 'Connection error' },
-          }),
-        }),
-      }),
-    });
+  it('propaga el error en vez de inventar un folio por timestamp', async () => {
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
 
     const { result } = renderHook(() => useFolioGenerator());
 
-    let folio = '';
-    await act(async () => {
-      folio = await result.current.generateNextFolio();
-    });
-
-    expect(folio).toMatch(/^SRV-\d{4}$/);
+    await expect(
+      act(async () => {
+        await result.current.generateNextFolio();
+      }),
+    ).rejects.toThrow();
   });
 
-  it('handles update error gracefully and returns fallback', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        limit: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'company-uuid', next_service_folio_number: 1050 },
-            error: null,
-          }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: { message: 'Update error' } }),
-      }),
-    });
+  it('tampoco acepta una respuesta vacía como folio válido', async () => {
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
 
     const { result } = renderHook(() => useFolioGenerator());
 
-    let folio = '';
-    await act(async () => {
-      folio = await result.current.generateNextFolio();
-    });
-
-    expect(folio).toMatch(/^SRV-\d{4}$/);
+    await expect(
+      act(async () => {
+        await result.current.generateNextFolio();
+      }),
+    ).rejects.toThrow(/no devolvió un folio válido/i);
   });
 
   it('validates folio uniqueness returns true for unique', async () => {

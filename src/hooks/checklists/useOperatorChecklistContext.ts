@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { describeCrane } from '@/utils/checklists/checklistLogic';
+import { OPERATOR_HIDDEN_STATUSES_POSTGREST } from '@/constants/operatorVisibility';
 
 const logger = createLogger('Checklists');
 
@@ -100,7 +101,7 @@ export const useOperatorChecklistContext = (userId?: string | null) => {
         .from('services')
         .select('id, folio, license_plate, crane_id, service_date')
         .eq('operator_id', operatorId as string)
-        .in('status', ['pending', 'in_progress', 'inspection_completed'])
+        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
         .order('service_date', { ascending: false })
         .limit(20);
 

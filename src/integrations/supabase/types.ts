@@ -9338,6 +9338,14 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      service_delete_block_reason: {
+        Args: { p_service_id: string }
+        Returns: string | null
+      }
+      next_service_folio: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       detect_duplicate_crane_parts: {
         Args: { p_crane_id?: string }
         Returns: Json
