@@ -15,14 +15,17 @@ import {
 import { Crane, CraneType, CraneStatus } from '@/types';
 import { formatRut } from '@/utils/rutFormatter';
 import { CRANE_TYPE_OPTIONS } from '@/utils/craneType';
+import { Loader2 } from 'lucide-react';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 interface CraneFormProps {
   crane?: Crane;
-  onSubmit: (data: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (data: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => void | Promise<void>;
   onCancel: () => void;
 }
 
 export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
+  const { run: runCraneSave, isRunning: isSaving } = useSingleFlight();
   const [formData, setFormData] = useState({
     licensePlate: '',
     brand: '',
@@ -72,9 +75,13 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     }
   }, [crane]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      await runCraneSave(() => onSubmit(formData));
+    } catch {
+      // La mutación padre ya traduce y muestra el error correspondiente.
+    }
   };
 
   const handleChange = (field: string, value: string | boolean | CraneType | CraneStatus) => {
@@ -253,11 +260,13 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             variant="outline"
             className="border-border/70 bg-background/60"
             onClick={onCancel}
+            disabled={isSaving}
           >
             Cancelar
           </Button>
-          <Button type="submit">
-            {crane ? 'Actualizar' : 'Crear'} Grúa
+          <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+            {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isSaving ? 'Guardando...' : `${crane ? 'Actualizar' : 'Crear'} Grúa`}
           </Button>
         </DialogFooter>
       </form>

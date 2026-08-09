@@ -150,12 +150,11 @@ const Cranes = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // onError ya muestra el toast; el catch solo evita un unhandled rejection.
+  const handleSubmit = async (data: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingCrane) {
-      updateCrane(editingCrane.id, data).catch(() => {});
+      await updateCrane(editingCrane.id, data);
     } else {
-      createCrane(data).catch(() => {});
+      await createCrane(data);
     }
     setIsDialogOpen(false);
     setEditingCrane(undefined);

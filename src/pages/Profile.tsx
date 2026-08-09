@@ -17,6 +17,7 @@ import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
 import { DeleteAccountSection } from '@/components/account/DeleteAccountSection';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 
 const logger = createLogger("Profile");
@@ -43,6 +44,7 @@ const Profile = () => {
   const { user, updateUser, forceRefreshProfile } = useUser();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { run: runProfileSave, isRunning: isSavingProfile } = useSingleFlight();
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -115,7 +117,7 @@ const Profile = () => {
     }
   };
 
-  const onSubmit = async (data: ProfileFormData) => {
+  const onSubmit = (data: ProfileFormData) => runProfileSave(async () => {
     await updateUser({ name: data.name, email: data.email });
 
     if (data.newPassword) {
@@ -129,7 +131,7 @@ const Profile = () => {
     toast.success("Perfil actualizado", {
       description: "Los cambios se han guardado correctamente",
     });
-  };
+  });
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
@@ -309,9 +311,9 @@ const Profile = () => {
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
             <Button type="button" variant="outline" className="border-border/70 bg-card/70" onClick={() => navigate(-1)}>Cancelar</Button>
-            <Button type="submit">
-              <Save className="size-4 mr-2" />
-              Guardar Cambios
+            <Button type="submit" disabled={isSavingProfile} aria-busy={isSavingProfile}>
+              {isSavingProfile ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
+              {isSavingProfile ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
           </div>
         </form>

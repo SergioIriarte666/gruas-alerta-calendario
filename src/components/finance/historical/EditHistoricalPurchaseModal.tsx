@@ -15,6 +15,8 @@ import { format, parse } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { Loader2 } from 'lucide-react';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 
 const logger = createLogger("EditHistoricalPurchaseModal");
@@ -43,6 +45,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
   onOpenChange,
 }) => {
   const { updateInvoice } = usePurchaseInvoices();
+  const { run: runInvoiceSave, isRunning: isSaving } = useSingleFlight();
   
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
@@ -76,21 +79,23 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
     if (!invoice) return;
 
     try {
-      await updateInvoice({
-        id: invoice.id,
-        data: {
-          invoice_number: data.invoice_number,
-          issue_date: data.issue_date.toISOString(),
-          due_date: data.due_date.toISOString(),
-          amount: data.amount,
-          net_amount: data.net_amount,
-          tax_amount: data.tax_amount,
-          status: data.status,
-          product_service_description: data.product_service_description,
-          description: data.product_service_description,
-        },
+      await runInvoiceSave(async () => {
+        await updateInvoice({
+          id: invoice.id,
+          data: {
+            invoice_number: data.invoice_number,
+            issue_date: data.issue_date.toISOString(),
+            due_date: data.due_date.toISOString(),
+            amount: data.amount,
+            net_amount: data.net_amount,
+            tax_amount: data.tax_amount,
+            status: data.status,
+            product_service_description: data.product_service_description,
+            description: data.product_service_description,
+          },
+        });
+        onOpenChange(false);
       });
-      onOpenChange(false);
     } catch (error) {
       logger.error('Error updating invoice:', error);
     }
@@ -289,11 +294,12 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
                 Cancelar
               </Button>
-              <Button type="submit">
-                Guardar Cambios
+              <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+                {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {isSaving ? 'Guardando...' : 'Guardar Cambios'}
               </Button>
             </DialogFooter>
           </form>

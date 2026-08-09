@@ -14,6 +14,8 @@ import { useEditClosure } from '@/hooks/closures/useEditClosure';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 const editClosureSchema = z.object({
   dateFrom: z.string().min(1, 'Fecha de inicio es requerida'),
@@ -26,7 +28,7 @@ type EditClosureFormData = z.infer<typeof editClosureSchema>;
 
 interface EditClosureFormProps {
   closure: ServiceClosure;
-  onSubmit: (data: EditClosureFormData) => void;
+  onSubmit: (data: EditClosureFormData) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -37,6 +39,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
 }) => {
   const { clients } = useClients();
   const [localClosure, setLocalClosure] = useState<ServiceClosure>(closure);
+  const { run: runClosureSave, isRunning: isSaving } = useSingleFlight();
   
   const {
     availableServices,
@@ -86,8 +89,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
     return currentClientId;
   };
 
-  const handleFormSubmit = (data: EditClosureFormData) => {
-    // Update the closure with form data
+  const handleFormSubmit = (data: EditClosureFormData) => runClosureSave(async () => {
     const updatedClosure = {
       ...localClosure,
       dateRange: {
@@ -98,8 +100,8 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
       status: data.status
     };
     setLocalClosure(updatedClosure);
-    onSubmit(data);
-  };
+    await onSubmit(data);
+  });
 
   const handleServiceToggle = (serviceId: string, checked: boolean) => {
     const newServiceIds = checked 
@@ -252,11 +254,12 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Actualizar Cierre
+            <Button type="submit" disabled={isSaving} aria-busy={isSaving} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {isSaving ? 'Actualizando...' : 'Actualizar Cierre'}
             </Button>
           </div>
         </form>

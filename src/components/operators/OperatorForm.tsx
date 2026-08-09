@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Save, UserCog } from 'lucide-react';
+import { Loader2, Save, UserCog } from 'lucide-react';
 import { formatRut } from '@/utils/rutFormatter';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
@@ -16,18 +16,20 @@ import { Operator } from '@/types';
 import { createLogger } from "@/lib/logger";
 import { isTestUserEmail } from '@/lib/userValidation';
 import { useOperatorLinkedProfile } from '@/hooks/operators/useOperatorLinkedProfile';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 
 const logger = createLogger("OperatorForm");
 interface OperatorFormProps {
   operator?: Operator;
-  onSubmit: (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => void | Promise<void>;
   onCancel: () => void;
 }
 
 export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps) => {
   const { toast } = useToast();
   const [showPersistedDataAlert, setShowPersistedDataAlert] = React.useState(false);
+  const { run: runOperatorSave, isRunning: isSaving } = useSingleFlight();
   
   const [formData, setFormData] = React.useState({
     name: operator?.name || '',
@@ -61,15 +63,12 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
     }
   }, [operator, hasPersistedData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      onSubmit(formData);
-      clearFormData();
-      toast({
-        type: 'success',
-        title: 'Operador guardado',
-        description: 'El operador se ha guardado correctamente'
+      await runOperatorSave(async () => {
+        await onSubmit(formData);
+        clearFormData();
       });
     } catch (error) {
       logger.error('Error submitting operator form:', error);
@@ -312,11 +311,15 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             variant="outline"
             className="border-border/70 bg-background/60"
             onClick={onCancel}
+            disabled={isSaving}
           >
             Cancelar
           </Button>
-          <Button type="submit">
-            {operator ? 'Actualizar' : 'Crear'} {formData.operatorType === 'administrative' ? 'Personal' : 'Operador'}
+          <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+            {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isSaving
+              ? 'Guardando...'
+              : `${operator ? 'Actualizar' : 'Crear'} ${formData.operatorType === 'administrative' ? 'Personal' : 'Operador'}`}
           </Button>
         </div>
       </form>

@@ -29,7 +29,7 @@ import { useFleetCompliance } from '@/hooks/useFleetCompliance';
 
 const Operators = () => {
   const { data: operatorsData, isLoading: loading } = useOperatorsData();
-  const { createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperatorMutations();
+  const { createOperatorAsync, updateOperatorAsync, deleteOperator, toggleOperatorStatus } = useOperatorMutations();
   const { data: operatorsWithDocumentAlerts } = useOperatorDocumentAlerts();
   const { byResourceId: fleetComplianceByResourceId } = useFleetCompliance();
   
@@ -135,11 +135,11 @@ const Operators = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingOperator) {
-      updateOperator({ id: editingOperator.id, operatorData: data });
+      await updateOperatorAsync({ id: editingOperator.id, operatorData: data });
     } else {
-      createOperator(data);
+      await createOperatorAsync(data);
     }
     setIsDialogOpen(false);
     setEditingOperator(undefined);

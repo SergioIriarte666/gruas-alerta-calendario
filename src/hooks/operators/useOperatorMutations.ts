@@ -150,7 +150,9 @@ export const useOperatorMutations = () => {
 
   return {
     createOperator: createOperatorMutation.mutate,
+    createOperatorAsync: createOperatorMutation.mutateAsync,
     updateOperator: updateOperatorMutation.mutate,
+    updateOperatorAsync: updateOperatorMutation.mutateAsync,
     deleteOperator: deleteOperatorMutation.mutate,
     toggleOperatorStatus: toggleOperatorStatusMutation.mutate,
     isCreating: createOperatorMutation.isPending,
