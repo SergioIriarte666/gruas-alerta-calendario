@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { isOperatorMobileVariant } from '@/lib/appVariant';
 import { createLogger } from '@/lib/logger';
 import { startLiveUpdateService } from '@/services/liveUpdate';
+import { flushEarlyErrors } from '@/native/earlyErrorReporter';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
@@ -264,6 +265,16 @@ function AppContent() {
 
   useEffect(() => {
     void startLiveUpdateService();
+  }, []);
+
+  // Errores capturados por el script inline de index.html, antes de que React
+  // montara. Se vuelcan con retardo para no competir con el arranque: llegan
+  // igual, y el arranque es lo que no puede esperar.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void flushEarlyErrors();
+    }, 3000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Preload all route chunks after first render

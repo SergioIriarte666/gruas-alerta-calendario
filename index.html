@@ -2,6 +2,152 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
+    <!-- PRIMERA instrucción de la página, a propósito.
+
+         En cada arranque de la app iOS aparece en el log nativo un "JS Eval
+         error" seguido de "CapacitorUpdater reportWebViewError", ANTES de
+         "WebView loaded": la excepción ocurre mientras se evalúa el bundle, o
+         sea antes de que React monte y antes de que el ErrorBoundary exista.
+         Los handlers de main.tsx llegan tarde —son parte de ese mismo bundle—,
+         así que hoy el error se descarta y frontend_error_logs queda vacío.
+
+         Este script no pasa por el bundler ni importa nada: si el módulo
+         principal revienta al parsearse, esto ya está en pie. Todo va en
+         try/catch: el mecanismo que registra fallos no puede ser una fuente de
+         fallos. Y NO se llama preventDefault en ningún caso, para que el
+         comportamiento actual (la app se recupera sola) siga idéntico. -->
+    <script>
+      (function () {
+        var STORAGE_KEY = 'tms.earlyErrors.v1';
+        var MAX_QUEUED = 20;
+        var MAX_TEXT = 4000;
+
+        if (window.__earlyErrors) return;
+        window.__earlyErrors = [];
+
+        function cut(value) {
+          try {
+            if (value === undefined || value === null) return '';
+            return String(value).slice(0, MAX_TEXT);
+          } catch (e) { return ''; }
+        }
+
+        function describe(value) {
+          try {
+            if (typeof value === 'string') return value;
+            if (value && typeof value.message === 'string') return value.message;
+            return String(value);
+          } catch (e) { return 'unknown'; }
+        }
+
+        function stackOf(value) {
+          try { return value && value.stack ? String(value.stack) : ''; } catch (e) { return ''; }
+        }
+
+        // Espejo síncrono en localStorage: si el proceso muere entre la captura
+        // y el montaje de React, el arranque siguiente todavía lo encuentra.
+        function persist() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(window.__earlyErrors));
+          } catch (e) { /* almacenamiento lleno o bloqueado: se pierde el espejo, no el arranque */ }
+        }
+
+        function enqueue(entry) {
+          try {
+            if (window.__earlyErrors.length >= MAX_QUEUED) return;
+            entry.at = new Date().toISOString();
+            entry.userAgent = cut(navigator.userAgent);
+            entry.href = cut(location.href);
+            window.__earlyErrors.push(entry);
+            persist();
+          } catch (e) { /* nunca propagar */ }
+        }
+
+        // Fase de captura, igual que el reporter de Capgo: así se ven también
+        // los errores que algún handler de más abajo pudiera detener.
+        window.addEventListener('error', function (event) {
+          try {
+            var target = event && event.target;
+            if (target && target !== window && (target.src || target.href)) {
+              enqueue({
+                kind: 'early',
+                type: 'resource_error',
+                message: 'Recurso no cargado: ' + cut(target.src || target.href),
+                source: cut(target.src || target.href),
+              });
+              return;
+            }
+            enqueue({
+              kind: 'early',
+              type: 'javascript_error',
+              message: cut(describe((event && event.message) || (event && event.error))),
+              stack: cut(stackOf(event && event.error)),
+              source: cut(event && event.filename),
+              line: cut(event && event.lineno),
+              column: cut(event && event.colno),
+            });
+          } catch (e) { /* nunca propagar */ }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (event) {
+          try {
+            var reason = event && event.reason;
+            enqueue({
+              kind: 'early',
+              type: 'unhandled_rejection',
+              message: cut(describe(reason)),
+              stack: cut(stackOf(reason)),
+            });
+          } catch (e) { /* nunca propagar */ }
+        }, true);
+
+        // Capgo 8.50.2 NO expone un evento de error del WebView por addListener:
+        // inyecta su reporter con WKUserScript en atDocumentStart y le pasa el
+        // payload al nativo llamando a
+        // Capacitor.Plugins.CapacitorUpdater.reportWebViewError(payload).
+        // Envolver ese método es la única forma de leer el payload real —
+        // incluido su 'webview_unclean_restart', que el plugin sintetiza y no
+        // corresponde a ningún evento del DOM.
+        //
+        // El plugin reintenta su flush cada 250 ms hasta 40 veces esperando que
+        // exista el plugin, así que este sondeo alcanza a envolverlo antes.
+        var tries = 0;
+        function wrapUpdater() {
+          try {
+            var cap = window.Capacitor;
+            var plugin = cap && cap.Plugins ? cap.Plugins.CapacitorUpdater : null;
+            if (!plugin || typeof plugin.reportWebViewError !== 'function') {
+              if (tries++ < 60) setTimeout(wrapUpdater, 100);
+              return;
+            }
+            if (plugin.__tmsWrapped) return;
+
+            var original = plugin.reportWebViewError.bind(plugin);
+            plugin.reportWebViewError = function (payload) {
+              try {
+                enqueue({
+                  kind: 'capgo',
+                  type: cut(payload && payload.type) || 'unknown',
+                  message: cut(payload && payload.message),
+                  stack: cut(payload && payload.stack),
+                  source: cut(payload && payload.source),
+                  line: cut(payload && payload.line),
+                  column: cut(payload && payload.column),
+                  extra: (function () {
+                    try { return JSON.stringify(payload).slice(0, MAX_TEXT); } catch (e) { return ''; }
+                  })(),
+                });
+              } catch (e) { /* nunca propagar */ }
+              // Se delega SIEMPRE: el plugin tiene que seguir viendo lo suyo.
+              return original(payload);
+            };
+            plugin.__tmsWrapped = true;
+          } catch (e) { /* nunca propagar */ }
+        }
+        wrapUpdater();
+      })();
+    </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>TMS Grúas - Sistema de Gestión Profesional</title>
