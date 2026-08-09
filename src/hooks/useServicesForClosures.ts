@@ -6,6 +6,13 @@ import { useToast } from '@/components/ui/custom-toast';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import {
+  CLOSURE_CANDIDATE_STATUSES,
+  ClosureValueType,
+  EXCESS_ROW_SUFFIX,
+  getClosureValueKey,
+  isClosureValueAvailable,
+} from '@/utils/closureBilling';
 
 
 const logger = createLogger("useServicesForClosures");
@@ -16,11 +23,7 @@ interface UseServicesForClosuresOptions {
   enabled?: boolean;
 }
 
-export type ClosureValueType = 'covered' | 'excess';
-
-// Sufijo de id virtual para la fila de excedente de un servicio expandido.
-// Al guardar el cierre se traduce a value_type='excess' en closure_services.
-export const EXCESS_ROW_SUFFIX = '::excess';
+export { EXCESS_ROW_SUFFIX } from '@/utils/closureBilling';
 
 export interface ClosureServiceRow extends Service {
   _closureType?: ClosureValueType;
@@ -118,7 +121,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       let billableQuery = supabase
         .from('services')
         .select(baseServiceSelect)
-        .in('status', ['completed', 'with_purchase_order', 'failed']);
+        .in('status', [...CLOSURE_CANDIDATE_STATUSES]);
 
       let pendingQuery = supabase
         .from('services')
@@ -188,7 +191,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
         (closureServices || []).forEach((cs: any) => {
           usedServiceIds.add(cs.service_id);
-          usedKeys.add(`${cs.service_id}:${cs.value_type || 'covered'}`);
+          usedKeys.add(getClosureValueKey(cs.service_id, cs.value_type || 'covered'));
         });
       }
 
@@ -276,14 +279,14 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       // Expande servicios con excedente + tercero pagador en dos filas virtuales:
       // una 'covered' (cliente principal, monto cubierto) y una 'excess'
       // (tercero pagador, excedente). La fila excess usa id virtual `${id}::excess`.
-      const expandServiceRows = (item: any): { key: string; service: ClosureServiceRow }[] => {
+      const expandServiceRows = (item: any): ClosureServiceRow[] => {
         const base = mapServiceForClosure(item) as ClosureServiceRow;
         const excessAmount = Number(item.excess_amount || 0);
         const canSplit = Boolean(item.has_excess && item.third_party_client_id && excessAmount > 0);
         const disputeReason = disputedByServiceId.get(item.id);
 
         if (!canSplit) {
-          return [{ key: `${item.id}:covered`, service: { ...base, _disputeReason: disputeReason } }];
+          return [{ ...base, _disputeReason: disputeReason }];
         }
 
         const coveredRow: ClosureServiceRow = {
@@ -321,15 +324,23 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         };
 
         return [
-          { key: `${item.id}:covered`, service: coveredRow },
-          { key: `${item.id}:excess`, service: excessRow },
+          coveredRow,
+          excessRow,
         ];
       };
 
       const transformedBillable = billableServices
-        .flatMap(expandServiceRows)
-        .filter(row => !usedKeys.has(row.key))
-        .map(row => row.service);
+        .flatMap(item => expandServiceRows(item).filter(row =>
+          isClosureValueAvailable({
+            serviceId: item.id,
+            status: item.status,
+            hasExcess: Boolean(item.has_excess),
+            thirdPartyClientId: item.third_party_client_id,
+            excessAmount: Number(item.excess_amount || 0),
+            valueType: row._closureType || 'covered',
+            usedKeys,
+          })
+        ));
       const transformedPending = pendingServices.map(mapServiceForClosure);
 
       if (fetchId !== fetchIdRef.current) return;

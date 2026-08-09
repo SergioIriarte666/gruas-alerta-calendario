@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
-import { EXCESS_ROW_SUFFIX, ClosureValueType } from '@/hooks/useServicesForClosures';
+import { EXCESS_ROW_SUFFIX, ClosureValueType } from '@/utils/closureBilling';
 import { createLogger } from "@/lib/logger";
 
 

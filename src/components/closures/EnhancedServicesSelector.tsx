@@ -617,7 +617,7 @@ const EnhancedServicesSelector = ({
               disabled={filteredServices.length === 0}
             />
             <Label htmlFor="select-all-services" className="text-foreground cursor-pointer">
-              Servicios Completados Disponibles
+              Servicios y Excedentes Disponibles
             </Label>
           </div>
           {filteredServices.length > 0 && (
@@ -633,8 +633,8 @@ const EnhancedServicesSelector = ({
             <div className="text-center py-4">
               <p className="text-muted-foreground text-sm">
                 {clientId ? 
-                  `No hay servicios completados disponibles para este cliente` : 
-                  'No hay servicios completados disponibles para cierre'
+                  `No hay montos pendientes de cierre para este cliente` :
+                  'No hay servicios ni excedentes disponibles para cierre'
                 }
               </p>
               {services.length > 0 && clientId && (

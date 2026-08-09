@@ -4,7 +4,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useServicesForClosures, EXCESS_ROW_SUFFIX } from '@/hooks/useServicesForClosures';
+import { useServicesForClosures } from '@/hooks/useServicesForClosures';
+import { EXCESS_ROW_SUFFIX } from '@/utils/closureBilling';
 import { toast } from 'sonner';
 import { ServiceClosure, ClosureStatus } from '@/types';
 import DateRangePicker from './DateRangePicker';
@@ -334,7 +335,7 @@ const ClosureForm = ({
                         <Alert className="border border-primary/30 bg-primary-soft">
                           <AlertCircle className="size-4 text-primary" />
                           <AlertDescription className="text-muted-foreground">
-                            Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
+                            Solo se pueden incluir montos pendientes de facturar. En servicios con excedente, la cobertura y el excedente se cierran por separado.
                           </AlertDescription>
                         </Alert>
 
