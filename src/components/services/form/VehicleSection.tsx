@@ -28,20 +28,14 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
+import { findCatalogMatch, normalizeCatalogName as normalizeText } from '@/utils/vehicleCatalogMatch';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("VehicleSection");
+const autofillLogger = createLogger("VehicleAutofill");
 const RECENT_SERVICE_WINDOW_DAYS = 30;
 // --- Normalization utilities ---
-const normalizeText = (text: string): string =>
-  text
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
 const tokenize = (text: string): string[] =>
   normalizeText(text).split(/[\s\-_/]+/).filter(t => t.length > 0);
 
@@ -125,6 +119,10 @@ export const VehicleSection = ({
   const appliedPlatesRef = useRef<Set<string>>(new Set());
   const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
   const [pendingModel, setPendingModel] = useState<string | null>(null);
+  // Modelo leído del historial, a la espera de que carguen los modelos de la
+  // marca ya resuelta. A diferencia de `pendingModel` (sugerencia de la API)
+  // nunca crea catálogo: el historial es texto libre y puede venir sucio.
+  const [pendingHistoryModel, setPendingHistoryModel] = useState<string | null>(null);
   
   // Cross-verification states
   const [mismatchWarning, setMismatchWarning] = useState<{
@@ -195,6 +193,10 @@ export const VehicleSection = ({
       patentLoading
     ) return;
 
+    // Sin catálogo cargado no se puede decidir si la marca del historial calza:
+    // resolver ahora daría un falso "no existe". El efecto reintenta al llegar.
+    if (brandsLoading || brands.length === 0) return;
+
     const timer = setTimeout(() => {
       // 1. Search local service history first (free, instant)
       const localMatch = history?.[0]; // already filtered by license_plate in query
@@ -203,9 +205,44 @@ export const VehicleSection = ({
         logger.debug(`[PatentLookup] Local data for ${cleanPlate}: ${localMatch.vehicleBrand}`);
         searchedPlatesRef.current.add(cleanPlate);
         if (!vehicleBrand) {
-          onVehicleBrandChange(localMatch.vehicleBrand);
-          if (localMatch.vehicleModel) {
-            onVehicleModelChange(localMatch.vehicleModel);
+          // El historial es texto libre: resolver contra el catálogo ignorando
+          // espacios y casing, y setear el id del item que calzó — nunca el
+          // string crudo, que es lo que dejaba el Select en el placeholder.
+          const rawBrand = localMatch.vehicleBrand;
+          const rawModel = localMatch.vehicleModel;
+          const matchedBrand = findCatalogMatch(brands, rawBrand);
+
+          autofillLogger.debug('Marca desde historial', {
+            plate: cleanPlate,
+            raw: rawBrand,
+            normalized: normalizeText(rawBrand),
+            resolvedId: matchedBrand?.id ?? null,
+            resolvedName: matchedBrand?.name ?? null,
+          });
+
+          if (!matchedBrand) {
+            // Marca fuera de catálogo ('N/A', 'Volare'...): se dejan AMBOS
+            // campos vacíos. Rellenar sólo el modelo deja el formulario en un
+            // estado que el usuario no puede corregir (el Select de modelo
+            // está deshabilitado sin marca). No se marca como "aplicada": la
+            // patente sigue disponible para revalidar contra la API.
+            setPendingHistoryModel(null);
+            setSelectedBrandId('');
+            onVehicleBrandChange('');
+            onVehicleModelChange('');
+            toast.info(
+              `Los datos históricos de ${cleanPlate} están incompletos (marca "${rawBrand}"). Completa marca y modelo a mano.`
+            );
+            return;
+          }
+
+          // Orden: primero la marca; el modelo espera a que carguen los
+          // modelos de esa marca (efecto de pendingHistoryModel).
+          setSelectedBrandId(matchedBrand.id);
+          onVehicleBrandChange(matchedBrand.name);
+          setPendingHistoryModel(rawModel || null);
+          if (!rawModel) {
+            onVehicleModelChange('');
           }
           appliedPlatesRef.current.add(cleanPlate);
           toast.success('Datos del vehículo completados desde historial');
@@ -219,7 +256,7 @@ export const VehicleSection = ({
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [licensePlate, isEditing, patentLoading, skipLookup, history]);
+  }, [licensePlate, isEditing, patentLoading, skipLookup, history, brands, brandsLoading]);
 
   // Show suggestion dialog when patent data arrives and NO brand selected
   useEffect(() => {
@@ -299,6 +336,35 @@ export const VehicleSection = ({
     applyPendingModel();
   }, [pendingModel, selectedBrandId, models, modelsLoading, onVehicleModelChange, createModelAsync]);
 
+  // Modelo del historial: se aplica recién cuando los modelos de la marca ya
+  // resuelta están cargados. Sólo hace match, nunca crea catálogo.
+  useEffect(() => {
+    if (!pendingHistoryModel || !selectedBrandId || modelsLoading) return;
+
+    const matchedModel = findCatalogMatch(models, pendingHistoryModel);
+
+    autofillLogger.debug('Modelo desde historial', {
+      raw: pendingHistoryModel,
+      normalized: normalizeText(pendingHistoryModel),
+      brandId: selectedBrandId,
+      resolvedId: matchedModel?.id ?? null,
+      resolvedName: matchedModel?.name ?? null,
+    });
+
+    if (matchedModel) {
+      onVehicleModelChange(matchedModel.name);
+    } else {
+      // La marca sí calzó, así que el Select de modelo queda habilitado y el
+      // usuario puede elegir. No se inventa un modelo desde texto libre.
+      onVehicleModelChange('');
+      toast.info(
+        `El modelo "${pendingHistoryModel}" del historial no está en el catálogo de la marca. Selecciónalo a mano.`
+      );
+    }
+
+    setPendingHistoryModel(null);
+  }, [pendingHistoryModel, selectedBrandId, models, modelsLoading, onVehicleModelChange]);
+
   // Show history dialog when plate has services (only for new services)
   useEffect(() => {
     if (
@@ -333,15 +399,16 @@ export const VehicleSection = ({
     prevPlateRef.current = cleanPlate;
   }, [licensePlate]);
 
-  // Find brand ID from brand name when component loads
+  // Find brand ID from brand name when component loads.
+  // Comparación tolerante: el valor puede venir de un servicio guardado antes
+  // de la normalización ('Nissan ', 'NISSAN') y un match exacto lo perdería.
   useEffect(() => {
-    if (vehicleBrand && brands.length > 0) {
-      const brand = brands.find(b => b.name && b.name.toLowerCase() === vehicleBrand.toLowerCase());
-      if (brand) {
-        setSelectedBrandId(brand.id);
-      }
+    if (!vehicleBrand || brands.length === 0) return;
+    const brand = findCatalogMatch(brands, vehicleBrand);
+    if (brand && brand.id !== selectedBrandId) {
+      setSelectedBrandId(brand.id);
     }
-  }, [vehicleBrand, brands]);
+  }, [vehicleBrand, brands, selectedBrandId]);
 
   const handleConfirmContinue = () => {
     setHistoryConfirmed(true);
@@ -358,6 +425,9 @@ export const VehicleSection = ({
   const handleBrandChange = (brandId: string) => {
     const brand = brands.find(b => b.id === brandId);
     if (brand) {
+      // Un cambio manual de marca cancela cualquier autofill en vuelo: el
+      // modelo pendiente pertenecía a la marca anterior.
+      setPendingHistoryModel(null);
       setSelectedBrandId(brandId);
       onVehicleBrandChange(brand.name);
       // Reset model when brand changes
@@ -368,13 +438,15 @@ export const VehicleSection = ({
   const handleModelChange = (modelId: string) => {
     const model = models.find(m => m.id === modelId);
     if (model) {
+      // El usuario mandó: el modelo del historial ya no se aplica encima.
+      setPendingHistoryModel(null);
       onVehicleModelChange(model.name);
     }
   };
 
   const handleCreateBrand = async () => {
     if (!newBrandName.trim()) return;
-    
+
     try {
       const newBrand = await createBrandAsync({ name: newBrandName.trim() });
       if (newBrand) {
@@ -577,7 +649,7 @@ export const VehicleSection = ({
             <p className="text-xs text-muted-foreground">Opcional para este tipo de servicio</p>
           )}
           <Select 
-            value={vehicleModel ? models.find(m => m.name.toLowerCase() === vehicleModel.toLowerCase())?.id || '' : ''}
+            value={findCatalogMatch(models, vehicleModel)?.id || ''}
             onValueChange={handleModelChange}
             disabled={disabled || !selectedBrandId || modelsLoading}
           >

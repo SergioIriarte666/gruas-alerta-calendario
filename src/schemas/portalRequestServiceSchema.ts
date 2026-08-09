@@ -17,8 +17,8 @@ export const portalRequestServiceSchema = z.object({
     .min(1, { message: 'Debe seleccionar una fecha de servicio para continuar' }),
   
   license_plate: z.string().optional(),
-  vehicle_brand: z.string().optional(),
-  vehicle_model: z.string().optional(),
+  vehicle_brand: z.string().trim().optional(),
+  vehicle_model: z.string().trim().optional(),
 
   contact_phone: z.string()
     .optional()

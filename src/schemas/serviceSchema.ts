@@ -19,8 +19,10 @@ const baseServiceFormSchema = z.object({
   serviceDate: z.string(),
   clientId: z.string().min(1, 'El cliente es requerido'),
   purchaseOrder: z.string().optional(),
-  vehicleBrand: z.string().optional(),
-  vehicleModel: z.string().optional(),
+  // .trim() en el schema: es el punto por el que pasan creación y edición, y
+  // evita que vuelva a entrar un 'Nissan ' que rompa el match con el catálogo.
+  vehicleBrand: z.string().trim().optional(),
+  vehicleModel: z.string().trim().optional(),
   licensePlate: z.string().optional(),
   origin: z.string().optional(),
   originLat: z.number().nullable().optional(),

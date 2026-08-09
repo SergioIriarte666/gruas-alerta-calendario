@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { PortalRequestServiceSchema } from '@/schemas/portalRequestServiceSchema';
+import { normalizeVehicleFreeText } from '@/utils/vehicleCatalogMatch';
 import { useToast } from '@/components/ui/custom-toast';
 import { useNavigate } from 'react-router-dom';
 import { createLogger } from "@/lib/logger";
@@ -35,8 +36,8 @@ const createServiceRequest = async ({
     origin: formData.origin,
     destination: formData.destination,
     license_plate: formData.license_plate || '',
-    vehicle_brand: formData.vehicle_brand || '',
-    vehicle_model: formData.vehicle_model || '',
+    vehicle_brand: normalizeVehicleFreeText(formData.vehicle_brand) || '',
+    vehicle_model: normalizeVehicleFreeText(formData.vehicle_model) || '',
     contact_phone: formData.contact_phone || null,
     preferred_time: formData.preferred_time || null,
     urgency: formData.urgency || 'normal',

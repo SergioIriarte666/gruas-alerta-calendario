@@ -2,10 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { normalizeCatalogName } from '@/utils/vehicleCatalogMatch';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useVehicleBrands");
+
+/** Neutraliza los comodines de LIKE para que el filtro sea sólo un acotador. */
+const likeEscape = (value: string): string => value.replace(/[\\%_]/g, m => `\\${m}`);
 type VehicleBrand = Tables<'vehicle_brands'>;
 type VehicleBrandInsert = TablesInsert<'vehicle_brands'>;
 type VehicleBrandUpdate = TablesUpdate<'vehicle_brands'>;
@@ -41,9 +45,40 @@ export const useVehicleBrands = () => {
 
   const createMutation = useMutation({
     mutationFn: async (brand: VehicleBrandInsert) => {
+      // El catálogo es la referencia contra la que se resuelve el historial de
+      // servicios: un 'Nissan ' acá genera un duplicado que rompe el matching.
+      const name = (brand.name ?? '').trim().replace(/\s+/g, ' ');
+      if (!name) throw new Error('El nombre de la marca es requerido');
+
+      // Reusar la fila equivalente en vez de duplicarla (compara sin casing ni
+      // espacios). Incluye inactivas: crear una gemela activa deja dos filas.
+      // El ilike sólo acota; la igualdad real la decide normalizeCatalogName.
+      const { data: existing, error: lookupError } = await supabase
+        .from('vehicle_brands')
+        .select(VEHICLE_BRANDS_SELECT)
+        .ilike('name', `%${likeEscape(name)}%`);
+
+      if (lookupError) throw lookupError;
+
+      const duplicate = (existing as VehicleBrand[] | null)?.find(
+        b => normalizeCatalogName(b.name ?? '') === normalizeCatalogName(name)
+      );
+      if (duplicate) {
+        if (duplicate.is_active) return duplicate;
+        // Reactivar la existente en lugar de insertar una gemela.
+        const { data: revived, error: reviveError } = await supabase
+          .from('vehicle_brands')
+          .update({ is_active: true })
+          .eq('id', duplicate.id)
+          .select(VEHICLE_BRANDS_SELECT)
+          .single();
+        if (reviveError) throw reviveError;
+        return revived;
+      }
+
       const { data, error } = await supabase
         .from('vehicle_brands')
-        .insert(brand)
+        .insert({ ...brand, name })
         .select(VEHICLE_BRANDS_SELECT)
         .single();
 
@@ -70,9 +105,13 @@ export const useVehicleBrands = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & VehicleBrandUpdate) => {
+      const payload: VehicleBrandUpdate = data.name != null
+        ? { ...data, name: data.name.trim().replace(/\s+/g, ' ') }
+        : data;
+
       const { data: result, error } = await supabase
         .from('vehicle_brands')
-        .update(data)
+        .update(payload)
         .eq('id', id)
         .select(VEHICLE_BRANDS_SELECT)
         .single();

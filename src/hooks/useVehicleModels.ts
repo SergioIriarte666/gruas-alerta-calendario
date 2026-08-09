@@ -2,10 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { normalizeCatalogName } from '@/utils/vehicleCatalogMatch';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useVehicleModels");
+
+/** Neutraliza los comodines de LIKE para que el filtro sea sólo un acotador. */
+const likeEscape = (value: string): string => value.replace(/[\\%_]/g, m => `\\${m}`);
 type VehicleModel = Tables<'vehicle_models'> & {
   vehicle_brands?: { name: string };
 };
@@ -43,9 +47,38 @@ export const useVehicleModels = (brandId?: string) => {
 
   const createMutation = useMutation({
     mutationFn: async (model: VehicleModelInsert) => {
+      // Mismo criterio que en marcas: el catálogo no puede acumular gemelos
+      // que sólo difieran en espacios o casing.
+      const name = (model.name ?? '').trim().replace(/\s+/g, ' ');
+      if (!name) throw new Error('El nombre del modelo es requerido');
+
+      // El ilike sólo acota; la igualdad real la decide normalizeCatalogName.
+      const { data: existing, error: lookupError } = await supabase
+        .from('vehicle_models')
+        .select('*')
+        .eq('brand_id', model.brand_id)
+        .ilike('name', `%${likeEscape(name)}%`);
+
+      if (lookupError) throw lookupError;
+
+      const duplicate = (existing as VehicleModel[] | null)?.find(
+        m => normalizeCatalogName(m.name ?? '') === normalizeCatalogName(name)
+      );
+      if (duplicate) {
+        if (duplicate.is_active) return duplicate;
+        const { data: revived, error: reviveError } = await supabase
+          .from('vehicle_models')
+          .update({ is_active: true })
+          .eq('id', duplicate.id)
+          .select()
+          .single();
+        if (reviveError) throw reviveError;
+        return revived;
+      }
+
       const { data, error } = await supabase
         .from('vehicle_models')
-        .insert(model)
+        .insert({ ...model, name })
         .select()
         .single();
 
@@ -72,9 +105,13 @@ export const useVehicleModels = (brandId?: string) => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & VehicleModelUpdate) => {
+      const payload: VehicleModelUpdate = data.name != null
+        ? { ...data, name: data.name.trim().replace(/\s+/g, ' ') }
+        : data;
+
       const { data: result, error } = await supabase
         .from('vehicle_models')
-        .update(data)
+        .update(payload)
         .eq('id', id)
         .select()
         .single();

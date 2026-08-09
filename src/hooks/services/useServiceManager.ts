@@ -9,6 +9,7 @@ import { createLogger } from '@/lib/logger';
 import { invalidateStockDependentQueries } from '@/lib/queryKeys/inventory';
 import { businessClock } from '@/utils/businessClock';
 import { normalizeLicensePlate } from '@/utils/licensePlate';
+import { normalizeVehicleFreeText } from '@/utils/vehicleCatalogMatch';
 import { planServiceCostChanges } from './serviceCostDiff';
 import { describeServiceCostError } from '@/utils/serviceCostErrors';
 
@@ -197,6 +198,13 @@ export const useServiceManager = () => {
         // final rompe las búsquedas por patente y sale así impreso en el acta.
         const normalizedLicensePlate = normalizeLicensePlate(serviceData.licensePlate);
 
+        // Marca y modelo van sin espacios sobrantes: un 'Nissan ' guardado acá
+        // deja de calzar con vehicle_brands y el autocompletado del próximo
+        // servicio con esa patente queda a medio llenar. No todos los que
+        // llaman a createService pasan por el schema (CSV, calendario, portal).
+        const normalizedVehicleBrand = normalizeVehicleFreeText(serviceData.vehicleBrand);
+        const normalizedVehicleModel = normalizeVehicleFreeText(serviceData.vehicleModel);
+
         
 
         // Obtener el usuario actual para created_by
@@ -226,12 +234,12 @@ export const useServiceManager = () => {
           // VALIDACIÓN INTEGRAL DE CAMPOS DE VEHÍCULO
           // Tipos especiales: Taxi, Traslado de Insumos (vehicle fields false)
           // Lavado, Servicios Mecánicos, Puente Bateria (vehicle_info_optional true)
-          vehicle_brand: (!serviceTypeConfig?.vehicle_brand_required && !serviceData.vehicleBrand) 
-            ? null 
-            : serviceData.vehicleBrand || null,
-          vehicle_model: (!serviceTypeConfig?.vehicle_model_required && !serviceData.vehicleModel) 
-            ? null 
-            : serviceData.vehicleModel || null,
+          vehicle_brand: (!serviceTypeConfig?.vehicle_brand_required && !normalizedVehicleBrand)
+            ? null
+            : normalizedVehicleBrand || null,
+          vehicle_model: (!serviceTypeConfig?.vehicle_model_required && !normalizedVehicleModel)
+            ? null
+            : normalizedVehicleModel || null,
           license_plate: (!serviceTypeConfig?.license_plate_required && !normalizedLicensePlate)
             ? null
             : normalizedLicensePlate || null,
@@ -672,10 +680,10 @@ export const useServiceManager = () => {
           }),
           // ✅ CRÍTICO: Mantener campos de vehículo (NO eliminar)
           ...(serviceData.vehicleBrand !== undefined && {
-            vehicle_brand: serviceData.vehicleBrand
+            vehicle_brand: normalizeVehicleFreeText(serviceData.vehicleBrand)
           }),
           ...(serviceData.vehicleModel !== undefined && {
-            vehicle_model: serviceData.vehicleModel
+            vehicle_model: normalizeVehicleFreeText(serviceData.vehicleModel)
           }),
           ...(serviceData.licensePlate !== undefined && {
             license_plate: normalizeLicensePlate(serviceData.licensePlate)
