@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Invoice } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvoicesListTabContent } from '@/components/invoices/InvoicesListTabContent';
+import { InvoicesByClientView } from '@/components/invoices/InvoicesByClientView';
 import { InvoicesPipelineView } from '@/components/invoices/InvoicesPipelineView';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
@@ -118,10 +119,14 @@ export const InvoicesPageContent = ({
         className="w-full"
       >
         <SectionCard flush className="finance-panel border-border/70 bg-card/80 shadow-sm" contentClassName="p-2">
-          <TabsList className="finance-tabs w-full gap-1 lg:grid lg:grid-cols-6">
+          <TabsList className="finance-tabs w-full gap-1 lg:grid lg:grid-cols-7">
             <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Facturas</span>
               <span className="sm:hidden">Fact.</span>
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Por clientes</span>
+              <span className="sm:hidden">Clientes</span>
             </TabsTrigger>
             <TabsTrigger value="iva-f29" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">IVA (F29)</span>
@@ -173,6 +178,15 @@ export const InvoicesPageContent = ({
             onInvoiceToggle={onInvoiceToggle}
             onSelectAllToggle={onSelectAllToggle}
             onPageChange={onPageChange}
+            getInvoiceWithDetails={getInvoiceWithDetails}
+          />
+        </TabsContent>
+
+        <TabsContent value="clients">
+          <InvoicesByClientView
+            invoices={invoices}
+            onEdit={onEditInvoice}
+            onMarkAsPaid={onMarkAsPaid}
             getInvoiceWithDetails={getInvoiceWithDetails}
           />
         </TabsContent>
