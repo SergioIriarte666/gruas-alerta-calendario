@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.50.0";
 
 export type AppRole = "admin" | "operator" | "viewer" | "client";
 export type AuthorizationFailure = { response: Response };
@@ -8,7 +8,9 @@ export type AuthorizationSuccess = {
   supabaseAdmin: any;
   user: any;
 };
-export type RequireUserRolesResult = AuthorizationFailure | AuthorizationSuccess;
+export type RequireUserRolesResult =
+  | AuthorizationFailure
+  | AuthorizationSuccess;
 
 export const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -16,9 +18,14 @@ export const jsonResponse = (body: Record<string, unknown>, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-export const withHeaders = (response: Response, headers: Record<string, string>) => {
+export const withHeaders = (
+  response: Response,
+  headers: Record<string, string>,
+) => {
   const mergedHeaders = new Headers(response.headers);
-  Object.entries(headers).forEach(([key, value]) => mergedHeaders.set(key, value));
+  Object.entries(headers).forEach(([key, value]) =>
+    mergedHeaders.set(key, value)
+  );
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -43,7 +50,9 @@ export async function requireUserRoles(
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     return {
-      response: jsonResponse({ error: "Configuración de autenticación incompleta" }, 500),
+      response: jsonResponse({
+        error: "Configuración de autenticación incompleta",
+      }, 500),
     };
   }
 
@@ -52,7 +61,8 @@ export async function requireUserRoles(
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+  const { data: userData, error: userError } = await supabaseAuth.auth
+    .getUser();
   if (userError || !userData?.user) {
     return {
       response: jsonResponse({ error: "No autorizado" }, 401),
@@ -72,7 +82,9 @@ export async function requireUserRoles(
   const role = profile?.role as AppRole | undefined;
   if (profileError || !role) {
     return {
-      response: jsonResponse({ error: "No se pudo verificar el rol del usuario" }, 403),
+      response: jsonResponse({
+        error: "No se pudo verificar el rol del usuario",
+      }, 403),
     };
   }
 

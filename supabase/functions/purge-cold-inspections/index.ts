@@ -1,4 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import {
+  createClient,
+  type SupabaseClient,
+} from "npm:@supabase/supabase-js@2.50.0";
 import { createR2Config, deleteAndVerifyObjects } from "../_shared/r2.ts";
 import { assertCronRequest, errorMessage, json } from "../_shared/retention.ts";
 
@@ -11,7 +14,7 @@ type Row = {
 };
 
 const audit = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, "public", any>,
   row: Row,
   status: "success" | "failure",
   details: Record<string, unknown>,
@@ -25,7 +28,11 @@ const audit = async (
     details,
     error_message: errorMessage || null,
   });
-  if (error) console.error(`[purge-cold-inspections] auditoría ${row.id}: ${error.message}`);
+  if (error) {
+    console.error(
+      `[purge-cold-inspections] auditoría ${row.id}: ${error.message}`,
+    );
+  }
 };
 
 Deno.serve(async (req: Request) => {
@@ -54,11 +61,16 @@ Deno.serve(async (req: Request) => {
     .limit(200);
   if (error) return json({ error: error.message }, 500);
 
-  const results: Array<{ inspectionId: string; serviceId: string; status: string; error?: string }> = [];
+  const results: Array<
+    { inspectionId: string; serviceId: string; status: string; error?: string }
+  > = [];
   for (const row of (data || []) as Row[]) {
     try {
-      const photoKeys = Object.values(row.r2_photos || {}).flat().filter((key): key is string => typeof key === "string");
-      const keys = [row.r2_pdf_path, row.r2_pdf_retiro_path, ...photoKeys].filter((key): key is string => !!key);
+      const photoKeys = Object.values(row.r2_photos || {}).flat().filter((
+        key,
+      ): key is string => typeof key === "string");
+      const keys = [row.r2_pdf_path, row.r2_pdf_retiro_path, ...photoKeys]
+        .filter((key): key is string => !!key);
       await deleteAndVerifyObjects(r2, keys);
 
       const deletedAt = new Date().toISOString();
@@ -68,16 +80,32 @@ Deno.serve(async (req: Request) => {
         .eq("storage_tier", "cold");
       if (updateError) throw new Error(updateError.message);
 
-      await audit(supabase, row, "success", { files: keys.length, deleted_at: deletedAt });
-      results.push({ inspectionId: row.id, serviceId: row.service_id, status: "success" });
+      await audit(supabase, row, "success", {
+        files: keys.length,
+        deleted_at: deletedAt,
+      });
+      results.push({
+        inspectionId: row.id,
+        serviceId: row.service_id,
+        status: "success",
+      });
     } catch (cause) {
       const message = errorMessage(cause);
       try {
         await audit(supabase, row, "failure", {}, message);
       } catch (auditCause) {
-        console.error(`[purge-cold-inspections] auditoría ${row.id}: ${errorMessage(auditCause)}`);
+        console.error(
+          `[purge-cold-inspections] auditoría ${row.id}: ${
+            errorMessage(auditCause)
+          }`,
+        );
       }
-      results.push({ inspectionId: row.id, serviceId: row.service_id, status: "failure", error: message });
+      results.push({
+        inspectionId: row.id,
+        serviceId: row.service_id,
+        status: "failure",
+        error: message,
+      });
     }
   }
   return json({ processed: results.length, results });

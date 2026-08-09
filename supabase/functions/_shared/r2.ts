@@ -1,15 +1,26 @@
-import {
-  DeleteObjectsCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "npm:@aws-sdk/client-s3@3.828.0";
-import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.828.0";
+import { AwsClient } from "npm:aws4fetch@1.0.20";
+
+type AwsRequestInit = RequestInit & {
+  aws?: {
+    signQuery?: boolean;
+  };
+};
+
+export type R2HttpClient = {
+  fetch(
+    input: Request | { toString: () => string },
+    init?: AwsRequestInit,
+  ): Promise<Response>;
+  sign(
+    input: Request | { toString: () => string },
+    init?: AwsRequestInit,
+  ): Promise<Request>;
+};
 
 export type R2Config = {
   bucket: string;
-  client: S3Client;
+  endpoint: string;
+  client: R2HttpClient;
 };
 
 const requiredEnv = (name: string): string => {
@@ -20,24 +31,71 @@ const requiredEnv = (name: string): string => {
 
 export const createR2Config = (): R2Config => {
   const accountId = requiredEnv("R2_ACCOUNT_ID");
-  const bucket = Deno.env.get("R2_BUCKET_NAME")?.trim() || Deno.env.get("R2_BUCKET")?.trim();
-  if (!bucket) throw new Error("Falta el secret R2_BUCKET_NAME (o R2_BUCKET legado)");
+  const bucket = Deno.env.get("R2_BUCKET_NAME")?.trim() ||
+    Deno.env.get("R2_BUCKET")?.trim();
+  if (!bucket) {
+    throw new Error("Falta el secret R2_BUCKET_NAME (o R2_BUCKET legado)");
+  }
   return {
     bucket,
-    client: new S3Client({
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    client: new AwsClient({
+      service: "s3",
       region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: requiredEnv("R2_ACCESS_KEY_ID"),
-        secretAccessKey: requiredEnv("R2_SECRET_ACCESS_KEY"),
-      },
+      accessKeyId: requiredEnv("R2_ACCESS_KEY_ID"),
+      secretAccessKey: requiredEnv("R2_SECRET_ACCESS_KEY"),
+      retries: 2,
     }),
   };
 };
 
+const encodeObjectKey = (key: string): string =>
+  key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+export const r2ObjectUrl = (
+  r2: Pick<R2Config, "endpoint" | "bucket">,
+  key: string,
+): string => {
+  if (!key || key.includes("..") || key.startsWith("/")) {
+    throw new Error(`Ruta R2 inválida: ${key || "(vacía)"}`);
+  }
+  return `${r2.endpoint}/${encodeURIComponent(r2.bucket)}/${
+    encodeObjectKey(key)
+  }`;
+};
+
+const responseError = async (
+  operation: string,
+  key: string,
+  response: Response,
+): Promise<Error> => {
+  const detail = (await response.text().catch(() => ""))
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
+  return new Error(
+    `R2 rechazó ${operation} para ${key} (HTTP ${response.status})${
+      detail ? `: ${detail}` : ""
+    }`,
+  );
+};
+
+const requireOk = async (
+  operation: string,
+  key: string,
+  response: Response,
+): Promise<void> => {
+  if (!response.ok) throw await responseError(operation, key, response);
+};
+
 export const sha256Base64 = async (bytes: Uint8Array): Promise<string> => {
   const digestInput = Uint8Array.from(bytes);
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", digestInput));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", digestInput),
+  );
   let binary = "";
   for (const byte of digest) binary += String.fromCharCode(byte);
   return btoa(binary);
@@ -49,15 +107,16 @@ export const headVerifiedObject = async (
   expectedSize: number,
   expectedSha256?: string,
 ): Promise<boolean> => {
-  try {
-    const head = await r2.client.send(new HeadObjectCommand({ Bucket: r2.bucket, Key: key }));
-    if (head.ContentLength !== expectedSize) return false;
-    return !expectedSha256 || head.Metadata?.sha256 === expectedSha256;
-  } catch (error) {
-    const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
-    if (status === 404) return false;
-    throw error;
-  }
+  const response = await r2.client.fetch(r2ObjectUrl(r2, key), {
+    method: "HEAD",
+  });
+  if (response.status === 404) return false;
+  await requireOk("HEAD", key, response);
+
+  const size = Number(response.headers.get("content-length"));
+  if (!Number.isFinite(size) || size !== expectedSize) return false;
+  return !expectedSha256 ||
+    response.headers.get("x-amz-meta-sha256") === expectedSha256;
 };
 
 export const putAndVerifyObject = async (
@@ -69,20 +128,25 @@ export const putAndVerifyObject = async (
   sourcePath: string,
 ): Promise<{ size: number; sha256: string }> => {
   const sha256 = await sha256Base64(bytes);
-  const alreadyPresent = await headVerifiedObject(r2, key, bytes.byteLength, sha256);
+  const alreadyPresent = await headVerifiedObject(
+    r2,
+    key,
+    bytes.byteLength,
+    sha256,
+  );
   if (!alreadyPresent) {
-    await r2.client.send(new PutObjectCommand({
-      Bucket: r2.bucket,
-      Key: key,
-      Body: bytes,
-      ContentLength: bytes.byteLength,
-      ContentType: contentType || "application/octet-stream",
-      Metadata: {
-        sha256,
-        "source-bucket": sourceBucket,
-        "source-path": encodeURIComponent(sourcePath),
+    const body = Uint8Array.from(bytes).buffer;
+    const response = await r2.client.fetch(r2ObjectUrl(r2, key), {
+      method: "PUT",
+      headers: {
+        "content-type": contentType || "application/octet-stream",
+        "x-amz-meta-sha256": sha256,
+        "x-amz-meta-source-bucket": sourceBucket,
+        "x-amz-meta-source-path": encodeURIComponent(sourcePath),
       },
-    }));
+      body,
+    });
+    await requireOk("PUT", key, response);
   }
 
   if (!await headVerifiedObject(r2, key, bytes.byteLength, sha256)) {
@@ -91,27 +155,27 @@ export const putAndVerifyObject = async (
   return { size: bytes.byteLength, sha256 };
 };
 
-export const deleteAndVerifyObjects = async (r2: R2Config, keys: string[]): Promise<void> => {
+export const deleteAndVerifyObjects = async (
+  r2: R2Config,
+  keys: string[],
+): Promise<void> => {
   const uniqueKeys = [...new Set(keys.filter(Boolean))];
-  if (uniqueKeys.length === 0) return;
+  for (const key of uniqueKeys) {
+    const response = await r2.client.fetch(r2ObjectUrl(r2, key), {
+      method: "DELETE",
+    });
+    await requireOk("DELETE", key, response);
+  }
 
-  for (let offset = 0; offset < uniqueKeys.length; offset += 1000) {
-    const chunk = uniqueKeys.slice(offset, offset + 1000);
-    const result = await r2.client.send(new DeleteObjectsCommand({
-      Bucket: r2.bucket,
-      Delete: { Objects: chunk.map((Key) => ({ Key })), Quiet: false },
-    }));
-    if (result.Errors?.length) {
-      throw new Error(`R2 rechazó el borrado de: ${result.Errors.map((e) => e.Key).join(", ")}`);
-    }
-    for (const key of chunk) {
-      try {
-        await r2.client.send(new HeadObjectCommand({ Bucket: r2.bucket, Key: key }));
-        throw new Error(`R2 todavía contiene ${key} después del borrado`);
-      } catch (error) {
-        const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
-        if (status !== 404) throw error;
+  for (const key of uniqueKeys) {
+    const response = await r2.client.fetch(r2ObjectUrl(r2, key), {
+      method: "HEAD",
+    });
+    if (response.status !== 404) {
+      if (!response.ok) {
+        throw await responseError("verificación de borrado", key, response);
       }
+      throw new Error(`R2 todavía contiene ${key} después del borrado`);
     }
   }
 };
@@ -121,11 +185,14 @@ export const createR2DownloadUrl = async (
   key: string,
   expiresIn = 3600,
 ): Promise<string> => {
-  // Firmar no consulta R2; HEAD evita entregar una URL aparentemente válida a un objeto ausente.
-  await r2.client.send(new HeadObjectCommand({ Bucket: r2.bucket, Key: key }));
-  return getSignedUrl(
-    r2.client,
-    new GetObjectCommand({ Bucket: r2.bucket, Key: key }),
-    { expiresIn },
+  const objectUrl = r2ObjectUrl(r2, key);
+  const head = await r2.client.fetch(objectUrl, { method: "HEAD" });
+  await requireOk("HEAD", key, head);
+
+  const safeExpiry = Math.min(Math.max(Math.trunc(expiresIn), 1), 604_800);
+  const signed = await r2.client.sign(
+    new Request(`${objectUrl}?X-Amz-Expires=${safeExpiry}`),
+    { aws: { signQuery: true } },
   );
+  return signed.url;
 };
