@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { resolveClientServiceBillingView } from '@/utils/clientServiceBilling';
+import type { ClientClosureBillingState } from '@/utils/clientServiceBilling';
 import { createLogger } from "@/lib/logger";
 
 
@@ -66,7 +68,7 @@ export const useClientServices = (clientId: string | null) => {
             }
 
             const serviceIds = data.map((service) => service.id);
-            const closureBillingByServiceId = new Map<string, { coveredInvoiced: boolean; excessInvoiced: boolean }>();
+            const closureBillingByServiceId = new Map<string, ClientClosureBillingState>();
 
             if (serviceIds.length > 0) {
                 const { data: closureLinks, error: closureLinksError } = await supabase
@@ -79,7 +81,14 @@ export const useClientServices = (clientId: string | null) => {
                         client_id,
                         closure_type,
                         status,
-                        invoice_closures!fk_invoice_closures_closure_id(id)
+                        invoice_closures!fk_invoice_closures_closure_id(
+                          id,
+                          invoice:invoices!fk_invoice_closures_invoice_id(
+                            folio,
+                            numero_fiscal,
+                            status
+                          )
+                        )
                       )
                     `)
                     .in('service_id', serviceIds);
@@ -92,9 +101,16 @@ export const useClientServices = (clientId: string | null) => {
                             ? link.service_closures[0]
                             : link.service_closures;
 
-                        if (!closure || closure.client_id !== id) continue;
+                        if (!closure) continue;
 
-                        const isInvoiced = closure.status === 'invoiced' || (closure.invoice_closures?.length || 0) > 0;
+                        const invoiceClosure = (closure.invoice_closures || []).find((entry: any) => {
+                            const invoice = Array.isArray(entry.invoice) ? entry.invoice[0] : entry.invoice;
+                            return Boolean(invoice && invoice.status !== 'cancelled');
+                        });
+                        const invoice = Array.isArray(invoiceClosure?.invoice)
+                            ? invoiceClosure.invoice[0]
+                            : invoiceClosure?.invoice;
+                        const isInvoiced = closure.status === 'invoiced' || Boolean(invoiceClosure);
                         if (!isInvoiced) continue;
 
                         const current = closureBillingByServiceId.get(link.service_id) || {
@@ -104,8 +120,16 @@ export const useClientServices = (clientId: string | null) => {
 
                         if (link.value_type === 'excess' || closure.closure_type === 'excess') {
                             current.excessInvoiced = true;
+                            current.excessInvoice = invoice ? {
+                                folio: invoice.folio,
+                                numeroFiscal: invoice.numero_fiscal,
+                            } : current.excessInvoice;
                         } else {
                             current.coveredInvoiced = true;
+                            current.coveredInvoice = invoice ? {
+                                folio: invoice.folio,
+                                numeroFiscal: invoice.numero_fiscal,
+                            } : current.coveredInvoice;
                         }
 
                         closureBillingByServiceId.set(link.service_id, current);
@@ -113,21 +137,20 @@ export const useClientServices = (clientId: string | null) => {
                 }
             }
 
-            const formattedServices: Service[] = data.map(service => ({
-                status: (() => {
-                  const closureBilling = closureBillingByServiceId.get(service.id);
-                  const isThirdPartyView = Boolean(service.third_party_client_id && service.third_party_client_id === id);
+            const formattedServices: Service[] = data.map(service => {
+              const billingView = resolveClientServiceBillingView({
+                rawStatus: service.status as Service['status'],
+                hasExcess: Boolean(service.has_excess),
+                primaryClientId: service.client_id,
+                thirdPartyClientId: service.third_party_client_id,
+                viewingClientId: id,
+                globalInvoiceFolio: service.invoice_folio,
+                globalInvoiceNumeroFiscal: service.invoice_numero_fiscal,
+                closureBilling: closureBillingByServiceId.get(service.id),
+              });
 
-                  if (closureBilling?.excessInvoiced && isThirdPartyView) {
-                    return 'invoiced' as Service['status'];
-                  }
-
-                  if (closureBilling?.coveredInvoiced && !isThirdPartyView) {
-                    return 'invoiced' as Service['status'];
-                  }
-
-                  return service.status as Service['status'];
-                })(),
+              return {
+                status: billingView.status,
                 id: service.id,
                 folio: service.folio,
                 requestDate: service.request_date,
@@ -158,8 +181,8 @@ export const useClientServices = (clientId: string | null) => {
                 purchaseOrder: service.purchase_order,
                 purchaseOrderNumber: service.purchase_order_number || '',
                 quoteNumber: service.quote_number || '',
-                invoiceFolio: service.invoice_folio || undefined,
-                invoiceNumeroFiscal: service.invoice_numero_fiscal || undefined,
+                invoiceFolio: billingView.invoiceFolio,
+                invoiceNumeroFiscal: billingView.invoiceNumeroFiscal,
                 vehicleBrand: service.vehicle_brand,
                 vehicleModel: service.vehicle_model,
                 licensePlate: service.license_plate,
@@ -223,7 +246,8 @@ export const useClientServices = (clientId: string | null) => {
                 observations: service.observations,
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,
-            }));
+              };
+            });
 
             setServices(formattedServices);
         } catch (error: any) {

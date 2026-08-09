@@ -790,13 +790,25 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             {group.services.map(service => {
                               const dispute = openDisputesByServiceId.get(service.id);
                               const realStatus = getVipPipelineDisplayStatus(service);
+                              const isExcessView = Boolean(
+                                service.hasExcess &&
+                                clientId &&
+                                service.thirdPartyClientId === clientId
+                              );
                               return (
                                 <TableRow key={service.id} className="border-muted">
                                   <TableCell>
                                     <Checkbox checked={false} disabled />
                                   </TableCell>
                                   <TableCell>
-                                    <div className="font-medium text-foreground">{service.folio}</div>
+                                    <div className="flex items-center gap-1.5 font-medium text-foreground">
+                                      <span>{service.folio}</span>
+                                      {isExcessView && (
+                                        <Badge className="h-5 border border-warning/30 bg-warning-soft px-1.5 text-xs text-warning hover:bg-warning-soft">
+                                          Excedente
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
                                   <TableCell>
                                     <div className="text-foreground">{service.serviceType.name}</div>
@@ -866,6 +878,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
                       const renderServiceRow = (service: Service) => {
                         const daysInStatus = differenceInDays(businessClock.now(), parseFromDatabase(service.serviceDate));
+                        const isExcessView = Boolean(
+                          service.hasExcess &&
+                          clientId &&
+                          service.thirdPartyClientId === clientId
+                        );
                         return (
                           <TableRow key={service.id} className="border-muted">
                             <TableCell>
@@ -875,7 +892,14 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               />
                             </TableCell>
                             <TableCell>
-                              <div className="font-medium text-foreground">{service.folio}</div>
+                              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                                <span>{service.folio}</span>
+                                {isExcessView && (
+                                  <Badge className="h-5 border border-warning/30 bg-warning-soft px-1.5 text-xs text-warning hover:bg-warning-soft">
+                                    Excedente
+                                  </Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="text-foreground">{service.serviceType.name}</div>
