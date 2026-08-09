@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
-import { resolveClientServiceBillingView } from '@/utils/clientServiceBilling';
+import {
+    resolveClientPurchaseOrder,
+    resolveClientServiceBillingView,
+} from '@/utils/clientServiceBilling';
 import type { ClientClosureBillingState } from '@/utils/clientServiceBilling';
 import { createLogger } from "@/lib/logger";
 
@@ -138,6 +141,13 @@ export const useClientServices = (clientId: string | null) => {
             }
 
             const formattedServices: Service[] = data.map(service => {
+              const purchaseOrderView = resolveClientPurchaseOrder(
+                Boolean(service.has_excess),
+                service.third_party_client_id,
+                id,
+                service.purchase_order,
+                service.purchase_order_number,
+              );
               const billingView = resolveClientServiceBillingView({
                 rawStatus: service.status as Service['status'],
                 hasExcess: Boolean(service.has_excess),
@@ -178,8 +188,10 @@ export const useClientServices = (clientId: string | null) => {
                   createdAt: '',
                   updatedAt: ''
                 },
-                purchaseOrder: service.purchase_order,
-                purchaseOrderNumber: service.purchase_order_number || '',
+                // La OC pertenece al cliente principal (aseguradora). El tercero
+                // que paga el excedente no debe verla ni heredarla en reportes.
+                purchaseOrder: purchaseOrderView.purchaseOrder,
+                purchaseOrderNumber: purchaseOrderView.purchaseOrderNumber,
                 quoteNumber: service.quote_number || '',
                 invoiceFolio: billingView.invoiceFolio,
                 invoiceNumeroFiscal: billingView.invoiceNumeroFiscal,

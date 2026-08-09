@@ -37,6 +37,31 @@ const invoiceFields = (invoice?: ClientBillingInvoiceRef): Pick<
   invoiceNumeroFiscal: invoice?.numeroFiscal || undefined,
 });
 
+export const isThirdPartyExcessView = (
+  hasExcess: boolean,
+  thirdPartyClientId: string | null,
+  viewingClientId: string,
+): boolean => Boolean(
+  hasExcess && thirdPartyClientId && thirdPartyClientId === viewingClientId,
+);
+
+export const resolveClientPurchaseOrder = (
+  hasExcess: boolean,
+  thirdPartyClientId: string | null,
+  viewingClientId: string,
+  purchaseOrder?: string | null,
+  purchaseOrderNumber?: string | null,
+): { purchaseOrder: string; purchaseOrderNumber: string } => {
+  if (isThirdPartyExcessView(hasExcess, thirdPartyClientId, viewingClientId)) {
+    return { purchaseOrder: '', purchaseOrderNumber: '' };
+  }
+
+  return {
+    purchaseOrder: purchaseOrder || '',
+    purchaseOrderNumber: purchaseOrderNumber || '',
+  };
+};
+
 /**
  * Resuelve el estado y la factura visibles desde el pipeline de un cliente.
  * La aseguradora ve la parte cubierta; el tercero pagador ve el excedente.
@@ -52,8 +77,10 @@ export const resolveClientServiceBillingView = ({
   closureBilling,
 }: ResolveClientServiceBillingInput): ClientServiceBillingView => {
   const isPrimaryView = primaryClientId === viewingClientId;
-  const isThirdPartyView = Boolean(
-    hasExcess && thirdPartyClientId && thirdPartyClientId === viewingClientId,
+  const isThirdPartyView = isThirdPartyExcessView(
+    hasExcess,
+    thirdPartyClientId,
+    viewingClientId,
   );
 
   if (!hasExcess || (!isPrimaryView && !isThirdPartyView)) {

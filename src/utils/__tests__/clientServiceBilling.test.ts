@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveClientServiceBillingView } from '@/utils/clientServiceBilling';
+import {
+  isThirdPartyExcessView,
+  resolveClientPurchaseOrder,
+  resolveClientServiceBillingView,
+} from '@/utils/clientServiceBilling';
 
 const baseInput = {
   rawStatus: 'invoiced' as const,
@@ -19,6 +23,30 @@ const baseInput = {
 };
 
 describe('vista de facturación por cliente en Pipeline VIP', () => {
+  it('identifica al tercero para no heredar la OC de la aseguradora', () => {
+    expect(isThirdPartyExcessView(true, 'el-pelicano', 'el-pelicano')).toBe(true);
+    expect(isThirdPartyExcessView(true, 'el-pelicano', 'auxilia')).toBe(false);
+
+    expect(resolveClientPurchaseOrder(
+      true,
+      'el-pelicano',
+      'el-pelicano',
+      'OC-PR-26080116',
+      'OC-PR-26080116',
+    )).toEqual({ purchaseOrder: '', purchaseOrderNumber: '' });
+
+    expect(resolveClientPurchaseOrder(
+      true,
+      'el-pelicano',
+      'auxilia',
+      'OC-PR-26080116',
+      'OC-PR-26080116',
+    )).toEqual({
+      purchaseOrder: 'OC-PR-26080116',
+      purchaseOrderNumber: 'OC-PR-26080116',
+    });
+  });
+
   it('muestra a Auxilia su cobertura facturada y su número fiscal', () => {
     expect(resolveClientServiceBillingView({
       ...baseInput,
