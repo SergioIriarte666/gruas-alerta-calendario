@@ -8,6 +8,7 @@ import { businessClock } from '@/utils/businessClock';
 import { normalizeRut } from '@/utils/rutFormatter';
 import { normalizePersonNameOrNull } from '@/utils/personName';
 import { createLogger } from '@/lib/logger';
+import { getArchivedInspectionFiles } from '@/utils/archivedInspectionFiles';
 
 const logger = createLogger('Inspection');
 
@@ -32,21 +33,6 @@ export interface PersistInspectionResult {
   id: string;
   wasInserted: boolean;
 }
-
-interface ArchivedFilesResponse {
-  tier: 'hot' | 'cold' | 'deleted';
-  deletedAt?: string | null;
-  pdfUrl?: string | null;
-  photos?: { beforeService?: Array<string | null> };
-}
-
-const getArchivedFiles = async (serviceId: string): Promise<ArchivedFilesResponse> => {
-  const { data, error } = await supabase.functions.invoke('get-archived-inspection-files', {
-    body: { serviceId },
-  });
-  if (error) throw new Error(`No se pudo recuperar el archivo R2: ${error.message}`);
-  return data as ArchivedFilesResponse;
-};
 
 /**
  * La entrega no puede depender de sessionStorage (efímero, por pestaña) para mostrar la
@@ -81,7 +67,7 @@ export const fetchInitialInspectionEvidence = async (
   let pdfUrl: string | null = null;
   let photos: string[] = [];
   if (storageTier === 'cold') {
-    const archived = await getArchivedFiles(serviceId);
+    const archived = await getArchivedInspectionFiles({ serviceId });
     pdfUrl = archived.pdfUrl || null;
     photos = (archived.photos?.beforeService || []).filter((url): url is string => !!url);
   } else if (storageTier !== 'deleted') {
@@ -421,7 +407,7 @@ export const fetchInitialPhotosForPdf = async (
   let signedPhotos: Array<{ url: string; fileName: string }> = [];
   if (data?.storage_tier === 'cold') {
     try {
-      const archived = await getArchivedFiles(serviceId);
+      const archived = await getArchivedInspectionFiles({ serviceId });
       signedPhotos = (archived.photos?.beforeService || [])
         .filter((url): url is string => !!url)
         .map((url, index) => ({ url, fileName: `inicial-${index}` }));

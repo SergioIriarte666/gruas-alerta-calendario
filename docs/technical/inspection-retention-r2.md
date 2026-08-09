@@ -10,6 +10,12 @@ La fila de `public.inspections` es permanente. Esta política administra únicam
 
 El archivado usa una ruta determinista `inspections/{service_id}/...` y un manifiesto con tamaño y SHA-256. El orden obligatorio es: copiar todo, verificar todo, guardar el manifiesto y recién entonces borrar desde Storage. Un reintento reutiliza objetos ya verificados.
 
+## Acceso desde la aplicación
+
+La sección **Documentos del servicio** distingue automáticamente entre archivos `hot` y `cold`. Los recientes se firman en Supabase Storage; los históricos solicitan a `get-archived-inspection-files` un enlace privado temporal de R2 usando el `inspection_id` exacto.
+
+El usuario puede ver, descargar o compartir el PDF inicial y el PDF de entrega sin restaurarlos a Supabase. En dispositivos compatibles se comparte el PDF real; si el navegador no acepta archivos, la interfaz utiliza el enlace temporal como respaldo. Las URLs firmadas nunca se persisten.
+
 ## Secrets y bucket
 
 El bucket R2 debe ser privado. Las siguientes variables se configuran exclusivamente como secrets de Supabase Edge Functions:
