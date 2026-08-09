@@ -466,7 +466,7 @@ export const ConsolidatedCostDetails = ({
                             <div className="font-medium text-foreground">{item.description}</div>
                             {item.inventory_item?.name && item.inventory_item.name !== item.description && (
                               <div className="text-xs text-muted-foreground">
-                                Catalogo: {item.inventory_item.name}
+                                Catálogo: {item.inventory_item.name}
                               </div>
                             )}
                           </td>

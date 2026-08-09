@@ -90,6 +90,15 @@ export interface OriginResolvedCoords {
 
 const NO_COORDS: OriginResolvedCoords = { lat: null, lng: null, catalogId: null, source: null };
 
+/** Clave estable de una sugerencia de Google, tambien usada como value de cmdk. */
+const suggestionKey = (suggestion: PlaceSuggestion): string =>
+  suggestion.placeId ?? `${suggestion.source}-${suggestion.text}`;
+
+/** Una fila del popover, con el objeto completo por closure (no un string). */
+type FieldOption =
+  | { key: string; kind: 'catalog'; match: FavoriteLocation }
+  | { key: string; kind: 'place'; suggestion: PlaceSuggestion };
+
 interface OriginLocationFieldProps {
   value: string;
   onChange: (value: string) => void;
@@ -123,6 +132,7 @@ export function OriginLocationField({
   id,
 }: OriginLocationFieldProps) {
   const [open, setOpen] = useState(false);
+  const [activeKey, setActiveKey] = useState('');
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [networkSuggestions, setNetworkSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -153,6 +163,13 @@ export function OriginLocationField({
   const selectingRef = useRef(false);
   const resolvingRef = useRef(false);
   const lastResolvedRef = useRef<string | null>(null);
+  // Generacion de la ubicacion vigente. La resolucion por blur tarda segundos
+  // (Places + Geocoding) y volvia a escribir el texto a medio teclear ENCIMA
+  // de la sugerencia recien elegida: se tecleaba "ae", se hacia clic en el
+  // aeropuerto y el input terminaba mostrando "Ae" (el lugar que Google
+  // devuelve para ese query). Cada seleccion o tecleo avanza la generacion y
+  // toda resolucion en vuelo que vuelva con una generacion vieja se descarta.
+  const locationGenerationRef = useRef(0);
 
   useEffect(() => {
     valueRef.current = value;
@@ -222,6 +239,11 @@ export function OriginLocationField({
     const query = raw.trim();
     if (!query || disabled) return;
 
+    // Iniciar una resolucion invalida cualquier otra en vuelo, y a su vez esta
+    // queda invalidada por la proxima seleccion o tecleo.
+    const generation = ++locationGenerationRef.current;
+    const isStale = () => generation !== locationGenerationRef.current;
+
     resolvingRef.current = true;
     lastResolvedRef.current = query;
     setIsResolvingLocation(true);
@@ -229,6 +251,11 @@ export function OriginLocationField({
 
     try {
       const result = await resolve(query);
+
+      if (isStale()) {
+        logger.debug('Resolucion descartada: la ubicacion cambio mientras se resolvia', { query });
+        return;
+      }
 
       if (isResolutionFailure(result)) {
         onCoordsChange(NO_COORDS);
@@ -257,8 +284,12 @@ export function OriginLocationField({
       logger.warn('No se pudo resolver la ubicacion', err);
       toast.error('No pudimos resolver esa ubicación. Fija el punto en el mapa si lo necesitas.');
     } finally {
-      resolvingRef.current = false;
-      setIsResolvingLocation(false);
+      // Si esta resolucion quedo obsoleta, la que la reemplazo es la duena de
+      // las banderas: apagarlas aca dejaria pasar un blur sobre ella.
+      if (!isStale()) {
+        resolvingRef.current = false;
+        setIsResolvingLocation(false);
+      }
     }
   };
 
@@ -305,9 +336,106 @@ export function OriginLocationField({
     showNetworkTier && !networkLoading && networkSuggestions.length === 0 && !showCatalog;
   const hasConfirmedCoords = coords.lat != null && coords.lng != null;
 
-  const selectCatalogMatch = (match: (typeof catalogMatches)[number]) => {
+  // Lista plana de lo que se ve en el popover, en el mismo orden. El <Input>
+  // vive fuera del <Command> (es el trigger del popover), asi que cmdk nunca
+  // recibe las teclas: sin esto, flechas y Enter no hacen nada.
+  const options = useMemo<FieldOption[]>(
+    () => [
+      ...(showCatalog
+        ? catalogMatches.map((match) => ({ key: match.id, kind: 'catalog' as const, match }))
+        : []),
+      ...(showNetworkTier
+        ? networkSuggestions.map((suggestion) => ({
+            key: suggestionKey(suggestion),
+            kind: 'place' as const,
+            suggestion,
+          }))
+        : []),
+    ],
+    [showCatalog, catalogMatches, showNetworkTier, networkSuggestions],
+  );
+
+  // Al cambiar la lista, el resaltado vuelve al primer resultado.
+  useEffect(() => {
+    setActiveKey(options[0]?.key ?? '');
+  }, [options]);
+
+  const commitOption = (option: FieldOption) => {
+    if (option.kind === 'catalog') {
+      selectCatalogMatch(option.match);
+      return;
+    }
+    void selectNetworkSuggestion(option.suggestion);
+  };
+
+  const moveActive = (delta: 1 | -1) => {
+    if (options.length === 0) return;
+    const current = options.findIndex((option) => option.key === activeKey);
+    const next =
+      current < 0
+        ? delta === 1
+          ? 0
+          : options.length - 1
+        : (current + delta + options.length) % options.length;
+    setActiveKey(options[next].key);
+  };
+
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
+
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+    if (!open || options.length === 0) return;
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActive(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      const option = options.find((item) => item.key === activeKey) ?? options[0];
+      if (!option) return;
+      // Sin preventDefault el Enter enviaria el formulario del servicio.
+      event.preventDefault();
+      commitOption(option);
+    }
+  };
+
+  /**
+   * Toma el control del campo antes de escribir nada: invalida cualquier
+   * resolucion en vuelo, corta la busqueda con debounce y cierra el popover.
+   * Sin esto, la resolucion del texto a medio teclear volvia segundos despues
+   * y pisaba la sugerencia elegida.
+   */
+  const armSelection = () => {
+    locationGenerationRef.current += 1;
     selectingRef.current = true;
-    const label = formatChileAddress(match.name);
+    resolvingRef.current = false;
+    setIsResolvingLocation(false);
+  };
+
+  const beginSelection = () => {
+    armSelection();
+    setNetworkSuggestions([]);
+    setNetworkLoading(false);
+    setOpen(false);
+  };
+
+  const endSelection = () => {
+    window.setTimeout(() => {
+      selectingRef.current = false;
+    }, BLUR_RESOLVE_DELAY_MS * 2);
+  };
+
+  const selectCatalogMatch = (match: (typeof catalogMatches)[number]) => {
+    beginSelection();
+    // El nombre del catalogo es texto curado por el equipo: se escribe tal
+    // cual. Formatearlo aca podia recortar segmentos y dejar el input con una
+    // etiqueta distinta de la que se acababa de leer en la lista.
+    const label = match.name;
     onChange(label);
     lastResolvedRef.current = label;
     onCoordsChange({
@@ -316,15 +444,14 @@ export function OriginLocationField({
       catalogId: match.id,
       source: 'catalog',
     });
-    setOpen(false);
-    window.setTimeout(() => {
-      selectingRef.current = false;
-    }, BLUR_RESOLVE_DELAY_MS * 2);
+    endSelection();
   };
 
   const openCatalogEditor = (location: FavoriteLocation) => {
     setEditingLocation(location);
-    setEditingName(formatChileAddress(location.name));
+    // El nombre guardado se muestra tal cual: formatearlo aca lo reescribia al
+    // guardar, aunque el usuario no hubiera tocado el campo.
+    setEditingName(location.name);
     setEditingAliases(location.aliases.join('\n'));
     setEditingRoutingAccess(
       location.routing_access_latitude != null &&
@@ -378,23 +505,35 @@ export function OriginLocationField({
   };
 
   const selectNetworkSuggestion = async (suggestion: PlaceSuggestion) => {
-    selectingRef.current = true;
-    setOpen(false);
-    setNetworkSuggestions([]);
-    setIsResolvingLocation(true);
+    beginSelection();
+    const generation = locationGenerationRef.current;
+    const isStale = () => generation !== locationGenerationRef.current;
+
+    // El texto que ya se ve en la lista se escribe de inmediato: pedir el
+    // detalle del lugar tarda, y hasta entonces el input no puede seguir
+    // mostrando lo tecleado. Las coordenadas llegan enseguida.
+    const previewLabel = suggestion.mainText
+      ? [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', ')
+      : suggestion.text;
+    onChange(previewLabel);
+    lastResolvedRef.current = previewLabel;
 
     try {
       if (suggestion.source === 'geocode' && suggestion.coordinates) {
         const [lng, lat] = suggestion.coordinates;
-        const label = formatChileAddress(suggestion.text);
-        onChange(label);
-        lastResolvedRef.current = label;
         onCoordsChange({ lat, lng, catalogId: null, source: 'places' });
         return;
       }
 
       if (!suggestion.placeId) return;
+      setIsResolvingLocation(true);
       const place = await getPlaceDetails(suggestion.placeId);
+
+      if (isStale()) {
+        logger.debug('Detalle de lugar descartado: la ubicacion cambio mientras se pedia');
+        return;
+      }
+
       if (!place) {
         toast.error('No pudimos obtener la ubicación exacta seleccionada.');
         return;
@@ -409,8 +548,10 @@ export function OriginLocationField({
       lastResolvedRef.current = label;
       onCoordsChange({ lat: place.lat, lng: place.lng, catalogId: null, source: 'places' });
     } finally {
-      selectingRef.current = false;
-      setIsResolvingLocation(false);
+      if (!isStale()) {
+        selectingRef.current = false;
+        setIsResolvingLocation(false);
+      }
     }
   };
 
@@ -478,6 +619,9 @@ export function OriginLocationField({
               id={id}
               value={value}
               onChange={(event) => {
+                // Teclear tambien invalida la resolucion en vuelo: lo escrito
+                // manda por sobre lo que Google devuelva del query anterior.
+                locationGenerationRef.current += 1;
                 onChange(event.target.value);
                 onCoordsChange(NO_COORDS);
                 lastResolvedRef.current = null;
@@ -485,6 +629,7 @@ export function OriginLocationField({
               }}
               onFocus={() => setOpen(true)}
               onBlur={handleBlurResolve}
+              onKeyDown={handleInputKeyDown}
               onPaste={(event) => {
                 // Solo se toma el control cuando el pegado reemplaza todo el
                 // campo (caso real: pegar un enlace o un plus code). Un pegado
@@ -546,21 +691,33 @@ export function OriginLocationField({
           className="w-[var(--radix-popover-trigger-width)] p-0"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
-          <Command shouldFilter={false} className="bg-background">
+          <Command
+            shouldFilter={false}
+            value={activeKey}
+            onValueChange={setActiveKey}
+            className="bg-background"
+          >
             <CommandList className="max-h-72">
               {showCatalog ? (
-                <CommandGroup heading="Catalogo de ubicaciones">
+                <CommandGroup heading="Catálogo de ubicaciones">
                   {catalogMatches.map((match) => (
                     <CommandItem
                       key={match.id}
                       value={match.id}
                       className="gap-3 px-3 py-3"
+                      // El pointerdown saca el foco del input y programa la
+                      // resolucion del texto a medio teclear. Marcar la
+                      // seleccion aca —y no al soltar— evita que un clic
+                      // pausado cierre el popover antes del onSelect. No se
+                      // cierra el popover todavia: el item debe seguir vivo
+                      // hasta el click.
+                      onPointerDown={() => armSelection()}
                       onSelect={() => selectCatalogMatch(match)}
                     >
                       <Building2 className="size-4 shrink-0 text-info-text" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">
-                          {formatChileAddress(match.name)}
+                          {match.name}
                         </p>
                         {match.address ? (
                           <p className="truncate text-xs text-muted-foreground">
@@ -602,9 +759,10 @@ export function OriginLocationField({
                 <CommandGroup heading="Resultados de Google">
                   {networkSuggestions.map((suggestion) => (
                     <CommandItem
-                      key={suggestion.placeId ?? `${suggestion.source}-${suggestion.text}`}
-                      value={suggestion.placeId ?? `${suggestion.source}-${suggestion.text}`}
+                      key={suggestionKey(suggestion)}
+                      value={suggestionKey(suggestion)}
                       className="gap-3 px-3 py-3"
+                      onPointerDown={() => armSelection()}
                       onSelect={() => void selectNetworkSuggestion(suggestion)}
                     >
                       <MapPin className="size-4 shrink-0 text-success-text" />
