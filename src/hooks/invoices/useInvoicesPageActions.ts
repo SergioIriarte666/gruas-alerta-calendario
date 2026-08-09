@@ -6,6 +6,7 @@ import { getTodayLocal } from '@/utils/timezoneUtils';
 import { formatCurrency } from '@/lib/utils';
 import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
 import { Invoice } from '@/types';
+import { normalizeInvoiceStatusBeforeAutomaticPayment } from '@/utils/invoicePaymentCreation';
 import { InvoicesProtectedDeleteDialogState } from '@/components/invoices/InvoicesProtectedDeleteDialog';
 import { createLogger } from "@/lib/logger";
 
@@ -136,7 +137,18 @@ export const useInvoicesPageActions = ({
     if (!editingInvoice) return;
 
     try {
-      await updateInvoice(editingInvoice.id, data);
+      const shouldRegisterPayment = data.status === 'paid' && editingInvoice.status !== 'paid';
+      const updateData = shouldRegisterPayment
+        ? { ...data, status: normalizeInvoiceStatusBeforeAutomaticPayment(data.status) }
+        : data;
+
+      await updateInvoice(editingInvoice.id, updateData);
+
+      if (shouldRegisterPayment) {
+        const paymentDate = data.paymentDate || data.issueDate || getTodayLocal();
+        await markAsPaid(editingInvoice.id, paymentDate);
+      }
+
       closeInvoiceForm();
     } catch (error) {
       logger.error('Invoices page - Error updating invoice:', error);

@@ -91,7 +91,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   const editableFields = isEditing && invoice ? getEditableFields(invoice.status) : {
-    canEditClosure: true, canEditDates: true, canEditNumeroFiscal: true, canEditStatus: true, canEditPaymentDate: false
+    canEditClosure: true, canEditDates: true, canEditNumeroFiscal: true, canEditStatus: true, canEditPaymentDate: true
   };
 
   const selectedClosureId = watch('closureId');
@@ -137,6 +137,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const canGoNext = validateStep(currentStep);
   const canSubmit = validateStep(1) && validateStep(2) && validateStep(3);
 
+  const handleStatusChange = useCallback((status: InvoiceStatus) => {
+    setValue('status', status);
+    if (status === 'paid' && !watch('paymentDate')) {
+      setValue('paymentDate', watch('issueDate') || getTodayLocal());
+    }
+  }, [setValue, watch]);
+
   const steps: InvoiceFormStep[] = getInvoiceFormSteps().map(step => ({
     ...step,
     isCompleted: step.id < currentStep || (step.id === currentStep && validateStep(step.id)),
@@ -150,7 +157,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       case 2:
         return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
       case 3:
-        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} productServiceDescription={watch('productServiceDescription') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v: InvoiceStatus) => setValue('status', v)} onNumeroFiscalChange={(v: string) => setValue('numeroFiscal', v)} onProductServiceDescriptionChange={(v: string) => setValue('productServiceDescription', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message, productServiceDescription: errors.productServiceDescription?.message } as any} />;
+        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} productServiceDescription={watch('productServiceDescription') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={handleStatusChange} onNumeroFiscalChange={(v: string) => setValue('numeroFiscal', v)} onProductServiceDescriptionChange={(v: string) => setValue('productServiceDescription', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message, productServiceDescription: errors.productServiceDescription?.message } as any} />;
       default: return null;
     }
   };

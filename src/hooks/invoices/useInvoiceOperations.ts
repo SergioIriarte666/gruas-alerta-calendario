@@ -5,6 +5,10 @@ import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import { formatInvoiceData } from '@/utils/invoiceUtils';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  assertAutomaticPaymentSucceeded,
+  normalizeInvoiceStatusBeforeAutomaticPayment,
+} from '@/utils/invoicePaymentCreation';
 import { createLogger } from "@/lib/logger";
 
 
@@ -75,7 +79,10 @@ export const useInvoiceOperations = () => {
         throw new Error('La descripción de producto o servicio debe tener máximo 500 caracteres');
       }
 
-      // Preparar datos para la transacción
+      const requestedStatus = invoiceData.status || 'draft';
+
+      // Una factura solicitada como pagada se inserta primero como emitida. El
+      // pago automático posterior es quien establece paid + paid_amount.
       const invoiceDataForTransaction = {
         client_id: invoiceData.clientId,
         issue_date: invoiceData.issueDate,
@@ -84,7 +91,7 @@ export const useInvoiceOperations = () => {
         vat: invoiceData.vat.toString(),
         total: invoiceData.total.toString(),
         numero_fiscal: invoiceData.numeroFiscal,
-        status: invoiceData.status || 'draft',
+        status: normalizeInvoiceStatusBeforeAutomaticPayment(requestedStatus),
         payment_term_id: invoiceData.paymentTermId || '',
         notes: invoiceData.notes || null,
         product_service_description: trimmedDescription
@@ -734,8 +741,10 @@ export const useInvoiceOperations = () => {
         throw error;
       }
 
-      // Dispatch event for real-time updates
       const result = data as any;
+      assertAutomaticPaymentSucceeded(result);
+
+      // Dispatch event for real-time updates
       window.dispatchEvent(new CustomEvent('invoice-paid', { 
         detail: { invoiceId: id, paymentId: result?.payment_id } 
       }));
