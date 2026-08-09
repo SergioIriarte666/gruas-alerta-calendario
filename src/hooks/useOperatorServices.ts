@@ -8,7 +8,8 @@ import { createLogger } from '@/lib/logger';
 import { operatorServicesKeys } from './operatorServicesQueryKeys';
 import { cacheOperatorServices, getCachedOperatorServices } from '@/utils/operatorOffline';
 import { syncOperatorWidgets } from '@/native/operatorWidget';
-import { OPERATOR_HIDDEN_STATUSES_POSTGREST } from '@/constants/operatorVisibility';
+import { buildOperatorVisibilityFilter, isVisibleToOperator } from '@/constants/operatorVisibility';
+import { getBusinessToday } from '@/utils/timezoneUtils';
 
 const logger = createLogger('useOperatorServices');
 
@@ -120,15 +121,17 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
 
     logger.debug('Found operator:', operatorData.id);
 
-    // Se excluye por lo que ya NO se puede trabajar, no por estado comercial:
-    // un 'quoted' con operador asignado es un servicio que hay que salir a
-    // hacer. Ver OPERATOR_HIDDEN_SERVICE_STATUSES.
+    // "Si el servicio está en etapa de cotizado u OC, con fecha futura, se debe
+    // ver": los operacionales van siempre, los comerciales solo mientras la
+    // fecha no haya pasado. Ver buildOperatorVisibilityFilter.
+    const visibilityFilter = buildOperatorVisibilityFilter(getBusinessToday());
+
     const [{ data: directServices, error: directError }, { data: resourceServices, error: resourceServicesError }] = await Promise.all([
       supabase
         .from('services')
         .select(OPERATOR_SERVICES_SELECT)
         .eq('operator_id', operatorData.id)
-        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
+        .or(visibilityFilter)
         .order('service_date', { ascending: true }),
       // Servicios asignados vía service_resources (multi-operador), filtrados server-side
       // para nunca traer el historial completo del operador (puede tener cientos de filas).
@@ -137,7 +140,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         .select(`${OPERATOR_SERVICES_SELECT}, service_resources!inner(operator_id, resource_type)`)
         .eq('service_resources.operator_id', operatorData.id)
         .eq('service_resources.resource_type', 'operator')
-        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
+        .or(visibilityFilter)
         .order('service_date', { ascending: true }),
     ]);
 
@@ -176,7 +179,11 @@ export const useOperatorServices = (userId?: string) => {
         return await fetchOperatorServices(userId!);
       } catch (error) {
         if (userId && !navigator.onLine) {
-          const cached = await getCachedOperatorServices(userId);
+          // La caché se filtró el día que se guardó: una cotización de ayer
+          // seguiría apareciendo sin volver a evaluar la fecha.
+          const cached = (await getCachedOperatorServices(userId)).filter((service) =>
+            isVisibleToOperator(service.status, service.serviceDate, getBusinessToday()),
+          );
           if (cached.length > 0) {
             logger.warn('Using cached operator services while offline');
             return cached;

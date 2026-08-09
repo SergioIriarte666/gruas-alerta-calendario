@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { describeCrane } from '@/utils/checklists/checklistLogic';
-import { OPERATOR_HIDDEN_STATUSES_POSTGREST } from '@/constants/operatorVisibility';
+import { buildOperatorVisibilityFilter } from '@/constants/operatorVisibility';
+import { getBusinessToday } from '@/utils/timezoneUtils';
 
 const logger = createLogger('Checklists');
 
@@ -101,7 +102,7 @@ export const useOperatorChecklistContext = (userId?: string | null) => {
         .from('services')
         .select('id, folio, license_plate, crane_id, service_date')
         .eq('operator_id', operatorId as string)
-        .not('status', 'in', OPERATOR_HIDDEN_STATUSES_POSTGREST)
+        .or(buildOperatorVisibilityFilter(getBusinessToday()))
         .order('service_date', { ascending: false })
         .limit(20);
 

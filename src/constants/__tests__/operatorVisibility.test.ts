@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  OPERATOR_COMMERCIAL_SERVICE_STATUSES,
   OPERATOR_HIDDEN_SERVICE_STATUSES,
-  OPERATOR_HIDDEN_STATUSES_POSTGREST,
+  OPERATOR_OPERATIONAL_SERVICE_STATUSES,
   OPERATOR_STARTABLE_SERVICE_STATUSES,
+  buildOperatorVisibilityFilter,
   isStartableByOperator,
   isVisibleToOperator,
 } from '../operatorVisibility';
@@ -19,25 +21,56 @@ const readCode = (path: string) =>
 
 const MIGRATION = 'supabase/migrations/20260809170000_service_integrity_guards.sql';
 
+const HOY = '2026-08-09';
+const MANANA = '2026-08-10';
+const JUNIO = '2026-06-15';
+
 describe('visibilidad operacional del portal del operador', () => {
-  // El incidente: 32 servicios en 'quoted' invisibles para su operador.
-  it('un servicio cotizado es visible y se puede iniciar', () => {
-    expect(isVisibleToOperator('quoted')).toBe(true);
+  // Regla del dueño: "si el servicio está en etapa de cotizado u OC, con fecha
+  // futura, se debe ver".
+  it('un cotizado de hoy o de mañana se ve y se puede iniciar', () => {
+    expect(isVisibleToOperator('quoted', HOY, HOY)).toBe(true);
+    expect(isVisibleToOperator('quoted', MANANA, HOY)).toBe(true);
     expect(isStartableByOperator('quoted')).toBe(true);
   });
 
-  it('los demás estados comerciales tampoco esconden el servicio', () => {
-    for (const status of ['pending', 'purchase_order_pending', 'with_purchase_order']) {
-      expect(isVisibleToOperator(status)).toBe(true);
+  it('un cotizado con fecha pasada ya no se ve', () => {
+    expect(isVisibleToOperator('quoted', JUNIO, HOY)).toBe(false);
+  });
+
+  it('la etapa de OC sigue el mismo criterio de fecha', () => {
+    for (const status of ['purchase_order_pending', 'with_purchase_order']) {
+      expect(isVisibleToOperator(status, MANANA, HOY)).toBe(true);
+      expect(isVisibleToOperator(status, JUNIO, HOY)).toBe(false);
       expect(isStartableByOperator(status)).toBe(true);
     }
   });
 
-  it('solo esconde lo que ya no se puede trabajar', () => {
+  it('los operacionales se ven siempre, la fecha no los toca', () => {
+    for (const status of OPERATOR_OPERATIONAL_SERVICE_STATUSES) {
+      expect(isVisibleToOperator(status, '2025-01-10', HOY)).toBe(true);
+      expect(isVisibleToOperator(status, MANANA, HOY)).toBe(true);
+    }
+  });
+
+  it('un pending antiguo sigue apareciendo', () => {
+    expect(isVisibleToOperator('pending', '2025-01-10', HOY)).toBe(true);
+  });
+
+  it('los cerrados no se ven ni con fecha futura', () => {
     expect(OPERATOR_HIDDEN_SERVICE_STATUSES).toEqual(['invoiced', 'cancelled', 'failed']);
     for (const status of OPERATOR_HIDDEN_SERVICE_STATUSES) {
-      expect(isVisibleToOperator(status)).toBe(false);
+      expect(isVisibleToOperator(status, MANANA, HOY)).toBe(false);
     }
+  });
+
+  it('la lista es blanca: un estado no clasificado tampoco se ve', () => {
+    expect(isVisibleToOperator('partially_invoiced', MANANA, HOY)).toBe(false);
+  });
+
+  it('un comercial sin fecha no se muestra: no hay con qué decidir vigencia', () => {
+    expect(isVisibleToOperator('quoted', null, HOY)).toBe(false);
+    expect(isVisibleToOperator('quoted', MANANA, '')).toBe(false);
   });
 
   it('lo que ya está en vuelo o cerrado no ofrece "Iniciar"', () => {
@@ -46,20 +79,19 @@ describe('visibilidad operacional del portal del operador', () => {
     }
   });
 
-  it('un servicio en curso sigue siendo visible', () => {
-    expect(isVisibleToOperator('in_progress')).toBe(true);
-    expect(isVisibleToOperator('inspection_completed')).toBe(true);
-    expect(isVisibleToOperator('completed')).toBe(true);
-  });
-
-  it('la cláusula PostgREST va entre paréntesis', () => {
-    expect(OPERATOR_HIDDEN_STATUSES_POSTGREST).toBe('(invoiced,cancelled,failed)');
-  });
-
   it('sin estado no hay visibilidad ni inicio', () => {
-    expect(isVisibleToOperator(null)).toBe(false);
-    expect(isVisibleToOperator('')).toBe(false);
+    expect(isVisibleToOperator(null, MANANA, HOY)).toBe(false);
+    expect(isVisibleToOperator('', MANANA, HOY)).toBe(false);
     expect(isStartableByOperator(undefined)).toBe(false);
+  });
+
+  // La sintaxis anidada se verificó contra la API real: un filtro mal formado
+  // devuelve PGRST100 "failed to parse logic tree" antes de tocar RLS.
+  it('la cláusula PostgREST anida el and() dentro del or()', () => {
+    expect(buildOperatorVisibilityFilter(HOY)).toBe(
+      'status.in.(pending,in_progress,inspection_completed,completed),' +
+        `and(status.in.(quoted,purchase_order_pending,with_purchase_order),service_date.gte.${HOY})`,
+    );
   });
 });
 
@@ -69,7 +101,10 @@ describe('contrato con el servidor', () => {
     // Un `.in('status', [...])` acá es exactamente lo que escondió los 32
     // servicios en 'quoted'.
     expect(source).not.toContain(".in('status'");
-    expect(source).toContain('OPERATOR_HIDDEN_STATUSES_POSTGREST');
+    expect(source).toContain('buildOperatorVisibilityFilter');
+    // La fecha de corte va en TZ del negocio: el día del navegador mueve el
+    // corte segun donde este el telefono.
+    expect(source).toContain('getBusinessToday()');
   });
 
   it('operator_startable_statuses() del servidor coincide con la constante', () => {
@@ -81,6 +116,11 @@ describe('contrato con el servidor', () => {
 
     for (const status of OPERATOR_STARTABLE_SERVICE_STATUSES) {
       expect(fn).toContain(`'${status}'`);
+    }
+    // Todo comercial visible tiene que poder iniciarse, o el operador ve el
+    // servicio y no puede hacer nada con el.
+    for (const status of OPERATOR_COMMERCIAL_SERVICE_STATUSES) {
+      expect(isStartableByOperator(status)).toBe(true);
     }
   });
 
