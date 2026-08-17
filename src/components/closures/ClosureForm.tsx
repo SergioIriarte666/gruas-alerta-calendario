@@ -65,7 +65,8 @@ const ClosureForm = ({
     services,
     pendingServices,
     usedServiceIds,
-    totalCompleted,
+    alreadyInClosureCount,
+    previewLimited,
     loading: servicesLoading,
     completeService,
     completeMultipleServices,
@@ -78,6 +79,9 @@ const ClosureForm = ({
     dateFrom: formData.dateFrom,
     dateTo: formData.dateTo,
     searchTerm: servicesSearchTerm,
+    // El cliente acota la consulta en el servidor: sin esto la lista solo podía
+    // filtrar la página de los servicios más recientes.
+    clientId: formData.clientId,
     enabled: open
   });
   
@@ -246,84 +250,86 @@ const ClosureForm = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="finance-dialog bg-card border max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-primary-soft to-primary/10">
-            <DialogTitle className="text-2xl font-bold text-foreground">
-              Nuevo Cierre de Servicios
-            </DialogTitle>
-            <p className="text-muted-foreground">
-              Agrupa servicios completados para facturación
-            </p>
-          </DialogHeader>
+      {/* Alto fijo + min-h-0 en cada nivel: sin eso los `h-full` encadenados
+          colapsaban y el cuerpo se recortaba sin barra de desplazamiento. */}
+      <DialogContent className="finance-dialog bg-card border max-w-5xl h-[85dvh] flex flex-col overflow-hidden gap-0 p-0">
+        {/* Header */}
+        <DialogHeader className="shrink-0 border-b bg-gradient-to-r from-primary-soft to-primary/10 px-6 py-4 pr-12">
+          <DialogTitle className="text-2xl font-bold text-foreground">
+            Nuevo Cierre de Servicios
+          </DialogTitle>
+          <p className="text-muted-foreground">
+            Agrupa servicios completados para facturación
+          </p>
+        </DialogHeader>
 
-          {/* Main Content - 2 Column Layout */}
-          <div className="flex-1 overflow-clip">
-            <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
-              {/* Left Sidebar */}
-              <div className="lg:col-span-1 border-r bg-muted/30 p-4 overflow-y-auto space-y-4">
-                <ClosureFormStepNavigation
-                  steps={steps}
-                  currentStep={currentStep}
-                  onStepClick={setCurrentStep}
-                />
-                
-                <div className="hidden lg:block">
-                  <ClosureSummaryPanel
-                    dateFrom={formData.dateFrom}
-                    dateTo={formData.dateTo}
-                    clientName={selectedClient?.name || ''}
-                    selectedCount={formData.serviceIds.length}
-                    total={formData.total}
-                    purchaseOrder={formData.purchaseOrder}
-                    status={formData.status}
-                  />
-                </div>
-              </div>
+        {/* Cuerpo: en móvil desplaza completo, en escritorio cada columna aparte */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:grid-cols-4 lg:overflow-hidden">
+          {/* Left Sidebar */}
+          <div className="shrink-0 space-y-4 border-b bg-muted/30 p-4 lg:col-span-1 lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+            <ClosureFormStepNavigation
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={setCurrentStep}
+            />
 
-              {/* Right Content */}
-              <div className="lg:col-span-3 flex flex-col overflow-clip">
-                <div className="flex flex-col h-full">
-                  <div className="flex-1 overflow-y-auto p-6">
+            <div className="hidden lg:block">
+              <ClosureSummaryPanel
+                dateFrom={formData.dateFrom}
+                dateTo={formData.dateTo}
+                clientName={selectedClient?.name || ''}
+                selectedCount={formData.serviceIds.length}
+                total={formData.total}
+                purchaseOrder={formData.purchaseOrder}
+                status={formData.status}
+              />
+            </div>
+          </div>
+
+          {/* Right Content */}
+          <div className="min-h-0 lg:col-span-3 lg:overflow-y-auto">
+            <div className="p-4 sm:p-6">
                     {/* Step 1: Cliente y Servicios */}
                     {currentStep === 1 && (
                       <div className="space-y-4">
+                        {/* El cliente acota la lista de abajo: va primero para no
+                            quedar escondido al final del paso. */}
+                        <ColoredSectionCard
+                          title="Cliente (Opcional)"
+                          icon={<AlertCircle className="size-4" />}
+                          color="blue"
+                        >
+                          <ClientSelector
+                            clientId={formData.clientId}
+                            onClientChange={handleClientChange}
+                          />
+                        </ColoredSectionCard>
+
                         <ColoredSectionCard
                           title="Servicios Disponibles"
                           icon={<AlertCircle className="size-4" />}
                           color="green"
                           required
                         >
-                          <EnhancedServicesSelector 
-                            services={services} 
+                          <EnhancedServicesSelector
+                            services={services}
                             pendingServices={pendingServices}
-                            loading={servicesLoading} 
-                            clientId={formData.clientId} 
-                            selectedServiceIds={formData.serviceIds} 
+                            loading={servicesLoading}
+                            clientId={formData.clientId}
+                            selectedServiceIds={formData.serviceIds}
                             onServiceToggle={handleServiceSelection}
                             onCompleteService={completeService}
                             onCompleteMultipleServices={completeMultipleServices}
-                            totalCompleted={totalCompleted}
+                            alreadyInClosureCount={alreadyInClosureCount}
                             usedServiceIds={usedServiceIds}
                             isGlobalSearch={isGlobalSearch}
+                            previewLimited={previewLimited}
                             onAutoFillDates={handleAutoFillDates}
                             onSearchTermChange={setServicesSearchTerm}
                             processedServices={processedServices}
                             searchingProcessed={searchingProcessed}
                             onSearchProcessed={searchProcessedServices}
                             onClearProcessed={clearProcessedServices}
-                          />
-                        </ColoredSectionCard>
-
-                        <ColoredSectionCard
-                          title="Cliente (Opcional)"
-                          icon={<AlertCircle className="size-4" />}
-                          color="blue"
-                        >
-                          <ClientSelector 
-                            clientId={formData.clientId} 
-                            onClientChange={handleClientChange} 
                           />
                         </ColoredSectionCard>
                       </div>
@@ -430,60 +436,57 @@ const ClosureForm = ({
                         </ColoredSectionCard>
                       </div>
                     )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="border-t bg-muted/30 px-6 py-4 flex items-center justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePrevStep}
-                      disabled={currentStep === 1}
-                      className="gap-2"
-                    >
-                      <ChevronLeft className="size-4" />
-                      Anterior
-                    </Button>
-
-                    <span className="text-sm text-muted-foreground">
-                      Paso {currentStep} de 3
-                    </span>
-
-                    <div className="flex gap-2">
-                      {currentStep < 3 ? (
-                        <Button
-                          type="button"
-                          onClick={handleNextStep}
-                          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          Siguiente
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={loading || !isFormValid}
-                          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          {loading ? (
-                            <>
-                              <Loader2 className="size-4 animate-spin" />
-                              Creando...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="size-4" />
-                              Crear Cierre
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Footer: fuera del cuerpo desplazable, visible en todo viewport */}
+        <div className="flex shrink-0 items-center justify-between gap-2 border-t bg-muted/30 px-4 py-3 sm:px-6 sm:py-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrevStep}
+            disabled={currentStep === 1}
+            className="gap-2"
+          >
+            <ChevronLeft className="size-4" />
+            <span className="hidden sm:inline">Anterior</span>
+          </Button>
+
+          <span className="text-sm text-muted-foreground">
+            Paso {currentStep} de 3
+          </span>
+
+          <div className="flex gap-2">
+            {currentStep < 3 ? (
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Siguiente
+                <ChevronRight className="size-4" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading || !isFormValid}
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    Crear Cierre
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

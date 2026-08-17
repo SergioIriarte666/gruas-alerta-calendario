@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { ProcessedServiceInfo } from '@/hooks/useServicesForClosures';
+import { matchesClosureClient } from '@/utils/closureBilling';
 import { toTitleCase } from '@/lib/utils';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -24,9 +25,13 @@ interface EnhancedServicesSelectorProps {
   // complete_service), así que viaja el par y no solo el id.
   onCompleteService: (target: { id: string; folio: string }) => void;
   onCompleteMultipleServices: (targets: { id: string; folio: string }[]) => void;
-  totalCompleted: number;
+  // Partes que quedaron fuera de la lista por estar ya en otro cierre. Viene del
+  // mismo filtro que arma la lista; si no se conoce, el aviso no se muestra.
+  alreadyInClosureCount?: number;
   usedServiceIds: Set<string>;
   isGlobalSearch?: boolean;
+  // La consulta se truncó por límite: hay más servicios de los listados.
+  previewLimited?: boolean;
   onAutoFillDates?: (dateFrom: Date, dateTo: Date) => void;
   onSearchTermChange?: (searchTerm: string) => void;
   // New props for processed services
@@ -45,9 +50,10 @@ const EnhancedServicesSelector = ({
   onServiceToggle,
   onCompleteService: _onCompleteService,
   onCompleteMultipleServices,
-  totalCompleted,
+  alreadyInClosureCount = 0,
   usedServiceIds: _usedServiceIds,
   isGlobalSearch = false,
+  previewLimited = false,
   onAutoFillDates,
   onSearchTermChange,
   processedServices = [],
@@ -120,16 +126,11 @@ const EnhancedServicesSelector = ({
     }
     
     // Check if we have any available results
-    const clientFilteredServices = services.filter(service => {
-      if (!clientId) return true;
-      return service.client?.id === clientId;
-    });
-    
-    const clientFilteredPending = pendingServices.filter(service => {
-      if (!clientId) return true;
-      return service.client?.id === clientId;
-    });
-    
+    const clientFilteredServices = services.filter(service => matchesClosureClient(service, clientId));
+
+    const clientFilteredPending = pendingServices.filter(service => matchesClosureClient(service, clientId));
+
+
     const hasAvailableResults = filterServicesBySearch(clientFilteredServices).length > 0;
     const hasPendingResults = filterServicesBySearch(clientFilteredPending).length > 0;
     
@@ -151,18 +152,14 @@ const EnhancedServicesSelector = ({
     };
   }, [searchTerm, services, pendingServices, clientId, filterServicesBySearch, onSearchProcessed, onClearProcessed]);
 
+  // El servidor ya acota por cliente; este filtro es el mismo criterio aplicado
+  // a lo que quedó en memoria (y cubre el instante previo al refetch).
   const filteredServices = useMemo(() => filterServicesBySearch(
-    services.filter(service => {
-      if (!clientId) return true;
-      return service.client.id === clientId;
-    })
+    services.filter(service => matchesClosureClient(service, clientId))
   ), [services, clientId, filterServicesBySearch]);
 
   const filteredPendingServices = useMemo(() => filterServicesBySearch(
-    pendingServices.filter(service => {
-      if (!clientId) return true;
-      return service.client.id === clientId;
-    })
+    pendingServices.filter(service => matchesClosureClient(service, clientId))
   ), [pendingServices, clientId, filterServicesBySearch]);
 
   const visibleServices = useMemo(() => filteredServices.slice(0, 120), [filteredServices]);
@@ -271,25 +268,39 @@ const EnhancedServicesSelector = ({
         return null;
       }
       
+      if (hasActiveSearch) {
+        return {
+          type: 'info' as const,
+          title: 'No se encontraron servicios con ese criterio',
+          description: `No se encontraron servicios que coincidan con "${searchTerm}". Intenta con otros términos de búsqueda.`,
+          suggestions: [
+            'Verifica la ortografía del término de búsqueda',
+            'Intenta buscar por otro campo (patente, folio, orden de compra)',
+            isGlobalSearch
+              ? 'Limpia la búsqueda para ver los servicios disponibles'
+              : 'Limpia la búsqueda para ver todos los servicios del rango'
+          ]
+        };
+      }
+
+      // En modo global no hay período: nombrar un "rango de fechas" que no existe
+      // fue lo que hacía contradictorio este aviso.
+      const scopeLabel = clientId ? 'para este cliente' : 'en el sistema';
       return {
         type: 'info' as const,
-        title: hasActiveSearch 
-          ? 'No se encontraron servicios con ese criterio'
+        title: isGlobalSearch
+          ? 'No hay servicios disponibles para cierre'
           : 'No hay servicios en el rango de fechas',
-        description: hasActiveSearch
-          ? `No se encontraron servicios que coincidan con "${searchTerm}". Intenta con otros términos de búsqueda.`
-          : 'No se encontraron servicios completados ni pendientes para el período seleccionado.',
-        suggestions: hasActiveSearch
-          ? [
-              'Verifica la ortografía del término de búsqueda',
-              'Intenta buscar por otro campo (patente, folio, orden de compra)',
-              'Limpia la búsqueda para ver todos los servicios del rango'
-            ]
-          : [
-              'Amplía el rango de fechas',
-              'Verifica que existan servicios en el sistema',
-              'Selecciona "Todos los clientes" si buscas servicios de otros clientes'
-            ]
+        description: isGlobalSearch
+          ? `No se encontraron servicios completados ni pendientes sin cerrar ${scopeLabel}.`
+          : `No se encontraron servicios completados ni pendientes ${scopeLabel} para el período seleccionado.`,
+        suggestions: [
+          ...(isGlobalSearch ? [] : ['Amplía el rango de fechas']),
+          ...(clientId
+            ? ['Selecciona "Todos los clientes" para ver servicios de otros clientes']
+            : ['Verifica que existan servicios completados sin cierre en el sistema']),
+          'Los servicios ya incluidos en otro cierre no vuelven a listarse'
+        ]
       };
     }
 
@@ -300,19 +311,23 @@ const EnhancedServicesSelector = ({
         description: `Se encontraron ${filteredPendingServices.length} servicio(s) pendiente(s) que pueden ser completados.`,
         suggestions: [
           'Completa los servicios pendientes para incluirlos en el cierre',
-          'Amplía el rango de fechas para incluir más servicios',
+          ...(isGlobalSearch ? [] : ['Amplía el rango de fechas para incluir más servicios']),
           'Verifica el estado de los servicios en el sistema'
         ]
       };
     }
 
-    if (filteredServices.length > 0 && totalCompleted > filteredServices.length) {
-      const alreadyUsed = totalCompleted - filteredServices.length;
+    // El conteo sale del mismo filtro de elegibilidad que arma la lista, así que
+    // "disponibles" y "ya incluidos" siempre suman sobre el mismo universo. Con
+    // una búsqueda local activa la lista está recortada y el aviso no aplica.
+    if (filteredServices.length > 0 && !hasActiveSearch && alreadyInClosureCount > 0) {
       return {
         type: 'success' as const,
-        title: `${filteredServices.length} servicio(s) disponible(s)`,
-        description: `${alreadyUsed} servicio(s) ya están incluidos en otros cierres.`,
-        suggestions: []
+        title: `${filteredServices.length} monto(s) disponible(s)`,
+        description: `${alreadyInClosureCount} monto(s) ya están incluidos en otros cierres.`,
+        suggestions: previewLimited
+          ? ['Se muestran solo los servicios más recientes: acota por cliente, fechas o búsqueda para ver el resto']
+          : []
       };
     }
 
@@ -349,7 +364,11 @@ const EnhancedServicesSelector = ({
               <AlertDescription className="text-foreground">
                 <div className="font-medium text-warning">Búsqueda Global Activa</div>
                 <div className="text-sm mt-1 text-muted-foreground">
-                  Mostrando servicios sin límite de fecha. Busca por OC, folio o patente.
+                  {previewLimited
+                    ? 'Mostrando solo los servicios más recientes. Acota por cliente, fechas o búsqueda (OC, folio o patente) para ver el resto.'
+                    : clientId
+                      ? 'Mostrando todos los servicios disponibles de este cliente, sin límite de fecha.'
+                      : 'Mostrando servicios sin límite de fecha. Busca por OC, folio o patente.'}
                 </div>
                 {selectedServiceIds.length > 0 && onAutoFillDates && (
                   <Button
@@ -640,18 +659,16 @@ const EnhancedServicesSelector = ({
           {filteredServices.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-muted-foreground text-sm">
-                {clientId ? 
+                {clientId ?
                   `No hay montos pendientes de cierre para este cliente` :
                   'No hay servicios ni excedentes disponibles para cierre'
                 }
               </p>
-              {services.length > 0 && clientId && (
+              {clientId && (
+                // La consulta viene acotada a este cliente: no se puede afirmar
+                // cuántos servicios tienen los demás sin inventar el número.
                 <p className="text-secondary-foreground text-xs mt-1">
-                  Hay {services.length} servicio(s) disponible(s) para otros clientes.
-                  <br />
-                  <span className="text-primary cursor-pointer underline">
-                    Selecciona "Todos los clientes" para incluirlos.
-                  </span>
+                  Selecciona "Todos los clientes" para ver los servicios de otros clientes.
                 </p>
               )}
             </div>

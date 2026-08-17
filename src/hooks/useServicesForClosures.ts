@@ -12,6 +12,7 @@ import {
 } from '@/utils/serviceCompletion';
 import { createLogger } from "@/lib/logger";
 import {
+  buildClosureClientFilter,
   CLOSURE_CANDIDATE_STATUSES,
   ClosureValueType,
   EXCESS_ROW_SUFFIX,
@@ -25,8 +26,20 @@ interface UseServicesForClosuresOptions {
   dateFrom?: Date;
   dateTo?: Date;
   searchTerm?: string;
+  clientId?: string;
   enabled?: boolean;
 }
+
+// Sin cliente, sin búsqueda y sin fechas la consulta abarcaría toda la historia:
+// se traen solo los más recientes como vista previa y la UI lo dice.
+const GLOBAL_PREVIEW_BILLABLE_LIMIT = 80;
+const GLOBAL_PREVIEW_PENDING_LIMIT = 40;
+// Acotada por búsqueda o por fechas.
+const FILTERED_BILLABLE_LIMIT = 180;
+const FILTERED_PENDING_LIMIT = 80;
+// Acotada por cliente: el universo es el de un solo cliente, así que cabe entero.
+const CLIENT_SCOPED_BILLABLE_LIMIT = 500;
+const CLIENT_SCOPED_PENDING_LIMIT = 200;
 
 export { EXCESS_ROW_SUFFIX } from '@/utils/closureBilling';
 
@@ -41,7 +54,12 @@ interface ServicesForClosuresData {
   availableServices: Service[];
   pendingServices: Service[];
   usedServiceIds: Set<string>;
-  totalCompleted: number;
+  // Filas candidatas descartadas por `isClosureValueAvailable` porque ya viven en
+  // otro cierre. Sale del mismo filtro que arma la lista, para que el mensaje de
+  // estado y la lista nunca cuenten con criterios distintos.
+  alreadyInClosureCount: number;
+  // La consulta se truncó por límite: lo mostrado no es todo el universo.
+  previewLimited: boolean;
 }
 
 // Interface for processed services (already in closures/invoiced)
@@ -64,14 +82,15 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     availableServices: [],
     pendingServices: [],
     usedServiceIds: new Set(),
-    totalCompleted: 0
+    alreadyInClosureCount: 0,
+    previewLimited: false
   });
   const [loading, setLoading] = useState(false);
   const [processedServices, setProcessedServices] = useState<ProcessedServiceInfo[]>([]);
   const [searchingProcessed, setSearchingProcessed] = useState(false);
   const { toast } = useToast();
-  const { dateFrom, dateTo, searchTerm = '', enabled = true } = options;
-  
+  const { dateFrom, dateTo, searchTerm = '', clientId = '', enabled = true } = options;
+
   // Flag to indicate if this is a global search (no date filter)
   const isGlobalSearch = !dateFrom && !dateTo;
 
@@ -85,6 +104,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       const normalizedSearch = searchTerm.trim();
       const hasSearch = normalizedSearch.length > 0;
+      const hasClientScope = clientId.trim().length > 0;
       const safeSearchTerm = normalizedSearch.replace(/,/g, ' ');
       const searchPattern = `%${safeSearchTerm}%`;
       const serviceSearchFilter = `purchase_order.ilike.${searchPattern},purchase_order_number.ilike.${searchPattern},folio.ilike.${searchPattern},license_plate.ilike.${searchPattern},vehicle_brand.ilike.${searchPattern},vehicle_model.ilike.${searchPattern},origin.ilike.${searchPattern},destination.ilike.${searchPattern}`;
@@ -143,14 +163,31 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         pendingQuery = pendingQuery.lte('service_date', toLocalDateString(dateTo));
       }
 
-      // In global mode, avoid loading massive datasets until user searches
-      if (isGlobalSearch && !hasSearch) {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(80);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(40);
-      } else {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(180);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(80);
+      // El filtro por cliente vive aquí, en el servidor: aplicarlo solo en el
+      // render dejaba fuera a todo cliente cuyos servicios no cayeran dentro de
+      // la página de los más recientes, y la lista salía vacía con servicios
+      // elegibles en la base.
+      if (hasClientScope) {
+        const clientFilter = buildClosureClientFilter(clientId);
+        billableQuery = billableQuery.or(clientFilter);
+        pendingQuery = pendingQuery.or(clientFilter);
       }
+
+      // Sin acotar (ni cliente, ni búsqueda, ni fechas) se trae solo una vista
+      // previa de los más recientes para no cargar la historia completa.
+      const billableLimit = hasClientScope
+        ? CLIENT_SCOPED_BILLABLE_LIMIT
+        : isGlobalSearch && !hasSearch
+          ? GLOBAL_PREVIEW_BILLABLE_LIMIT
+          : FILTERED_BILLABLE_LIMIT;
+      const pendingLimit = hasClientScope
+        ? CLIENT_SCOPED_PENDING_LIMIT
+        : isGlobalSearch && !hasSearch
+          ? GLOBAL_PREVIEW_PENDING_LIMIT
+          : FILTERED_PENDING_LIMIT;
+
+      billableQuery = billableQuery.order('service_date', { ascending: false }).limit(billableLimit);
+      pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(pendingLimit);
 
       // Server-side search for heavy datasets
       if (hasSearch) {
@@ -334,18 +371,26 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         ];
       };
 
+      // Un solo recorrido decide qué se lista y cuántas partes quedaron fuera por
+      // estar ya en otro cierre: son la misma pasada, no dos criterios paralelos.
+      let alreadyInClosureCount = 0;
       const transformedBillable = billableServices
-        .flatMap(item => expandServiceRows(item).filter(row =>
-          isClosureValueAvailable({
+        .flatMap(item => expandServiceRows(item).filter(row => {
+          const valueType = row._closureType || 'covered';
+          const available = isClosureValueAvailable({
             serviceId: item.id,
             status: item.status,
             hasExcess: Boolean(item.has_excess),
             thirdPartyClientId: item.third_party_client_id,
             excessAmount: Number(item.excess_amount || 0),
-            valueType: row._closureType || 'covered',
+            valueType,
             usedKeys,
-          })
-        ));
+          });
+          if (!available && usedKeys.has(getClosureValueKey(item.id, valueType))) {
+            alreadyInClosureCount += 1;
+          }
+          return available;
+        }));
       const transformedPending = pendingServices.map(mapServiceForClosure);
 
       if (fetchId !== fetchIdRef.current) return;
@@ -354,7 +399,9 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         availableServices: transformedBillable,
         pendingServices: transformedPending,
         usedServiceIds,
-        totalCompleted: billableServices.length
+        alreadyInClosureCount,
+        previewLimited:
+          billableServices.length >= billableLimit || pendingServices.length >= pendingLimit
       });
     } catch (error: any) {
       logger.error('Error fetching services data for closures:', error);
@@ -368,7 +415,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           availableServices: [],
           pendingServices: [],
           usedServiceIds: new Set(),
-          totalCompleted: 0
+          alreadyInClosureCount: 0,
+          previewLimited: false
         });
       }
     } finally {
@@ -432,7 +480,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   useEffect(() => {
     if (!enabled) return;
     fetchServicesData();
-  }, [dateFrom, dateTo, searchTerm, enabled]);
+  }, [dateFrom, dateTo, searchTerm, clientId, enabled]);
 
   // Refetch function that forces fresh data
   const refetchWithDebug = async () => {
@@ -444,7 +492,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       availableServices: [],
       pendingServices: [],
       usedServiceIds: new Set(),
-      totalCompleted: 0
+      alreadyInClosureCount: 0,
+      previewLimited: false
     });
     await fetchServicesData();
   };
@@ -536,7 +585,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     services: data.availableServices,
     pendingServices: data.pendingServices,
     usedServiceIds: data.usedServiceIds,
-    totalCompleted: data.totalCompleted,
+    alreadyInClosureCount: data.alreadyInClosureCount,
+    previewLimited: data.previewLimited,
     loading,
     completeService,
     completeMultipleServices,

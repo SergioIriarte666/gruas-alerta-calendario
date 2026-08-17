@@ -28,6 +28,32 @@ export const getClosureValueKey = (
 ): string => `${serviceId}:${valueType}`;
 
 /**
+ * Filtro PostgREST que acota `services` a un cliente.
+ *
+ * La fila cubierta pertenece al cliente principal (`client_id`) y la fila de
+ * excedente al tercero pagador (`third_party_client_id`), así que filtrar por
+ * cliente en el servidor exige mirar ambas.
+ */
+export const buildClosureClientFilter = (clientId: string): string =>
+  `client_id.eq.${clientId},third_party_client_id.eq.${clientId}`;
+
+/**
+ * Criterio único de pertenencia a cliente de una fila de cierre.
+ *
+ * Espeja `buildClosureClientFilter`: la fila ya viene con el cliente que le
+ * corresponde (principal o tercero pagador), y sin cliente seleccionado pasan
+ * todas. Lo comparten la lista, el contador y los mensajes de estado para que
+ * nunca cuenten cosas distintas.
+ */
+export const matchesClosureClient = (
+  row: { client?: { id?: string } | null },
+  clientId?: string,
+): boolean => {
+  if (!clientId) return true;
+  return row.client?.id === clientId;
+};
+
+/**
  * Decide si una parte facturable puede aparecer en un nuevo cierre.
  *
  * Un servicio ya facturado solo vuelve a mostrarse cuando:

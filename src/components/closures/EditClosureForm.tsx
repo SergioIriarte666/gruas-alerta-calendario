@@ -248,7 +248,6 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
               onServiceToggle={handleServiceToggle}
               onCompleteService={completeService}
               onCompleteMultipleServices={completeMultipleServices}
-              totalCompleted={availableServices.length + currentServices.length}
               usedServiceIds={new Set()}
             />
           </div>
