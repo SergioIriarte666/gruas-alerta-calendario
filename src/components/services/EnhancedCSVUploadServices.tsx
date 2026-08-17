@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -73,6 +75,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [markAsCompleted, setMarkAsCompleted] = useState(false);
 
   useEffect(() => {
     initializeUploader();
@@ -87,6 +90,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     ];
     
     if (selectedFile && allowedTypes.includes(selectedFile.type)) {
+      setMarkAsCompleted(false);
       setFile(selectedFile);
     } else {
       toast.error('Por favor seleccione un archivo CSV o Excel válido.');
@@ -104,6 +108,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     ];
     
     if (droppedFile && allowedTypes.includes(droppedFile.type)) {
+      setMarkAsCompleted(false);
       setFile(droppedFile);
     } else {
       toast.error('Por favor seleccione un archivo CSV o Excel válido.');
@@ -149,8 +154,13 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     }
   };
 
+  const handleReset = useCallback(() => {
+    setMarkAsCompleted(false);
+    reset();
+  }, [reset]);
+
   const handleUpload = async () => {
-    const result = await uploadServices();
+    const result = await uploadServices({ markAsCompleted });
     if (result?.success && onSuccess) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
@@ -360,7 +370,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={reset}
+                    onClick={handleReset}
                     className="border-border/70 bg-background/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     Limpiar
@@ -543,10 +553,12 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {/* Preview Table */}
             {csvData.length > 0 && (
               <div>
-                <h4 className="text-foreground font-medium mb-2">Vista Previa (primeras 5 filas)</h4>
-                <div className="overflow-x-auto bg-muted/50 rounded-lg">
+                <h4 className="text-foreground font-medium mb-2">
+                  Vista Previa ({csvData.length} {csvData.length === 1 ? 'fila' : 'filas'})
+                </h4>
+                <div className="max-h-[50vh] overflow-y-auto overflow-x-auto overscroll-contain rounded-lg border border-border/60 bg-muted/50">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 z-10 bg-card">
                       <TableRow className="border">
                         <TableHead className="text-muted-foreground">Folio</TableHead>
                         <TableHead className="text-muted-foreground">Fecha</TableHead>
@@ -558,7 +570,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {csvData.slice(0, 5).map((row, index) => {
+                      {csvData.map((row, index) => {
                         const previewRow = row as Record<string, unknown>;
                         const hasError = validationResult.errors.some(
                           error => error.row === index && error.severity === 'error'
@@ -605,31 +617,50 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
               </div>
             )}
 
-            {/* Upload Button */}
+            {/* Estado del lote + Upload Button */}
             {validationResult.validCount > 0 && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  ref={uploadButtonRef}
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className={cn(
-                    "bg-primary hover:bg-primary/90 text-primary-foreground px-8 transition-all duration-500",
-                    isUploading && "animate-pulse-glow scale-105"
-                  )}
-                  size="lg"
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="size-4 mr-2 animate-spin" />
-                      {isCancelling ? 'Cancelando…' : 'Cargando...'}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="size-4 mr-2" />
-                      Cargar {validationResult.validCount} Servicios
-                    </>
-                  )}
-                </Button>
+              <div className="pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Checkbox
+                    id="mark-as-completed"
+                    checked={markAsCompleted}
+                    onCheckedChange={(value) => setMarkAsCompleted(value === true)}
+                    disabled={isUploading}
+                  />
+                  <Label htmlFor="mark-as-completed" className="cursor-pointer">
+                    Marcar los servicios como completados
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Se cargarán con estado:{' '}
+                  <strong className="text-foreground">
+                    {markAsCompleted ? 'Completado' : 'Pendiente'}
+                  </strong>
+                </p>
+                <div className="flex justify-center">
+                  <Button
+                    ref={uploadButtonRef}
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className={cn(
+                      "bg-primary hover:bg-primary/90 text-primary-foreground px-8 transition-all duration-500",
+                      isUploading && "animate-pulse-glow scale-105"
+                    )}
+                    size="lg"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="size-4 mr-2 animate-spin" />
+                        {isCancelling ? 'Cancelando…' : 'Cargando...'}
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="size-4 mr-2" />
+                        Cargar {validationResult.validCount} Servicios
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

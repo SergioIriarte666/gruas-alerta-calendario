@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { EnhancedCSVUploader, ValidationResult, UploadProgress, UploadResult } from '@/utils/enhancedCsvUpload';
+import { EnhancedCSVUploader, ValidationResult, UploadProgress, UploadResult, ServiceStatus } from '@/utils/enhancedCsvUpload';
 import { useServices } from '@/hooks/useServices';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { toast } from 'sonner';
@@ -103,11 +103,17 @@ export const useEnhancedCSVUpload = () => {
     }
   }, [csvData, uploader, initializeUploader, services]);
 
-  const uploadServices = useCallback(async (): Promise<UploadResult | null> => {
+  const uploadServices = useCallback(async (
+    { markAsCompleted = false }: { markAsCompleted?: boolean } = {}
+  ): Promise<UploadResult | null> => {
     if (!validationResult || !validationResult.isValid || validationResult.validRows.length === 0) {
       toast.error('No hay datos válidos para cargar');
       return null;
     }
+
+    // La planilla no trae columna de estado: el estado del lote lo decide
+    // exclusivamente la casilla del modal.
+    const status: ServiceStatus = markAsCompleted ? 'completed' : 'pending';
 
     try {
       setIsUploading(true);
@@ -123,7 +129,8 @@ export const useEnhancedCSVUpload = () => {
           skipInvalidation: true,
           skipRefetch: true,
         }),
-        setUploadProgress
+        setUploadProgress,
+        { status }
       );
 
       setUploadResult(result);
@@ -131,7 +138,9 @@ export const useEnhancedCSVUpload = () => {
       if (result.cancelled) {
         toast.info(result.message);
       } else if (result.success) {
-        toast.success(`Carga exitosa: ${result.processed} servicios creados`);
+        toast.success(
+          `${result.processed} servicios cargados como ${markAsCompleted ? 'completados' : 'pendientes'}`
+        );
       } else {
         toast.error(`Carga parcial: ${result.processed} exitosos, ${result.errors} errores`);
       }

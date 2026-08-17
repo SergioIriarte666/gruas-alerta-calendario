@@ -1,6 +1,7 @@
 import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { DataMapper, MappedServiceData } from './dataMapper';
+import type { Database } from '@/integrations/supabase/types';
 
 import { createLogger } from '@/lib/logger';
 
@@ -93,6 +94,16 @@ export interface UploadProgress {
   currentBatch: number;
   totalBatches: number;
   stage: 'parsing' | 'validating' | 'mapping' | 'uploading';
+}
+
+export type ServiceStatus = Database['public']['Enums']['service_status'];
+
+export interface UploadOptions {
+  /**
+   * Estado con el que se insertan los servicios del lote.
+   * La planilla no trae columna de estado: lo decide la casilla del modal.
+   */
+  status: ServiceStatus;
 }
 
 export interface UploadResult {
@@ -485,9 +496,11 @@ export class EnhancedCSVUploader {
   async uploadServices(
     services: MappedServiceData[],
     createService: (service: any) => Promise<any>,
-    onProgress?: (progress: UploadProgress) => void
+    onProgress?: (progress: UploadProgress) => void,
+    options: UploadOptions = { status: 'pending' }
   ): Promise<UploadResult> {
     this.uploadCancelled = false;
+    const status: ServiceStatus = options.status;
     const total = services.length;
     const totalBatches = Math.ceil(total / this.batchSize);
     let processed = 0;
@@ -509,7 +522,8 @@ export class EnhancedCSVUploader {
     logger.debug('🚀 Starting service upload:', {
       total,
       batchSize: this.batchSize,
-      totalBatches
+      totalBatches,
+      status
     });
 
     if (onProgress) {
@@ -570,7 +584,7 @@ export class EnhancedCSVUploader {
                 operatorId: service.operatorId,
                 commission: service.operatorCommission
               }],
-              status: 'pending' as const,
+              status,
               observations: service.observations || '',
               hasExcess: false
             };

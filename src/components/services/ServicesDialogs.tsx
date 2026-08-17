@@ -46,10 +46,14 @@ export const ServicesDialogs = ({
             <DialogTitle>Carga Masiva de Servicios</DialogTitle>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
-            <EnhancedCSVUploadServices
-              onClose={onCSVUploadClose}
-              onSuccess={onCSVSuccess}
-            />
+            {/* Montaje condicional: al cerrar se desmonta y todo el estado del
+                modal (archivo, validación, casilla "completados") vuelve a cero. */}
+            {isCSVUploadOpen && (
+              <EnhancedCSVUploadServices
+                onClose={onCSVUploadClose}
+                onSuccess={onCSVSuccess}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
