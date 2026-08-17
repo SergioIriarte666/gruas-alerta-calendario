@@ -17,6 +17,19 @@ interface VehicleHistoryProps {
   clientName?: string;
 }
 
+/**
+ * Valor de una fila del historial. Único lugar del que salen la celda "Valor" y
+ * el total del header, para que no puedan divergir.
+ *
+ * `entry.value` YA viene normalizado por `getServiceValueForClosure` dentro de
+ * useVehicleHistory / useClientHistory —el mismo criterio que aplican los
+ * exports Excel/PDF vía getTotalAmount, incluidos los servicios con excedente—.
+ * Volver a pasarlo por getTotalAmount aquí lo inflaría: para un servicio con
+ * base y custodia (10 casos reales, p.ej. SRV-6304 = 40.000 + 49.000) sumaría la
+ * custodia dos veces.
+ */
+const getRowValue = (entry: VehicleHistoryEntry | ClientHistoryEntry): number => Number(entry.value ?? 0);
+
 const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = {
       pending: { label: 'Pendiente', className: 'border-warning/30 bg-warning/10 text-warning' },
@@ -55,6 +68,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
   const history = isVehicleSpecific ? vehicleHistory : clientHistory;
   const isLoading = isVehicleSpecific ? vehicleLoading : clientLoading;
   const error = isVehicleSpecific ? vehicleError : clientError;
+
+  // Total en memoria sobre la lista ya cargada: ninguna query nueva.
+  const totalValue = history.reduce((acc, service) => acc + getRowValue(service), 0);
 
   if (isLoading) {
     return (
@@ -122,7 +138,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
   return (
     <div className="mt-4">
       <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-info/10">
               {isVehicleSpecific ? (
@@ -132,15 +148,20 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
               )}
             </div>
             <h3 className="text-base font-semibold text-info-text">
-              {isVehicleSpecific 
+              {isVehicleSpecific
                 ? `Historial de Servicios - Patente ${licensePlate}`
                 : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
               }
             </h3>
           </div>
-          <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-            {history.length} servicio{history.length !== 1 ? 's' : ''} encontrado{history.length !== 1 ? 's' : ''}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+              {history.length} servicio{history.length !== 1 ? 's' : ''} encontrado{history.length !== 1 ? 's' : ''}
+            </Badge>
+            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+              Total: {formatUserCurrency(totalValue)}
+            </Badge>
+          </div>
         </div>
       
       <div className="overflow-x-auto -mx-2 px-2">
@@ -197,7 +218,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                     {service.origin} → {service.destination}
                   </div>
                 </TableCell>
-                <TableCell className="text-foreground font-semibold">{formatUserCurrency(service.value)}</TableCell>
+                <TableCell className="text-foreground font-semibold">{formatUserCurrency(getRowValue(service))}</TableCell>
                 <TableCell>{getStatusBadge(service.status)}</TableCell>
               </TableRow>
             ))}

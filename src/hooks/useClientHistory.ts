@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
+import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { createLogger } from "@/lib/logger";
 
 
@@ -13,10 +14,15 @@ export interface ClientHistoryEntry {
   serviceType: {
     name: string;
   };
+  /** Valor ya normalizado por getServiceValueForClosure, igual que useVehicleHistory. */
   value: number;
   origin: string;
   destination: string;
   licensePlate: string;
+  // Insumos del cálculo de valor: sin ellos una custodia se reportaba en $0.
+  custody_total_amount?: number | null;
+  has_excess?: boolean | null;
+  client_covered_amount?: number | null;
 }
 
 const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[]> => {
@@ -33,6 +39,9 @@ const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[
       origin,
       destination,
       license_plate,
+      custody_total_amount,
+      has_excess,
+      client_covered_amount,
       service_types(name)
     `)
     .eq('client_id', clientId)
@@ -52,7 +61,11 @@ const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[
     value: Number(item.value || 0),
     origin: item.origin || '',
     destination: item.destination || '',
-    licensePlate: item.license_plate || 'N/A'
+    licensePlate: item.license_plate || 'N/A',
+    // Insumos de getServiceValueForClosure (se aplica más abajo, como en useVehicleHistory).
+    custody_total_amount: item.custody_total_amount,
+    has_excess: item.has_excess,
+    client_covered_amount: item.client_covered_amount
   }));
 };
 
@@ -63,5 +76,12 @@ export const useClientHistory = (clientId: string) => {
     enabled: !!clientId,
   });
 
-  return { history: data ?? [], isLoading, error };
+  // Mismo criterio de valor que useVehicleHistory y que los exports: una
+  // custodia guarda el monto en custody_total_amount con value = 0, así que
+  // leer `value` crudo la mostraba en $0.
+  const processedEntries = data
+    ? data.map(entry => ({ ...entry, value: getServiceValueForClosure(entry) }))
+    : [];
+
+  return { history: processedEntries, isLoading, error };
 };
