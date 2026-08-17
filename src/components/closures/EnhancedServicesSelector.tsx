@@ -20,8 +20,10 @@ interface EnhancedServicesSelectorProps {
   clientId: string;
   selectedServiceIds: string[];
   onServiceToggle: (serviceId: string, checked: boolean) => void;
-  onCompleteService: (serviceId: string) => void;
-  onCompleteMultipleServices: (serviceIds: string[]) => void;
+  // El cierre exige el folio de pantalla junto al id (doble llave de
+  // complete_service), así que viaja el par y no solo el id.
+  onCompleteService: (target: { id: string; folio: string }) => void;
+  onCompleteMultipleServices: (targets: { id: string; folio: string }[]) => void;
   totalCompleted: number;
   usedServiceIds: Set<string>;
   isGlobalSearch?: boolean;
@@ -175,10 +177,16 @@ const EnhancedServicesSelector = ({
   };
 
   const handleCompleteSelected = () => {
-    if (selectedPendingIds.length > 0) {
-      onCompleteMultipleServices(selectedPendingIds);
-      setSelectedPendingIds([]);
+    if (selectedPendingIds.length === 0) return;
+    // El folio sale de la misma lista que el usuario está viendo: es lo que el
+    // servidor compara contra el id antes de cerrar.
+    const targets = pendingServices
+      .filter(service => selectedPendingIds.includes(service.id))
+      .map(service => ({ id: service.id, folio: service.folio }));
+    if (targets.length > 0) {
+      onCompleteMultipleServices(targets);
     }
+    setSelectedPendingIds([]);
   };
 
   // Estado del checkbox maestro para servicios completados

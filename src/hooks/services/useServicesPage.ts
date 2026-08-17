@@ -357,37 +357,40 @@ export const useServicesPage = () => {
   };
 
   const handleCloseService = async (service: Service) => {
-    if (service.status === 'invoiced') {
+    if (service.status === 'invoiced' || service.status === 'partially_invoiced') {
       toast.error('No se puede cerrar un servicio que ya está facturado');
       return;
     }
 
     try {
       logger.debug('🔄 [CLOSE_SERVICE] Attempting to close service:', service.folio, service.id);
-      
-      // SOLUCIÓN DEFINITIVA: Función de emergencia que bypassa todos los triggers
-      const { data, error: updateError } = await supabase.rpc('emergency_close_service', {
-        p_service_id: service.id
+
+      // Vía única de cierre: valida el folio de pantalla contra el id, estampa
+      // end_time y deja correr los efectos de cierre.
+      const { data, error: updateError } = await supabase.rpc('complete_service', {
+        p_service_id: service.id,
+        p_folio_confirmation: service.folio,
       });
 
       logger.debug('🔄 [CLOSE_SERVICE] Database function result:', { data, updateError });
 
       if (updateError) {
         logger.error('🚨 [CLOSE_SERVICE] RPC error:', updateError);
-        throw new Error(`Error al cerrar servicio: ${updateError.message}`);
+        throw updateError;
       }
 
-      if (!(data as any)?.success) {
-        logger.error('🚨 [CLOSE_SERVICE] Function returned error:', (data as any)?.error);
-        throw new Error(`Error al cerrar servicio: ${(data as any)?.error || 'Error desconocido'}`);
-      }
-      
       logger.debug('✅ [CLOSE_SERVICE] Service closed successfully:', service.folio);
       await refetch();
-      toast.success('El servicio se ha cerrado exitosamente');
+      toast.success(
+        data === 'already_completed'
+          ? 'El servicio ya estaba cerrado'
+          : 'El servicio se ha cerrado exitosamente',
+      );
     } catch (error) {
       logger.error('Error closing service:', error);
-      toast.error('No se pudo cerrar el servicio');
+      // Los RAISE de complete_service están redactados para leerse en pantalla
+      // (folio_mismatch, invalid_transition, traspaso sin confirmar).
+      toast.error(error instanceof Error ? error.message : 'No se pudo cerrar el servicio');
     }
   };
 
@@ -407,22 +410,26 @@ export const useServicesPage = () => {
     setIsBatchClosing(true);
     let successCount = 0;
     let errorCount = 0;
+    let firstError: string | null = null;
 
     try {
       for (const service of closeable) {
         try {
-          const { data, error } = await supabase.rpc('emergency_close_service', {
-            p_service_id: service.id
+          const { error } = await supabase.rpc('complete_service', {
+            p_service_id: service.id,
+            p_folio_confirmation: service.folio,
           });
 
-          if (error || !(data as any)?.success) {
-            logger.error(`Error closing service ${service.id}:`, error || (data as any)?.error);
+          if (error) {
+            logger.error(`Error closing service ${service.id}:`, error);
+            firstError = firstError ?? error.message;
             errorCount++;
           } else {
             successCount++;
           }
         } catch (err) {
           logger.error(`Error closing service ${service.id}:`, err);
+          if (!firstError && err instanceof Error) firstError = err.message;
           errorCount++;
         }
       }
@@ -435,9 +442,11 @@ export const useServicesPage = () => {
       if (errorCount === 0) {
         toast.success(`${successCount} servicio${successCount > 1 ? 's' : ''} cerrado${successCount > 1 ? 's' : ''} exitosamente`);
       } else if (successCount === 0) {
-        toast.error(`No se pudieron cerrar los servicios`);
+        toast.error(firstError ?? 'No se pudieron cerrar los servicios');
       } else {
-        toast.warning(`${successCount} cerrado${successCount > 1 ? 's' : ''}, ${errorCount} con error`);
+        toast.warning(`${successCount} cerrado${successCount > 1 ? 's' : ''}, ${errorCount} con error`, {
+          description: firstError ?? undefined,
+        });
       }
     } catch (error) {
       logger.error('Error in batch close:', error);

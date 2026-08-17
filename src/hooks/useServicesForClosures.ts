@@ -5,6 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import {
+  completeServiceByFolio,
+  completeServicesByFolio,
+  type ServiceCloseTarget,
+} from '@/utils/serviceCompletion';
 import { createLogger } from "@/lib/logger";
 import {
   CLOSURE_CANDIDATE_STATUSES,
@@ -373,18 +378,13 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     }
   };
 
-  const completeService = async (serviceId: string) => {
+  const completeService = async (target: ServiceCloseTarget) => {
     try {
-      const { error } = await supabase
-        .from('services')
-        .update({ status: 'completed' })
-        .eq('id', serviceId);
-
-      if (error) throw error;
+      await completeServiceByFolio(target);
 
       // Refresh data after completing service
       await fetchServicesData();
-      
+
       toast({
         type: "success",
         title: "Servicio completado",
@@ -395,34 +395,36 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       toast({
         type: "error",
         title: "Error",
-        description: "No se pudo completar el servicio.",
+        description: error?.message || "No se pudo completar el servicio.",
       });
     }
   };
 
-  const completeMultipleServices = async (serviceIds: string[]) => {
-    try {
-      const { error } = await supabase
-        .from('services')
-        .update({ status: 'completed' })
-        .in('id', serviceIds);
+  const completeMultipleServices = async (targets: ServiceCloseTarget[]) => {
+    const { successCount, errorCount, firstError } = await completeServicesByFolio(targets);
 
-      if (error) throw error;
+    // Refresh data after completing services
+    await fetchServicesData();
 
-      // Refresh data after completing services
-      await fetchServicesData();
-      
+    if (errorCount === 0) {
       toast({
         type: "success",
         title: "Servicios completados",
-        description: `${serviceIds.length} servicio(s) han sido marcados como completados.`,
+        description: `${successCount} servicio(s) han sido marcados como completados.`,
       });
-    } catch (error: any) {
-      logger.error('Error completing services:', error);
+    } else if (successCount === 0) {
+      logger.error('Error completing services:', firstError);
       toast({
         type: "error",
         title: "Error",
-        description: "No se pudieron completar los servicios.",
+        description: firstError || "No se pudieron completar los servicios.",
+      });
+    } else {
+      logger.error('Error completing some services:', firstError);
+      toast({
+        type: "warning",
+        title: `${successCount} completado(s), ${errorCount} con error`,
+        description: firstError || undefined,
       });
     }
   };

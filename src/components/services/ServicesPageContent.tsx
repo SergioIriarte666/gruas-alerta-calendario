@@ -176,9 +176,9 @@ export const ServicesPageContent = () => {
     }
   };
 
-  // Función para cerrar servicio sin duplicar comisiones
+  // Cierre canónico: complete_service con el folio que la pantalla muestra.
   const handleCloseService = async (service: Service) => {
-    if (service.status === 'invoiced') {
+    if (service.status === 'invoiced' || service.status === 'partially_invoiced') {
       toast({
         type: 'error',
         title: 'Error',
@@ -188,7 +188,7 @@ export const ServicesPageContent = () => {
     }
 
     try {
-      const result = await closeService(service.id);
+      const result = await closeService(service.id, service.folio);
       refetch();
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });

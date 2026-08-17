@@ -86,7 +86,27 @@ export function useAdminServiceOps() {
   const forceServiceStatus = async (
     serviceId: string,
     targetStatus: string,
+    /** Folio en pantalla: obligatorio para el destino 'completed'. */
+    folio?: string,
+    /** Estado actual, para distinguir un cierre de una reversión de factura. */
+    currentStatus?: string,
   ): Promise<void> => {
+    // Cerrar un servicio tiene una sola vía: complete_service, que valida folio,
+    // estampa end_time y dispara los efectos de cierre (revocar links de
+    // tracking, cerrar sesiones GPS y eventos de parada). Lo único que sigue
+    // pasando por UPDATE directo es la reversión de un servicio ya facturado,
+    // que es la razón de existir de esta herramienta y que complete_service
+    // rechaza por diseño.
+    const isInvoiceReversal = currentStatus === 'invoiced' || currentStatus === 'partially_invoiced';
+    if (targetStatus === 'completed' && folio && !isInvoiceReversal) {
+      const { error } = await supabase.rpc('complete_service', {
+        p_service_id: serviceId,
+        p_folio_confirmation: folio,
+      });
+      if (error) throw error;
+      return;
+    }
+
     const updateData: Record<string, unknown> = {
       status: targetStatus,
       updated_at: businessClock.nowISO(),
@@ -104,16 +124,27 @@ export function useAdminServiceOps() {
     if (error) throw error;
   };
 
-  const closeService = async (serviceId: string): Promise<{ success: boolean; message?: string }> => {
-    const { data, error } = await supabase.rpc('emergency_close_service', {
+  /**
+   * Cierre administrativo. Pasa por complete_service igual que el operador en
+   * terreno: el admin puede cerrar desde cualquier estado no facturado, pero el
+   * folio de la pantalla viaja siempre para que el servidor confirme que es
+   * este servicio y no otro.
+   */
+  const closeService = async (
+    serviceId: string,
+    folio: string,
+  ): Promise<{ success: boolean; message?: string }> => {
+    const { data, error } = await supabase.rpc('complete_service', {
       p_service_id: serviceId,
+      p_folio_confirmation: folio,
     });
     if (error) throw error;
-    const result = data as any;
-    if (!result?.success) {
-      throw new Error(result?.error || 'Error desconocido al cerrar servicio');
-    }
-    return result;
+    return {
+      success: true,
+      message: data === 'already_completed'
+        ? 'El servicio ya estaba cerrado'
+        : 'El servicio se ha cerrado exitosamente',
+    };
   };
 
   return { searchServiceByFolio, deleteServiceCascade, forceServiceStatus, closeService };

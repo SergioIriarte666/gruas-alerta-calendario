@@ -102,7 +102,7 @@ export const ForceStatusChangeTool = () => {
     setExecuting(true);
 
     try {
-      await forceServiceStatus(service.id, targetStatus);
+      await forceServiceStatus(service.id, targetStatus, service.folio, service.status);
 
       toast.success('Estado actualizado', {
         description: `${service.folio} cambiado a "${SERVICE_STATUSES.find(s => s.value === targetStatus)?.label}"`,

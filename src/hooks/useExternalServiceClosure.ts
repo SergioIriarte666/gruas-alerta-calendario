@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { generateExternalServiceActaPdf } from '@/utils/pdf/externalServicePdfGenerator';
+import { completeServiceByFolio } from '@/utils/serviceCompletion';
 import type {
   ExternalEvidence,
   ExternalClosure,
@@ -153,12 +154,9 @@ export const useCloseExternalService = () => {
         .single();
       if (closureError) throw closureError;
 
-      // 2. Update service status
-      const { error: serviceError } = await supabase
-        .from('services')
-        .update({ status: 'completed' })
-        .eq('id', input.serviceId);
-      if (serviceError) throw serviceError;
+      // 2. Cerrar el servicio por la vía canónica: valida el folio de pantalla,
+      // estampa end_time y dispara los efectos de cierre.
+      await completeServiceByFolio({ id: input.serviceId, folio: input.serviceFolio });
 
       // 3. Fetch datos para el PDF
       const { data: svc, error: svcError } = await supabase

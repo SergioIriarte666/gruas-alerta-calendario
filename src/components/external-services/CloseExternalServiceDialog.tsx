@@ -58,6 +58,7 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
     try {
       await close.mutateAsync({
         serviceId: service.id,
+        serviceFolio: service.folio,
         thirdPartyProviderName: providerName.trim(),
         thirdPartyProviderRut: providerRut.trim() || undefined,
         thirdPartyServiceSummary: summary.trim(),

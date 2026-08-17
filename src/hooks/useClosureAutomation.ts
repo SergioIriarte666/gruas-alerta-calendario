@@ -7,6 +7,7 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { completeServiceByFolio, type ServiceCloseTarget } from '@/utils/serviceCompletion';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('ClosureAutomation');
@@ -310,18 +311,13 @@ export const useClosureAutomation = () => {
     });
   }, []);
 
-  const completeService = async (serviceId: string) => {
+  const completeService = async (target: ServiceCloseTarget) => {
     try {
-      const { error } = await supabase
-        .from('services')
-        .update({ status: 'completed' })
-        .eq('id', serviceId);
-
-      if (error) throw error;
+      await completeServiceByFolio(target);
 
       // Refresh data after completing service
       await fetchClientsForMonth(selectedMonth);
-      
+
       toast({
         type: "success",
         title: "Servicio completado",
@@ -332,7 +328,7 @@ export const useClosureAutomation = () => {
       toast({
         type: "error",
         title: "Error",
-        description: "No se pudo completar el servicio.",
+        description: error?.message || "No se pudo completar el servicio.",
       });
     }
   };

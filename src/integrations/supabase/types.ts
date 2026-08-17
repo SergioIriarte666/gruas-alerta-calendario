@@ -923,6 +923,72 @@ export type Database = {
           },
         ]
       }
+      commission_batches: {
+        Row: {
+          batch_number: string
+          commission_count: number
+          commission_ids: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          operator_id: string
+          payment_date: string
+          payment_method: string | null
+          payment_reference: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number: string
+          commission_count: number
+          commission_ids: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          operator_id: string
+          payment_date: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          commission_count?: number
+          commission_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          operator_id?: string
+          payment_date?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_batches_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_data: {
         Row: {
           address: string
@@ -9037,6 +9103,10 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: undefined
       }
+      assert_service_deletable: {
+        Args: { p_service_id: string }
+        Returns: undefined
+      }
       assert_service_identity: {
         Args: { p_folio_confirmation: string; p_service_id: string }
         Returns: string
@@ -9192,10 +9262,6 @@ export type Database = {
         Args: { p_operator_id: string }
         Returns: undefined
       }
-      close_service_status_only: {
-        Args: { p_service_id: string }
-        Returns: Json
-      }
       complete_service: {
         Args: { p_folio_confirmation: string; p_service_id: string }
         Returns: string
@@ -9214,12 +9280,21 @@ export type Database = {
         }
         Returns: string
       }
-      create_automatic_payment_for_invoice:
-        | { Args: { p_invoice_id: string }; Returns: Json }
-        | {
-            Args: { p_invoice_id: string; p_payment_date?: string }
-            Returns: Json
-          }
+      create_automatic_payment_for_invoice: {
+        Args: { p_invoice_id: string; p_payment_date?: string }
+        Returns: Json
+      }
+      create_commission_payment_batch: {
+        Args: {
+          p_commission_ids: string[]
+          p_notes?: string
+          p_operator_id: string
+          p_payment_date: string
+          p_payment_method?: string
+          p_payment_reference?: string
+        }
+        Returns: Json
+      }
       create_cost_with_payment_link: {
         Args: {
           p_amount: number
@@ -9276,17 +9351,6 @@ export type Database = {
         }
         Returns: string
       }
-      create_commission_payment_batch: {
-        Args: {
-          p_commission_ids: string[]
-          p_notes?: string
-          p_operator_id: string
-          p_payment_date: string
-          p_payment_method?: string
-          p_payment_reference?: string
-        }
-        Returns: Json
-      }
       create_notification: {
         Args: {
           p_action_data?: Json
@@ -9338,14 +9402,6 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
-      service_delete_block_reason: {
-        Args: { p_service_id: string }
-        Returns: string | null
-      }
-      next_service_folio: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       detect_duplicate_crane_parts: {
         Args: { p_crane_id?: string }
         Returns: Json
@@ -9374,7 +9430,6 @@ export type Database = {
         Args: { service_id_param?: string }
         Returns: Json
       }
-      emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
       enqueue_checklist_email: {
         Args: { p_checklist_id: string }
         Returns: string
@@ -9480,10 +9535,6 @@ export type Database = {
         Returns: Json
       }
       fix_unlinked_maintenance_costs: { Args: never; Returns: Json }
-      force_close_service_bypass_triggers: {
-        Args: { p_service_id: string }
-        Returns: Json
-      }
       force_frontend_cache_refresh: { Args: never; Returns: Json }
       force_resync_crane_part: { Args: { part_id: string }; Returns: Json }
       force_update_service_to_invoiced: {
@@ -10098,11 +10149,13 @@ export type Database = {
       }
       migrate_unsync_crane_parts: { Args: never; Returns: Json }
       migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
+      next_service_folio: { Args: never; Returns: string }
       normalize_service_location_text: {
         Args: { p_text: string }
         Returns: string
       }
       operator_has_pin: { Args: { p_operator_id: string }; Returns: boolean }
+      operator_startable_statuses: { Args: never; Returns: string[] }
       preview_next_invoice_folio: { Args: never; Returns: string }
       preview_recovery_operation: {
         Args: { p_operation_id: string }
@@ -10236,6 +10289,10 @@ export type Database = {
       service_client_notifications_enabled: {
         Args: { p_service_id: string }
         Returns: boolean
+      }
+      service_delete_block_reason: {
+        Args: { p_service_id: string }
+        Returns: string
       }
       service_has_active_tracking_link: {
         Args: { p_service_id: string }

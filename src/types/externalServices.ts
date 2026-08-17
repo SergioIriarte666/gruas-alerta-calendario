@@ -48,6 +48,8 @@ export interface ExternalClosure {
 
 export interface ExternalClosureInput {
   serviceId: string;
+  /** Folio visible en el diálogo: doble llave de complete_service. */
+  serviceFolio: string;
   thirdPartyProviderName: string;
   thirdPartyProviderRut?: string;
   thirdPartyServiceSummary: string;
