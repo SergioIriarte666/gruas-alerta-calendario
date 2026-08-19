@@ -11,7 +11,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { ClosuresMobileView } from './ClosuresMobileView';
 import ClosuresGroupedView from './ClosuresGroupedView';
 import { ClosureStatusBadge } from './ClosureStatusBadge';
-import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import { ClosureSortField, SortDirection, GroupSortBy, SortIcon } from './closureSort';
 
 export type { ClosureSortField, SortDirection, GroupSortBy };
@@ -48,9 +48,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
     if (!clientId) return 'Todos los clientes';
     const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
-    const dept = client.department;
-    if (!dept || dept === 'General') return toTitleCase(client.name);
-    return `${toTitleCase(client.name)} - ${dept}`;
+    return getClientDisplayName(client);
   }, [clientMap]);
 
   const groupedClosures = useMemo(() => {

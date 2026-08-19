@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Client } from '@/types';
 import { getServiceValueBreakdown } from '@/utils/serviceValueCalculations';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 
 interface EnhancedFinancialSectionProps {
   value: number;
@@ -338,7 +339,7 @@ export const EnhancedFinancialSection = ({
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.name} {c.rut ? `· ${c.rut}` : ''}
+                      {getClientDisplayName(c)} {c.rut ? `· ${c.rut}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

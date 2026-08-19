@@ -2,7 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toTitleCase } from "@/lib/utils";
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 
 interface ProjectionFiltersProps {
   dateRange: number;
@@ -73,7 +73,7 @@ export const ProjectionFilters = ({
             {clients?.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{toTitleCase(client.name)}</span>
+                  <span className="font-medium">{getClientDisplayName(client)}</span>
                   {client.rut && (
                     <>
                       <span className="text-muted-foreground/30">•</span>

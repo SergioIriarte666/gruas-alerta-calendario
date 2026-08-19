@@ -29,6 +29,7 @@ import { applyVipServiceBatchUpdates } from '@/utils/vipBatchServiceUpdater';
 import { getVipPipelineDisplayStatus, isVipPipelineInvoiced } from '@/utils/vipPipelineStatus';
 
 import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import { createLogger } from "@/lib/logger";
 
 
@@ -230,8 +231,11 @@ export default function VipClientPipeline() {
           <div className="hidden sm:block h-8 w-px bg-border" />
           <div>
             <span className="dashboard-section-kicker">Pipeline comercial</span>
+            {/* Cada departamento del RUT es una unidad operativa aparte y este
+                pipeline es solo el suyo: el nombre lo lleva para que nunca se
+                confunda con el de una sucursal hermana. */}
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
-              {toTitleCase(client.name)}
+              {getClientDisplayName(client)}
               <Badge variant="secondary" className="text-xs sm:text-sm">
                 VIP Pipeline
               </Badge>

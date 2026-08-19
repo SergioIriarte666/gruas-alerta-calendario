@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client } from '@/types';
-import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 
 interface ClosuresSearchProps {
   searchTerm: string;
@@ -51,7 +51,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
                 </SelectItem>
                 {sortedClients.map((client) => (
                   <SelectItem key={client.id} value={client.id} className="text-foreground hover:bg-muted">
-                    {toTitleCase(client.name)}
+                    {getClientDisplayName(client)}
                   </SelectItem>
                 ))}
               </SelectContent>

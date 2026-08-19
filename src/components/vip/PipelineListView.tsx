@@ -58,12 +58,16 @@ interface SubGroupConfig {
   badgeBg: string;
 }
 
+// `quote_number` y `purchase_order` conviven en la base como NULL y como cadena
+// vacía: ambos significan "sin documento" y deben caer en el mismo subgrupo.
+const subGroupValue = (value?: string | null) => value?.trim() || '';
+
 const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
   switch (status) {
     case 'quoted':
     case 'purchase_order_pending':
       return {
-        fieldExtractor: (s) => s.quoteNumber || '',
+        fieldExtractor: (s) => subGroupValue(s.quoteNumber),
         emptyLabel: 'Sin Cotización',
         prefix: '',
         badgeColor: 'text-primary',
@@ -72,7 +76,7 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
     case 'invoiced':
     case 'partially_invoiced':
       return {
-        fieldExtractor: (s) => s.invoiceNumeroFiscal || '',
+        fieldExtractor: (s) => subGroupValue(s.invoiceNumeroFiscal),
         emptyLabel: 'Sin Factura',
         prefix: '',
         badgeColor: 'text-success-text',
@@ -80,7 +84,7 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
       };
     default:
       return {
-        fieldExtractor: (s) => s.purchaseOrderNumber || s.purchaseOrder || '',
+        fieldExtractor: (s) => subGroupValue(s.purchaseOrderNumber) || subGroupValue(s.purchaseOrder),
         emptyLabel: 'Sin O.C.',
         prefix: '',
         badgeColor: 'text-info-text',

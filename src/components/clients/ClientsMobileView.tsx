@@ -7,6 +7,7 @@ import { Client } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { DepartmentBadge } from './DepartmentBadge';
 import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,7 +83,7 @@ export const ClientsMobileView = ({
                   )}
                   <div className="flex-1">
                     <button onClick={() => handleViewPipeline(client)} className="font-semibold text-primary text-lg hover:underline text-left">
-                      {toTitleCase(client.name)}
+                      {getClientDisplayName(client)}
                     </button>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       <p className="text-foreground text-sm font-medium">{client.rut}</p>

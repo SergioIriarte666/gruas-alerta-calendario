@@ -10,6 +10,7 @@ import { ClientsMobileView } from './ClientsMobileView';
 import { DepartmentBadge } from './DepartmentBadge';
 import { useClients } from '@/hooks/useClients';
 import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -200,7 +201,7 @@ export const ClientsTable = ({
                           className="text-left font-medium text-primary hover:underline"
                           title="Ir al Pipeline VIP"
                         >
-                          {toTitleCase(client.name)}
+                          {getClientDisplayName(client)}
                         </button>
                         {client.billingType === 'monthly' && (
                           <Badge variant="outline" className="border-info/20 px-1.5 py-0 text-xs text-info">

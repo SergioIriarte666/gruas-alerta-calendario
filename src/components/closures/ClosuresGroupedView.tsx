@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
-import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import { ClosureStatusBadge } from './ClosureStatusBadge';
 import { ClosureSortField, SortDirection, SortIcon } from './closureSort';
 
@@ -39,9 +39,7 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
     if (!clientId) return 'Sin cliente asignado';
     const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
-    const dept = client.department;
-    if (!dept || dept === 'General') return toTitleCase(client.name);
-    return `${toTitleCase(client.name)} - ${dept}`;
+    return getClientDisplayName(client);
   };
 
   const formatCurrency = (amount: number) => {

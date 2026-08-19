@@ -52,6 +52,7 @@ import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, get
 import { getCoveredAmount, getExcessAmount } from '@/utils/serviceAmounts';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import { toast } from 'sonner';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generateQuotePDF } from '@/utils/pdf/quotePdfGenerator';
@@ -358,7 +359,10 @@ const ThirdPartyPayerSection = ({
     if (!thirdPartyClientId) return null;
     const fromList = (clients || []).find(c => c.id === thirdPartyClientId);
     if (fromList) {
-      return { name: fromList.displayName ?? fromList.name, rut: fromList.rut };
+      return {
+        name: fromList.displayName ?? getClientDisplayName(fromList),
+        rut: fromList.rut,
+      };
     }
     if (thirdPartyClientName) {
       return { name: thirdPartyClientName, rut: thirdPartyClientRut || '' };
@@ -414,7 +418,7 @@ const ThirdPartyPayerSection = ({
               <SelectItem value={NO_THIRD_PARTY}>— Sin asignar —</SelectItem>
               {activeClients.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.displayName ?? c.name}{c.rut ? ` · ${c.rut}` : ''}
+                  {c.displayName ?? getClientDisplayName(c)}{c.rut ? ` · ${c.rut}` : ''}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -14,6 +14,7 @@ import { useEditClosure } from '@/hooks/closures/useEditClosure';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 import { Loader2 } from 'lucide-react';
 import { useSingleFlight } from '@/hooks/useSingleFlight';
 
@@ -171,7 +172,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                   <SelectItem value="all">Todos los clientes</SelectItem>
                   {activeClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {toTitleCase(client.name)}
+                      {getClientDisplayName(client)}
                     </SelectItem>
                   ))}
                 </SelectContent>

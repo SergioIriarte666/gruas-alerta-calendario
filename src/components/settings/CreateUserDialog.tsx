@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, User, Mail, UserCog, Building, HardHat } from 'lucide-react';
 import { toast } from 'sonner';
-import { toTitleCase } from '@/lib/utils';
+import { getClientDisplayName } from '@/utils/clientDisplayName';
 
 interface Client {
   id: string;
   name: string;
   rut: string;
+  // Varias filas comparten nombre y RUT: el departamento es lo que las distingue.
+  department?: string | null;
   isActive?: boolean;
 }
 
@@ -204,7 +206,7 @@ export const CreateUserDialog = ({
                 <SelectContent>
                   {clients.filter(c => c.isActive !== false).map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {toTitleCase(client.name)} - {client.rut}
+                      {getClientDisplayName(client)} - {client.rut}
                     </SelectItem>
                   ))}
                 </SelectContent>
