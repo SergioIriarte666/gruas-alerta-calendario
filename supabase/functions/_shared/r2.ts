@@ -29,9 +29,15 @@ const requiredEnv = (name: string): string => {
   return value;
 };
 
-export const createR2Config = (): R2Config => {
+/**
+ * `bucketName` permite apuntar a un bucket distinto del de inspecciones. Los
+ * respaldos viven en el suyo propio a propósito: el purgador diario no puede
+ * alcanzar el archivo de terreno ni por un prefijo mal escrito.
+ */
+export const createR2Config = (bucketName?: string): R2Config => {
   const accountId = requiredEnv("R2_ACCOUNT_ID");
-  const bucket = Deno.env.get("R2_BUCKET_NAME")?.trim() ||
+  const bucket = bucketName?.trim() ||
+    Deno.env.get("R2_BUCKET_NAME")?.trim() ||
     Deno.env.get("R2_BUCKET")?.trim();
   if (!bucket) {
     throw new Error("Falta el secret R2_BUCKET_NAME (o R2_BUCKET legado)");
@@ -196,3 +202,47 @@ export const createR2DownloadUrl = async (
   );
   return signed.url;
 };
+
+/**
+ * Lista las llaves del bucket (ListObjectsV2). Se leen con expresión regular en
+ * vez de un parser XML: las llaves las genera este mismo código y son
+ * `YYYY-MM-DD/archivo`, sin caracteres que necesiten escape.
+ */
+export const listObjectKeys = async (
+  r2: R2Config,
+  prefix = "",
+): Promise<string[]> => {
+  const keys: string[] = [];
+  let token: string | undefined;
+
+  do {
+    const url = new URL(`${r2.endpoint}/${encodeURIComponent(r2.bucket)}`);
+    url.searchParams.set("list-type", "2");
+    url.searchParams.set("max-keys", "1000");
+    if (prefix) url.searchParams.set("prefix", prefix);
+    if (token) url.searchParams.set("continuation-token", token);
+
+    const response = await r2.client.fetch(url.toString(), { method: "GET" });
+    await requireOk("LIST", prefix || "(raíz)", response);
+    const xml = await response.text();
+
+    for (const match of xml.matchAll(/<Key>([^<]+)<\/Key>/g)) {
+      keys.push(decodeXmlEntities(match[1]));
+    }
+
+    const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
+    token = truncated
+      ? xml.match(/<NextContinuationToken>([^<]+)<\/NextContinuationToken>/)?.[1]
+      : undefined;
+  } while (token);
+
+  return keys;
+};
+
+const decodeXmlEntities = (value: string): string =>
+  value
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&apos;", "'");

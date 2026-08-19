@@ -156,6 +156,18 @@ verify_jwt = false
 [functions.purge-cold-inspections]
 verify_jwt = false
 
+[functions.sync-backups-to-r2]
+verify_jwt = false
+
+[functions.purge-old-backups]
+verify_jwt = false
+
+[functions.backup-watchdog]
+verify_jwt = false
+
+[functions.verify-backup-restore]
+verify_jwt = false
+
 [functions.purge-storage-orphans]
 verify_jwt = false
 
