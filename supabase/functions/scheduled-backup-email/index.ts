@@ -22,23 +22,19 @@ const formatBytes = (b?: number | null): string => {
 };
 
 /**
- * El respaldo anterior pedía `.select("*").limit(50000)` y no paginaba: PostgREST
- * corta en 1.000 filas por respuesta, así que el límite del cliente nunca se
- * aplicaba y cada archivo perdía miles de filas en silencio. Además la lista de
- * tablas estaba escrita a mano y cubría 16 de 143.
+ * Dos fallos encadenados dieron forma a este archivo:
  *
- * Ahora: la lista sale del catálogo (backup_table_inventory), se pagina con
- * .range() hasta que llega una página corta —única garantía de que se leyó todo—
- * y el resultado se comprime en streaming para no acumular decenas de MB en
- * memoria. Lo que no se pudo leer se reporta; nunca se omite en silencio.
+ * 1. Pedía `.select("*").limit(50000)` sin paginar. PostgREST corta en 1.000
+ *    filas por respuesta, así que el límite del cliente nunca se aplicaba y cada
+ *    archivo perdía miles de filas en silencio, cubriendo 16 de 143 tablas.
+ * 2. Al paginar tabla por tabla pasó a hacer ~208 peticiones de ~265 ms: el ida
+ *    y vuelta agotaba el presupuesto de cómputo y el respaldo dejó de generarse
+ *    el 2026-08-20 con "CPU Time exceeded".
+ *
+ * Ahora Postgres arma bloques de varias tablas (`backup_dump_chunk`) y la
+ * función solo comprime y sube: ~7 peticiones. Lo que no se pudo leer se
+ * reporta; nunca se omite en silencio.
  */
-const PAGE_SIZE = 1000;
-
-interface TableInventoryRow {
-  table_name: string;
-  order_column: string | null;
-  estimated_rows: number;
-}
 
 interface TableStat {
   table: string;
@@ -47,89 +43,82 @@ interface TableStat {
 }
 
 /**
- * El texto lo arma Postgres (backup_table_page): serializar fila por fila en JS
- * agotaba el presupuesto de cómputo de la edge function. Aquí solo se pide
- * página a página y se empuja a los dos flujos comprimidos.
+ * El respaldo se pide por bloques, no tabla por tabla.
+ *
+ * La versión anterior hacía una petición por tabla (143) más una por página
+ * extra: ~208 viajes a PostgREST de ~265 ms cada uno. Solo el ida y vuelta
+ * agotaba el presupuesto de cómputo, y el respaldo diario dejó de generarse el
+ * 2026-08-20 con "CPU Time exceeded" a los 33 s.
+ *
+ * `backup_dump_chunk` devuelve todas las tablas que quepan en un presupuesto de
+ * bytes y dice por cuál seguir: el respaldo completo son ~7 peticiones. Se
+ * genera solo el .sql, que es el artefacto con el que se restaura; el .json era
+ * el mismo contenido en otra forma y duplicaba el trabajo.
  */
-async function dumpAll(
+const CHUNK_BYTES = 2_500_000;
+const CHUNK_PAGE = 5_000;
+const MAX_CHUNKS = 60; // tope de seguridad: jamás debería acercarse
+
+interface DumpChunk {
+  body: string;
+  next_table: string | null;
+  rows_by_table: Record<string, number> | null;
+}
+
+async function dumpSql(
   supabase: any,
-  inventory: TableInventoryRow[],
   stats: TableStat[],
-): Promise<{ sql: Blob; json: Blob }> {
+): Promise<Blob> {
   const encoder = new TextEncoder();
+  const ts = new TransformStream<Uint8Array, BufferSource>();
+  const done = new Response(ts.readable.pipeThrough(new CompressionStream("gzip"))).blob();
+  const writer = ts.writable.getWriter();
+  const write = (text: string) => writer.write(encoder.encode(text));
 
-  const sqlTs = new TransformStream<Uint8Array, BufferSource>();
-  const jsonTs = new TransformStream<Uint8Array, BufferSource>();
-  const sqlDone = new Response(sqlTs.readable.pipeThrough(new CompressionStream("gzip"))).blob();
-  const jsonDone = new Response(jsonTs.readable.pipeThrough(new CompressionStream("gzip"))).blob();
-  const sqlW = sqlTs.writable.getWriter();
-  const jsonW = jsonTs.writable.getWriter();
+  await write(`-- SQL Dump TMS Grúas - ${new Date().toISOString()}\n\n`);
 
-  const writeSql = (text: string) => sqlW.write(encoder.encode(text));
-  const writeJson = (text: string) => jsonW.write(encoder.encode(text));
+  let nextTable: string | null = null;
+  let chunks = 0;
 
-  await writeSql(`-- SQL Dump TMS Grúas - ${new Date().toISOString()}\n-- Tablas: ${inventory.length}\n\n`);
-  await writeJson(`{"generated_at":${JSON.stringify(new Date().toISOString())},"tables":{`);
-
-  let firstTable = true;
-  for (const table of inventory) {
-    const stat: TableStat = { table: table.table_name, rows: 0 };
-    stats.push(stat);
-
-    await writeSql(`-- ===== ${table.table_name} =====\n`);
-    await writeJson(`${firstTable ? "" : ","}${JSON.stringify(table.table_name)}:{"rows":[`);
-    firstTable = false;
-
-    let offset = 0;
-    let firstPage = true;
-    while (true) {
-      const { data, error } = await supabase.rpc("backup_table_page", {
-        p_table: table.table_name,
-        p_order_column: table.order_column,
-        p_offset: offset,
-        p_limit: PAGE_SIZE,
+  try {
+    while (chunks < MAX_CHUNKS) {
+      const { data, error } = await supabase.rpc("backup_dump_chunk", {
+        p_start_table: nextTable,
+        p_max_bytes: CHUNK_BYTES,
+        p_page: CHUNK_PAGE,
       });
+      if (error) throw new Error(`bloque ${chunks + 1} desde ${nextTable ?? "el inicio"}: ${error.message}`);
 
-      if (error) {
-        stat.error = error.message;
-        await writeSql(`-- ERROR leyendo ${table.table_name}: ${error.message}\n`);
-        break;
+      const chunk = (Array.isArray(data) ? data[0] : data) as DumpChunk | undefined;
+      if (!chunk) throw new Error(`bloque ${chunks + 1}: respuesta vacía`);
+
+      chunks += 1;
+      await write(chunk.body);
+      for (const [table, rows] of Object.entries(chunk.rows_by_table ?? {})) {
+        stats.push({ table, rows: Number(rows) });
       }
 
-      // RETURNS TABLE siempre llega como arreglo, aunque traiga una sola fila.
-      const page = Array.isArray(data) ? data[0] : data;
-      const rows = page?.rows_returned ?? 0;
-      if (rows === 0) break;
-
-      stat.rows += rows;
-      await Promise.all([
-        writeSql(`${page.sql_text}\n`),
-        writeJson(`${firstPage ? "" : ","}${page.json_text}`),
-      ]);
-      firstPage = false;
-
-      // Página incompleta: no queda nada más que leer.
-      if (rows < PAGE_SIZE) break;
-      offset += PAGE_SIZE;
+      nextTable = chunk.next_table;
+      if (!nextTable) break;
     }
 
-    await writeSql(`-- ${stat.rows} filas\n\n`);
-    await writeJson(`],"count":${stat.rows}${stat.error ? `,"error":${JSON.stringify(stat.error)}` : ""}}`);
+    if (nextTable) {
+      // Nunca debería ocurrir; si ocurre, el archivo queda incompleto y hay que
+      // decirlo en vez de subirlo como si estuviera entero.
+      throw new Error(`El respaldo no terminó: quedó pendiente desde ${nextTable}`);
+    }
+  } finally {
+    await writer.close();
   }
 
-  await writeJson(`}}`);
-  await sqlW.close();
-  await jsonW.close();
-
-  return { sql: await sqlDone, json: await jsonDone };
+  console.log(`📦 ${chunks} bloques`);
+  return await done;
 }
 
 function buildEmailHtml(opts: {
   dateStr: string;
   sqlUrl: string;
-  jsonUrl: string;
   sqlSize: string;
-  jsonSize: string;
   expiresDays: number;
   tables: number;
   rows: number;
@@ -147,8 +136,8 @@ function buildEmailHtml(opts: {
       <div style="padding:28px 32px;">
         <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
           Tu respaldo diario se generó correctamente: <strong>${opts.tables} tablas</strong> y
-          <strong>${opts.rows.toLocaleString("es-CL")} registros</strong>. Los archivos vienen comprimidos (.gz);
-          descomprímelos con doble clic antes de abrirlos.
+          <strong>${opts.rows.toLocaleString("es-CL")} registros</strong>. El archivo viene comprimido (.gz);
+          descomprímelo con doble clic antes de abrirlo.
         </p>
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">
           <tr>
@@ -156,14 +145,6 @@ function buildEmailHtml(opts: {
               <div style="font-size:13px;color:#6b21a8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Dump SQL comprimido · ${opts.sqlSize}</div>
               <div style="font-size:12px;color:#6b7280;margin:4px 0 12px;">INSERTs de todas las tablas, para restaurar la base</div>
               <a href="${opts.sqlUrl}" style="display:inline-block;background:#8b5cf6;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;font-size:14px;">Descargar SQL</a>
-            </td>
-          </tr>
-          <tr><td style="height:12px;"></td></tr>
-          <tr>
-            <td style="padding:14px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;">
-              <div style="font-size:13px;color:#6b21a8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Export JSON · ${opts.jsonSize}</div>
-              <div style="font-size:12px;color:#6b7280;margin:4px 0 12px;">Snapshot para análisis y auditoría</div>
-              <a href="${opts.jsonUrl}" style="display:inline-block;background:#ffffff;color:#8b5cf6;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;font-size:14px;border:1.5px solid #8b5cf6;">Descargar JSON</a>
             </td>
           </tr>
         </table>
@@ -271,21 +252,17 @@ serve(async (req: Request) => {
       timeZone: DEFAULT_TZ, day: "2-digit", month: "long", year: "numeric",
     });
 
-    const { data: inventory, error: inventoryError } = await supabase.rpc("backup_table_inventory");
-    if (inventoryError) throw new Error(`No se pudo listar las tablas a respaldar: ${inventoryError.message}`);
-    const tables = (inventory || []) as TableInventoryRow[];
-    if (tables.length === 0) throw new Error("El inventario de tablas vino vacío: no se respalda nada");
-
-    console.log(`📦 Generando respaldos de ${tables.length} tablas...`);
+    console.log("📦 Generando respaldo...");
     const stats: TableStat[] = [];
-    const { sql: sqlBlob, json: jsonBlob } = await dumpAll(supabase, tables, stats);
+    const sqlBlob = await dumpSql(supabase, stats);
 
+    const tables = stats;
     const failedTables = stats.filter((t) => t.error);
     const totalRows = stats.reduce((sum, t) => sum + t.rows, 0);
-    console.log(`📊 ${totalRows} filas de ${tables.length} tablas; ${failedTables.length} con error`);
+    console.log(`📊 ${totalRows} filas de ${stats.length} tablas`);
+    if (stats.length === 0) throw new Error("El respaldo no incluyó ninguna tabla");
 
     const sqlPath = `${dateKey}/tms-gruas-backup-${dateKey}.sql.gz`;
-    const jsonPath = `${dateKey}/tms-gruas-backup-${dateKey}.json.gz`;
 
     console.log("⬆️  Subiendo a Storage...");
     const { error: sqlUpErr } = await supabase.storage.from(BUCKET).upload(
@@ -293,30 +270,18 @@ serve(async (req: Request) => {
     );
     if (sqlUpErr) throw new Error(`Upload SQL falló: ${sqlUpErr.message}`);
 
-    const { error: jsonUpErr } = await supabase.storage.from(BUCKET).upload(
-      jsonPath, jsonBlob, { upsert: true, contentType: "application/gzip" },
-    );
-    if (jsonUpErr) throw new Error(`Upload JSON falló: ${jsonUpErr.message}`);
-
     const expiresSec = expiresDays * 86400;
     const { data: sqlSigned, error: sqlSigErr } = await supabase.storage.from(BUCKET)
       .createSignedUrl(sqlPath, expiresSec, { download: `tms-gruas-backup-${dateKey}.sql.gz` });
     if (sqlSigErr || !sqlSigned?.signedUrl) throw new Error(`Signed URL SQL falló: ${sqlSigErr?.message}`);
 
-    const { data: jsonSigned, error: jsonSigErr } = await supabase.storage.from(BUCKET)
-      .createSignedUrl(jsonPath, expiresSec, { download: `tms-gruas-backup-${dateKey}.json.gz` });
-    if (jsonSigErr || !jsonSigned?.signedUrl) throw new Error(`Signed URL JSON falló: ${jsonSigErr?.message}`);
-
     const sqlBackup = { size: sqlBlob.size };
-    const jsonBackup = { size: jsonBlob.size };
 
     generatedBackupMetadata = {
       source: "scheduled_email",
       recipient,
       sql_size: sqlBlob.size,
-      json_size: jsonBlob.size,
       sql_path: sqlPath,
-      json_path: jsonPath,
       manual: manualTrigger,
       // Cobertura explícita: si algún día vuelve a faltar algo, queda escrito.
       tables_total: tables.length,
@@ -329,14 +294,14 @@ serve(async (req: Request) => {
       await supabase.from("backup_logs").insert({
         backup_type: "auto",
         status: failedTables.length > 0 ? "partial" : "completed",
-        file_size_bytes: sqlBlob.size + jsonBlob.size,
+        file_size_bytes: sqlBlob.size,
         metadata: { ...generatedBackupMetadata, email_status: "skipped" },
       });
       return new Response(JSON.stringify({
         success: true, email_skipped: true,
         tables: tables.length, rows: totalRows,
         failed_tables: failedTables,
-        sql_size: sqlBlob.size, json_size: jsonBlob.size,
+        sql_size: sqlBlob.size,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -348,9 +313,7 @@ serve(async (req: Request) => {
     const html = buildEmailHtml({
       dateStr: dateDisplay,
       sqlUrl: sqlSigned.signedUrl,
-      jsonUrl: jsonSigned.signedUrl,
       sqlSize: formatBytes(sqlBackup.size),
-      jsonSize: formatBytes(jsonBackup.size),
       expiresDays,
       tables: tables.length,
       rows: totalRows,
@@ -370,14 +333,13 @@ serve(async (req: Request) => {
       last_status: "success",
       last_error: null,
       last_sql_size_bytes: sqlBackup.size,
-      last_json_size_bytes: jsonBackup.size,
     }).eq("id", config.id);
 
     await supabase.from("backup_logs").insert({
       backup_type: "auto",
       // Una tabla ilegible ya no pasa por respaldo correcto.
       status: failedTables.length > 0 ? "partial" : "completed",
-      file_size_bytes: sqlBackup.size + jsonBackup.size,
+      file_size_bytes: sqlBackup.size,
       error_message: failedTables.length > 0
         ? `No se pudieron leer ${failedTables.length} tabla(s): ${failedTables.map((t) => t.table).join(", ")}`
         : null,
@@ -391,7 +353,7 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({
       success: true, recipient,
       tables: tables.length, rows: totalRows, failed_tables: failedTables,
-      sql_size: sqlBackup.size, json_size: jsonBackup.size,
+      sql_size: sqlBackup.size,
       resend_id: sent?.id,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -409,8 +371,7 @@ serve(async (req: Request) => {
             backup_type: "auto",
             status: "completed",
             file_size_bytes:
-              Number(generatedBackupMetadata.sql_size || 0) +
-              Number(generatedBackupMetadata.json_size || 0),
+              Number(generatedBackupMetadata.sql_size || 0),
             metadata: {
               ...generatedBackupMetadata,
               email_status: "failed",

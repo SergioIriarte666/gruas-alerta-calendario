@@ -79,7 +79,11 @@ Deno.serve(async (req: Request) => {
     try {
       const r2 = createR2Config(Deno.env.get("R2_BACKUPS_BUCKET")?.trim());
       const keys = await listObjectKeys(r2);
-      r2Days = [...new Set(keys.map((k) => k.slice(0, 10)))].sort();
+      // Solo las llaves con forma `YYYY-MM-DD/`: bajo `preservados/` viven
+      // copias de conservación permanente que no son el respaldo del día.
+      r2Days = [...new Set(
+        keys.filter((k) => /^\d{4}-\d{2}-\d{2}\//.test(k)).map((k) => k.slice(0, 10)),
+      )].sort();
       const recent = [dayOffset(0), dayOffset(-1)];
       if (!r2Days.some((day) => recent.includes(day))) {
         problems.push(`R2 no tiene copia de hoy ni de ayer (última: ${r2Days.at(-1) ?? "ninguna"}).`);
