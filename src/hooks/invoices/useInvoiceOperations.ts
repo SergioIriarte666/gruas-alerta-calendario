@@ -21,6 +21,13 @@ export interface UpdateInvoiceOptions {
   protectSystemStatus?: boolean;
 }
 
+export interface CreateInvoiceOptions {
+  /** The caller owns aggregate progress and feedback, such as a batch importer. */
+  silent?: boolean;
+  /** Defer broad query invalidation until the complete batch finishes. */
+  skipInvalidation?: boolean;
+}
+
 const INVOICE_SELECT = `
   id,
   client_id,
@@ -46,7 +53,10 @@ const INVOICE_SELECT = `
 export const useInvoiceOperations = () => {
   const queryClient = useQueryClient();
 
-  const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>): Promise<Invoice> => {
+  const createInvoice = async (
+    invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>,
+    options: CreateInvoiceOptions = {},
+  ): Promise<Invoice> => {
     try {
       if (!invoiceData.closureId) {
         throw new Error('closureId es requerido para crear una factura');
@@ -185,31 +195,37 @@ export const useInvoiceOperations = () => {
       }
 
       // Invalidar queries de facturación + servicios enhanced para sincronizar modals
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['closures'] });
-      queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
-      // Invalidar enhanced-service-details para que modals reflejen factura recién creada
-      serviceIds.forEach(sid => {
-        queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', sid] });
-      });
-      queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
+      if (!options.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        queryClient.invalidateQueries({ queryKey: ['closures'] });
+        queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
+        // Invalidar enhanced-service-details para que modals reflejen factura recién creada
+        serviceIds.forEach(sid => {
+          queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', sid] });
+        });
+        queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
+      }
 
       // Dispatch del evento custom para otros listeners
       window.dispatchEvent(new CustomEvent('invoice-created', { 
         detail: { invoiceId: newInvoice.id, serviceIds } 
       }));
       
-      toast.success("Factura creada", {
-        description: `Factura ${result.invoice_folio} creada exitosamente.`,
-      });
+      if (!options.silent) {
+        toast.success("Factura creada", {
+          description: `Factura ${result.invoice_folio} creada exitosamente.`,
+        });
+      }
 
       return formatInvoiceData({ ...newInvoice, invoice_closures: [{ closure_id: invoiceData.closureId }] });
 
     } catch (error: any) {
       logger.error('❌ Error general en createInvoice:', error);
-      toast.error("Error al crear factura", {
-        description: error.message || "No se pudo crear la factura.",
-      });
+      if (!options.silent) {
+        toast.error("Error al crear factura", {
+          description: error.message || "No se pudo crear la factura.",
+        });
+      }
       throw error;
     }
   };

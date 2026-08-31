@@ -15,6 +15,7 @@ import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderPDFImporter } from '@/components/vip/PurchaseOrderPDFImporter';
 import { QuotePDFImporter } from '@/components/vip/QuotePDFImporter';
+import { BillingBatchImporter } from '@/components/vip/BillingBatchImporter';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
@@ -68,6 +69,12 @@ export default function VipClientPipeline() {
     } else {
       setShowServiceDetailsModal(true);
     }
+  };
+
+  const handleServiceView = (service: Service) => {
+    setSelectedService(service);
+    setShowPurchaseOrderDialog(false);
+    setShowServiceDetailsModal(true);
   };
 
   const handleServiceEdit = (service: Service) => {
@@ -297,6 +304,15 @@ export default function VipClientPipeline() {
         </TabsContent>
 
         <TabsContent value="purchase-orders" className="space-y-6">
+          <BillingBatchImporter
+            clientId={clientId}
+            clientName={toTitleCase(client.name)}
+            services={services}
+            onServiceSelect={handleServiceView}
+            onRefresh={async () => {
+              await Promise.all([forceGlobalRefresh(), refetch()]);
+            }}
+          />
           <QuotePDFImporter
             clientId={clientId}
             clientName={toTitleCase(client.name)}
