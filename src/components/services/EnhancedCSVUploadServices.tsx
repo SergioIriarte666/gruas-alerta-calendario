@@ -574,6 +574,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                         <TableHead className="text-muted-foreground">Vehículo</TableHead>
                         <TableHead className="text-muted-foreground">Patente</TableHead>
                         <TableHead className="text-muted-foreground">Valor</TableHead>
+                        <TableHead className="text-muted-foreground">Comisión</TableHead>
                         <TableHead className="text-muted-foreground">Gastos</TableHead>
                         <TableHead className="text-muted-foreground">Estado</TableHead>
                       </TableRow>
@@ -607,6 +608,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                             </TableCell>
                             <TableCell className="text-foreground">
                               {formatCurrency(Number(getPreviewValue(previewRow, 'Valor', 'value')))}
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {formatCurrency(Number(getPreviewValue(previewRow, 'Comisión Operador', 'operatorCommission') || 0))}
                             </TableCell>
                             <TableCell className="text-foreground">
                               {formatCurrency(getPreviewExpensesTotal(previewRow))}

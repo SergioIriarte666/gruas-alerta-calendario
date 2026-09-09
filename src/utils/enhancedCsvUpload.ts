@@ -398,7 +398,7 @@ export class EnhancedCSVUploader {
       const requiredFields = [
         'folio', 'requestDate', 'serviceDate', 'clientRut', 'clientName', 'clientDepartment',
         'vehicleBrand', 'vehicleModel', 'licensePlate', 'origin', 'destination',
-        'serviceType', 'value', 'craneLicensePlate', 'operatorRut', 'operatorCommission'
+        'serviceType', 'value', 'craneLicensePlate', 'operatorRut'
       ];
       
       logger.debug(`🔍 Row ${i + 1} checking required fields:`, requiredFields);

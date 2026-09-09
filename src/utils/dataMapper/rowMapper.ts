@@ -118,7 +118,13 @@ export class RowMapper {
       // Validate numeric values
       logger.debug('💰 Validating numeric values...');
       const valueValidation = this.validators.validateNumericValue(rowData.value, 'value');
-      const commissionValidation = this.validators.validateNumericValue(rowData.operatorCommission, 'operatorCommission');
+      const operatorCommissionValue =
+        rowData.operatorCommission === null ||
+        rowData.operatorCommission === undefined ||
+        String(rowData.operatorCommission).trim() === ''
+          ? 0
+          : rowData.operatorCommission;
+      const commissionValidation = this.validators.validateNumericValue(operatorCommissionValue, 'operatorCommission');
 
       logger.debug('💰 Value validation:', valueValidation);
       logger.debug('💰 Commission validation:', commissionValidation);
@@ -188,7 +194,7 @@ export class RowMapper {
         value: parseFloat(rowData.value),
         craneId: crane!.id,
         operatorId: operator!.id,
-        operatorCommission: parseFloat(rowData.operatorCommission),
+        operatorCommission: parseFloat(operatorCommissionValue),
         observations: rowData.observations || '',
         costDetails,
       };

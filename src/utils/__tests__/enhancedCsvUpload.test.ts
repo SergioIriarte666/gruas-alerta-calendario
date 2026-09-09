@@ -69,7 +69,7 @@ describe('normalizeExcelCellValue', () => {
       value: 450000,
       craneLicensePlate: 'TLYF-23',
       operatorRut: '1-9',
-      operatorCommission: 0,
+      operatorCommission: '',
       observations: '',
       fuelExpense: 150000,
       allowanceExpense: 15000,
@@ -77,6 +77,7 @@ describe('normalizeExcelCellValue', () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.data?.operatorCommission).toBe(0);
     expect(result.data?.costDetails).toEqual([
       expect.objectContaining({ subcategory: 'Combustible', amount: 150000 }),
       expect.objectContaining({
