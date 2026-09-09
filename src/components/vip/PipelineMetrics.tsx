@@ -101,7 +101,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       avgProcessingTime,
       urgentServices
     };
-  }, [services]);
+  }, [clientId, services]);
 
   const metricCards = [
     {

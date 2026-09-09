@@ -20,11 +20,13 @@ import { businessClock } from '@/utils/businessClock';
 
 interface ServiceCardProps {
   service: Service;
+  clientId: string;
   onUpdate: () => void;
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
+  clientId,
   onUpdate: _onUpdate
 }) => {
   // Calcular días desde la fecha del servicio
@@ -146,7 +148,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           <div className="flex items-center gap-2 text-foreground">
             <DollarSign className="size-3" />
             <span className="font-medium">
-              ${getDisplayServiceValue(service).toLocaleString()}
+              ${getDisplayServiceValue(service, clientId).toLocaleString()}
             </span>
           </div>
 

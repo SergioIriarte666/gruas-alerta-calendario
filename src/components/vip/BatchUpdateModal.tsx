@@ -18,6 +18,7 @@ interface BatchUpdateModalProps {
   onOpenChange: (open: boolean) => void;
   selectedServices: Service[];
   onBatchUpdate: (updates: BatchUpdateData) => Promise<void>;
+  clientId: string;
   clientName: string;
 }
 
@@ -52,6 +53,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   onOpenChange,
   selectedServices,
   onBatchUpdate,
+  clientId,
   clientName
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -109,8 +111,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
   // Calcular suma total de servicios activos
   const activeTotalValue = useMemo(() =>
-    activeServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0),
-    [activeServices]
+    activeServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0),
+    [activeServices, clientId]
   );
 
   // Función para determinar el estado objetivo (OC prevalece)

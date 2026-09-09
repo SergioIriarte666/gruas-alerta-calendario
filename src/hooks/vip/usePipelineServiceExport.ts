@@ -118,13 +118,13 @@ export const usePipelineServiceExport = (
         };
       }
       acc[status].count++;
-      acc[status].totalValue += getDisplayServiceValue(service);
+      acc[status].totalValue += getDisplayServiceValue(service, clientId);
       acc[status].services.push(service);
       return acc;
     }, {} as Record<ServiceStatus, { count: number; totalValue: number; services: Service[] }>);
 
     return statusGroups;
-  }, [services]);
+  }, [clientId, services]);
 
   const exportToPDF = useCallback(async (options: PipelineExportOptions = {}) => {
     const { includeStatuses, includeAllStatuses = true } = options;

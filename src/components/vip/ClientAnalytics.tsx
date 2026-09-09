@@ -36,9 +36,11 @@ import {
 import { format, subDays, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toTitleCase } from '@/lib/utils';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface ClientAnalyticsProps {
   services: Service[];
+  clientId: string;
   clientName: string;
 }
 
@@ -60,6 +62,7 @@ interface PatternAnalysis {
 
 export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
   services,
+  clientId,
   clientName
 }) => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('90d');
@@ -118,7 +121,10 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
         ['completed', 'invoiced'].includes(s.status)
       );
 
-      const revenue = completedServices.reduce((sum, s) => sum + s.value, 0);
+      const revenue = completedServices.reduce(
+        (sum, service) => sum + getDisplayServiceValue(service, clientId),
+        0,
+      );
       const pending = periodServices.filter(s =>
         ['pending', 'in_progress'].includes(s.status)
       ).length;
@@ -184,6 +190,10 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
   const analyticsData = generateAnalyticsData();
   const patterns = analyzePatterns();
+  const totalClientValue = services.reduce(
+    (sum, service) => sum + getDisplayServiceValue(service, clientId),
+    0,
+  );
 
   // Calculate period-over-period comparison
   const currentPeriodData = analyticsData.slice(-4); // Last 4 periods
@@ -433,14 +443,14 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  ${services.reduce((sum, s) => sum + s.value, 0).toLocaleString()}
+                  ${totalClientValue.toLocaleString()}
                 </p>
                 <p className="text-xs text-warning-text">Valor Total</p>
               </div>
               <DollarSign className="size-5 text-warning-text" />
             </div>
             <div className="text-xs text-muted-foreground mt-2">
-              Promedio: ${Math.round(services.reduce((sum, s) => sum + s.value, 0) / services.length).toLocaleString()}
+              Promedio: ${Math.round(totalClientValue / Math.max(services.length, 1)).toLocaleString()}
             </div>
           </CardContent>
         </Card>

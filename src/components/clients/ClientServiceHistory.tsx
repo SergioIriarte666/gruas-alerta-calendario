@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Truck, DollarSign, Hash } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -71,7 +72,9 @@ export const ClientServiceHistory = ({ client }: { client: Client }) => {
                       <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(service.serviceDate))}</TableCell>
                       <TableCell className="text-foreground">{formatVehicleInfo(service)}</TableCell>
                       <TableCell className="text-foreground max-w-xs truncate">{service.origin} → {service.destination}</TableCell>
-                      <TableCell className="text-foreground font-semibold">{formatCurrency(service.value)}</TableCell>
+                      <TableCell className="text-foreground font-semibold">
+                        {formatCurrency(getDisplayServiceValue(service, client.id))}
+                      </TableCell>
                       <TableCell>
                         {getServiceStatusBadge(service.status)}
                       </TableCell>

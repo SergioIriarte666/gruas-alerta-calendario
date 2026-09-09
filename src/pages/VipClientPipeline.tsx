@@ -327,6 +327,7 @@ export default function VipClientPipeline() {
           />
           <PurchaseOrderManager 
             services={services}
+            clientId={clientId}
             onServiceSelect={handleServiceSelect}
           />
         </TabsContent>
@@ -336,10 +337,12 @@ export default function VipClientPipeline() {
           <div className="space-y-6">
             <ClientAnalytics 
               services={services}
+              clientId={clientId}
               clientName={toTitleCase(client.name)}
             />
             <PredictiveInsights 
               services={services}
+              clientId={clientId}
               clientName={toTitleCase(client.name)}
             />
           </div>
@@ -371,6 +374,7 @@ export default function VipClientPipeline() {
         open={showPurchaseOrderDialog}
         onOpenChange={setShowPurchaseOrderDialog}
         service={selectedService}
+        clientId={clientId}
         onUpdate={handleServiceUpdate}
       />
 

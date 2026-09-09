@@ -161,20 +161,24 @@ export const getDisplayServiceValue = (
 ): number => {
   if (!service) return 0;
 
-  if (viewingClientId && service.hasExcess) {
+  const hasExcess = Boolean(service.hasExcess ?? service.has_excess);
+  const primaryClientId = service.client?.id ?? service.clientId ?? service.client_id;
+  const thirdPartyClientId = service.thirdPartyClientId ?? service.third_party_client_id;
+  const clientCoveredAmount = service.clientCoveredAmount ?? service.client_covered_amount;
+  const excessAmount = service.excessAmount ?? service.excess_amount;
+
+  if (viewingClientId && hasExcess) {
     if (
-      service.client?.id === viewingClientId &&
-      service.clientCoveredAmount != null &&
-      service.clientCoveredAmount > 0
+      primaryClientId === viewingClientId &&
+      clientCoveredAmount != null
     ) {
-      return Math.round(service.clientCoveredAmount);
+      return Math.round(Number(clientCoveredAmount));
     }
     if (
-      service.thirdPartyClientId === viewingClientId &&
-      service.excessAmount != null &&
-      service.excessAmount > 0
+      thirdPartyClientId === viewingClientId &&
+      excessAmount != null
     ) {
-      return Math.round(service.excessAmount);
+      return Math.round(Number(excessAmount));
     }
   }
 

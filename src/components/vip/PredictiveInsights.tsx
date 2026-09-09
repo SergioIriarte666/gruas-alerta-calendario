@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 import { toTitleCase } from '@/lib/utils';
 import { addWeeks } from 'date-fns';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface PredictiveInsightsProps {
   services: Service[];
+  clientId: string;
   clientName: string;
 }
 
@@ -47,6 +49,7 @@ interface ForecastData {
 
 export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
   services,
+  clientId,
   clientName
 }) => {
   const [selectedInsight, setSelectedInsight] = useState<string | null>(null);
@@ -87,7 +90,12 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
     });
 
     // Revenue Prediction
-    const avgServiceValue = services.reduce((sum, s) => sum + s.value, 0) / services.length;
+    const avgServiceValue = services.length > 0
+      ? services.reduce(
+        (sum, service) => sum + getDisplayServiceValue(service, clientId),
+        0,
+      ) / services.length
+      : 0;
     const projectedRevenue = monthlyServices * avgServiceValue * 1.15; // Growth projection
 
     predictions.push({

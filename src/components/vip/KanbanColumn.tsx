@@ -24,7 +24,7 @@ interface KanbanColumnProps {
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   column,
   services,
-  clientId: _clientId,
+  clientId,
   onServiceUpdate
 }) => {
   const getColumnIcon = () => {
@@ -47,7 +47,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   };
 
   // Calcular métricas de la columna
-  const totalValue = services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
+  const totalValue = services.reduce(
+    (sum, service) => sum + getDisplayServiceValue(service, clientId),
+    0,
+  );
   const avgDays = services.length > 0 ? Math.round(
     services.reduce((sum, service) => {
       const daysDiff = Math.floor(
@@ -114,6 +117,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               <ServiceCard
                 key={service.id}
                 service={service}
+                clientId={clientId}
                 onUpdate={onServiceUpdate}
               />
             ))

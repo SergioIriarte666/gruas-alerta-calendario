@@ -71,7 +71,7 @@ interface TrendData {
 
 export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   services,
-  clientId: _clientId,
+  clientId,
   clientName
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'30' | '90' | '180' | '365'>('90');
@@ -91,7 +91,10 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       ['completed', 'invoiced'].includes(s.status)
     );
 
-    const totalRevenue = completedServices.reduce((sum, s) => sum + s.value, 0);
+    const totalRevenue = completedServices.reduce(
+      (sum, service) => sum + getDisplayServiceValue(service, clientId),
+      0,
+    );
 
     // Calculate average service time (from pending to completed)
     const avgServiceTime = completedServices.length > 0
@@ -138,7 +141,10 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
         ['completed', 'invoiced'].includes(s.status)
       );
 
-      const monthRevenue = completedServices.reduce((sum, s) => sum + s.value, 0);
+      const monthRevenue = completedServices.reduce(
+        (sum, service) => sum + getDisplayServiceValue(service, clientId),
+        0,
+      );
       const completionRate = monthServices.length > 0
         ? (completedServices.length / monthServices.length) * 100
         : 0;
@@ -340,7 +346,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       'Fecha': format(new Date(service.serviceDate), 'dd/MM/yyyy'),
       'Estado': service.status,
       'Tipo de Servicio': service.serviceType.name,
-      'Valor': getDisplayServiceValue(service),
+      'Valor': getDisplayServiceValue(service, clientId),
       'Cliente': toTitleCase(service.client.name),
       'Operador': service.operator?.name || 'Sin asignar',
       'Grúa': service.crane?.licensePlate || 'Sin asignar',

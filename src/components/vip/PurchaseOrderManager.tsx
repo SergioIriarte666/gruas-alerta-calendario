@@ -27,11 +27,13 @@ const logger = createLogger('PurchaseOrderManager');
 
 interface PurchaseOrderManagerProps {
   services: Service[];
+  clientId: string;
   onServiceSelect: (service: Service) => void;
 }
 
 export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   services,
+  clientId,
   onServiceSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,7 +112,10 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     quoted: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'quoted').length,
     pending_po: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'purchase_order_pending').length,
     with_purchase_order: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'with_purchase_order').length,
-    total_value: relevantServices.reduce((sum, s) => sum + s.value, 0)
+    total_value: relevantServices.reduce(
+      (sum, service) => sum + getDisplayServiceValue(service, clientId),
+      0,
+    )
   };
 
   return (
@@ -302,7 +307,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-foreground">
                             <DollarSign className="size-3" />
-                            <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
+                            <span className="font-medium">{formatCurrency(getDisplayServiceValue(service, clientId))}</span>
                           </div>
                         </div>
                       </div>
@@ -320,7 +325,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                                 event: 'orden_compra',
                                 data: {
                                   proveedor: service.client?.name || '',
-                                  monto: getDisplayServiceValue(service).toLocaleString('es-CL') || '0',
+                                  monto: getDisplayServiceValue(service, clientId).toLocaleString('es-CL') || '0',
                                   descripcion: `OC ${service.purchaseOrderNumber || service.purchaseOrder} - Folio ${service.folio}`,
                                 },
                               },

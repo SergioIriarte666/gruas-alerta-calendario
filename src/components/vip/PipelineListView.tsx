@@ -305,8 +305,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           bValue = parseFromDatabase(b.serviceDate);
           break;
         case 'value':
-          aValue = a.value || 0;
-          bValue = b.value || 0;
+          aValue = getDisplayServiceValue(a, clientId);
+          bValue = getDisplayServiceValue(b, clientId);
           break;
         case 'daysInStatus':
           aValue = differenceInDays(businessClock.now(), parseFromDatabase(a.serviceDate));
@@ -1141,6 +1141,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         onOpenChange={setShowBatchModal}
         selectedServices={selectedServicesArray}
         onBatchUpdate={handleBatchUpdate}
+        clientId={clientId}
         clientName={clientName}
       />
 

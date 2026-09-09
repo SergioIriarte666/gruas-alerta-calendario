@@ -30,6 +30,7 @@ interface PurchaseOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service: Service | null;
+  clientId: string;
   onUpdate: () => void;
 }
 
@@ -37,6 +38,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
   open,
   onOpenChange,
   service,
+  clientId,
   onUpdate
 }) => {
   const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
@@ -147,7 +149,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
                 <div className="flex items-center gap-2 text-success-text">
                   <DollarSign className="size-4" />
-                  <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
+                  <span className="font-medium">{formatCurrency(getDisplayServiceValue(service, clientId))}</span>
                 </div>
               </div>
             </div>
