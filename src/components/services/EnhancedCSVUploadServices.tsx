@@ -44,6 +44,14 @@ const getPreviewVehicle = (row: Record<string, unknown>): string => {
   return [brand, model].filter(Boolean).join(' ') || '-';
 };
 
+const getPreviewExpensesTotal = (row: Record<string, unknown>): number =>
+  ['Combustible', 'Viáticos', 'Viaticos', 'Peajes'].reduce((total, header) => {
+    const value = row[header];
+    if (value === null || value === undefined || String(value).trim() === '') return total;
+    const amount = typeof value === 'number' ? value : Number(String(value).trim());
+    return Number.isFinite(amount) ? total + amount : total;
+  }, 0);
+
 interface EnhancedCSVUploadServicesProps {
   onClose?: () => void;
   onSuccess?: (count: number) => void;
@@ -566,6 +574,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                         <TableHead className="text-muted-foreground">Vehículo</TableHead>
                         <TableHead className="text-muted-foreground">Patente</TableHead>
                         <TableHead className="text-muted-foreground">Valor</TableHead>
+                        <TableHead className="text-muted-foreground">Gastos</TableHead>
                         <TableHead className="text-muted-foreground">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -598,6 +607,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                             </TableCell>
                             <TableCell className="text-foreground">
                               {formatCurrency(Number(getPreviewValue(previewRow, 'Valor', 'value')))}
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {formatCurrency(getPreviewExpensesTotal(previewRow))}
                             </TableCell>
                             <TableCell>
                               {hasError ? (

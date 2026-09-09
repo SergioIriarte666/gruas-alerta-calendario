@@ -44,6 +44,24 @@ export class DataValidators {
     return { isValid: true };
   }
 
+  validateOptionalExpense(value: any, fieldName: string): { isValid: boolean; error?: string; amount?: number } {
+    if (value === null || value === undefined || String(value).trim() === '') {
+      return { isValid: true };
+    }
+
+    const amount = typeof value === 'number' ? value : Number(String(value).trim());
+
+    if (!Number.isFinite(amount)) {
+      return { isValid: false, error: `${fieldName} inválido: ${value}` };
+    }
+
+    if (amount < 0) {
+      return { isValid: false, error: `${fieldName} no puede ser negativo: ${value}` };
+    }
+
+    return { isValid: true, amount };
+  }
+
   validateDate(value: any, fieldName: string): { isValid: boolean; error?: string; fixedDate?: string } {
     const fixedDate = this.fixDateFormat(value);
     

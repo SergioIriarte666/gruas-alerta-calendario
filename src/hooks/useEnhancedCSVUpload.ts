@@ -3,12 +3,14 @@ import { useState, useCallback } from 'react';
 import { EnhancedCSVUploader, ValidationResult, UploadProgress, UploadResult, ServiceStatus } from '@/utils/enhancedCsvUpload';
 import { useServices } from '@/hooks/useServices';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useEnhancedCSVUpload");
 export const useEnhancedCSVUpload = () => {
+  const queryClient = useQueryClient();
   const { createService, services, refetch } = useServices();
   const { syncAllFoliosAfterBulkUpload } = useFolioGenerator();
   const [uploader] = useState(() => new EnhancedCSVUploader());
@@ -149,6 +151,7 @@ export const useEnhancedCSVUpload = () => {
       if (result.insertedFolios && result.insertedFolios.length > 0) {
         logger.debug('🔄 Syncing folio counter after bulk upload...');
         await syncAllFoliosAfterBulkUpload(result.insertedFolios);
+        await queryClient.invalidateQueries({ queryKey: ['costs'] });
         await refetch();
       }
 
@@ -170,7 +173,7 @@ export const useEnhancedCSVUpload = () => {
       setIsCancelling(false);
       setUploadProgress(null);
     }
-  }, [validationResult, uploader, createService, refetch, syncAllFoliosAfterBulkUpload]);
+  }, [validationResult, uploader, createService, queryClient, refetch, syncAllFoliosAfterBulkUpload]);
 
   const cancelUpload = useCallback(() => {
     if (!isUploading || isCancelling) return;

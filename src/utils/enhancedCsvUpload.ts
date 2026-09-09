@@ -586,7 +586,9 @@ export class EnhancedCSVUploader {
               }],
               status,
               observations: service.observations || '',
-              hasExcess: false
+              hasExcess: false,
+              costDetails: service.costDetails || [],
+              markCostsPaidOnCreate: (service.costDetails?.length || 0) > 0,
             };
 
             logger.debug(`📤 Sending service data:`, serviceData);
@@ -675,7 +677,10 @@ export class EnhancedCSVUploader {
       'Grúa Patente',
       'Operador RUT',
       'Comisión Operador',
-      'Observaciones'
+      'Observaciones',
+      'Combustible',
+      'Viáticos',
+      'Peajes'
     ];
 
     const sampleData = [
@@ -695,7 +700,10 @@ export class EnhancedCSVUploader {
       'GRUA-01',
       '16.123.456-7',
       '15000',
-      'Servicio de ejemplo'
+      'Servicio de ejemplo',
+      '',
+      '',
+      ''
     ];
 
     const csvContent = [headers.join(','), sampleData.join(',')].join('\n');
@@ -729,7 +737,10 @@ export class EnhancedCSVUploader {
       'Grúa Patente': 'GRUA-01',
       'Operador RUT': '16.123.456-7',
       'Comisión Operador': 15000,
-      'Observaciones': 'Servicio de ejemplo'
+      'Observaciones': 'Servicio de ejemplo',
+      'Combustible': '',
+      'Viáticos': '',
+      'Peajes': ''
     }];
 
     const worksheet = XLSX.utils.json_to_sheet(sampleData);

@@ -22,6 +22,18 @@ export interface MappedServiceData {
   operatorId: string;
   operatorCommission: number;
   observations: string;
+  costDetails?: MappedServiceCostDetail[];
+}
+
+export interface MappedServiceCostDetail {
+  description: string;
+  amount: number;
+  quantity: number;
+  unitPrice: number;
+  notes: string;
+  subcategory: 'Combustible' | 'Viáticos' | 'Peajes';
+  operator_id?: string;
+  location_text?: string;
 }
 
 export interface MappingResult {

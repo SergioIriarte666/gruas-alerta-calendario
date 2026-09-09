@@ -146,6 +146,20 @@ export class HeaderMapper {
     'comision operador': 'operatorCommission',
     'Operator Commission': 'operatorCommission',
     'operator commission': 'operatorCommission',
+
+    // Gastos opcionales del servicio
+    'Combustible': 'fuelExpense',
+    'COMBUSTIBLE': 'fuelExpense',
+    'combustible': 'fuelExpense',
+    'Viáticos': 'allowanceExpense',
+    'VIÁTICOS': 'allowanceExpense',
+    'viáticos': 'allowanceExpense',
+    'Viaticos': 'allowanceExpense',
+    'VIATICOS': 'allowanceExpense',
+    'viaticos': 'allowanceExpense',
+    'Peajes': 'tollExpense',
+    'PEAJES': 'tollExpense',
+    'peajes': 'tollExpense',
     
     // Observaciones
     'OBSERVACIONES': 'observations',
@@ -207,7 +221,8 @@ export class HeaderMapper {
 
     const mappedHeaders = this.mapHeaders(headers);
     const missing = required.filter(req => !mappedHeaders.includes(req));
-    const extra = mappedHeaders.filter(h => !required.includes(h) && h !== 'observations');
+    const optional = ['observations', 'fuelExpense', 'allowanceExpense', 'tollExpense'];
+    const extra = mappedHeaders.filter(h => !required.includes(h) && !optional.includes(h));
 
     const result = {
       valid: missing.length === 0,

@@ -1,7 +1,7 @@
 
 import { EntityFinders } from './entityFinders';
 import { DataValidators } from './dataValidators';
-import { MappingResult, MappedServiceData } from './types';
+import { MappingResult, MappedServiceCostDetail, MappedServiceData } from './types';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('RowMapper');
@@ -132,6 +132,39 @@ export class RowMapper {
         errors.push(commissionValidation.error!);
       }
 
+      const expenseColumns = [
+        { field: 'fuelExpense', label: 'Combustible', subcategory: 'Combustible' },
+        { field: 'allowanceExpense', label: 'Viáticos', subcategory: 'Viáticos' },
+        { field: 'tollExpense', label: 'Peajes', subcategory: 'Peajes' },
+      ] as const;
+      const costDetails: MappedServiceCostDetail[] = [];
+
+      for (const expense of expenseColumns) {
+        const validation = this.validators.validateOptionalExpense(rowData[expense.field], expense.label);
+
+        if (!validation.isValid) {
+          errors.push(validation.error!);
+          continue;
+        }
+
+        if (validation.amount && validation.amount > 0) {
+          costDetails.push({
+            description: `${expense.subcategory} ${rowData.folio}`,
+            amount: validation.amount,
+            quantity: 1,
+            unitPrice: validation.amount,
+            notes: 'Costo registrado desde carga masiva',
+            subcategory: expense.subcategory,
+            ...(expense.subcategory === 'Viáticos' && operator?.id
+              ? { operator_id: operator.id }
+              : {}),
+            ...(expense.subcategory === 'Peajes' && rowData.origin && rowData.destination
+              ? { location_text: `${rowData.origin} → ${rowData.destination}` }
+              : {}),
+          });
+        }
+      }
+
       if (errors.length > 0) {
         logger.debug('❌ Row mapping failed with errors:', errors);
         return {
@@ -156,7 +189,8 @@ export class RowMapper {
         craneId: crane!.id,
         operatorId: operator!.id,
         operatorCommission: parseFloat(rowData.operatorCommission),
-        observations: rowData.observations || ''
+        observations: rowData.observations || '',
+        costDetails,
       };
 
       logger.debug('✅ Row mapping successful:', mappedData);
