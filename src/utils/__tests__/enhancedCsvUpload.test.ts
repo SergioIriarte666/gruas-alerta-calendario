@@ -24,6 +24,15 @@ describe('normalizeExcelCellValue', () => {
     expect(normalizeExcelCellValue('Observaciones', '2026-07-23')).toBe('2026-07-23');
   });
 
+  it('preserves imported calendar dates without applying a timezone shift', () => {
+    const validators = new DataValidators();
+
+    expect(validators.fixDateFormat('2026-09-03')).toBe('2026-09-03');
+    expect(validators.fixDateFormat('03/09/2026')).toBe('2026-09-03');
+    expect(validators.fixDateFormat(46268)).toBe('2026-09-03');
+    expect(validators.validateDate('2026-02-30', 'Fecha Servicio').isValid).toBe(false);
+  });
+
   it('accepts zero as a provided numeric value', () => {
     expect(isMissingRequiredValue(0)).toBe(false);
     expect(isMissingRequiredValue('0')).toBe(false);
@@ -77,6 +86,8 @@ describe('normalizeExcelCellValue', () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.data?.requestDate).toBe('2026-09-09');
+    expect(result.data?.serviceDate).toBe('2026-09-09');
     expect(result.data?.operatorCommission).toBe(0);
     expect(result.data?.costDetails).toEqual([
       expect.objectContaining({ subcategory: 'Combustible', amount: 150000 }),
