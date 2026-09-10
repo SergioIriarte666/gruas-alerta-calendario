@@ -117,7 +117,7 @@ export const FuelPricesManager = () => {
   const { data: currentPrices = [], isLoading: loadingCurrent } = useCurrentFuelPrices();
   const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory();
   const { mutate: deletePrice } = useDeleteFuelPrice();
-  const { mutate: syncReferencePrices, isPending: isSyncing } = useSyncReferenceFuelPrices();
+  const { mutate: syncReferencePrices, isPending: isSyncing, error: syncError } = useSyncReferenceFuelPrices();
 
   const pivot = useMemo(() => buildWeeklyPivot(history), [history]);
   const canSyncReferencePrices = profileUser?.role === 'admin';
@@ -208,6 +208,13 @@ export const FuelPricesManager = () => {
         </div>
       </div>
 
+      {syncError && (
+        <p role="alert" className="text-sm text-destructive">
+          No se pudieron actualizar los precios desde COPEC. Se muestran los últimos valores guardados.
+          {' '}{syncError instanceof Error ? syncError.message : 'Intenta actualizar nuevamente.'}
+        </p>
+      )}
+
       {/* Current prices cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {FUEL_TYPES.map(({ value, label }) => {
@@ -220,7 +227,7 @@ export const FuelPricesManager = () => {
                     <Fuel className="size-4" />
                     {label}
                   </span>
-                  {price && <Badge className="bg-success text-success-foreground text-xs">Vigente</Badge>}
+                  {price && <Badge className="bg-success text-success-foreground text-xs">{syncError ? 'Sin verificar' : 'Vigente'}</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
