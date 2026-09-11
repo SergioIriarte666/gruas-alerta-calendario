@@ -19,6 +19,17 @@ export class RowMapper {
     const warnings: string[] = [];
 
     try {
+      // Excel returns numeric cells as numbers, even for text fields (e.g. model 5008).
+      // Normalize before entity lookup and creation, preserving typed dates and amounts.
+      rowData = { ...rowData };
+      for (const field of [
+        'folio', 'clientRut', 'clientName', 'clientDepartment', 'vehicleBrand',
+        'vehicleModel', 'licensePlate', 'origin', 'destination', 'serviceType',
+        'craneLicensePlate', 'operatorRut', 'observations',
+      ]) {
+        rowData[field] = String(rowData[field] ?? '');
+      }
+
       // Validate and fix dates
       logger.debug('📅 Validating dates...');
       const requestDateValidation = this.validators.validateDate(rowData.requestDate, 'Fecha Solicitud');

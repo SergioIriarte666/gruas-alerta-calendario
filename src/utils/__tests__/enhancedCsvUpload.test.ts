@@ -8,6 +8,7 @@ import type { MappedServiceData } from '@/utils/dataMapper';
 import { DataValidators } from '@/utils/dataMapper/dataValidators';
 import { HeaderMapper } from '@/utils/dataMapper/headerMapping';
 import { RowMapper } from '@/utils/dataMapper/rowMapper';
+import { normalizeVehicleFreeText } from '@/utils/vehicleCatalogMatch';
 
 describe('normalizeExcelCellValue', () => {
   it('converts numeric serials only in date columns', () => {
@@ -52,7 +53,7 @@ describe('normalizeExcelCellValue', () => {
     expect(validation.extra).toEqual([]);
   });
 
-  it('maps only positive optional expenses to service costs', async () => {
+  it.each(['Ranger', 5008])('maps Excel model %s and expenses through service creation', async (vehicleModel) => {
     const entityFinders = {
       findClientByRutAndDepartment: () => ({ id: 'client-1', name: 'Cliente', department: 'General', rut: '1-9' }),
       findClientByRut: () => ({ id: 'client-1', name: 'Cliente', department: 'General', rut: '1-9' }),
@@ -70,7 +71,7 @@ describe('normalizeExcelCellValue', () => {
       clientName: 'Cliente',
       clientDepartment: 'General',
       vehicleBrand: 'Ford',
-      vehicleModel: 'Ranger',
+      vehicleModel,
       licensePlate: 'ABCD-12',
       origin: 'Origen',
       destination: 'Destino',
@@ -89,6 +90,8 @@ describe('normalizeExcelCellValue', () => {
     expect(result.data?.requestDate).toBe('2026-09-09');
     expect(result.data?.serviceDate).toBe('2026-09-09');
     expect(result.data?.operatorCommission).toBe(0);
+    expect(result.data?.vehicleModel).toBe(String(vehicleModel));
+    expect(result.data?.value).toBe(450000);
     expect(result.data?.costDetails).toEqual([
       expect.objectContaining({ subcategory: 'Combustible', amount: 150000 }),
       expect.objectContaining({
@@ -102,6 +105,20 @@ describe('normalizeExcelCellValue', () => {
         location_text: 'Origen → Destino',
       }),
     ]);
+
+    const createService = vi.fn(async (service) => {
+      // Exercise the same text normalization used by useServiceManager.
+      expect(normalizeVehicleFreeText(service.vehicleModel)).toBe(String(vehicleModel));
+    });
+    const upload = await new EnhancedCSVUploader().uploadServices(
+      [result.data!], createService, undefined, { status: 'completed' }
+    );
+    expect(upload.processed).toBe(1);
+    expect(upload.errors).toBe(0);
+    expect(createService).toHaveBeenCalledWith(expect.objectContaining({
+      vehicleModel: String(vehicleModel), value: 450000, status: 'completed',
+      costDetails: result.data?.costDetails,
+    }));
   });
 
   it('rejects invalid or negative optional expense amounts', () => {
