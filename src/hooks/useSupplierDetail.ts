@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
@@ -164,7 +165,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
 
     // Add pending/overdue amount
     if (balance > 0) {
-      if (invoice.due_date && new Date(invoice.due_date) < today) {
+      if (invoice.due_date && parseDateValue(invoice.due_date) < today) {
         stats.totalOverdue += balance;
         stats.overdueCount++;
       } else {

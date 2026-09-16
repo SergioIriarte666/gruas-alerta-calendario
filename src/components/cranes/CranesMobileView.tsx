@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -166,17 +168,17 @@ export const CranesMobileView = ({
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-foreground text-sm">
                 <Calendar className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <span>Rev. Técnica: {format(new Date(crane.technicalReviewExpiry), 'dd/MM/yyyy', { locale: es })}</span>
+                <span>Rev. Técnica: {businessClock.format(crane.technicalReviewExpiry, 'dd/MM/yyyy', { locale: es })}</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
                 <Shield className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <span>Seguro: {format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es })}</span>
+                <span>Seguro: {businessClock.format(crane.insuranceExpiry, 'dd/MM/yyyy', { locale: es })}</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
                 <Wrench className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <span>Permiso Circulación: {format(new Date(crane.circulationPermitExpiry), 'dd/MM/yyyy', { locale: es })}</span>
+                <span>Permiso Circulación: {businessClock.format(crane.circulationPermitExpiry, 'dd/MM/yyyy', { locale: es })}</span>
               </div>
             </div>
 

@@ -1,3 +1,5 @@
+import { parseDateValue } from '@/utils/calendarDate';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import React, { useState } from 'react';
 import { PaymentWithDetails, ManualApplication } from '@/types/payments';
 import { usePayments } from '@/hooks/usePayments';
@@ -35,8 +37,8 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
 
   // Ordenar facturas por fecha de vencimiento (más antiguas primero)
   const sortedInvoices = [...availableInvoices].sort((a, b) => {
-    const dateA = new Date(a.due_date);
-    const dateB = new Date(b.due_date);
+    const dateA = parseDateValue(a.due_date);
+    const dateB = parseDateValue(b.due_date);
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -256,7 +258,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
                         />
                       </TableCell>
                       <TableCell>{invoice.numero_fiscal || invoice.folio}</TableCell>
-                      <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatForDisplay(invoice.due_date)}</TableCell>
                       <TableCell>{formatCurrency(invoice.total)}</TableCell>
                       <TableCell>{formatCurrency(invoice.remaining_amount)}</TableCell>
                       <TableCell>

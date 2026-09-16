@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table,
@@ -191,8 +192,8 @@ export const EnhancedCostsTable = ({
 
       switch (sortField) {
         case 'date':
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
+          aValue = parseDateValue(a.date);
+          bValue = parseDateValue(b.date);
           break;
         case 'description':
           aValue = a.description.toLowerCase();
@@ -211,8 +212,8 @@ export const EnhancedCostsTable = ({
           bValue = Number(b.amount);
           break;
         case 'payment_date':
-          aValue = a.payment_date ? new Date(`${a.payment_date}T12:00:00Z`).getTime() : 0;
-          bValue = b.payment_date ? new Date(`${b.payment_date}T12:00:00Z`).getTime() : 0;
+          aValue = a.payment_date ? parseDateValue(a.payment_date).getTime() : 0;
+          bValue = b.payment_date ? parseDateValue(b.payment_date).getTime() : 0;
           break;
         case 'associated':
           aValue = getAssociatedTo(a).toLowerCase();
@@ -239,7 +240,7 @@ export const EnhancedCostsTable = ({
     sortedCosts.forEach(cost => {
       let key: string;
       if (groupBy === 'date') {
-        key = format(new Date(`${cost.date}T12:00:00Z`), "MMMM yyyy", { locale: es });
+        key = businessClock.format(cost.date, "MMMM yyyy", { locale: es });
       } else if (groupBy === 'category') {
         key = getCategoryDisplay(cost);
       } else if (groupBy === 'crane') {
@@ -341,7 +342,7 @@ export const EnhancedCostsTable = ({
   };
 
   const formatDate = (date: string) => {
-    return format(new Date(`${date}T12:00:00Z`), 'dd/MM/yyyy');
+    return businessClock.format(date, 'dd/MM/yyyy');
   };
 
   if (loading) {
@@ -427,7 +428,7 @@ export const EnhancedCostsTable = ({
             <TooltipTrigger asChild>
               <span className="inline-flex">
                 {cost.payment_date ? (
-                  new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.now() ? (
+                  cost.payment_date > businessClock.today() ? (
                     <CalendarClock className="mx-auto size-5 text-warning" />
                   ) : (
                     <CheckCircle className="mx-auto size-5 text-success" />
@@ -439,8 +440,8 @@ export const EnhancedCostsTable = ({
               </TooltipTrigger>
               <TooltipContent>
                 {cost.payment_date
-                  ? new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.todayDate()
-                    ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
+                  ? parseDateValue(cost.payment_date) > businessClock.todayDate()
+                    ? `Pago programado - ${businessClock.format(cost.payment_date, 'dd/MM/yyyy')}`
                   : 'Pagado'
                 : 'Pendiente'}
             </TooltipContent>

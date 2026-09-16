@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +69,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
   const totalCosts = costs.reduce((sum, cost) => sum + Number(cost.amount), 0);
   const monthlyTotal = costs
     .filter(cost => {
-      const costDate = new Date(cost.date);
+      const costDate = parseDateValue(cost.date);
       const currentDate = businessClock.todayDate();
       return costDate.getMonth() === currentDate.getMonth() && 
              costDate.getFullYear() === currentDate.getFullYear();

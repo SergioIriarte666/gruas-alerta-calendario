@@ -1,3 +1,4 @@
+import { toLocalDateString } from '@/utils/timezoneUtils';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -187,8 +188,8 @@ const InvoiceExportModal = ({
     await handleExportInvoiceReport(filters.format, {
       clientId: filters.clientId || undefined,
       status: filters.status !== 'all' ? filters.status : undefined,
-      dateFrom: filters.dateFrom?.toISOString(),
-      dateTo: filters.dateTo?.toISOString(),
+      dateFrom: filters.dateFrom ? toLocalDateString(filters.dateFrom) : undefined,
+      dateTo: filters.dateTo ? toLocalDateString(filters.dateTo) : undefined,
       includePaymentHistory: filters.includePaymentHistory
     });
 

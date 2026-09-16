@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +23,7 @@ export const PendingInvoicesTable = ({ invoices, isLoading }: PendingInvoicesTab
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd MMM yyyy', { locale: es });
+    return businessClock.format(dateString, 'dd MMM yyyy', { locale: es });
   };
 
   const getStatusBadge = (status: string) => {

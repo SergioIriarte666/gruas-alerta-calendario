@@ -1,3 +1,6 @@
+import { addCalendarDays } from '@/utils/calendarDate';
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,14 +78,14 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   // Safe date parsing - avoid new Date('YYYY-MM-DD') timezone bug
   const selectedDateSafe = selectedDate.match(/^\d{4}-\d{2}-\d{2}$/) 
     ? selectedDate 
-    : formatForDatabase(new Date(selectedDate));
+    : formatForDatabase(parseDateValue(selectedDate));
   const dateForDB = selectedDateSafe;
   
   // Usar funciones de zona horaria para cálculos de semana
   const selectedDateObj = new Date(parseInt(selectedDateSafe.substring(0, 4)), parseInt(selectedDateSafe.substring(5, 7)) - 1, parseInt(selectedDateSafe.substring(8, 10)), 12, 0, 0);
   const currentWeekStart = getWeekStart(selectedDateObj);
-  const currentWeekEnd = new Date(currentWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-  const nextWeekEnd = new Date(currentWeekEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const currentWeekEnd = parseDateValue(addCalendarDays(currentWeekStart, 6));
+  const nextWeekEnd = parseDateValue(addCalendarDays(currentWeekEnd, 7));
 
   // Fetch services data - expandir rango para incluir semana actual y próxima
   const [servicesRes, calendarRes, invoicesRes, paymentsRes, supplierPaymentsRes, cranesRes, operatorsRes] = await Promise.all([
@@ -185,7 +188,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     // Safe date-only comparison using string slicing
     const sDate = s.service_date;
     if (!sDate || sDate <= dateForDB) return false;
-    const nextWeekEndStr = formatForDatabase(new Date(selectedDateObj.getTime() + 7 * 24 * 60 * 60 * 1000));
+    const nextWeekEndStr = formatForDatabase(parseDateValue(addCalendarDays(selectedDateObj, 7)));
     return sDate <= nextWeekEndStr;
   });
 
@@ -297,7 +300,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     const getDaysDiff = (dateStr: string) => {
       if (!dateStr) return 999;
       const d = new Date(parseInt(dateStr.substring(0, 4)), parseInt(dateStr.substring(5, 7)) - 1, parseInt(dateStr.substring(8, 10)), 12, 0, 0);
-      return Math.ceil((d.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+      return differenceInCalendarDates(d, todayDate);
     };
     
     const checkDocument = (expiryDateStr: string, docType: string, docName: string) => {

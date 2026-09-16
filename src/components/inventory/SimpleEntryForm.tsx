@@ -83,7 +83,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess, ent
   } = useForm<EntryFormData>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
-      movement_date: businessClock.now(),
+      movement_date: businessClock.todayDate(),
       quantity: 1,
       unit_cost: 0,
       item_id: '',

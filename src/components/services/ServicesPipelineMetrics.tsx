@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+
 import React, { useMemo } from 'react';
 import { Service } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
@@ -65,9 +67,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
     // Tiempo promedio de procesamiento (días desde serviceDate)
     const avgProcessingTime = services.length > 0 ? Math.round(
       services.reduce((sum, service) => {
-        const daysSince = Math.floor(
-          (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
         return sum + daysSince;
       }, 0) / services.length
     ) : 0;
@@ -75,9 +75,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
     // Servicios con urgencia (más de 7 días)
     const urgentServices = services.filter(service => {
       if (service.status === 'invoiced' || service.status === 'completed') return false;
-      const daysSince = Math.floor(
-        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
       return daysSince > 7;
     }).length;
 

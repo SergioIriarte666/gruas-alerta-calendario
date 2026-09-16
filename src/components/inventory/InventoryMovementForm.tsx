@@ -110,7 +110,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
     resolver: zodResolver(movementSchema),
     defaultValues: {
       movement_type: defaultMovementType,
-      movement_date: businessClock.now(),
+      movement_date: businessClock.todayDate(),
       quantity: 1,
     },
   });
@@ -178,7 +178,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         operator_id: data.operator_id,
         reason: data.reason,
         observations: data.observations,
-        movement_date: data.movement_date.toISOString(),
+        movement_date: businessClock.toTimestamp(data.movement_date),
         generateCost: data.generate_cost,
       });
       
@@ -198,7 +198,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         operator_id: data.operator_id,
         reason: data.reason,
         observations: data.observations,
-        movement_date: data.movement_date.toISOString(),
+        movement_date: businessClock.toTimestamp(data.movement_date),
         generateCost: data.generate_cost,
       });
       
@@ -207,7 +207,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
       toast.success('Movimiento registrado correctamente');
       form.reset({
         movement_type: defaultMovementType,
-        movement_date: businessClock.now(),
+        movement_date: businessClock.todayDate(),
         quantity: 1,
       });
       onSuccess?.();

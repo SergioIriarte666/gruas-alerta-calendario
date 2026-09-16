@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -115,11 +116,11 @@ export const useCraneInventoryMetrics = (
       const totalInventoryConsumptions = consumptionData?.length || 0;
       const consumptionValue = consumptionData?.reduce((sum, consumption) => sum + (consumption.total_cost || 0), 0) || 0;
 
-      const thirtyDaysAgo = businessClock.now();
+      const thirtyDaysAgo = businessClock.todayDate();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const recentPurchases = installedPartsData?.filter(part => 
-        new Date(part.date) >= thirtyDaysAgo
+        parseDateValue(part.date) >= thirtyDaysAgo
       ).length || 0;
 
       const lastMovementDate = consumptionData?.[0]?.movement_date || null;

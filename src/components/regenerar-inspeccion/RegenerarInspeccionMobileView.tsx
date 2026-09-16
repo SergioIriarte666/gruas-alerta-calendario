@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CalendarDays, Camera, Eye, FileCheck2, FileWarning, User } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { ServicioConFotos } from '@/types/regenerar-inspeccion';
 
 interface RegenerarInspeccionMobileViewProps {
@@ -40,7 +40,7 @@ export const RegenerarInspeccionMobileView = ({ servicios, onPreview }: Regenera
               <div className="grid gap-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
                   <CalendarDays className="size-4" />
-                  {formatForDisplay(parseFromDatabase(servicio.serviceDate))}
+                  {formatForDisplay(servicio.serviceDate)}
                 </span>
                 <span className="flex items-center gap-2">
                   <User className="size-4" />

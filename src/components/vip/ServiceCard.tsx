@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,8 +32,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   onUpdate: _onUpdate
 }) => {
   // Calcular días desde la fecha del servicio
-  const serviceDate = new Date(service.serviceDate);
-  const daysSince = Math.floor((businessClock.todayDate().getTime() - serviceDate.getTime()) / (1000 * 60 * 60 * 24));
+  const serviceDate = parseDateValue(service.serviceDate);
+  const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
 
   // Determinar color de urgencia
   const getUrgencyColor = () => {

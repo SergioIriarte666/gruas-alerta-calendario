@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { useState, useMemo } from 'react';
 import {
   Dialog,
@@ -160,7 +162,7 @@ export const ServiceBatchUpdateModal = ({
   const formatServiceDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
-      return format(new Date(dateString), 'dd/MM', { locale: es });
+      return businessClock.format(dateString, 'dd/MM', { locale: es });
     } catch {
       return dateString;
     }

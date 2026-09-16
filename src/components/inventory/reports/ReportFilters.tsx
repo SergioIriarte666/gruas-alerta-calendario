@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue } from '@/utils/calendarDate';
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,7 +57,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
               >
                 <CalendarIcon className="mr-2 size-4" />
                 {filters.dateFrom ? (
-                  format(new Date(filters.dateFrom), "dd/MM/yyyy")
+                  businessClock.format(filters.dateFrom, "dd/MM/yyyy")
                 ) : (
                   <span>Seleccionar fecha</span>
                 )}
@@ -64,7 +66,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={filters.dateFrom ? new Date(filters.dateFrom) : undefined}
+                selected={filters.dateFrom ? parseDateValue(filters.dateFrom) : undefined}
                 onSelect={(date) => 
                   handleFilterChange('dateFrom', date ? format(date, 'yyyy-MM-dd') : undefined)
                 }
@@ -89,7 +91,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
               >
                 <CalendarIcon className="mr-2 size-4" />
                 {filters.dateTo ? (
-                  format(new Date(filters.dateTo), "dd/MM/yyyy")
+                  businessClock.format(filters.dateTo, "dd/MM/yyyy")
                 ) : (
                   <span>Seleccionar fecha</span>
                 )}
@@ -98,7 +100,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={filters.dateTo ? new Date(filters.dateTo) : undefined}
+                selected={filters.dateTo ? parseDateValue(filters.dateTo) : undefined}
                 onSelect={(date) => 
                   handleFilterChange('dateTo', date ? format(date, 'yyyy-MM-dd') : undefined)
                 }

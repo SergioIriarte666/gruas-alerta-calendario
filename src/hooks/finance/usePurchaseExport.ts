@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -35,8 +36,8 @@ export const usePurchaseExport = () => {
         'Folio': inv.invoice_number,
         'Proveedor': inv.supplier?.name || 'Sin Proveedor',
         'RUT Proveedor': inv.supplier?.rut || 'N/A',
-        'Fecha Emisión': format(new Date(inv.issue_date), 'dd/MM/yyyy'),
-        'Fecha Vencimiento': format(new Date(inv.due_date), 'dd/MM/yyyy'),
+        'Fecha Emisión': businessClock.format(inv.issue_date, 'dd/MM/yyyy'),
+        'Fecha Vencimiento': businessClock.format(inv.due_date, 'dd/MM/yyyy'),
         'Descripción de Producto o Servicio': inv.product_service_description || inv.description || '',
         'Estado': inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Pendiente',
         'Monto Neto': inv.net_amount,
@@ -112,7 +113,7 @@ export const usePurchaseExport = () => {
       const tableData = invoices.map(inv => [
         inv.invoice_number,
         inv.supplier?.name || 'Sin Proveedor',
-        format(new Date(inv.issue_date), 'dd/MM/yyyy'),
+        businessClock.format(inv.issue_date, 'dd/MM/yyyy'),
         (inv.product_service_description || inv.description || '').slice(0, 60),
         inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Pendiente',
         formatCurrency(inv.amount)

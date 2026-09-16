@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { businessClock } from '@/utils/businessClock';
+
+import { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Clock, Trash2, Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -250,7 +252,7 @@ export function PendingEntriesView() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Fecha:</span>
-                    <p className="font-medium">{new Date(entry.date).toLocaleDateString()}</p>
+                    <p className="font-medium">{businessClock.dateLabel(entry.date)}</p>
                   </div>
                   {entry.amount && (
                     <div>

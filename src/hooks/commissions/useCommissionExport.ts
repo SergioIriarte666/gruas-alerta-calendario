@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { Commission, CommissionFilters } from '@/types/commissions';
 import { exportCommissionReport } from '@/utils/reportExporter';
@@ -105,7 +106,7 @@ const getDateRange = (commissions: Commission[], filters: CommissionFilters) => 
 
   const dates = commissions.map(c => {
     const serviceDate = c.services?.service_date;
-    return serviceDate ? new Date(serviceDate) : new Date(c.date);
+    return serviceDate ? parseDateValue(serviceDate) : parseDateValue(c.date);
   }).sort((a, b) => a.getTime() - b.getTime());
 
   return {

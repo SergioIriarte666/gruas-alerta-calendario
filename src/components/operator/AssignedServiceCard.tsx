@@ -1,7 +1,7 @@
 import React from 'react';
 import { Service } from '@/types';
 import { Truck, Calendar, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car, Clock } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
@@ -119,7 +119,7 @@ const CardBody = ({ service, showNavigation = false }: { service: Service; showN
       </div>
       <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-muted px-2.5 py-2 text-xs font-semibold text-muted-foreground">
         <Calendar className="size-3.5" />
-        <span>{format(parseISO(service.serviceDate), 'd MMM', { locale: es })}</span>
+        <span>{businessClock.format(service.serviceDate, 'd MMM', { locale: es })}</span>
       </div>
     </div>
     <div className="operator-route-line relative ml-1.5 space-y-2.5 pl-6">

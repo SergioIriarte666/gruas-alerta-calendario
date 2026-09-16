@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { useAddCost, useLinkInvoiceToCost } from '@/hooks/useCosts';
@@ -321,7 +323,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         setIsCheckingDuplicates(true);
         try {
           const itemsToCheck = result.documents.map(doc => ({
-            date: doc.issue_date || format(new Date(), 'yyyy-MM-dd'),
+            date: doc.issue_date || businessClock.today(),
             amount: doc.total_amount,
             description: doc.description || '',
             folio: doc.folio,
@@ -410,9 +412,9 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           const decisions: Record<string, string | 'new'> = {};
           for (const doc of result.documents) {
             if (!doc.supplier_rut || !doc.total_amount) continue;
-            const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
-            const dateFrom = new Date(issueDate); dateFrom.setDate(dateFrom.getDate() - 30);
-            const dateTo = new Date(issueDate); dateTo.setDate(dateTo.getDate() + 30);
+            const issueDate = safeParseDateOnly(doc.issue_date || businessClock.today());
+            const dateFrom = parseDateValue(issueDate); dateFrom.setDate(dateFrom.getDate() - 30);
+            const dateTo = parseDateValue(issueDate); dateTo.setDate(dateTo.getDate() + 30);
             const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
               p_supplier_rut: doc.supplier_rut,
               p_amount: doc.total_amount,
@@ -563,10 +565,10 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         let createdCostId: string | null = null;
 
         try {
-          const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
+          const emissionDate = doc.issue_date || businessClock.today();
           const condition = getSelectedCondition(doc.supplier_rut);
           const isManuallyPaid = !!paidOverrides[documentKey];
-          const paymentDate = isManuallyPaid ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd')) : (condition === 'none' ? emissionDate : null);
+          const paymentDate = isManuallyPaid ? (paidDateOverrides[documentKey] || businessClock.today()) : (condition === 'none' ? emissionDate : null);
 
           const linkCostId = linkDecisions[documentKey];
           if (linkCostId && linkCostId !== 'new') {

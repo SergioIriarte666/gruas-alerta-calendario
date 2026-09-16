@@ -1,3 +1,4 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 
 import { useQuery } from '@tanstack/react-query';
@@ -168,7 +169,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       if (check.date) {
         const expiryDate = parseISO(check.date);
         if (isBefore(today, expiryDate) || expiryDate.toDateString() === today.toDateString()) {
-          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const daysUntilExpiry = differenceInCalendarDates(expiryDate, today);
           
           let alertType: 'error' | 'warning' | 'info' = 'info';
           let title = 'Documento por Vencer';
@@ -200,7 +201,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   (expiringOperatorsRes.data || []).forEach((operator: any) => {
     const expiryDate = parseISO(operator.exam_expiry);
     if (isBefore(today, expiryDate) || expiryDate.toDateString() === today.toDateString()) {
-      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntilExpiry = differenceInCalendarDates(expiryDate, today);
       
       let alertType: 'error' | 'warning' | 'info' = 'info';
       let title = 'Examen por Vencer';

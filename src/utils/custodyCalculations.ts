@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 /**
  * Utilidades centralizadas para cálculos de custodia y arriendo de equipos
  * 
@@ -47,10 +49,10 @@ export const convertToDaily = (originalRate: number, rateType: string): number =
  * Calcula los días entre dos fechas (inclusivo)
  */
 export const calculateDaysBetween = (startDate: string, endDate: string): number => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const start = parseDateValue(startDate);
+  const end = parseDateValue(endDate);
+  const diffTime = Math.abs(differenceInCalendarDates(end, start));
+  return diffTime + 1;
 };
 
 /**

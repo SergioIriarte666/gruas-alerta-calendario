@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import {
   Dialog,
@@ -111,13 +112,13 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           <div className="pt-3 border-t text-xs text-muted-foreground space-y-1">
             <div className="flex items-center gap-2">
               <Calendar className="size-3" />
-              Creado: {format(new Date(rate.created_at), "d 'de' MMMM, yyyy HH:mm", { locale: es })}
+              Creado: {businessClock.format(rate.created_at, "d 'de' MMMM, yyyy HH:mm", { locale: es })}
               {rate.creator && ` por ${rate.creator.email}`}
             </div>
             {rate.updated_at && rate.updated_at !== rate.created_at && (
               <div className="flex items-center gap-2">
                 <Calendar className="size-3" />
-                Actualizado: {format(new Date(rate.updated_at), "d 'de' MMMM, yyyy HH:mm", { locale: es })}
+                Actualizado: {businessClock.format(rate.updated_at, "d 'de' MMMM, yyyy HH:mm", { locale: es })}
               </div>
             )}
           </div>

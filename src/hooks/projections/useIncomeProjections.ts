@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
@@ -79,8 +81,8 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
 
       // Formatear datos y calcular métricas
       const invoices: ProjectedInvoice[] = (data || []).map((invoice: any) => {
-        const dueDate = new Date(invoice.due_date);
-        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const dueDate = parseDateValue(invoice.due_date);
+        const daysUntilDue = differenceInCalendarDates(dueDate, today);
         const daysOverdue = invoice.status === 'overdue' ? Math.abs(Math.min(daysUntilDue, 0)) : 0;
 
         return {

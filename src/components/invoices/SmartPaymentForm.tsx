@@ -322,7 +322,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                               {invoice.status}
                             </Badge>
                             {invoice.due_date && (() => {
-                              const isOverdue = new Date(invoice.due_date + 'T12:00:00') < businessClock.now();
+                              const isOverdue = invoice.due_date < businessClock.today();
                               return (
                                 <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                                   Vence: {formatForDisplay(invoice.due_date)}

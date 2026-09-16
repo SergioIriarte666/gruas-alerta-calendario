@@ -31,7 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 // Get nearest Thursday
 function getNearestThursday(): string {
-  const now = businessClock.now();
+  const now = businessClock.todayDate();
   const day = now.getDay(); // 0=Sun, 4=Thu
   const diff = (4 - day + 7) % 7;
   const thursday = new Date(now);

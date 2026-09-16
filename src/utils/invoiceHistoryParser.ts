@@ -1,9 +1,11 @@
+import { excelSerialToCalendarDate, isCalendarDate } from '@/utils/calendarDate';
+
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
+
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
 
@@ -144,17 +146,13 @@ const parseDate = (dateVal: any): string | null => {
 
   // Handle Excel serial numbers
   if (typeof dateVal === 'number') {
-    const date = new Date((dateVal - 25569) * 86400 * 1000);
-    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-    if (!isNaN(date.getTime())) {
-      return toLocalDateString(date);
-    }
+    return excelSerialToCalendarDate(dateVal);
   }
 
   const dateStr = String(dateVal).trim();
   
   // Try ISO YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return isCalendarDate(dateStr) ? dateStr : null;
 
   // Try DD-MM-YYYY, DD/MM/YYYY, DD-MM-YY, DD/MM/YY
   const parts = dateStr.split(/[-/]/);
@@ -177,8 +175,7 @@ const parseDate = (dateVal: any): string | null => {
     const m = month.padStart(2, '0');
     const d = day.padStart(2, '0');
     
-    const date = new Date(`${year}-${m}-${d}`);
-    if (!isNaN(date.getTime())) {
+    if (isCalendarDate(`${year}-${m}-${d}`)) {
       return `${year}-${m}-${d}`;
     }
   }
@@ -193,13 +190,7 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent'
   if (fechaVencimiento) {
     const dueDateStr = parseDate(fechaVencimiento);
     if (dueDateStr) {
-      const due = new Date(dueDateStr);
-      const today = businessClock.todayDate();
-      today.setHours(0, 0, 0, 0);
-      due.setHours(0, 0, 0, 0);
-      const dueTime = due.getTime() + (due.getTimezoneOffset() * 60000);
-      const todayTime = today.getTime();
-      if (dueTime < todayTime) return 'overdue';
+      if (dueDateStr < businessClock.today()) return 'overdue';
     }
   }
   return 'sent';

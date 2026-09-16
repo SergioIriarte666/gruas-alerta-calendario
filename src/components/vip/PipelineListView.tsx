@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +36,7 @@ import {
 import { AdvancedServiceFilters } from '@/components/services/AdvancedServiceFilters';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { Service, ServiceStatus } from '@/types';
-import { differenceInDays } from 'date-fns';
+
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { PipelineExportModal } from './PipelineExportModal';
@@ -116,8 +118,8 @@ const groupByField = (services: Service[], config: SubGroupConfig, sortField?: S
 
     switch (sortField) {
       case 'serviceDate': {
-        const aDate = Math.max(...a.services.map(s => new Date(s.serviceDate).getTime()));
-        const bDate = Math.max(...b.services.map(s => new Date(s.serviceDate).getTime()));
+        const aDate = Math.max(...a.services.map(s => parseDateValue(s.serviceDate).getTime()));
+        const bDate = Math.max(...b.services.map(s => parseDateValue(s.serviceDate).getTime()));
         return (aDate - bDate) * dir;
       }
       case 'value':
@@ -134,8 +136,8 @@ const groupByField = (services: Service[], config: SubGroupConfig, sortField?: S
       }
       case 'daysInStatus': {
         const now = businessClock.now().getTime();
-        const aAvg = a.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / a.services.length;
-        const bAvg = b.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / b.services.length;
+        const aAvg = a.services.reduce((sum, s) => sum + (now - parseDateValue(s.serviceDate).getTime()), 0) / a.services.length;
+        const bAvg = b.services.reduce((sum, s) => sum + (now - parseDateValue(s.serviceDate).getTime()), 0) / b.services.length;
         return (aAvg - bAvg) * dir;
       }
       default:
@@ -309,8 +311,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           bValue = getDisplayServiceValue(b, clientId);
           break;
         case 'daysInStatus':
-          aValue = differenceInDays(businessClock.now(), parseFromDatabase(a.serviceDate));
-          bValue = differenceInDays(businessClock.now(), parseFromDatabase(b.serviceDate));
+          aValue = differenceInCalendarDates(businessClock.today(), a.serviceDate);
+          bValue = differenceInCalendarDates(businessClock.today(), b.serviceDate);
           break;
         case 'quoteNumber':
           aValue = a.quoteNumber || '';
@@ -359,7 +361,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0);
         const averageDays = statusServices.length > 0
           ? statusServices.reduce((sum, s) => {
-              const days = differenceInDays(businessClock.now(), parseFromDatabase(s.serviceDate));
+              const days = differenceInCalendarDates(businessClock.today(), s.serviceDate);
               return sum + days;
             }, 0) / statusServices.length
           : 0;
@@ -839,7 +841,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   </TableCell>
                                   <TableCell>
                                     <div className="text-sm text-muted-foreground">
-                                      {formatForDisplay(parseFromDatabase(service.serviceDate))}
+                                      {formatForDisplay(service.serviceDate)}
                                     </div>
                                   </TableCell>
                                   <TableCell>
@@ -881,7 +883,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                       const hasMultiplePOs = poSubGroups.length > 1;
 
                       const renderServiceRow = (service: Service) => {
-                        const daysInStatus = differenceInDays(businessClock.now(), parseFromDatabase(service.serviceDate));
+                        const daysInStatus = differenceInCalendarDates(businessClock.today(), service.serviceDate);
                         const isExcessView = Boolean(
                           service.hasExcess &&
                           clientId &&
@@ -910,7 +912,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               <div className="text-sm text-muted-foreground">
-                                {formatForDisplay(parseFromDatabase(service.serviceDate))}
+                                {formatForDisplay(service.serviceDate)}
                               </div>
                             </TableCell>
                             <TableCell>

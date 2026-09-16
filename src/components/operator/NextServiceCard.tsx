@@ -1,7 +1,8 @@
+import { fromZonedTime } from 'date-fns-tz';
 import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { CalendarClock, MapPin, Truck, Clock, ArrowRight } from 'lucide-react';
-import { format, differenceInMinutes, parseISO } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -18,10 +19,8 @@ const getCountdown = (serviceDate: string, startTime?: string): { label: string;
   if (days < 0) return { label: 'Fecha pasada', urgent: false };
   if (days === 0) {
     if (startTime) {
-      const [h, m] = startTime.split(':').map(Number);
-      const now = businessClock.todayDate();
-      const serviceTime = businessClock.now();
-      serviceTime.setHours(h, m, 0, 0);
+      const now = businessClock.now();
+      const serviceTime = fromZonedTime(`${serviceDate}T${startTime}`, businessClock.timezone());
       const diffMins = differenceInMinutes(serviceTime, now);
       if (diffMins <= 0) return { label: 'En curso', urgent: false };
       if (diffMins < 60) return { label: `En ${diffMins} min`, urgent: true };
@@ -83,7 +82,7 @@ export const NextServiceCard = ({ service }: NextServiceCardProps) => {
           <div className="flex items-center gap-2 text-sm">
             <Clock className="size-3.5 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">
-              {format(parseISO(service.serviceDate), "EEEE d 'de' MMMM", { locale: es })}
+              {businessClock.format(service.serviceDate, "EEEE d 'de' MMMM", { locale: es })}
               {service.startTime && ` · ${service.startTime.slice(0, 5)}`}
             </span>
           </div>

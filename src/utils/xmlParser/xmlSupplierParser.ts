@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
@@ -676,7 +677,7 @@ export class XMLSupplierParser {
       const year = trimmed.substring(0, 4);
       const month = trimmed.substring(4, 6);
       const day = trimmed.substring(6, 8);
-      date = new Date(`${year}-${month}-${day}`);
+      date = parseDateValue(`${year}-${month}-${day}`);
     } else {
       date = new Date(trimmed);
     }
@@ -781,7 +782,7 @@ export class XMLSupplierParser {
       return toLocalDateString(today);
     }
 
-    const date = new Date(issueDate);
+    const date = parseDateValue(issueDate);
     date.setDate(date.getDate() + 30); // 30 días por defecto
     return toLocalDateString(date);
   }

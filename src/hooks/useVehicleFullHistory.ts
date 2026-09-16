@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
@@ -228,7 +229,7 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
   });
 
   // Ordenar servicios por fecha descendente
-  services.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  services.sort((a, b) => parseDateValue(b.date).getTime() - parseDateValue(a.date).getTime());
 
   const totalValue = services.reduce((sum, r) => sum + r.value, 0);
 

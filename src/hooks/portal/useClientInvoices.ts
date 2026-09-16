@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,7 +51,7 @@ const shouldBeOverdue = (status: string, dueDate: string): boolean => {
   if (status !== 'sent') return false;
   
   const today = businessClock.todayDate();
-  const due = new Date(dueDate);
+  const due = parseDateValue(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
   

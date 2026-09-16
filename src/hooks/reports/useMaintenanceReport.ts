@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -289,7 +290,7 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
         const monthlyMap = new Map();
         
         const addToMonthly = (date: string, maintenanceCost: number, partsCost: number) => {
-          const month = format(new Date(date), 'yyyy-MM');
+          const month = businessClock.format(date, 'yyyy-MM');
           const existing = monthlyMap.get(month) || { month, maintenanceCost: 0, partsCost: 0, interventionCount: 0 };
           existing.maintenanceCost += maintenanceCost;
           existing.partsCost += partsCost;

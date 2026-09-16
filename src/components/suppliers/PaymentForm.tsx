@@ -29,7 +29,7 @@ import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
-import { parseFromDatabase, formatForDisplay, getTodayLocal } from '@/utils/timezoneUtils';
+import { formatForDisplay, getTodayLocal } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { Badge } from '@/components/ui/badge';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
@@ -554,7 +554,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       </div>
                       <div className="flex justify-between">
                         <span>Vencimiento:</span>
-                        <span>{formatForDisplay(parseFromDatabase(duplicatePayment.due_date))}</span>
+                        <span>{formatForDisplay(duplicatePayment.due_date)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Estado:</span>

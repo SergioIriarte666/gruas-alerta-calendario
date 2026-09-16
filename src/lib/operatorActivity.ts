@@ -1,3 +1,4 @@
+import { addCalendarDays } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import type { OperatorActivity, OperatorActivityEventType } from '@/types/operatorActivity';
 
@@ -28,9 +29,7 @@ export const formatOperatorActivityTime = (createdAt: string): string =>
 
 export const groupOperatorActivities = (items: OperatorActivity[]): OperatorActivityGroup[] => {
   const today = businessClock.today();
-  const yesterdayDate = businessClock.todayDate();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterday = businessClock.format(yesterdayDate, 'yyyy-MM-dd');
+  const yesterday = addCalendarDays(today, -1);
   const groups = new Map<string, OperatorActivityGroup>();
 
   for (const item of items) {

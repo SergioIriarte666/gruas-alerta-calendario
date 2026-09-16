@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+import { calendarDateString, parseDateValue } from '@/utils/calendarDate';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +33,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
   onSuccess 
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [movementDate, setMovementDate] = useState<Date>(new Date(movement.movement_date));
+  const [movementDate, setMovementDate] = useState<Date>(parseDateValue(businessClock.format(movement.movement_date, 'yyyy-MM-dd')));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     quantity: movement.quantity.toString(),
@@ -65,7 +67,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
       reason: movement.reason || '',
       observations: movement.observations || '',
     });
-    setMovementDate(new Date(movement.movement_date));
+    setMovementDate(parseDateValue(businessClock.format(movement.movement_date, 'yyyy-MM-dd')));
     setErrors({});
   }, [movement]);
 
@@ -149,7 +151,9 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
         supplier_id: formData.supplier_id === 'none' ? null : formData.supplier_id,
         reason: formData.reason || null,
         observations: formData.observations || null,
-        movement_date: movementDate.toISOString(),
+        movement_date: calendarDateString(movementDate) === businessClock.format(movement.movement_date, 'yyyy-MM-dd')
+          ? movement.movement_date
+          : businessClock.toTimestamp(movementDate),
       };
 
       logger.debug('Updating movement with data:', updateData);

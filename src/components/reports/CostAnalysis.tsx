@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { ReportMetrics } from '@/hooks/useReports';
 import { ReportMetricCard } from './ReportMetricCard';
-import { format as formatDate } from 'date-fns';
+
 import { es } from 'date-fns/locale';
 import { DollarSign, Percent } from 'lucide-react';
 
@@ -20,7 +21,7 @@ const costsByMonthConfig = {
 export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
   const formattedCostsByMonth = metrics.costsByMonth.map(item => ({
     ...item,
-    month: formatDate(new Date(`${item.month}-02T12:00:00Z`), "MMM yyyy", { locale: es }),
+    month: businessClock.format(`${item.month}-02`, "MMM yyyy", { locale: es }),
   }));
 
   return (

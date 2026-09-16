@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import {
   Table,
   TableBody,
@@ -320,11 +322,11 @@ export const HistoricalPurchasesTable = ({
                 </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">
-                  {format(new Date(invoice.issue_date), 'dd MMM yyyy', { locale: es })}
+                  {businessClock.format(invoice.issue_date, 'dd MMM yyyy', { locale: es })}
                 </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">
-                  {format(new Date(invoice.due_date), 'dd MMM yyyy', { locale: es })}
+                  {businessClock.format(invoice.due_date, 'dd MMM yyyy', { locale: es })}
                 </TableCell>
 
                 <TableCell className="font-semibold text-sm">

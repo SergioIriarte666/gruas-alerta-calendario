@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { parseDateValue } from '@/utils/calendarDate';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -131,8 +132,8 @@ const Commissions = () => {
           bValue = b.service_folio || '';
           break;
         case 'service_date':
-          aValue = new Date(a.services?.service_date || a.date);
-          bValue = new Date(b.services?.service_date || b.date);
+          aValue = parseDateValue(a.services?.service_date || a.date);
+          bValue = parseDateValue(b.services?.service_date || b.date);
           break;
         case 'client_name':
           aValue = a.client_name || '';
@@ -159,8 +160,8 @@ const Commissions = () => {
           bValue = new Date(b.created_at);
           break;
         case 'payment_date':
-          aValue = a.payment_date ? new Date(a.payment_date) : new Date(0); // Sin fecha de pago al final
-          bValue = b.payment_date ? new Date(b.payment_date) : new Date(0);
+          aValue = a.payment_date ? parseDateValue(a.payment_date) : new Date(0); // Sin fecha de pago al final
+          bValue = b.payment_date ? parseDateValue(b.payment_date) : new Date(0);
           break;
         default:
           return 0;
@@ -208,7 +209,7 @@ const Commissions = () => {
       const matchesAmountTo = !filters.amount_to || commission.amount <= filters.amount_to;
 
       // Date filter
-      const commissionDate = new Date(commission.services?.service_date || commission.date);
+      const commissionDate = parseDateValue(commission.services?.service_date || commission.date);
       const matchesDateFrom = !filters.date_from || commissionDate >= filters.date_from;
       const matchesDateTo = !filters.date_to || commissionDate <= filters.date_to;
 

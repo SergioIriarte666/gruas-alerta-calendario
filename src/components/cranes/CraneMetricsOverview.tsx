@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,14 +42,14 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
         logger.warn('Date is null or undefined:', date);
         return 0;
       }
-      const expiry = new Date(date);
+      const expiry = parseDateValue(date);
       if (isNaN(expiry.getTime())) {
         logger.warn('Invalid date:', date);
         return 0;
       }
       const today = businessClock.todayDate();
-      const diffTime = expiry.getTime() - today.getTime();
-      const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffTime = differenceInCalendarDates(expiry, today);
+      const days = diffTime;
       return days;
     } catch (error) {
       logger.error('Error calculating days until expiry:', error, 'Date:', date);

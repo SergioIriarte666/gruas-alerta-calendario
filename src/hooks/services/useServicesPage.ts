@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { getCurrentMonthRange, formatForInput } from '@/utils/timezoneUtils';
@@ -224,8 +225,8 @@ export const useServicesPage = () => {
             valueB = b.folio;
             break;
           case 'date':
-            valueA = new Date(a.serviceDate);
-            valueB = new Date(b.serviceDate);
+            valueA = parseDateValue(a.serviceDate);
+            valueB = parseDateValue(b.serviceDate);
             break;
           case 'client':
             valueA = a.client?.name || '';

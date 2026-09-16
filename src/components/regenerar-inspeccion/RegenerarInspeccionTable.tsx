@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye, FileCheck2, FileWarning } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase, formatDateForDisplay } from '@/utils/timezoneUtils';
+import { formatForDisplay, formatDateForDisplay } from '@/utils/timezoneUtils';
 import { ServicioConFotos } from '@/types/regenerar-inspeccion';
 
 interface RegenerarInspeccionTableProps {
@@ -22,7 +22,7 @@ export const RegenerarInspeccionTable = ({ servicios, onPreview }: RegenerarInsp
     {
       accessorKey: 'serviceDate',
       header: 'Fecha',
-      cell: ({ row }) => formatForDisplay(parseFromDatabase(row.original.serviceDate)),
+      cell: ({ row }) => formatForDisplay(row.original.serviceDate),
     },
     {
       accessorKey: 'clientName',

@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Wrench } from 'lucide-react';
@@ -67,7 +69,7 @@ export const SupplierPartsTab: React.FC<SupplierPartsTabProps> = ({ parts, isLoa
           {parts.map((part) => (
             <TableRow key={part.id} className="border-border">
               <TableCell className="text-foreground">
-                {format(new Date(part.date), 'dd/MM/yyyy', { locale: es })}
+                {businessClock.format(part.date, 'dd/MM/yyyy', { locale: es })}
               </TableCell>
               <TableCell className="text-foreground">
                 {part.cranes ? (

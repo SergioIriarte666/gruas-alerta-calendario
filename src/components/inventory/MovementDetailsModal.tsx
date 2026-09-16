@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,7 +108,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
           <div>
             <h3 className="text-lg font-semibold">Detalles del Movimiento</h3>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(movement.movement_date), 'dd \'de\' MMMM \'de\' yyyy \'a las\' HH:mm', { locale: es })}
+              {businessClock.format(movement.movement_date, 'dd \'de\' MMMM \'de\' yyyy \'a las\' HH:mm', { locale: es })}
             </p>
           </div>
         </div>
@@ -170,7 +172,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
                 <span className="text-sm font-medium">Fecha del Movimiento:</span>
               </div>
               <p className="text-sm ml-6">
-                {format(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm')}
+                {businessClock.format(movement.movement_date, 'dd/MM/yyyy HH:mm')}
               </p>
             </div>
 
@@ -251,7 +253,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Vencimiento:</span>
                 <span className="text-sm">
-                  {format(new Date(movement.expiration_date), 'dd/MM/yyyy')}
+                  {businessClock.format(movement.expiration_date, 'dd/MM/yyyy')}
                 </span>
               </div>
             )}

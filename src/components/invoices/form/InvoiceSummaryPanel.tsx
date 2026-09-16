@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -38,8 +39,7 @@ export const InvoiceSummaryPanel = ({
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-CL');
+    return formatForDisplay(dateStr);
   };
 
   const getStatusBadge = () => {

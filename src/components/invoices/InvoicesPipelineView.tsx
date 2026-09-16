@@ -1,3 +1,6 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,7 +117,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
     );
 
     const groups: Record<string, { invoices: Invoice[]; stats: InvoiceGroup }> = {};
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     
     PIPELINE_STATUSES.forEach(status => {
       const statusInvoices = filtered.filter(invoice => invoice.status === status.key);
@@ -129,25 +132,25 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
           const paidWithDates = statusInvoices.filter(inv => inv.paymentDate);
           if (paidWithDates.length > 0) {
             avgDays = paidWithDates.reduce((sum, inv) => {
-              const issueDate = new Date(inv.issueDate);
-              const paymentDate = new Date(inv.paymentDate!);
-              const diffTime = paymentDate.getTime() - issueDate.getTime();
-              return sum + Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              const issueDate = parseDateValue(inv.issueDate);
+              const paymentDate = parseDateValue(inv.paymentDate!);
+              const diffTime = differenceInCalendarDates(paymentDate, issueDate);
+              return sum + diffTime;
             }, 0) / paidWithDates.length;
           }
         } else if (status.key === 'overdue') {
           // For overdue: average days overdue
           avgDays = statusInvoices.reduce((sum, inv) => {
-            const dueDate = new Date(inv.dueDate);
-            const diffTime = now.getTime() - dueDate.getTime();
-            return sum + Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const dueDate = parseDateValue(inv.dueDate);
+            const diffTime = differenceInCalendarDates(now, dueDate);
+            return sum + diffTime;
           }, 0) / statusInvoices.length;
         } else if (status.key === 'sent') {
           // For sent: average days since issue
           avgDays = statusInvoices.reduce((sum, inv) => {
-            const issueDate = new Date(inv.issueDate);
-            const diffTime = now.getTime() - issueDate.getTime();
-            return sum + Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const issueDate = parseDateValue(inv.issueDate);
+            const diffTime = differenceInCalendarDates(now, issueDate);
+            return sum + diffTime;
           }, 0) / statusInvoices.length;
         }
       }
@@ -181,14 +184,14 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL');
+    return formatForDisplay(dateString);
   };
 
   const calculateDaysFromDue = (dueDate: string) => {
-    const due = new Date(dueDate);
-    const now = businessClock.now();
-    const diffTime = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const due = parseDateValue(dueDate);
+    const now = businessClock.todayDate();
+    const diffTime = differenceInCalendarDates(due, now);
+    const diffDays = diffTime;
     return diffDays;
   };
 

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,7 +71,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
 
   const AlertCard = ({ alert }: { alert: any }) => {
     const alertLevel = getAlertLevel(alert.priority);
-    const expiryDate = new Date(alert.expiryDate);
+    const expiryDate = parseDateValue(alert.expiryDate);
 
     return (
       <Card className={alertLevel.cardClass}>

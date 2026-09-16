@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Service } from '@/types';
@@ -71,7 +72,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
   // Generate analytics data based on time range
   const generateAnalyticsData = (): AnalyticsData[] => {
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     let intervals: Date[] = [];
     let formatString = '';
 
@@ -113,7 +114,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                        timeRange === '7d' ? date : endOfWeek(date);
 
       const periodServices = services.filter(service => {
-        const serviceDate = new Date(service.serviceDate);
+        const serviceDate = parseDateValue(service.serviceDate);
         return serviceDate >= periodStart && serviceDate <= periodEnd;
       });
 
@@ -153,7 +154,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
     };
 
     services.forEach(service => {
-      const dayName = format(new Date(service.serviceDate), 'EEEE');
+      const dayName = businessClock.format(service.serviceDate, 'EEEE');
       if (dayCount[dayName] !== undefined) {
         dayCount[dayName]++;
       }

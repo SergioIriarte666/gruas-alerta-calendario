@@ -4,7 +4,7 @@ import { useSupplierInvoices, SupplierInvoice } from '@/hooks/useSupplierInvoice
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
-import { format, parseISO, isBefore } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface SupplierInvoiceSelectorProps {
@@ -23,7 +23,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
-  const isOverdue = isBefore(parseISO(invoice.due_date), businessClock.now());
+  const isOverdue = invoice.due_date < businessClock.today();
   const isPaid = invoice.status === 'paid' || (invoice.balance !== null && invoice.balance <= 0);
   const isPartial = (invoice.paid_amount || 0) > 0 && !isPaid;
 
@@ -166,10 +166,10 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span>
-                    Emisión: {format(parseISO(invoice.issue_date), 'dd/MM/yyyy', { locale: es })}
+                    Emisión: {businessClock.format(invoice.issue_date, 'dd/MM/yyyy', { locale: es })}
                   </span>
                   <span>
-                    Vence: {format(parseISO(invoice.due_date), 'dd/MM/yyyy', { locale: es })}
+                    Vence: {businessClock.format(invoice.due_date, 'dd/MM/yyyy', { locale: es })}
                   </span>
                 </div>
               </div>

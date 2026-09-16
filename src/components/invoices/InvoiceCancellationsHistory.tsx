@@ -1,10 +1,11 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Ban, Search, FileText, Calendar, User, Building2, DollarSign, Info } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useInvoiceCancellation, InvoiceCancellation, CANCELLATION_REASONS } from '@/hooks/invoices/useInvoiceCancellation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -23,7 +24,7 @@ const formatCurrency = (amount: number) => {
 
 const formatDate = (dateStr: string) => {
   try {
-    return format(parseISO(dateStr), "dd/MM/yyyy HH:mm", { locale: es });
+    return businessClock.format(dateStr, "dd/MM/yyyy HH:mm", { locale: es });
   } catch {
     return 'Fecha inválida';
   }

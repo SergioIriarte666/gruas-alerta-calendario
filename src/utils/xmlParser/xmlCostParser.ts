@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { XMLCostData, XMLParseResult, XMLStructure } from '@/types/costs';
 import { createLogger } from "@/lib/logger";
 
@@ -321,7 +322,7 @@ export class XMLCostParser {
       if (!item.fecha) {
         errors.push(`Fila ${index + 1}: Fecha es requerida`);
       } else {
-        const fecha = new Date(item.fecha);
+        const fecha = parseDateValue(item.fecha);
         if (isNaN(fecha.getTime())) {
           errors.push(`Fila ${index + 1}: Fecha no válida`);
         }

@@ -62,7 +62,7 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
               {installment.debts?.description} — {installment.debts?.creditors?.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              Cuota #{installment.installment_number} · Vence: {format(new Date(installment.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+              Cuota #{installment.installment_number} · Vence: {businessClock.format(installment.due_date, 'dd/MM/yyyy')}
             </p>
             <p className="text-lg font-bold text-foreground">
               {displayInstallmentAmount}

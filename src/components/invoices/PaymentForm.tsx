@@ -1,3 +1,4 @@
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import React, { useState, useEffect } from 'react';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
 import { computeIvaToSeparate } from '@/utils/ivaF29Utils';
@@ -277,7 +278,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="size-3" />
-                                Vence: {new Date(invoice.due_date).toLocaleDateString()}
+                                Vence: {formatForDisplay(invoice.due_date)}
                               </span>
                               <span>Total: ${invoice.total.toLocaleString()}</span>
                               <span>Pendiente: ${(invoice.remaining_amount || invoice.total).toLocaleString()}</span>

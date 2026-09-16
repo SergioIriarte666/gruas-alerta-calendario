@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { useXmlDocumentUpload } from '@/hooks/xml/useXmlDocumentUpload';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
@@ -236,7 +237,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                     <div className="space-y-3">
                       {parseResult.documents.map((document, index) => {
                         const documentKey = getDocumentStateKey(document);
-                        const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || format(addDays(safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd')), defaultDaysToAdd), 'yyyy-MM-dd');
+                        const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || format(addDays(safeParseDateOnly(document.issue_date || businessClock.today()), defaultDaysToAdd), 'yyyy-MM-dd');
                         const dupInfo = getDuplicateInfoForDocument(document);
                         const isExactDuplicate = dupInfo?.matchType === 'exact_folio';
                         const showDetails = expandedDocumentDetails[documentKey] ?? !isExactDuplicate;
@@ -264,8 +265,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                             creditDate={supplierCreditDate[document.supplier_rut] || ''}
                             onDueDateChange={date => setDueDateOverrides(prev => ({ ...prev, [documentKey]: date }))}
                             isPaid={statusOverrides[documentKey] === 'paid'}
-                            onPaidChange={checked => { setStatusOverrides(prev => ({ ...prev, [documentKey]: checked ? 'paid' : 'pending' })); if (checked && !paidDateOverrides[documentKey]) setPaidDateOverrides(prev => ({ ...prev, [documentKey]: format(new Date(), 'yyyy-MM-dd') })); }}
-                            paidDate={paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd')}
+                            onPaidChange={checked => { setStatusOverrides(prev => ({ ...prev, [documentKey]: checked ? 'paid' : 'pending' })); if (checked && !paidDateOverrides[documentKey]) setPaidDateOverrides(prev => ({ ...prev, [documentKey]: businessClock.today() })); }}
+                            paidDate={paidDateOverrides[documentKey] || businessClock.today()}
                             onPaidDateChange={date => setPaidDateOverrides(prev => ({ ...prev, [documentKey]: date }))}
                             paymentTerms={paymentTerms} loadingTerms={loadingTerms}
                             applyCondition={applyConditionToSupplierDocuments}

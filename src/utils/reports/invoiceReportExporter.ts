@@ -1,3 +1,4 @@
+import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
@@ -103,13 +104,13 @@ export const exportInvoiceReport = async ({
       getInvoiceFiscalNumber(invoice) ?? '-',
       (invoice.productServiceDescription || '').slice(0, 60),
       invoice.issueDate 
-        ? formatDate(new Date(invoice.issueDate), 'dd/MM/yy', { locale: es })
+        ? formatDate(safeParseDateOnly(invoice.issueDate), 'dd/MM/yy', { locale: es })
         : '-',
       invoice.dueDate 
-        ? formatDate(new Date(invoice.dueDate), 'dd/MM/yy', { locale: es })
+        ? formatDate(safeParseDateOnly(invoice.dueDate), 'dd/MM/yy', { locale: es })
         : '-',
       invoice.paymentDate 
-        ? formatDate(new Date(invoice.paymentDate), 'dd/MM/yy', { locale: es })
+        ? formatDate(safeParseDateOnly(invoice.paymentDate), 'dd/MM/yy', { locale: es })
         : '-',
       formatCurrency(invoice.subtotal || 0),
       formatCurrency(invoice.vat || 0),
@@ -265,8 +266,8 @@ const createFilterLabels = (filters: ExportInvoiceReportArgs['appliedFilters']):
   }
   
   if (filters.dateFrom && filters.dateTo) {
-    const formattedFrom = formatDate(new Date(filters.dateFrom), 'dd/MM/yyyy', { locale: es });
-    const formattedTo = formatDate(new Date(filters.dateTo), 'dd/MM/yyyy', { locale: es });
+    const formattedFrom = formatDate(safeParseDateOnly(filters.dateFrom), 'dd/MM/yyyy', { locale: es });
+    const formattedTo = formatDate(safeParseDateOnly(filters.dateTo), 'dd/MM/yyyy', { locale: es });
     labels.push(['Período:', `${formattedFrom} - ${formattedTo}`]);
   }
   

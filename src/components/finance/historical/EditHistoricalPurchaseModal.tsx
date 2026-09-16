@@ -1,3 +1,4 @@
+import { calendarDateString } from '@/utils/calendarDate';
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -84,8 +85,8 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
           id: invoice.id,
           data: {
             invoice_number: data.invoice_number,
-            issue_date: data.issue_date.toISOString(),
-            due_date: data.due_date.toISOString(),
+            issue_date: calendarDateString(data.issue_date),
+            due_date: calendarDateString(data.due_date),
             amount: data.amount,
             net_amount: data.net_amount,
             tax_amount: data.tax_amount,

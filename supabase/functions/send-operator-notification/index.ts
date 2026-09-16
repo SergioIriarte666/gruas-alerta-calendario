@@ -1,3 +1,4 @@
+import { formatDocumentDate } from '../_shared/calendarDate.ts';
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
@@ -118,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
     const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
 
     // Formatear fecha
-    const formattedDate = new Date(serviceDate).toLocaleDateString('es-CL', {
+    const formattedDate = formatDocumentDate(serviceDate, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

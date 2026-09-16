@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,7 @@ export const TripEstimateHistory = () => {
                     <Badge variant="secondary">{est.distance_km} km</Badge>
                   )}
                   <Badge variant="secondary">
-                    {new Date(est.created_at).toLocaleDateString('es-CL')}
+                    {businessClock.dateLabel(est.created_at, 'es-CL')}
                   </Badge>
                 </div>
                 <div className="flex gap-4 mt-2 text-sm text-muted-foreground">

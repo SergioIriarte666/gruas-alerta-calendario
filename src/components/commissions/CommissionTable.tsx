@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Commission } from '@/types/commissions';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import { EditPaymentDateDialog } from './EditPaymentDateDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -95,7 +95,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return formatForDisplay(parseFromDatabase(dateString));
+    return formatForDisplay(dateString);
   };
 
   const getSortIcon = (field: SortField) => {

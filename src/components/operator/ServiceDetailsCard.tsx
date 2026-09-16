@@ -1,8 +1,9 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Service } from '@/types';
 import { toTitleCase } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Car, MapPin, User, Phone, CalendarClock, FileText, Truck } from 'lucide-react';
 
@@ -50,7 +51,7 @@ export const ServiceDetailsCard = ({ service }: ServiceDetailsCardProps) => {
     .join(' ');
 
   const dateLabel = service.serviceDate
-    ? format(parseISO(service.serviceDate), "EEEE d 'de' MMMM yyyy", { locale: es })
+    ? businessClock.format(service.serviceDate, "EEEE d 'de' MMMM yyyy", { locale: es })
     : '';
   const datetimeLabel = dateLabel && service.startTime
     ? `${dateLabel} · ${service.startTime.slice(0, 5)}`

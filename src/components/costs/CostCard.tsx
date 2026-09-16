@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Cost } from '@/types/costs';
@@ -26,7 +28,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: es });
+      return businessClock.format(dateString, 'dd/MM/yyyy', { locale: es });
     } catch {
       return dateString;
     }

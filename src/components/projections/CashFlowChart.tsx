@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,15 +19,15 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   useEffect(() => {
     setZoomDays(dateRange);
   }, [dateRange]);
-  const today = startOfDay(businessClock.now());
+  const today = startOfDay(businessClock.todayDate());
 
   // Separar facturas vencidas y próximas
-  const overdueInvoices = invoices.filter(inv => isBefore(new Date(inv.due_date), today));
-  const upcomingInvoices = invoices.filter(inv => !isBefore(new Date(inv.due_date), today));
+  const overdueInvoices = invoices.filter(inv => isBefore(parseDateValue(inv.due_date), today));
+  const upcomingInvoices = invoices.filter(inv => !isBefore(parseDateValue(inv.due_date), today));
 
   // Agrupar facturas vencidas por fecha
   const overdueByDate = overdueInvoices.reduce((acc, invoice) => {
-    const dateKey = format(new Date(invoice.due_date), 'yyyy-MM-dd');
+    const dateKey = businessClock.format(invoice.due_date, 'yyyy-MM-dd');
     if (!acc[dateKey]) {
       acc[dateKey] = 0;
     }
@@ -36,7 +37,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
 
   // Agrupar facturas próximas por fecha
   const upcomingByDate = upcomingInvoices.reduce((acc, invoice) => {
-    const dateKey = format(new Date(invoice.due_date), 'yyyy-MM-dd');
+    const dateKey = businessClock.format(invoice.due_date, 'yyyy-MM-dd');
     if (!acc[dateKey]) {
       acc[dateKey] = 0;
     }
@@ -53,7 +54,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   // Crear dataset combinado con acumulado
   const sortedData = Array.from(allDates)
     .map(date => ({
-      fecha: format(new Date(date), 'dd MMM', { locale: es }),
+      fecha: businessClock.format(date, 'dd MMM', { locale: es }),
       vencidas: overdueByDate[date] ? Math.round(overdueByDate[date]) : null,
       proximas: upcomingByDate[date] ? Math.round(upcomingByDate[date]) : null,
       fullDate: date
@@ -75,7 +76,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   const cutoffDate = addDays(today, -60); // Mostrar últimos 60 días de vencidas
   const futureDate = addDays(today, zoomDays);
   const filteredData = chartData.filter(item => {
-    const itemDate = new Date(item.fullDate);
+    const itemDate = parseDateValue(item.fullDate);
     return itemDate >= cutoffDate && itemDate <= futureDate;
   });
 

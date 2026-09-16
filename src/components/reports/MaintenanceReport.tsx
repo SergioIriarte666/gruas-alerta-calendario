@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMaintenanceReport, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { MaintenanceMetrics } from './maintenance/MaintenanceMetrics';
@@ -59,7 +60,7 @@ export const MaintenanceReport = () => {
 
   const getAppliedFilterLabels = () => {
     const labels: string[][] = [
-      ['Período', `${formatDate(new Date(`${filters.dateFrom}T12:00:00Z`), 'P', { locale: es })} - ${formatDate(new Date(`${filters.dateTo}T12:00:00Z`), 'P', { locale: es })}`]
+      ['Período', `${formatDate(parseDateValue(filters.dateFrom), 'P', { locale: es })} - ${formatDate(parseDateValue(filters.dateTo), 'P', { locale: es })}`]
     ];
     
     if (filters.craneId) {

@@ -1,7 +1,8 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatForDisplayShort } from '@/utils/timezoneUtils';
-import { format as formatDate } from 'date-fns';
+
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { ExportDailyReportArgs } from './reportTypes';
@@ -29,7 +30,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
 
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Fecha: ${businessClock.format(new Date(`${selectedDate}T12:00:00Z`), 'EEEE, dd MMMM yyyy')}`, 14, startY);
+    doc.text(`Fecha: ${businessClock.format(selectedDate, 'EEEE, dd MMMM yyyy')}`, 14, startY);
     startY += 15;
 
     // Resumen Ejecutivo
@@ -271,7 +272,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       ...(overduePayments || []).map(p => ({ ...p, urgency: 'high', status: 'Vencido' })),
       ...(todayPayments || []).map(p => ({ ...p, urgency: 'high', status: 'Vence Hoy' })),
       ...(weekPayments || []).map(p => ({ ...p, urgency: 'medium', status: 'Esta Semana' }))
-    ].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    ].sort((a, b) => parseDateValue(a.due_date).getTime() - parseDateValue(b.due_date).getTime());
 
     if (allUpcomingPayments.length > 0) {
       // Verificar si necesita nueva página
@@ -289,7 +290,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
         payment.supplier?.name || 'Proveedor',
         payment.description || 'Concepto',
         `$${(payment.amount || 0).toLocaleString()}`,
-        formatDate(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+        businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es }),
         payment.status
       ]);
 
@@ -385,7 +386,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       [`Tel: ${company.phone} | Email: ${company.email}`],
       [],
       ['INFORME DIARIO'],
-      [`Fecha: ${businessClock.format(new Date(`${selectedDate}T12:00:00Z`), 'EEEE, dd MMMM yyyy')}`],
+      [`Fecha: ${businessClock.format(selectedDate, 'EEEE, dd MMMM yyyy')}`],
       [],
       ['RESUMEN EJECUTIVO'],
       ['Métrica', 'Valor'],
@@ -479,7 +480,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
           payment.supplier?.rut || 'N/A',
           payment.description || 'Concepto',
           payment.amount || 0,
-          formatDate(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+          businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es }),
           payment.status_label,
           payment.urgency
         ])

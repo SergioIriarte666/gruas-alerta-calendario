@@ -1,3 +1,4 @@
+import { safeParseDateOnly } from '@/utils/timezoneUtils';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Invoice } from '@/types';
@@ -306,7 +307,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
         filtered = filtered.filter(inv => {
           if (inv.status === 'paid' || inv.status === 'cancelled') return false;
           if (!inv.dueDate) return false;
-          const due = new Date(inv.dueDate);
+          const due = safeParseDateOnly(inv.dueDate);
           return due >= monday && due <= sunday;
         });
       }

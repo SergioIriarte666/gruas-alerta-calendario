@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,10 +40,10 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
   });
 
   const getDaysUntilExpiry = (date: string) => {
-    const expiry = new Date(date);
+    const expiry = parseDateValue(date);
     const today = businessClock.todayDate();
-    const diffTime = expiry.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffTime = differenceInCalendarDates(expiry, today);
+    return diffTime;
   };
 
   const getExpiryStatus = (days: number) => {

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { SupplierPaymentWithDetails, SupplierPaymentReportFilters } from '@/types/suppliers';
 import { exportSupplierPaymentReport } from '@/utils/reports/supplierPaymentReportExporter';
@@ -52,7 +53,7 @@ export const useSupplierPaymentExport = () => {
         filteredPayments = payments.filter(payment => {
           if (payment.status !== 'pending') return false;
           
-          const dueDate = new Date(payment.due_date);
+          const dueDate = parseDateValue(payment.due_date);
           return isAfter(dueDate, today) && isBefore(dueDate, futureDate);
         });
       }

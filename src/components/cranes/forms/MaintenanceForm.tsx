@@ -50,7 +50,7 @@ type FormData = {
 
 export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefill, receiptPhotoPaths, quickEntryId, onCreated }: MaintenanceFormProps) => {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    editingRecord?.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.now()
+    editingRecord?.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.todayDate()
   );
   const [completedDate, setCompletedDate] = useState<Date | undefined>(
     editingRecord?.completedDate ? parseFromDatabase(editingRecord.completedDate) : undefined
@@ -93,7 +93,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
       });
 
       // Update date states
-      setScheduledDate(editingRecord.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.now());
+      setScheduledDate(editingRecord.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.todayDate());
       setCompletedDate(editingRecord.completedDate ? parseFromDatabase(editingRecord.completedDate) : undefined);
       setNextMaintenanceDate(editingRecord.nextMaintenanceDate ? parseFromDatabase(editingRecord.nextMaintenanceDate) : undefined);
     } else {
@@ -108,7 +108,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         kilometraje: undefined,
         performed_by: '',
       });
-      setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : businessClock.now());
+      setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : businessClock.todayDate());
       setCompletedDate(undefined);
       setNextMaintenanceDate(undefined);
     }
@@ -177,7 +177,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
   const handleClose = () => {
     reset();
-    setScheduledDate(businessClock.now());
+    setScheduledDate(businessClock.todayDate());
     setCompletedDate(undefined);
     setNextMaintenanceDate(undefined);
     onClose();

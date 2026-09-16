@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -94,7 +95,7 @@ const formatSafeDate = (dateValue: any): string => {
   try {
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
     if (!isValid(date)) return 'Fecha inválida';
-    return formatForDisplay(date);
+    return formatForDisplay(dateValue);
   } catch {
     return 'Error';
   }
@@ -416,7 +417,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
                 {invoice.issueDate && (() => {
                   try {
-                    const issued = typeof invoice.issueDate === 'string' ? parseISO(invoice.issueDate) : new Date(invoice.issueDate);
+                    const issued = typeof invoice.issueDate === 'string' ? parseISO(invoice.issueDate) : parseDateValue(invoice.issueDate);
                     if (!isValid(issued)) return null;
                     const today = businessClock.todayDate();
                     today.setHours(0, 0, 0, 0);
@@ -437,7 +438,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 })()}
                 {invoice.dueDate && invoice.status !== 'paid' && !isCancelled && (() => {
                   try {
-                    const due = typeof invoice.dueDate === 'string' ? parseISO(invoice.dueDate) : new Date(invoice.dueDate);
+                    const due = typeof invoice.dueDate === 'string' ? parseISO(invoice.dueDate) : parseDateValue(invoice.dueDate);
                     if (!isValid(due)) return null;
                     const today = businessClock.todayDate();
                     today.setHours(0, 0, 0, 0);

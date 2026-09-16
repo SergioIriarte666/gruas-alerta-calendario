@@ -1,3 +1,4 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,7 +191,7 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     checks.forEach(check => {
       if (check.date) {
         const expiryDate = parseISO(check.date);
-        const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const daysUntil = differenceInCalendarDates(expiryDate, today);
         if (daysUntil <= alertDays) {
           expiringDocuments.push({
             id: crane.id,
@@ -208,7 +209,7 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
   (expiringOperatorsRes.data || []).forEach((op: any) => {
     if (op.exam_expiry) {
       const expiryDate = parseISO(op.exam_expiry);
-      const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntil = differenceInCalendarDates(expiryDate, today);
       if (daysUntil <= alertDays) {
         expiringDocuments.push({
           id: op.id,

@@ -1,6 +1,8 @@
+import { businessClock } from '@/utils/businessClock';
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate } from 'date-fns';
+
 import { es } from 'date-fns/locale';
 import { Commission } from '@/types/commissions';
 import { ExportCommissionReportArgs, AppliedCommissionFilters } from './reportTypes';
@@ -82,8 +84,8 @@ export const exportCommissionReport = async ({
       commission.status === 'paid' ? 'Pagada' : 'Pendiente',
       commission.service_folio || 'N/A',
       commission.services?.service_date 
-        ? formatDate(new Date(commission.services.service_date), 'dd/MM/yyyy', { locale: es })
-        : formatDate(new Date(commission.date), 'dd/MM/yyyy', { locale: es }),
+        ? businessClock.format(commission.services.service_date, 'dd/MM/yyyy', { locale: es })
+        : businessClock.format(commission.date, 'dd/MM/yyyy', { locale: es }),
       commission.client_name || 'N/A',
       commission.operators?.name || 'N/A',
       commission.service_value ? formatCurrency(commission.service_value) : 'N/A',
@@ -121,15 +123,15 @@ export const exportCommissionReport = async ({
       'Estado': commission.status === 'paid' ? 'Pagada' : 'Pendiente',
       'Folio': commission.service_folio || 'N/A',
       'Fecha Servicio': commission.services?.service_date 
-        ? formatDate(new Date(commission.services.service_date), 'dd/MM/yyyy', { locale: es })
-        : formatDate(new Date(commission.date), 'dd/MM/yyyy', { locale: es }),
+        ? businessClock.format(commission.services.service_date, 'dd/MM/yyyy', { locale: es })
+        : businessClock.format(commission.date, 'dd/MM/yyyy', { locale: es }),
       'Cliente': commission.client_name || 'N/A',
       'Operador': commission.operators?.name || 'N/A',
       'Valor Servicio': commission.service_value || 0,
       'Comisión': commission.amount,
       'Porcentaje': commission.commission_percentage || 0,
       'Descripción': commission.description || '',
-      'Fecha Creación': formatDate(new Date(commission.created_at), 'dd/MM/yyyy HH:mm', { locale: es })
+      'Fecha Creación': businessClock.format(commission.created_at, 'dd/MM/yyyy HH:mm', { locale: es })
     }));
 
     const detailWs = XLSX.utils.json_to_sheet(detailData);

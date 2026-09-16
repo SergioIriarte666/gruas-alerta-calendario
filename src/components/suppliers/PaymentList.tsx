@@ -373,9 +373,9 @@ export const PaymentList: React.FC = () => {
                             </div>
                             <div className="flex items-center justify-between text-sm">
                               <span className="font-bold text-primary">{formatCurrency(payment.amount)}</span>
-                              <span className="text-xs text-muted-foreground">Vence: {formatForDisplay(parseFromDatabase(payment.due_date))}</span>
+                              <span className="text-xs text-muted-foreground">Vence: {formatForDisplay(payment.due_date)}</span>
                             </div>
-                            {payment.paid_date && <div className="text-xs text-success">Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}</div>}
+                            {payment.paid_date && <div className="text-xs text-success">Pagado: {formatForDisplay(payment.paid_date)}</div>}
                             <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
                               {(payment.status === 'pending' || payment.status === 'overdue') && (
                                 <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary h-7"><CheckCircle className="size-3.5" /></Button>
@@ -436,10 +436,10 @@ export const PaymentList: React.FC = () => {
                                     )}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-sm text-foreground">{formatForDisplay(parseFromDatabase(payment.due_date))}</TableCell>
+                                <TableCell className="text-sm text-foreground">{formatForDisplay(payment.due_date)}</TableCell>
                                 <TableCell>
                                   {payment.paid_date
-                                    ? <span className="text-sm text-success">{formatForDisplay(parseFromDatabase(payment.paid_date))}</span>
+                                    ? <span className="text-sm text-success">{formatForDisplay(payment.paid_date)}</span>
                                     : <span className="text-muted-foreground">-</span>}
                                 </TableCell>
                                 <TableCell><Badge className={`${getStatusColor(payment.status)}`}>{getStatusLabel(payment.status)}</Badge></TableCell>

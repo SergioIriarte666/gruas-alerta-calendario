@@ -63,8 +63,8 @@ export const CreateHistoricalPurchaseModal = ({
     defaultValues: {
       supplier_id: '',
       invoice_number: '',
-      issue_date: businessClock.now(),
-      due_date: businessClock.now(),
+      issue_date: businessClock.todayDate(),
+      due_date: businessClock.todayDate(),
       net_amount: 0,
       tax_amount: 0,
       amount: 0,
@@ -164,7 +164,7 @@ export const CreateHistoricalPurchaseModal = ({
                 render={({ field }) => (
                   <DatePickerInput
                     value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                    onChange={(val) => field.onChange(val ? parse(val, 'yyyy-MM-dd', new Date()) : undefined)}
+                    onChange={(val) => field.onChange(val ? parse(val, 'yyyy-MM-dd', businessClock.todayDate()) : undefined)}
                   />
                 )}
               />
@@ -181,7 +181,7 @@ export const CreateHistoricalPurchaseModal = ({
                 render={({ field }) => (
                   <DatePickerInput
                     value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                    onChange={(val) => field.onChange(val ? parse(val, 'yyyy-MM-dd', new Date()) : undefined)}
+                    onChange={(val) => field.onChange(val ? parse(val, 'yyyy-MM-dd', businessClock.todayDate()) : undefined)}
                   />
                 )}
               />

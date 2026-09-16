@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useEffect, useState } from 'react';
 import { createLogger } from '@/lib/logger';
 import { usePendingUsersFetcher } from '@/hooks/pendingusers/usePendingUsersFetcher';
@@ -201,7 +202,7 @@ export default function PendingUsers() {
                         )}
                         <p className="text-sm text-muted-foreground">
                           Solicitó acceso el{' '}
-                          {format(new Date(user.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                          {businessClock.format(user.created_at, "d MMM yyyy 'a las' HH:mm", { locale: es })}
                         </p>
                         {(user.company || user.rut || user.phone) && (
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

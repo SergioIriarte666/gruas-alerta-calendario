@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,7 +90,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         supplier_id: data.supplier_id || undefined,
         supplier_name: data.supplier_name || undefined,
         batch_number: data.batch_number || undefined,
-        expiration_date: data.expiration_date ? toLocalDateString(new Date(data.expiration_date)) : undefined,
+        expiration_date: data.expiration_date ? toLocalDateString(parseDateValue(data.expiration_date)) : undefined,
         reference_document: data.reference_document || undefined,
         observations: data.observations || undefined,
         movement_date: movementDate,

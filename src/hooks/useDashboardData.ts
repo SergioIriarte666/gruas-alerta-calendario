@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -77,7 +78,7 @@ const fetchDashboardData = async () => {
   // Calcular métricas del mes anterior
   const { start: prevStart, end: prevEnd } = getPreviousMonthRange();
   const servicesPreviousMonth = services.filter(s => {
-    const serviceDate = new Date(s.serviceDate);
+    const serviceDate = parseDateValue(s.serviceDate);
     return serviceDate >= prevStart && serviceDate <= prevEnd;
   });
   const previousMonthServices = servicesPreviousMonth.length;

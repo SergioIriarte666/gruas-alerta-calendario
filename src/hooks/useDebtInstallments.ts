@@ -51,7 +51,7 @@ export const useDebtInstallments = (debtId?: string) => {
 };
 
 export const useMonthlyInstallments = (monthDate?: Date) => {
-  const target = monthDate || businessClock.now();
+  const target = monthDate || businessClock.todayDate();
   const start = format(startOfMonth(target), 'yyyy-MM-dd');
   const end = format(endOfMonth(target), 'yyyy-MM-dd');
 

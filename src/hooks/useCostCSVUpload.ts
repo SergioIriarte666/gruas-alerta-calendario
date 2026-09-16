@@ -1,10 +1,11 @@
+import { excelSerialToCalendarDate, isCalendarDate } from '@/utils/calendarDate';
 import { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
+
 import { createLogger } from "@/lib/logger";
 
 
@@ -44,20 +45,20 @@ const parseDate = (value: string): string | null => {
   const trimmed = value.trim();
   
   // Try yyyy-mm-dd
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return isCalendarDate(trimmed) ? trimmed : null;
   
   // Try dd/mm/yyyy or dd-mm-yyyy
   const match = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
   if (match) {
     const [, d, m, y] = match;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    const date = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    return isCalendarDate(date) ? date : null;
   }
   
   // Try Excel serial number
   const num = Number(trimmed);
   if (!isNaN(num) && num > 40000 && num < 60000) {
-    const date = new Date((num - 25569) * 86400 * 1000);
-    return toLocalDateString(date);
+    return excelSerialToCalendarDate(num);
   }
   
   return null;

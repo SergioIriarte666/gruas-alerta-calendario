@@ -26,7 +26,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     
     // Filtros aplicados
     const filterLabels = [
-      ['Período', `${businessClock.format(new Date(`${appliedFilters.dateRange.from}T12:00:00Z`), 'P')} - ${businessClock.format(new Date(`${appliedFilters.dateRange.to}T12:00:00Z`), 'P')}`],
+      ['Período', `${businessClock.format(appliedFilters.dateRange.from, 'P')} - ${businessClock.format(appliedFilters.dateRange.to, 'P')}`],
       ['Empresa', appliedFilters.companyName || 'Todas las empresas'],
       ['Categoría', appliedFilters.categoryName || 'Todas las categorías'],
       ['Grúa', appliedFilters.craneName || 'Todas las grúas'],
@@ -52,7 +52,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     autoTable(doc, {
       head: [['Fecha', 'Descripción', 'Categoría', 'Monto', 'Asociado a', 'Notas']],
       body: costs.map(cost => [
-        businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'dd/MM/yy'),
+        businessClock.format(cost.date, 'dd/MM/yy'),
         cost.description.length > 20 ? cost.description.substring(0, 20) + '...' : cost.description,
         cost.subcategory && cost.cost_categories.name === 'Gastos de Servicios' 
           ? `${cost.cost_categories.name} - ${cost.subcategory}` 
@@ -82,7 +82,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
       autoTable(doc, {
         head: [['Fecha', 'Folio', 'Cliente', 'Tipo', 'Operador', 'Grúa', 'Origen', 'Destino', 'Estado', 'Valor']],
         body: serviceDetails.map(service => [
-          businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy'),
+          businessClock.format(service.serviceDate, 'dd/MM/yyyy'),
           service.folio,
           service.clientName,
           service.serviceTypeName,
@@ -108,7 +108,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
 
     // Hoja principal: Detalle completo de costos
     const costs_data = costs.map(cost => ({
-      'Fecha': businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'yyyy-MM-dd'),
+      'Fecha': businessClock.format(cost.date, 'yyyy-MM-dd'),
       'Descripción': cost.description,
       'Categoría': cost.subcategory && cost.cost_categories.name === 'Gastos de Servicios' 
         ? `${cost.cost_categories.name} - ${cost.subcategory}` 
@@ -145,7 +145,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
 
     // Hoja de tendencia mensual
     const monthlyTrend = costs.reduce((acc, cost) => {
-      const month = businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'yyyy-MM');
+      const month = businessClock.format(cost.date, 'yyyy-MM');
       if (!acc[month]) {
         acc[month] = { count: 0, total: 0 };
       }
@@ -170,7 +170,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
       [company.name],
       ['Informe Detallado de Costos'], [],
       ['Filtros Aplicados'],
-      ['Período', `${businessClock.format(new Date(`${appliedFilters.dateRange.from}T12:00:00Z`), 'P')} a ${businessClock.format(new Date(`${appliedFilters.dateRange.to}T12:00:00Z`), 'P')}`],
+      ['Período', `${businessClock.format(appliedFilters.dateRange.from, 'P')} a ${businessClock.format(appliedFilters.dateRange.to, 'P')}`],
       ['Categoría', appliedFilters.categoryName || 'Todas las categorías'],
       ['Grúa', appliedFilters.craneName || 'Todas las grúas'],
       ['Operador', appliedFilters.operatorName || 'Todos los operadores'], [],
@@ -185,7 +185,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
 
     if (serviceDetails.length > 0) {
       const services_ws = XLSX.utils.json_to_sheet(serviceDetails.map(service => ({
-        'Fecha': businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'yyyy-MM-dd'),
+        'Fecha': businessClock.format(service.serviceDate, 'yyyy-MM-dd'),
         'Folio': service.folio,
         'Cliente': service.clientName,
         'Tipo de Servicio': service.serviceTypeName,

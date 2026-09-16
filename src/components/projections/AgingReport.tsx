@@ -1,8 +1,9 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectedInvoice } from "@/hooks/projections/useIncomeProjections";
 import { formatCurrency } from "@/lib/utils";
-import { differenceInDays, startOfDay } from "date-fns";
+import { differenceInCalendarDays, startOfDay } from "date-fns";
 import { AlertCircle, Clock, AlertTriangle, XCircle } from "lucide-react";
 
 interface AgingReportProps {
@@ -19,7 +20,7 @@ interface AgingBucket {
 }
 
 export const AgingReport = ({ invoices }: AgingReportProps) => {
-  const today = startOfDay(businessClock.now());
+  const today = startOfDay(businessClock.todayDate());
 
   // Filtrar solo facturas vencidas (por status o por fecha)
   const overdueInvoices = invoices.filter(inv => inv.status === 'overdue');
@@ -62,7 +63,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
 
   // Clasificar facturas en buckets
   overdueInvoices.forEach(invoice => {
-    const daysOverdue = differenceInDays(today, new Date(invoice.due_date));
+    const daysOverdue = differenceInCalendarDays(today, parseDateValue(invoice.due_date));
     
     if (daysOverdue <= 30) {
       buckets[0].amount += invoice.remaining_amount;

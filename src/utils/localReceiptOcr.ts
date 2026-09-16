@@ -1,3 +1,4 @@
+import { isCalendarDate } from '@/utils/calendarDate';
 import { createWorker } from 'tesseract.js';
 import { createLogger } from "@/lib/logger";
 
@@ -50,9 +51,8 @@ const normalizeDate = (day: string, month: string, year: string) => {
   const mm = month.padStart(2, '0');
   const dd = day.padStart(2, '0');
 
-  const date = new Date(`${yyyy}-${mm}-${dd}T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  return `${yyyy}-${mm}-${dd}`;
+  const date = `${yyyy}-${mm}-${dd}`;
+  return isCalendarDate(date) ? date : null;
 };
 
 const extractDate = (text: string) => {

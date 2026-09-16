@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -179,7 +180,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
                       {recentMovements.map((movement) => (
                         <TableRow key={movement.id}>
                           <TableCell className="text-sm">
-                            {format(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm', { locale: es })}
+                            {businessClock.format(movement.movement_date, 'dd/MM/yyyy HH:mm', { locale: es })}
                           </TableCell>
                           <TableCell>
                             <Badge 

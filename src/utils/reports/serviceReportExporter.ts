@@ -97,22 +97,9 @@ const truncate = (str: string, maxLength: number): string => {
   return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
 };
 
-const parseReportDate = (value: unknown): Date | null => {
-  if (typeof value !== 'string' || !value.trim()) {
-    return null;
-  }
-
-  const normalizedValue = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? `${value}T12:00:00Z`
-    : value;
-  const parsedDate = new Date(normalizedValue);
-
-  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
-};
-
 const formatReportDate = (value: unknown, pattern: string): string => {
-  const parsedDate = parseReportDate(value);
-  return parsedDate ? businessClock.format(parsedDate, pattern) : '-';
+  if (typeof value !== 'string' || !value.trim()) return '-';
+  try { return businessClock.format(value, pattern); } catch { return '-'; }
 };
 
 const formatCurrency = (value: unknown): string => {

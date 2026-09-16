@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+
 import React, { useMemo } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,9 +70,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
     // Tiempo promedio de procesamiento (días desde serviceDate)
     const avgProcessingTime = services.length > 0 ? Math.round(
       services.reduce((sum, service) => {
-        const daysSince = Math.floor(
-          (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
         return sum + daysSince;
       }, 0) / services.length
     ) : 0;
@@ -79,9 +79,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
     const urgentServices = services.filter(service => {
       const displayStatus = getVipPipelineDisplayStatus(service);
       if (displayStatus === 'invoiced' || displayStatus === 'completed') return false;
-      const daysSince = Math.floor(
-        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
       return daysSince > 7;
     }).length;
 

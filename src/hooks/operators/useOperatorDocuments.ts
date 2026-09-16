@@ -1,3 +1,6 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { calendarDateString } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,8 +38,8 @@ export function getDocumentStatus(expiryDate?: string | null): DocumentStatus {
   if (!expiryDate) return 'sin_fecha';
   const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
-  const expiry = new Date(`${expiryDate}T12:00:00Z`);
-  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const expiry = parseDateValue(expiryDate);
+  const diffDays = differenceInCalendarDates(expiry, today);
   if (diffDays < 0) return 'vencido';
   if (diffDays <= 30) return 'por_vencer';
   return 'vigente';
@@ -46,8 +49,8 @@ export function getDaysUntilExpiry(expiryDate?: string | null): number | null {
   if (!expiryDate) return null;
   const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
-  const expiry = new Date(`${expiryDate}T12:00:00Z`);
-  return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const expiry = parseDateValue(expiryDate);
+  return differenceInCalendarDates(expiry, today);
 }
 
 function mapRow(row: any): OperatorDocument {
@@ -263,7 +266,7 @@ export const useOperatorDocumentAlerts = () => {
       const in30 = new Date(today);
       in30.setDate(in30.getDate() + 30);
 
-      const in30ISO = in30.toISOString().slice(0, 10);
+      const in30ISO = calendarDateString(in30);
 
       const { data, error } = await operatorDocumentsTable()
         .select('operator_id, expiry_date')

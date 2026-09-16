@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, FileText, ImageIcon } from 'lucide-react';
@@ -22,7 +23,7 @@ export const InitialInspectionEvidenceCard = ({ evidence }: InitialInspectionEvi
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
               Respaldo eliminado por política de retención (&gt;2 años)
-              {evidence.deletedAt ? ` el ${new Date(evidence.deletedAt).toLocaleDateString('es-CL')}` : ''}.
+              {evidence.deletedAt ? ` el ${businessClock.dateLabel(evidence.deletedAt, 'es-CL')}` : ''}.
             </span>
           </div>
         )}

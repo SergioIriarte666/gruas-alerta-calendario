@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { businessClock } from '@/utils/businessClock';
 
 export const MonthlyInstallments = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(businessClock.todayDate());
   const [payingInstallment, setPayingInstallment] = useState<DebtInstallment | null>(null);
   const { data: installments, isLoading } = useMonthlyInstallments(currentMonth);
 
@@ -80,7 +80,7 @@ export const MonthlyInstallments = () => {
                 installments.map((inst) => (
                   <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-danger-soft/50' : ''}>
                     <TableCell className="text-foreground font-medium">
-                      {format(new Date(inst.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                      {businessClock.format(inst.due_date, 'dd/MM/yyyy')}
                     </TableCell>
                     <TableCell className="text-foreground">
                       {inst.debts?.creditors?.name || '-'}

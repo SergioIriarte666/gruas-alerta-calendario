@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Service } from '@/types';
@@ -56,17 +57,17 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
   // Generate predictive insights
   const generatePredictions = (): Prediction[] => {
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     const predictions: Prediction[] = [];
 
     // Analyze service patterns for demand prediction
     const monthlyServices = services.filter(s => {
-      const serviceDate = new Date(s.serviceDate);
+      const serviceDate = parseDateValue(s.serviceDate);
       return serviceDate.getMonth() === now.getMonth();
     }).length;
 
     const previousMonthServices = services.filter(s => {
-      const serviceDate = new Date(s.serviceDate);
+      const serviceDate = parseDateValue(s.serviceDate);
       const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return serviceDate.getMonth() === prevMonth.getMonth();
     }).length;
@@ -183,7 +184,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
   // Generate forecast data
   const generateForecastData = (): ForecastData[] => {
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     const forecast: ForecastData[] = [];
 
     // Generate 6 weeks of forecast

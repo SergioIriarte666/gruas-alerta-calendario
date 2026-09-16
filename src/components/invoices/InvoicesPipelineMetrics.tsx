@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,8 +14,8 @@ interface InvoicesPipelineMetricsProps {
 
 export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = ({ invoices }) => {
   const metrics = useMemo(() => {
-    const now = businessClock.now();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const now = businessClock.todayDate();
+    const today = businessClock.todayDate();
 
     // Group invoices by status
     const byStatus = {
@@ -33,9 +35,9 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
     // Calculate urgent invoices (due in 3 days or less)
     const urgentInvoices = invoices.filter(inv => {
       if (inv.status === 'paid' || inv.status === 'cancelled') return false;
-      const dueDate = new Date(inv.dueDate);
-      const diffTime = dueDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const dueDate = parseDateValue(inv.dueDate);
+      const diffTime = differenceInCalendarDates(dueDate, today);
+      const diffDays = diffTime;
       return diffDays <= 3;
     });
 
@@ -43,10 +45,10 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
     const paidInvoicesWithPaymentDate = byStatus.paid.filter(inv => inv.paymentDate);
     const avgPaymentTime = paidInvoicesWithPaymentDate.length > 0 
       ? paidInvoicesWithPaymentDate.reduce((sum, inv) => {
-          const issueDate = new Date(inv.issueDate);
-          const paymentDate = new Date(inv.paymentDate!);
-          const diffTime = paymentDate.getTime() - issueDate.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const issueDate = parseDateValue(inv.issueDate);
+          const paymentDate = parseDateValue(inv.paymentDate!);
+          const diffTime = differenceInCalendarDates(paymentDate, issueDate);
+          const diffDays = diffTime;
           return sum + diffDays;
         }, 0) / paidInvoicesWithPaymentDate.length
       : 0;

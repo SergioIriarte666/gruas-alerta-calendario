@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Service } from '@/types';
@@ -210,7 +212,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                                 {match.candidates.map((cand) => (
                                   <SelectItem key={cand.id} value={cand.id} className="text-xs font-mono">
                                     {cand.folio}
-                                    {cand.serviceDate && ` (${format(new Date(cand.serviceDate), 'dd/MM')})`}
+                                    {cand.serviceDate && ` (${businessClock.format(cand.serviceDate, 'dd/MM')})`}
                                     {cand.quoteNumber ? ` · ${cand.quoteNumber}` : ' · sin cot.'}
                                   </SelectItem>
                                 ))}
@@ -235,7 +237,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                             {match.service.folio}
                             {match.service.serviceDate && (
                               <span className="text-muted-foreground ml-1 no-underline">
-                                ({format(new Date(match.service.serviceDate), 'dd/MM')})
+                                ({businessClock.format(match.service.serviceDate, 'dd/MM')})
                               </span>
                             )}
                           </button>

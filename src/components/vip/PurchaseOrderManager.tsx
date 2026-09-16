@@ -16,7 +16,7 @@ import {
   Building2,
   MessageCircle
 } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -284,7 +284,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Calendar className="size-3" />
-                            <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
+                            <span>{formatForDisplay(service.serviceDate)}</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Building2 className="size-3" />

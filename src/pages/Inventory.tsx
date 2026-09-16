@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { parseDateValue } from '@/utils/calendarDate';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MetricCard } from '@/components/ui/metric-card';
@@ -109,7 +110,7 @@ const Inventory = () => {
                 unit_cost: prefill?.amount ?? undefined,
                 observations: prefill?.notes || undefined,
                 reason: prefill?.description || undefined,
-                movement_date: prefill?.date ? new Date(`${prefill.date}T12:00:00Z`) : undefined,
+                movement_date: prefill?.date ? parseDateValue(prefill.date) : undefined,
               }}
             />
           </div>

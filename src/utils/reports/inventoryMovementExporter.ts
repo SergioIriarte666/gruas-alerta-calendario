@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate } from 'date-fns';
+
 import { businessClock } from '@/utils/businessClock';
 import {
   createExportFileName,
@@ -106,7 +106,7 @@ export const exportInventoryMovementReport = async ({
       doc.text('Detalle de Movimientos:', 14, lastY);
       
       const tableData = movements.map(movement => [
-        formatDate(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm'),
+        businessClock.format(movement.movement_date, 'dd/MM/yyyy HH:mm'),
         movement.movement_type === 'entry' ? 'Entrada' : 
         movement.movement_type === 'exit' ? 'Salida' :
         movement.movement_type === 'transfer' ? 'Transferencia' : 'Ajuste',
@@ -212,7 +212,7 @@ export const exportInventoryMovementReport = async ({
     // Movements Detail Sheet
     if (movements.length > 0) {
       const movementsData = movements.map(movement => ({
-        'Fecha': businessClock.format(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm'),
+        'Fecha': businessClock.format(movement.movement_date, 'dd/MM/yyyy HH:mm'),
         'Tipo': movement.movement_type === 'entry' ? 'Entrada' : 
                movement.movement_type === 'exit' ? 'Salida' :
                movement.movement_type === 'transfer' ? 'Transferencia' : 'Ajuste',
@@ -300,7 +300,7 @@ export const exportInventoryMovementReport = async ({
     const csvData = [
       headers.join(','),
       ...movements.map(movement => [
-        formatDate(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm'),
+        businessClock.format(movement.movement_date, 'dd/MM/yyyy HH:mm'),
         movement.movement_type === 'entry' ? 'Entrada' : 
         movement.movement_type === 'exit' ? 'Salida' :
         movement.movement_type === 'transfer' ? 'Transferencia' : 'Ajuste',

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,12 +80,12 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
   // Calculate metrics
   const calculateMetrics = (): ServiceMetrics => {
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     const periodDays = parseInt(selectedPeriod);
     const periodStart = subDays(now, periodDays);
 
     const periodServices = services.filter(s =>
-      new Date(s.serviceDate) >= periodStart
+      parseDateValue(s.serviceDate) >= periodStart
     );
 
     const completedServices = periodServices.filter(s =>
@@ -125,7 +126,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   // Generate trend data
   const generateTrendData = (): TrendData[] => {
     const months = [];
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
 
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
@@ -133,7 +134,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
 
       const monthServices = services.filter(s => {
-        const serviceDate = new Date(s.serviceDate);
+        const serviceDate = parseDateValue(s.serviceDate);
         return serviceDate >= monthStart && serviceDate <= monthEnd;
       });
 
@@ -343,7 +344,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
     // Hoja 2: Detalle de Servicios
     const servicesDetailData = services.map(service => ({
       'Folio': service.folio,
-      'Fecha': format(new Date(service.serviceDate), 'dd/MM/yyyy'),
+      'Fecha': businessClock.format(service.serviceDate, 'dd/MM/yyyy'),
       'Estado': service.status,
       'Tipo de Servicio': service.serviceType.name,
       'Valor': getDisplayServiceValue(service, clientId),

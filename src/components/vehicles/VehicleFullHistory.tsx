@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +46,7 @@ const getStatusConfig = (status: string) => {
 
 const formatDate = (dateStr: string) => {
   try {
-    return new Date(dateStr).toLocaleDateString('es-CL', {
+    return businessClock.dateLabel(dateStr, 'es-CL', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'

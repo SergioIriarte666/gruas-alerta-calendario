@@ -75,7 +75,7 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
   autoTable(doc, {
     startY: y,
     body: [
-      ['N° Comprobante', receiptNumber, 'Fecha emisión', formatForDisplay(today)],
+      ['N° Comprobante', receiptNumber, 'Fecha emisión', formatForDisplay(businessClock.today())],
     ],
     theme: 'grid',
     styles: { fontSize: 9, cellPadding: 2 },

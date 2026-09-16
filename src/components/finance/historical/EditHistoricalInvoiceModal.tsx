@@ -1,3 +1,4 @@
+
 import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import {
@@ -283,7 +284,7 @@ export const EditHistoricalInvoiceModal = ({
                 {metadata.auditLog.slice().reverse().map((log, i) => (
                   <div key={i} className="border-b border-border/50 pb-1 last:border-0">
                     <span className="font-mono text-muted-foreground">
-                      {format(new Date(log.date), 'dd/MM HH:mm')}
+                      {businessClock.format(log.date, 'dd/MM HH:mm')}
                     </span>
                     : {log.details}
                   </div>

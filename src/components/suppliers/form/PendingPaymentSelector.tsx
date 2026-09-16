@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +112,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
                 <span>{payment.supplier_name}</span>
                 <span>•</span>
                 <span>
-                  Vence: {format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es })}
+                  Vence: {businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es })}
                 </span>
               </div>
             </div>

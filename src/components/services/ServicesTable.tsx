@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
@@ -141,7 +141,7 @@ export const ServicesTable = React.memo(({
           </button>
         ),
         cell: ({ row }) =>
-          formatForDisplay(parseFromDatabase(row.original.serviceDate)),
+          formatForDisplay(row.original.serviceDate),
       },
       {
         id: 'client',

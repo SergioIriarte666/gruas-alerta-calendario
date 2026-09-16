@@ -1,3 +1,4 @@
+
 import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Service } from '@/types';
@@ -120,7 +121,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="size-4" />
-                  <span>{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</span>
+                  <span>{businessClock.format(service.serviceDate, 'dd/MM/yyyy', { locale: es })}</span>
                 </div>
 
                 <div className="flex items-center gap-2 text-muted-foreground">

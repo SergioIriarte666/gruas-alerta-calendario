@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { Client } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,7 +173,7 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
                             Fecha de Registro
                           </label>
                           <p className="text-foreground bg-card border-border rounded px-3 py-2">
-                            {client.createdAt ? new Date(client.createdAt).toLocaleDateString('es-CL') : 'No disponible'}
+                            {client.createdAt ? businessClock.dateLabel(client.createdAt, 'es-CL') : 'No disponible'}
                           </p>
                         </div>
 

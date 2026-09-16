@@ -61,10 +61,7 @@ export const useDuplicatePaymentCheck = (
         .eq('payment_date', paymentDate)
         .gte(
           'created_at',
-          businessClock.format(
-            new Date(Date.now() - 24 * 60 * 60 * 1000),
-            "yyyy-MM-dd'T'HH:mm:ssXXX",
-          ),
+          businessClock.format(Date.now() - 24 * 60 * 60 * 1000, "yyyy-MM-dd'T'HH:mm:ssXXX"),
         );
 
       if (error) {

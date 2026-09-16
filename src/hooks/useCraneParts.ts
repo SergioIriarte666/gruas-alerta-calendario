@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -215,7 +216,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
           }
         });
         const deduped = Array.from(byKey.values()).map(p => ({ ...p, origin: 'direct' as const }));
-        deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        deduped.sort((a, b) => parseDateValue(b.date).getTime() - parseDateValue(a.date).getTime());
         return deduped as EnhancedCranePart[];
       }
 
@@ -362,7 +363,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         if (pTime > eTime) dedup.set(key, p);
       }
 
-      const allParts = Array.from(dedup.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const allParts = Array.from(dedup.values()).sort((a, b) => parseDateValue(b.date).getTime() - parseDateValue(a.date).getTime());
 
       return allParts;
     },
@@ -524,11 +525,11 @@ export const useCranePartsStats = (craneId: string) => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const recentDirectParts = directParts?.filter(part => 
-        new Date(part.date) >= thirtyDaysAgo
+        parseDateValue(part.date) >= thirtyDaysAgo
       ) || [];
 
       const recentCostParts = costParts?.filter(cost => 
-        new Date(cost.date) >= thirtyDaysAgo
+        parseDateValue(cost.date) >= thirtyDaysAgo
       ) || [];
 
       const recentConsumptions = consumptions?.filter(consumption => 

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { Client, Crane, Operator } from '@/types';
 
 export interface CSVServiceRow {
@@ -64,7 +65,7 @@ export const validateDate = (date: string): boolean => {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(date)) return false;
   
-  const parsedDate = new Date(date);
+  const parsedDate = parseDateValue(date);
   return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
 };
 

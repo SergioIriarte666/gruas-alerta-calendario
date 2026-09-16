@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Cost } from '@/types/costs';
@@ -276,7 +278,7 @@ export const ManualCostXmlImportDialog = ({
               </CardHeader>
               <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoLine label="Descripción" value={cost.description} />
-                <InfoLine label="Fecha costo" value={format(new Date(`${cost.date}T12:00:00Z`), 'dd MMM yyyy', { locale: es })} />
+                <InfoLine label="Fecha costo" value={businessClock.format(cost.date, 'dd MMM yyyy', { locale: es })} />
                 <InfoLine label="Monto actual" value={formatCurrency(Number(cost.amount || 0))} />
               </CardContent>
             </Card>
@@ -482,7 +484,7 @@ export const ManualCostXmlImportDialog = ({
                         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm">
                           <p className="font-medium">{latestSnapshotQuery.data.summary || 'Última importación XML'}</p>
                           <p className="text-muted-foreground">
-                            {format(new Date(latestSnapshotQuery.data.changedAt), "dd 'de' MMMM yyyy, HH:mm", {
+                            {businessClock.format(latestSnapshotQuery.data.changedAt, "dd 'de' MMMM yyyy, HH:mm", {
                               locale: es,
                             })}
                           </p>

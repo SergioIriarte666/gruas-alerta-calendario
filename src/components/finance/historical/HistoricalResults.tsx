@@ -1,3 +1,6 @@
+import { parseDateValue } from '@/utils/calendarDate';
+import { addCalendarDays } from '@/utils/calendarDate';
+import { differenceInCalendarDates } from '@/utils/calendarDate';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
@@ -106,9 +109,9 @@ export const HistoricalResults: React.FC = () => {
 
   // Período anterior equivalente (mismo N° de días inmediatamente anterior a dateRange.from)
   const previousDateRange = useMemo(() => {
-    const days = Math.max(1, Math.round((dateRange.to.getTime() - dateRange.from.getTime()) / 86400000) + 1);
-    const to = new Date(dateRange.from.getTime() - 86400000);
-    const from = new Date(to.getTime() - (days - 1) * 86400000);
+    const days = Math.max(1, differenceInCalendarDates(dateRange.to, dateRange.from) + 1);
+    const to = parseDateValue(addCalendarDays(dateRange.from, -1));
+    const from = parseDateValue(addCalendarDays(to, -(days - 1)));
     return { from, to };
   }, [dateRange]);
 
@@ -319,7 +322,7 @@ export const HistoricalResults: React.FC = () => {
       const metaRows = [
         { 'Mes': `Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}` },
         { 'Mes': `Origen: ${sourceLabel}` },
-        { 'Mes': `Generado: ${businessClock.format(businessClock.todayDate(), 'dd/MM/yyyy HH:mm')}` },
+        { 'Mes': `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}` },
         { 'Mes': '' },
       ];
       const ws = XLSX.utils.json_to_sheet([...metaRows, ...data]);

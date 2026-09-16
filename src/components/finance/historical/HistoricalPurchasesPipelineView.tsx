@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useMemo, useState } from 'react';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
@@ -283,7 +284,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
 
                                     <div className="flex items-center gap-4">
                                       <span className="text-xs text-muted-foreground tabular-nums">
-                                        {format(parseISO(inv.issue_date), 'dd/MM/yyyy')}
+                                        {businessClock.format(inv.issue_date, 'dd/MM/yyyy')}
                                       </span>
                                       <span className="text-sm font-semibold text-primary tabular-nums">
                                         {formatCurrency(inv.amount)}

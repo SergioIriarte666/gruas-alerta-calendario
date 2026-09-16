@@ -65,7 +65,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
   } = useForm<ExitFormData>({
     resolver: zodResolver(exitSchema),
     defaultValues: {
-      movement_date: businessClock.now(),
+      movement_date: businessClock.todayDate(),
       quantity: 1,
       item_id: '',
       location_id: '',
@@ -161,7 +161,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
         location_id: data.location_id,
         movement_type: 'exit',
         quantity: data.quantity,
-        movement_date: data.movement_date.toISOString(),
+        movement_date: businessClock.toTimestamp(data.movement_date),
         reason: data.reason,
         observations: data.observations || null,
       };
@@ -281,7 +281,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
               </div>
               {selectedSourceEntry && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  Basado en origen seleccionado: {format(new Date(selectedSourceEntry.movement_date), 'dd/MM/yyyy', { locale: es })}
+                  Basado en origen seleccionado: {businessClock.format(selectedSourceEntry.movement_date, 'dd/MM/yyyy', { locale: es })}
                 </div>
               )}
               {!selectedSourceEntry && (
@@ -305,7 +305,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
                 <SelectContent>
                   {recentEntries.map((entry) => {
                     const parts = [
-                      format(new Date(entry.movement_date), 'dd/MM/yyyy', { locale: es }),
+                      businessClock.format(entry.movement_date, 'dd/MM/yyyy', { locale: es }),
                       entry.reference_document ? `Doc ${entry.reference_document}` : null,
                       entry.batch_number ? `Lote ${entry.batch_number}` : null,
                       `Costo $${Number(entry.unit_cost || 0).toLocaleString('es-CL')}`

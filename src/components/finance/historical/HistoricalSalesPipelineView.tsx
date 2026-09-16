@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useMemo, useState } from 'react';
 import { Invoice } from '@/types';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
@@ -150,7 +151,7 @@ const MonthSection = ({
                 {inv.productServiceDescription}
               </p>
               <p className="text-xs text-muted-foreground mb-2">
-                {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
+                {businessClock.format(inv.issueDate, 'dd/MM/yyyy')}
               </p>
               <p className="text-sm font-bold text-primary">{formatCurrency(inv.total)}</p>
             </div>

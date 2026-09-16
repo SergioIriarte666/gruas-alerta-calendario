@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -204,14 +204,14 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
                 <TableRow key={inst.id} className={inst.due_date < today && inst.status === 'pending' ? 'bg-danger-soft/50' : ''}>
                   <TableCell className="text-foreground">{inst.installment_number}</TableCell>
                   <TableCell className="text-foreground">
-                    {format(new Date(inst.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                    {businessClock.format(inst.due_date, 'dd/MM/yyyy')}
                   </TableCell>
                   <TableCell className="text-foreground font-medium">
                     {formatAmount(Number(inst.total_amount), debt.currency)}
                   </TableCell>
                   <TableCell>{getStatusBadge(inst)}</TableCell>
                   <TableCell className="text-foreground">
-                    {inst.paid_date ? format(new Date(inst.paid_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}
+                    {inst.paid_date ? businessClock.format(inst.paid_date, 'dd/MM/yyyy') : '-'}
                   </TableCell>
                   <TableCell>
                     {inst.status === 'pending' && (

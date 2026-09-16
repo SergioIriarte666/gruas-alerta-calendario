@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -138,12 +139,12 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
   const lastDate = consumptions[0]?.movement_date ? new Date(consumptions[0].movement_date) : null;
   const thirtyDaysAgo = businessClock.todayDate();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const recentCount = consumptions.filter((m: any) => m.movement_date && new Date(m.movement_date) >= thirtyDaysAgo).length;
+  const recentCount = consumptions.filter((m: any) => m.movement_date && parseDateValue(businessClock.format(m.movement_date, 'yyyy-MM-dd')) >= thirtyDaysAgo).length;
 
   const filteredConsumptions = consumptions.filter((m: any) => {
     if (activeFilter === 'all') return true;
     if (!m.movement_date) return false;
-    const date = new Date(m.movement_date);
+    const date = parseDateValue(businessClock.format(m.movement_date, 'yyyy-MM-dd'));
     const now = businessClock.todayDate();
     if (activeFilter === 'month') {
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -158,7 +159,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
 
   const groupedByMonth = filteredConsumptions.reduce((acc: Record<string, any[]>, m: any) => {
     const key = m.movement_date
-      ? format(new Date(m.movement_date), 'MMMM yyyy', { locale: es })
+      ? businessClock.format(m.movement_date, 'MMMM yyyy', { locale: es })
       : 'Sin fecha';
     if (!acc[key]) acc[key] = [];
     acc[key].push(m);
@@ -282,7 +283,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                               <p className="truncate text-sm font-medium text-foreground">{itemName}</p>
                               <p className="text-xs text-muted-foreground">
                                 {m.movement_date
-                                  ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es })
+                                  ? businessClock.format(m.movement_date, 'dd MMM yyyy', { locale: es })
                                   : '-'}
                                 {m.reason ? ` · ${m.reason}` : ''}
                               </p>

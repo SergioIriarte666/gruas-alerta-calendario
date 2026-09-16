@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -90,7 +91,7 @@ export const SupplierInventoryTab: React.FC<SupplierInventoryTabProps> = ({ move
           {movements.map((movement) => (
             <TableRow key={movement.id} className="border-border">
               <TableCell className="text-foreground">
-                {format(new Date(movement.movement_date), 'dd/MM/yyyy', { locale: es })}
+                {businessClock.format(movement.movement_date, 'dd/MM/yyyy', { locale: es })}
               </TableCell>
               <TableCell>
                 <Badge className={getMovementTypeColor(movement.movement_type)}>

@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState } from 'react';
 import { useGroupedServiceChangeHistory, type ServiceChangeEntry } from '@/hooks/useServiceChangeHistory';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -334,7 +336,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
-                      {format(new Date(group.date), "dd MMM yyyy, HH:mm", { locale: es })}
+                      {businessClock.format(group.date, "dd MMM yyyy, HH:mm", { locale: es })}
                     </span>
                   </div>
                 </div>

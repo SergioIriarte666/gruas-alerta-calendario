@@ -1,3 +1,4 @@
+import { calendarDateString } from '@/utils/calendarDate';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CostCenter, CostCenterFormData, CostCenterWithStats } from '@/types/costCenters';
@@ -37,20 +38,20 @@ const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
   const periodStart = (period: string | null): string => {
     switch (period) {
       case 'monthly':
-        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        return calendarDateString(new Date(now.getFullYear(), now.getMonth(), 1));
       case 'quarterly': {
         const q = Math.floor(now.getMonth() / 3);
-        return new Date(now.getFullYear(), q * 3, 1).toISOString().slice(0, 10);
+        return calendarDateString(new Date(now.getFullYear(), q * 3, 1));
       }
       case 'yearly':
-        return new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+        return calendarDateString(new Date(now.getFullYear(), 0, 1));
       default:
-        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        return calendarDateString(new Date(now.getFullYear(), now.getMonth(), 1));
     }
   };
 
   // Traer costos del año en curso para cubrir todos los períodos posibles
-  const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+  const yearStart = calendarDateString(new Date(now.getFullYear(), 0, 1));
 
   // Los centros de costo son presupuesto de G5N: excluir costos LowBoy para no inflar el gasto vs. presupuesto.
   const { data: costStats, error: statsError } = await supabase

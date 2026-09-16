@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { useXmlCostUpload } from '@/hooks/xml/useXmlCostUpload';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
@@ -251,7 +252,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     <div className="space-y-3">
                       {parseResult.documents.map((document, index) => {
                         const documentKey = getDocumentStateKey(document);
-                        const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || (() => { const d = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd')); d.setDate(d.getDate() + defaultDaysToAdd); return format(d, 'yyyy-MM-dd'); })();
+                        const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || (() => { const d = safeParseDateOnly(document.issue_date || businessClock.today()); d.setDate(d.getDate() + defaultDaysToAdd); return format(d, 'yyyy-MM-dd'); })();
                         const dupInfo = getDuplicateInfoForDocument(document);
                         const isExactDup = dupInfo?.matchType === 'exact' || dupInfo?.matchType === 'folio';
                         const isLowboy = getDocumentEntity(document) === 'lowboy';

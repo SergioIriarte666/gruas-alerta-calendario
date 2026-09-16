@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { Cost } from '@/types/costs';
@@ -715,9 +717,9 @@ const collectPreviewConflicts = (params: {
     });
   }
 
-  const costDate = new Date(`${cost.date}T12:00:00Z`);
-  const issueDate = new Date(`${document.issue_date}T12:00:00Z`);
-  const diffDays = Math.abs(Math.round((issueDate.getTime() - costDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const costDate = parseDateValue(cost.date);
+  const issueDate = parseDateValue(document.issue_date);
+  const diffDays = Math.abs(differenceInCalendarDates(issueDate, costDate));
   if (Number.isFinite(diffDays) && diffDays > 45) {
     conflicts.push({
       code: 'date_distance',

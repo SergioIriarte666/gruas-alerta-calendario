@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { businessClock } from '@/utils/businessClock';
+
+import { useEffect, useMemo, useState } from 'react';
 import { Calendar, DollarSign, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -120,7 +122,7 @@ export function QuickEntryPreview({
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Fecha:</span>
-                  <span className="font-medium">{new Date(entry.date).toLocaleDateString()}</span>
+                  <span className="font-medium">{businessClock.dateLabel(entry.date)}</span>
                 </div>
                 
                 {entry.amount && (

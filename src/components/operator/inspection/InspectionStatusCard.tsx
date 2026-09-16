@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock } from 'lucide-react';
@@ -25,7 +26,7 @@ export const InspectionStatusCard = ({ metadata }: InspectionStatusCardProps) =>
         {metadata.initial_completion_date && (
           <div className="text-sm text-muted-foreground">
             <strong>Inspección inicial completada:</strong>{' '}
-            {format(new Date(metadata.initial_completion_date), 'dd/MM/yyyy HH:mm', { locale: es })}
+            {businessClock.format(metadata.initial_completion_date, 'dd/MM/yyyy HH:mm', { locale: es })}
           </div>
         )}
 

@@ -1,12 +1,13 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Globe, Calendar, Clock } from 'lucide-react';
 import { useUserSettings } from '@/hooks/useUserSettings';
-import { invalidateUserSettingsCache, invalidateBusinessTimezoneCache, formatForDisplay, getSystemTimezone } from '@/utils/timezoneUtils';
+import { invalidateUserSettingsCache, invalidateBusinessTimezoneCache, formatForDisplay } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -31,16 +32,9 @@ const TIMEZONES = [
 export const TimezoneSettingsTab: React.FC = () => {
   const { userSettings, loading, saving, saveUserSettings } = useUserSettings();
   const [datePreview, setDatePreview] = useState<string>('');
-  const [systemTimezone, setSystemTimezone] = useState<string>('');
   const [reportTimezone, setReportTimezone] = useState<string>('America/Santiago');
-  const [reportUseSystem, setReportUseSystem] = useState<boolean>(false);
   const [loadingGlobal, setLoadingGlobal] = useState(true);
   const [savingGlobal, setSavingGlobal] = useState(false);
-
-  // Detectar timezone del sistema
-  useEffect(() => {
-    setSystemTimezone(getSystemTimezone());
-  }, []);
 
   // Cargar configuración global de timezone desde company_data
   useEffect(() => {
@@ -53,7 +47,6 @@ export const TimezoneSettingsTab: React.FC = () => {
           .maybeSingle();
         if (data) {
           setReportTimezone(data.report_timezone || 'America/Santiago');
-          setReportUseSystem(data.report_use_system_timezone ?? false);
         }
       } catch (e) {
         logger.warn('Error fetching global timezone:', e);
@@ -67,16 +60,16 @@ export const TimezoneSettingsTab: React.FC = () => {
   // Actualizar preview de fecha
   useEffect(() => {
     const now = new Date();
-    const preview = formatForDisplay(now);
+    const preview = formatForDisplay(businessClock.today());
     setDatePreview(preview);
-  }, [userSettings.dateFormat, reportTimezone, reportUseSystem]);
+  }, [userSettings.dateFormat, reportTimezone]);
 
   const handleReportTimezoneChange = async (timezone: string) => {
     setSavingGlobal(true);
     try {
       const { error } = await supabase
         .from('company_data')
-        .update({ report_timezone: timezone })
+        .update({ report_timezone: timezone, report_use_system_timezone: false })
         .not('id', 'is', null);
       if (error) throw error;
       setReportTimezone(timezone);
@@ -92,33 +85,6 @@ export const TimezoneSettingsTab: React.FC = () => {
     }
   };
 
-  const handleReportUseSystemChange = async (useSystem: boolean) => {
-    setSavingGlobal(true);
-    try {
-      const updates: any = { report_use_system_timezone: useSystem };
-      if (useSystem) {
-        // Freeze the detected browser timezone
-        updates.report_timezone = getSystemTimezone();
-        setReportTimezone(updates.report_timezone);
-      }
-      const { error } = await supabase
-        .from('company_data')
-        .update(updates)
-        .not('id', 'is', null);
-      if (error) throw error;
-      setReportUseSystem(useSystem);
-      invalidateBusinessTimezoneCache();
-      invalidateUserSettingsCache();
-      window.dispatchEvent(new CustomEvent('timezone-changed'));
-      toast.success('Configuración de zona horaria actualizada');
-    } catch (e) {
-      logger.error('Error saving report use system:', e);
-      toast.error('Error al guardar configuración');
-    } finally {
-      setSavingGlobal(false);
-    }
-  };
-
   const handleDateFormatChange = async (dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD') => {
     const success = await saveUserSettings({ dateFormat });
     if (success) {
@@ -128,7 +94,7 @@ export const TimezoneSettingsTab: React.FC = () => {
   };
 
   const getCurrentTimezone = () => {
-    return reportUseSystem ? systemTimezone : reportTimezone;
+    return reportTimezone;
   };
 
   const getCurrentOffset = () => {
@@ -202,21 +168,6 @@ export const TimezoneSettingsTab: React.FC = () => {
 
         {/* Configuración de zona horaria global (negocio) */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-foreground">Usar zona horaria del sistema</Label>
-              <p className="text-sm text-muted-foreground">
-                Detectar y congelar la zona horaria del navegador como zona del negocio
-              </p>
-            </div>
-            <Switch 
-              checked={reportUseSystem}
-              onCheckedChange={handleReportUseSystemChange}
-              disabled={isSaving}
-            />
-          </div>
-
-          {!reportUseSystem && (
             <div className="space-y-2">
               <Label className="text-foreground">Zona Horaria del Negocio</Label>
               <Select 
@@ -236,16 +187,9 @@ export const TimezoneSettingsTab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-          )}
-
-          {reportUseSystem && (
-            <div className="bg-accent/50 border rounded-lg p-3">
-              <p className="text-accent-foreground text-sm">
-                <Clock className="size-4 inline mr-1" />
-                Zona horaria del sistema detectada y congelada: <strong>{reportTimezone}</strong>
-              </p>
-            </div>
-          )}
+          <p className="text-sm text-muted-foreground">
+            Esta zona horaria se aplica a todos los usuarios del TMS. Las fechas ingresadas conservan el día seleccionado.
+          </p>
         </div>
 
         <Separator />
@@ -266,7 +210,7 @@ export const TimezoneSettingsTab: React.FC = () => {
                 <div className="flex items-center justify-between w-full">
                   <span>DD/MM/YYYY</span>
                   <span className="text-xs text-muted-foreground ml-4">
-                    {format(new Date(), 'dd/MM/yyyy')}
+                    {businessClock.format(businessClock.today(), 'dd/MM/yyyy')}
                   </span>
                 </div>
               </SelectItem>
@@ -274,7 +218,7 @@ export const TimezoneSettingsTab: React.FC = () => {
                 <div className="flex items-center justify-between w-full">
                   <span>MM/DD/YYYY</span>
                   <span className="text-xs text-muted-foreground ml-4">
-                    {format(new Date(), 'MM/dd/yyyy')}
+                    {businessClock.format(businessClock.today(), 'MM/dd/yyyy')}
                   </span>
                 </div>
               </SelectItem>
@@ -282,7 +226,7 @@ export const TimezoneSettingsTab: React.FC = () => {
                 <div className="flex items-center justify-between w-full">
                   <span>YYYY-MM-DD</span>
                   <span className="text-xs text-muted-foreground ml-4">
-                    {format(new Date(), 'yyyy-MM-dd')}
+                    {businessClock.format(businessClock.today(), 'yyyy-MM-dd')}
                   </span>
                 </div>
               </SelectItem>

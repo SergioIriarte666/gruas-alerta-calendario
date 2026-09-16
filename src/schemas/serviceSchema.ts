@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { z } from 'zod';
 import { ServiceTypeConfig } from '@/types/serviceTypes';
@@ -223,7 +224,7 @@ export const createServiceFormSchema = (serviceTypeConfig?: ServiceTypeConfig) =
     })
     .refine((data) => {
       if (data.custodyStartDate && data.custodyEndDate) {
-        return new Date(data.custodyEndDate) >= new Date(data.custodyStartDate);
+        return parseDateValue(data.custodyEndDate) >= parseDateValue(data.custodyStartDate);
       }
       return true;
     }, {

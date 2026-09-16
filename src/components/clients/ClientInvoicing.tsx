@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { FileText, DollarSign, FileWarning, FileCheck2 } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { InvoiceReportExport } from './InvoiceReportExport';
 import { toTitleCase } from '@/lib/utils';
 
@@ -97,8 +97,8 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
                   {invoices.map(invoice => (
                     <TableRow key={invoice.id} className="border-border">
                       <TableCell className="font-medium"><Badge variant="tms" className="whitespace-nowrap">{invoice.folio}</Badge></TableCell>
-                      <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(invoice.issueDate))}</TableCell>
-                      <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(invoice.dueDate))}</TableCell>
+                      <TableCell className="text-foreground">{formatForDisplay(invoice.issueDate)}</TableCell>
+                      <TableCell className="text-foreground">{formatForDisplay(invoice.dueDate)}</TableCell>
                       <TableCell className="text-foreground font-semibold">{formatCurrency(invoice.total)}</TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     </TableRow>

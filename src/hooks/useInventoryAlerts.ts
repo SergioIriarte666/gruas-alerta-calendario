@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -277,9 +279,7 @@ export const useActiveAlerts = (entityFilter: InventoryEntityFilter = 'all') => 
           );
           
           if (expiringConfig && movement.expiration_date) {
-            const daysToExpiry = Math.ceil(
-              (new Date(movement.expiration_date).getTime() - businessClock.todayDate().getTime()) / (1000 * 60 * 60 * 24)
-            );
+            const daysToExpiry = differenceInCalendarDates(movement.expiration_date, businessClock.today());
             const threshold = expiringConfig.threshold_value || 30;
             
             if (daysToExpiry <= threshold && daysToExpiry >= 0) {

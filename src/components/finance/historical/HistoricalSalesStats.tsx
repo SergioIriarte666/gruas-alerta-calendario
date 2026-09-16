@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice } from '@/types';
@@ -31,7 +32,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       const monthKey = format(date, 'yyyy-MM');
       
       const monthTotal = invoices
-        .filter(inv => isSameMonth(new Date(inv.issueDate), date))
+        .filter(inv => isSameMonth(parseDateValue(inv.issueDate), date))
         .reduce((acc, inv) => acc + inv.total, 0);
         
       chartData.push({

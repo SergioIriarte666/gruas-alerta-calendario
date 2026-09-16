@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import { parseDateValue } from '@/utils/calendarDate';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, DollarSign, FileText, BarChart3, ChevronDown } from 'lucide-react';
@@ -55,14 +56,14 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
     // Costos del mes actual (de todos los costos)
     const currentMonthCosts = allCosts.filter(c => {
-      const d = new Date(`${c.date}T12:00:00Z`);
+      const d = parseDateValue(c.date);
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     const currentMonthTotal = currentMonthCosts.reduce((sum, c) => sum + Number(c.amount), 0);
 
     // Costos del mes anterior
     const lastMonthCosts = allCosts.filter(c => {
-      const d = new Date(`${c.date}T12:00:00Z`);
+      const d = parseDateValue(c.date);
       return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
     });
     const lastMonthTotal = lastMonthCosts.reduce((sum, c) => sum + Number(c.amount), 0);
@@ -74,7 +75,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
     // Costos de hoy
     const todayCosts = allCosts.filter(c => {
-      const d = new Date(`${c.date}T12:00:00Z`);
+      const d = parseDateValue(c.date);
       return d.toDateString() === today.toDateString();
     });
     const todayTotal = todayCosts.reduce((sum, c) => sum + Number(c.amount), 0);

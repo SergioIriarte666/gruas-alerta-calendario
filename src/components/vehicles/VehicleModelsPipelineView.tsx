@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { ChevronRight, ChevronDown, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -170,7 +171,7 @@ export const VehicleModelsPipelineView: React.FC<VehicleModelsPipelineViewProps>
                         <div className="flex-1">
                           <p className="font-medium">{model.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            Creado el {new Date(model.created_at).toLocaleDateString('es-CL')}
+                            Creado el {businessClock.dateLabel(model.created_at, 'es-CL')}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">

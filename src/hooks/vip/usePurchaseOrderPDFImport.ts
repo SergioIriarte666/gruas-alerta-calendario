@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
@@ -535,7 +536,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       const allPatenteCandidates = patenteNorm
         ? clientServices
             .filter((s) => normalizePatente(s.licensePlate) === patenteNorm)
-            .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
+            .sort((a, b) => parseDateValue(b.serviceDate).getTime() - parseDateValue(a.serviceDate).getTime())
         : [];
 
       if (winner && winner.score >= MIN_SCORE) {

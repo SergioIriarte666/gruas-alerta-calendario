@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -163,7 +165,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
                   {filteredMovements.map((movement) => (
                     <TableRow key={movement.id} className="border-border">
                       <TableCell className="text-foreground text-sm">
-                        {format(new Date(movement.movement_date), 'dd/MM/yy', { locale: es })}
+                        {businessClock.format(movement.movement_date, 'dd/MM/yy', { locale: es })}
                       </TableCell>
                       <TableCell>
                         <Badge className={`${getMovementTypeColor(movement.movement_type)} text-xs`}>
@@ -241,7 +243,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
                   {filteredParts.map((part) => (
                     <TableRow key={part.id} className="border-border">
                       <TableCell className="text-foreground text-sm">
-                        {format(new Date(part.date), 'dd/MM/yy', { locale: es })}
+                        {businessClock.format(part.date, 'dd/MM/yy', { locale: es })}
                       </TableCell>
                       <TableCell className="text-foreground text-sm">
                         {part.cranes ? (

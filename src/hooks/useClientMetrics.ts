@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useMemo } from 'react';
 import { useClientServices } from './useClientServices';
 import { useClientInvoices } from './useClientInvoices';
@@ -28,11 +30,11 @@ export const useClientMetrics = (clientId: string | null) => {
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
     const recentServices = services.filter(s => 
-      new Date(s.serviceDate) >= sixMonthsAgo && s.status === 'completed'
+      parseDateValue(s.serviceDate) >= sixMonthsAgo && s.status === 'completed'
     );
     
     const monthlyTrend = recentServices.reduce((acc: Record<string, number>, service) => {
-      const month = new Date(service.serviceDate).toISOString().slice(0, 7); // YYYY-MM
+      const month = service.serviceDate.slice(0, 7); // YYYY-MM
       acc[month] = (acc[month] || 0) + getDisplayServiceValue(service, clientId);
       return acc;
     }, {});
@@ -42,10 +44,7 @@ export const useClientMetrics = (clientId: string | null) => {
     const avgPaymentTime = paidInvoices.length > 0
       ? paidInvoices.reduce((sum, invoice) => {
           if (invoice.paymentDate) {
-            const daysToPayment = Math.ceil(
-              (new Date(invoice.paymentDate).getTime() - new Date(invoice.issueDate).getTime()) 
-              / (1000 * 60 * 60 * 24)
-            );
+            const daysToPayment = differenceInCalendarDates(invoice.paymentDate, invoice.issueDate);
             return sum + daysToPayment;
           }
           return sum;
@@ -83,10 +82,10 @@ export const useClientMetrics = (clientId: string | null) => {
       
       // Últimas actividades
       lastServiceDate: services.length > 0 
-        ? Math.max(...services.map(s => new Date(s.serviceDate).getTime()))
+        ? services.map(s => s.serviceDate).sort().slice(-1)[0]
         : null,
       lastInvoiceDate: invoices.length > 0
-        ? Math.max(...invoices.map(i => new Date(i.issueDate).getTime()))
+        ? invoices.map(i => i.issueDate).sort().slice(-1)[0]
         : null,
     };
   }, [services, invoices, closures, requests, clientId, loading, serviceMetrics, invoiceMetrics, closureMetrics, requestMetrics]);

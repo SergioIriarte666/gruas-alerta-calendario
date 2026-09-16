@@ -394,7 +394,7 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
 
       // Group by date (last 30 days)
       const dateGroups = movements?.reduce((acc, movement) => {
-        const date = format(new Date(movement.movement_date), 'yyyy-MM-dd');
+        const date = businessClock.format(movement.movement_date, 'yyyy-MM-dd');
         if (!acc[date]) {
           acc[date] = { entries: 0, exits: 0, entries_value: 0, exits_value: 0 };
         }
@@ -536,7 +536,7 @@ export const useCostAnalysisReport = (filters?: InventoryReportFilters) => {
 
       // Cost trends by month
       const monthGroups = movements?.reduce((acc, movement) => {
-        const month = format(new Date(movement.movement_date), 'yyyy-MM');
+        const month = businessClock.format(movement.movement_date, 'yyyy-MM');
         if (!acc[month]) {
           acc[month] = { total_cost: 0, movement_count: 0 };
         }
@@ -615,7 +615,7 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
           acc[itemName] = { total_consumed: 0, months: new Set() };
         }
         acc[itemName].total_consumed += movement.quantity || 0;
-        acc[itemName].months.add(format(new Date(movement.movement_date), 'yyyy-MM'));
+        acc[itemName].months.add(businessClock.format(movement.movement_date, 'yyyy-MM'));
         return acc;
       }, {} as Record<string, { total_consumed: number; months: Set<string> }>);
 
@@ -637,7 +637,7 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
 
       // Seasonal trends
       const monthlyConsumption = movements?.reduce((acc, movement) => {
-        const month = format(new Date(movement.movement_date), 'yyyy-MM');
+        const month = businessClock.format(movement.movement_date, 'yyyy-MM');
         const category = movement.inventory_items?.inventory_categories?.name || 'Sin categoría';
         
         if (!acc[month]) {

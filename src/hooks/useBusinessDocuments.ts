@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+import { addCalendarDays } from '@/utils/calendarDate';
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -106,11 +108,8 @@ export const useBusinessDocuments = (filters: BusinessDocumentFilters = {}) => {
   const queryKey = useMemo(() => ['business-documents', filters], [filters]);
 
   const listDocuments = useCallback(async (activeFilters: BusinessDocumentFilters = filters) => {
-    const today = new Date();
-    const soon = new Date();
-    soon.setDate(today.getDate() + 30);
-    const todayIso = today.toISOString().slice(0, 10);
-    const soonIso = soon.toISOString().slice(0, 10);
+    const todayIso = businessClock.today();
+    const soonIso = addCalendarDays(todayIso, 30);
 
     let query = supabase
       .from('business_documents')

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useMemo } from 'react';
 import { Cost } from '@/types/costs';
@@ -13,19 +14,19 @@ export const useDateFilters = (costs: Cost[]) => {
 
     // Filtrar costos de hoy
     const todayCosts = costs.filter(cost => {
-      const costDate = new Date(`${cost.date}T12:00:00Z`);
+      const costDate = parseDateValue(cost.date);
       return costDate.toDateString() === today.toDateString();
     });
 
     // Filtrar costos del mes actual
     const currentMonthCosts = costs.filter(cost => {
-      const costDate = new Date(`${cost.date}T12:00:00Z`);
+      const costDate = parseDateValue(cost.date);
       return costDate.getMonth() === currentMonth && costDate.getFullYear() === currentYear;
     });
 
     // Filtrar costos del mes anterior
     const previousMonthCosts = costs.filter(cost => {
-      const costDate = new Date(`${cost.date}T12:00:00Z`);
+      const costDate = parseDateValue(cost.date);
       return costDate.getMonth() === previousMonth && costDate.getFullYear() === previousMonthYear;
     });
 

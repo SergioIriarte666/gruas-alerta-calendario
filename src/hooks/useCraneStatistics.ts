@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
@@ -56,7 +57,7 @@ export const useCraneStatistics = (craneId: string) => {
 
       const currentYear = businessClock.todayDate().getFullYear();
       const currentServices = services?.filter(s => 
-        new Date(s.service_date).getFullYear() === currentYear
+        parseDateValue(s.service_date).getFullYear() === currentYear
       ) || [];
 
       const completedServices = currentServices.filter(s => s.status === 'completed');
@@ -71,7 +72,7 @@ export const useCraneStatistics = (craneId: string) => {
       // Calcular estadísticas mensuales
       const monthlyData = Array(12).fill(0).map((_, month) => {
         const monthServices = currentServices.filter(service => 
-          new Date(service.service_date).getMonth() === month
+          parseDateValue(service.service_date).getMonth() === month
         );
         const monthCompletedServices = monthServices.filter(s => s.status === 'completed');
         const monthRevenue = monthCompletedServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
@@ -88,7 +89,7 @@ export const useCraneStatistics = (craneId: string) => {
       // Calcular costos de mantenimiento por mes
       const maintenanceCosts = Array(12).fill(0).map((_, month) => {
         const monthMaintenance = maintenanceData?.filter(m => 
-          m.completed_date && new Date(m.completed_date).getMonth() === month
+          m.completed_date && parseDateValue(m.completed_date).getMonth() === month
         ) || [];
         return monthMaintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
       });
@@ -96,7 +97,7 @@ export const useCraneStatistics = (craneId: string) => {
       // Estimar consumo de combustible (usando costos de combustible como proxy)
       const fuelConsumption = Array(12).fill(0).map((_, month) => {
         const monthFuel = fuelCosts?.filter(f => 
-          new Date(f.date).getMonth() === month
+          parseDateValue(f.date).getMonth() === month
         ) || [];
         const monthFuelCost = monthFuel.reduce((sum, f) => sum + (f.amount || 0), 0);
         // Estimar litros asumiendo $1000 CLP por litro (aproximado)
@@ -109,7 +110,7 @@ export const useCraneStatistics = (craneId: string) => {
       
       // Calcular crecimiento año anterior (simplificado)
       const previousYearServices = services?.filter(s => 
-        new Date(s.service_date).getFullYear() === currentYear - 1
+        parseDateValue(s.service_date).getFullYear() === currentYear - 1
       ) || [];
       
       const yearOverYearGrowth = previousYearServices.length > 0 

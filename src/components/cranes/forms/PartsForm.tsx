@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ interface PartsFormProps {
 type FormData = Omit<CreateCranePartData, 'crane_id' | 'created_by'>;
 
 export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(editingPart ? new Date(editingPart.date) : businessClock.now());
+  const [selectedDate, setSelectedDate] = useState<Date>(editingPart ? parseDateValue(editingPart.date) : businessClock.todayDate());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<SimilarItem | null>(null);
   const [confirmCreateNew, setConfirmCreateNew] = useState(false);
@@ -100,7 +101,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
   const handleClose = () => {
     reset();
-    setSelectedDate(businessClock.now());
+    setSelectedDate(businessClock.todayDate());
     setConfirmCreateNew(false);
     setShowDetailsModal(false);
     setSelectedProductForDetails(null);

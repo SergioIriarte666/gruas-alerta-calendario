@@ -1,8 +1,9 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
 import { useCallback, useMemo } from 'react';
 import { useToast } from '@/components/ui/custom-toast';
 import { useSettings } from '@/hooks/useSettings';
 import { exportServiceReport } from '@/utils/reports/serviceReportExporter';
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { Service, ServiceStatus } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
@@ -100,7 +101,7 @@ export const usePipelineServiceExport = (
         invoiceFolio: service.invoiceFolio || '',
         invoiceNumeroFiscal: service.invoiceNumeroFiscal || '',
         observations: service.observations || '',
-      daysInStatus: differenceInDays(businessClock.now(), parseFromDatabase(service.serviceDate)),
+      daysInStatus: differenceInCalendarDates(businessClock.today(), service.serviceDate),
       hasExcess: service.hasExcess || false,
       clientCoveredAmount: service.clientCoveredAmount,
     }));

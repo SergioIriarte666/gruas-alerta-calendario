@@ -1,12 +1,13 @@
+import { businessClock } from '@/utils/businessClock';
 import { useClientMetrics } from '@/hooks/useClientMetrics';
 import { Client } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  CreditCard, 
-  Clock, 
-  CheckCircle, 
+import {
+  TrendingUp,
+  CreditCard,
+  Clock,
+  CheckCircle,
   AlertTriangle,
   Calendar,
   BarChart3,
@@ -33,12 +34,12 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
           <div className="flex items-center gap-2">
             <p className="text-sm text-muted-foreground">{title}</p>
             {trend && (
-              <TrendingUp 
+              <TrendingUp
                 className={`size-3 ${
                   trend === 'up' ? 'text-success' :
                   trend === 'down' ? 'text-danger rotate-180' :
                   'text-muted-foreground'
-                }`} 
+                }`}
               />
             )}
           </div>
@@ -205,7 +206,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Último servicio</span>
                 <span className="text-sm font-medium text-foreground">
-                  {formatForDisplay(new Date(metrics.lastServiceDate))}
+                  {formatForDisplay(metrics.lastServiceDate)}
                 </span>
               </div>
             )}
@@ -213,7 +214,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Última factura</span>
                 <span className="text-sm font-medium text-foreground">
-                  {formatForDisplay(new Date(metrics.lastInvoiceDate))}
+                  {formatForDisplay(metrics.lastInvoiceDate)}
                 </span>
               </div>
             )}
@@ -232,9 +233,9 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               {metrics.monthlyTrend.map((month) => (
                 <div key={month.month} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {new Date(month.month + '-01').toLocaleDateString('es-CL', { 
-                      year: 'numeric', 
-                      month: 'long' 
+                    {businessClock.dateLabel(month.month + '-01', 'es-CL', {
+                      year: 'numeric',
+                      month: 'long'
                     })}
                   </span>
                   <span className="text-sm font-medium text-foreground">

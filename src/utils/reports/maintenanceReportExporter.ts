@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate } from 'date-fns';
+
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { MaintenanceReportData, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
@@ -166,8 +166,8 @@ export const exportMaintenanceReport = async ({
           'Costo Partes': c.totalPartsCost,
           'Costo Total': c.totalMaintenanceCost + c.totalPartsCost,
           'Intervenciones': c.interventionCount,
-          'Último Mantenimiento': c.lastMaintenance ? businessClock.format(new Date(c.lastMaintenance), 'dd/MM/yyyy') : 'N/A',
-          'Próximo Mantenimiento': c.nextMaintenance ? businessClock.format(new Date(c.nextMaintenance), 'dd/MM/yyyy') : 'N/A',
+          'Último Mantenimiento': c.lastMaintenance ? businessClock.format(c.lastMaintenance, 'dd/MM/yyyy') : 'N/A',
+          'Próximo Mantenimiento': c.nextMaintenance ? businessClock.format(c.nextMaintenance, 'dd/MM/yyyy') : 'N/A',
         }))
       );
       XLSX.utils.book_append_sheet(wb, crane_ws, 'Análisis por Grúa');
@@ -215,7 +215,7 @@ export const exportMaintenanceReport = async ({
     if (data.monthlyTrends.length > 0) {
       const trends_ws = XLSX.utils.json_to_sheet(
         data.monthlyTrends.map(t => ({
-          'Mes': formatDate(new Date(t.month + '-01'), 'MMM yyyy', { locale: es }),
+          'Mes': businessClock.format(t.month + '-01', 'MMM yyyy', { locale: es }),
           'Costo Mantenimiento': t.maintenanceCost,
           'Costo Partes': t.partsCost,
           'Total': t.maintenanceCost + t.partsCost,

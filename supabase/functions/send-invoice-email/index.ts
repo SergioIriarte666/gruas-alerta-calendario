@@ -1,3 +1,4 @@
+import { formatDocumentDate } from '../_shared/calendarDate.ts';
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
@@ -111,8 +112,8 @@ const handler = async (req: Request): Promise<Response> => {
     const companyRut = companyData?.rut || '';
 
     // Formatear fechas
-    const formattedIssueDate = new Date(issueDate).toLocaleDateString('es-CL');
-    const formattedDueDate = new Date(dueDate).toLocaleDateString('es-CL');
+    const formattedIssueDate = formatDocumentDate(issueDate);
+    const formattedDueDate = formatDocumentDate(dueDate);
 
     // Formatear total
     const formattedTotal = new Intl.NumberFormat('es-CL', {
@@ -125,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
     const servicesTable = services.map(service => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #ddd;">${escapeHtml(service.folio)}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${new Date(service.serviceDate).toLocaleDateString('es-CL')}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${formatDocumentDate(service.serviceDate)}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd;">${escapeHtml(service.serviceType)}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(service.value)}</td>
       </tr>

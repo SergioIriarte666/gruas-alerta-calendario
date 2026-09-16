@@ -14,7 +14,9 @@
  * app para precargar el cache. Después todas las funciones son síncronas.
  */
 
-import { formatInTimeZone } from 'date-fns-tz';
+import { DATE_ONLY_PATTERN, calendarDateString, formatCalendarDate } from './calendarDate';
+import type { FormatOptionsWithTZ } from 'date-fns-tz';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { createLogger } from "@/lib/logger";
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,20 +33,15 @@ async function fetchTimezone(): Promise<string> {
   try {
     const { data } = await supabase
       .from('company_data')
-      .select('report_timezone, report_use_system_timezone')
+      .select('report_timezone')
       .limit(1)
       .maybeSingle();
 
     if (!data) return FALLBACK_TZ;
 
-    if (data.report_use_system_timezone) {
-      try {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TZ;
-      } catch {
-        return FALLBACK_TZ;
-      }
-    }
-    return data.report_timezone || FALLBACK_TZ;
+    const configured = data.report_timezone || FALLBACK_TZ;
+    new Intl.DateTimeFormat('en', { timeZone: configured });
+    return configured;
   } catch (err) {
     logger.warn('[businessClock] No se pudo cargar TZ del negocio, usando fallback:', err);
     return FALLBACK_TZ;
@@ -132,28 +129,34 @@ function todayDate(): Date {
  */
 function toTimestamp(date: string | Date): string {
   const todayStr = today();
-  let dateStr: string;
-  if (typeof date === 'string') {
-    dateStr = date.length >= 10 ? date.slice(0, 10) : todayStr;
-  } else {
-    dateStr = formatInTimeZone(date, timezone(), 'yyyy-MM-dd');
-  }
+  const dateStr = calendarDateString(date);
   if (dateStr === todayStr) {
     // Mismo día → usar la hora actual real
     return nowISO();
   }
   // Día distinto → mediodía en TZ negocio (sin desfase visual)
   return formatInTimeZone(
-    new Date(`${dateStr}T12:00:00Z`),
+    fromZonedTime(`${dateStr}T12:00:00`, timezone()),
     timezone(),
     "yyyy-MM-dd'T'HH:mm:ssXXX",
   );
 }
 
 /** Format helper que respeta la TZ del negocio. */
-function format(date: Date | string, fmt: string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return formatInTimeZone(d, timezone(), fmt);
+function format(date: Date | string | number, fmt: string, options?: FormatOptionsWithTZ): string {
+  if (typeof date === 'string' && DATE_ONLY_PATTERN.test(date)) {
+    return formatCalendarDate(date, fmt, options);
+  }
+  const d = date instanceof Date ? date : new Date(date);
+  return formatInTimeZone(d, timezone(), fmt, options);
+}
+
+/** Locale date labels distinguish date-only documents from actual instants. */
+function dateLabel(value: string | Date | number, locales: string | string[] = 'es-CL', options: Intl.DateTimeFormatOptions = {}): string {
+  const dateOnly = typeof value === 'string' && DATE_ONLY_PATTERN.test(value);
+  if (dateOnly) calendarDateString(value);
+  const date = dateOnly ? new Date(`${value}T12:00:00Z`) : new Date(value);
+  return date.toLocaleDateString(locales, { ...options, timeZone: dateOnly ? 'UTC' : timezone() });
 }
 
 export const businessClock = {
@@ -166,6 +169,7 @@ export const businessClock = {
   todayDate,
   toTimestamp,
   format,
+  dateLabel,
 };
 
 // Auto-invalidar cache cuando el usuario cambia la TZ en Configuración

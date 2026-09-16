@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -207,7 +209,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
                         <TableCell className="text-foreground">{item.crane_license_plate}</TableCell>
                         <TableCell className="text-foreground">{item.supplier}</TableCell>
                         <TableCell className="text-foreground">
-                          {format(new Date(item.purchase_date), 'dd/MM/yyyy', { locale: es })}
+                          {businessClock.format(item.purchase_date, 'dd/MM/yyyy', { locale: es })}
                         </TableCell>
                         <TableCell className="text-foreground">
                           ${item.purchase_cost.toLocaleString('es-CL')}

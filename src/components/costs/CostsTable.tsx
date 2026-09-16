@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import {
     Table,
     TableBody,
@@ -13,7 +14,7 @@ import { format } from 'date-fns';
 import { Cost } from '@/types/costs';
 import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
@@ -72,8 +73,8 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                 <TableRow key={cost.id} className="border-border/70">
                                     <TableCell className="text-foreground">
                                         {cost.cost_categories?.name === 'Comisión Operador' && cost.payment_date 
-                                            ? formatForDisplay(parseFromDatabase(cost.payment_date))
-                                            : formatForDisplay(parseFromDatabase(cost.date))
+                                            ? formatForDisplay(cost.payment_date)
+                                            : formatForDisplay(cost.date)
                                         }
                                     </TableCell>
                                     <TableCell className="font-medium text-foreground">{cost.description}</TableCell>
@@ -84,7 +85,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                             <Tooltip>
                                                 <TooltipTrigger>
                                                     {cost.payment_date ? (
-                                                        new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.now() ? (
+                                                        cost.payment_date > businessClock.today() ? (
                                                             <CalendarClock className="mx-auto size-5 text-warning" />
                                                         ) : (
                                                             <CheckCircle className="mx-auto size-5 text-success" />
@@ -95,8 +96,8 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     {cost.payment_date
-                                                        ? new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.todayDate()
-                                                            ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
+                                                        ? parseDateValue(cost.payment_date) > businessClock.todayDate()
+                                                            ? `Pago programado - ${businessClock.format(cost.payment_date, 'dd/MM/yyyy')}`
                                                             : 'Pagado'
                                                         : 'Pendiente'}
                                                 </TooltipContent>

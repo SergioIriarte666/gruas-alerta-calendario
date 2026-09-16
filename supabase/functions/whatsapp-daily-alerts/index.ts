@@ -8,7 +8,6 @@ const corsHdrs = (req: Request) => ({
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 });
 
-const TZ = "America/Santiago";
 
 // Kill switch de las alertas de documentos (admin_doc_op_* / admin_doc_grua_*).
 // Las 4 plantillas fueron aprobadas por Meta el 2026-06-10 (es_CL, Utilidad,
@@ -23,8 +22,8 @@ const SERVICE_RISK_ALERTS_ENABLED = true;
 // settings.notify_operator_self_document (master switch respetado).
 const OPERATOR_SELF_ALERTS_ENABLED = true;
 
-function today(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
+function today(timeZone: string): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone });
 }
 function addDaysISO(iso: string, days: number): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
@@ -178,7 +177,8 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const todayISO = today();
+  const { data: company } = await supabase.from("company_data").select("report_timezone").limit(1).maybeSingle();
+  const todayISO = today(company?.report_timezone || "America/Santiago");
   const tomorrowISO = addDaysISO(todayISO, 1);
   const results: Record<string, unknown> = {};
   const activeUpcomingServiceStatuses = [

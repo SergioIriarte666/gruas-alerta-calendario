@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -344,10 +346,10 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {format(new Date(movement.movement_date), 'dd/MM/yyyy')}
+                            {businessClock.format(movement.movement_date, 'dd/MM/yyyy')}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {format(new Date(movement.movement_date), 'HH:mm')}
+                            {businessClock.format(movement.movement_date, 'HH:mm')}
                           </div>
                         </div>
                       </TableCell>
@@ -473,8 +475,8 @@ export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ en
               searchTerm: debouncedSearch,
               typeFilter,
               locationFilter,
-              dateFrom: dateFrom ? new Date(`${dateFrom}T12:00:00`) : undefined,
-              dateTo: dateTo ? new Date(`${dateTo}T12:00:00`) : undefined,
+              dateFrom: dateFrom ? parseDateValue(dateFrom) : undefined,
+              dateTo: dateTo ? parseDateValue(dateTo) : undefined,
             }}
             onClose={() => setShowExportOptions(false)}
           />

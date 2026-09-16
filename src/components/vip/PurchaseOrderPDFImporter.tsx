@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Service } from '@/types';
@@ -227,7 +229,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                   return (
                                     <SelectItem key={cand.id} value={cand.id} className="text-xs font-mono">
                                       {cand.folio}
-                                      {cand.serviceDate && ` (${format(new Date(cand.serviceDate), 'dd/MM')})`}
+                                      {cand.serviceDate && ` (${businessClock.format(cand.serviceDate, 'dd/MM')})`}
                                       {cand.quoteNumber ? ` · Cot: ${cand.quoteNumber}` : ''}
                                       {oc ? ` · ${oc}` : ' · sin OC'}
                                     </SelectItem>
@@ -254,7 +256,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                             {match.service.folio}
                             {match.service.serviceDate && (
                               <span className="text-muted-foreground ml-1 no-underline">
-                                ({format(new Date(match.service.serviceDate), 'dd/MM')})
+                                ({businessClock.format(match.service.serviceDate, 'dd/MM')})
                               </span>
                             )}
                             {match.service.quoteNumber && (
@@ -329,7 +331,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                       </div>
                                       <div className="text-muted-foreground">
                                         {c.service.licensePlate || '—'} · {formatCurrency(c.service.value, getUserCurrencySync())}
-                                        {c.service.serviceDate && ` · ${format(new Date(c.service.serviceDate), 'dd/MM/yy')}`}
+                                        {c.service.serviceDate && ` · ${businessClock.format(c.service.serviceDate, 'dd/MM/yy')}`}
                                         {c.service.quoteNumber && ` · Cot: ${c.service.quoteNumber}`}
                                       </div>
                                       <div className="text-primary">{c.reasons.join(' + ')}</div>

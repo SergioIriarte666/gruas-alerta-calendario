@@ -21,7 +21,9 @@
     "sync:ios": "npm run build:operator-mobile && npx cap sync ios",
     "sync:android": "npm run build:operator-mobile && npx cap sync android",
     "release:bundle": "node scripts/publish-bundle.mjs",
-    "knip": "knip"
+    "knip": "knip",
+    "check:dates": "node scripts/check-calendar-dates.mjs",
+    "test:dates": "vitest run src/utils/__tests__/calendarDate.test.ts src/utils/__tests__/invoiceUtils.test.ts src/components/invoices/__tests__/InvoiceSummaryPanel.dates.test.tsx"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",

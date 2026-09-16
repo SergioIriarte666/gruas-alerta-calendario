@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import { ExportSupplierPaymentReportArgs } from './reportTypes';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -133,11 +135,11 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
     let dateRangeText = `• ${dateTypeLabel}:`;
     
     if (filters.dateFrom && filters.dateTo) {
-      dateRangeText += ` desde ${format(new Date(filters.dateFrom), 'dd/MM/yyyy')} hasta ${format(new Date(filters.dateTo), 'dd/MM/yyyy')}`;
+      dateRangeText += ` desde ${businessClock.format(filters.dateFrom, 'dd/MM/yyyy')} hasta ${businessClock.format(filters.dateTo, 'dd/MM/yyyy')}`;
     } else if (filters.dateFrom) {
-      dateRangeText += ` desde ${format(new Date(filters.dateFrom), 'dd/MM/yyyy')}`;
+      dateRangeText += ` desde ${businessClock.format(filters.dateFrom, 'dd/MM/yyyy')}`;
     } else if (filters.dateTo) {
-      dateRangeText += ` hasta ${format(new Date(filters.dateTo), 'dd/MM/yyyy')}`;
+      dateRangeText += ` hasta ${businessClock.format(filters.dateTo, 'dd/MM/yyyy')}`;
     }
     
     doc.text(dateRangeText, 14, yPos);
@@ -183,7 +185,7 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
     payment.description,
     getCategoryLabel(payment.category),
     `$${payment.amount.toLocaleString()}`,
-    format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+    businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es }),
     getStatusLabel(payment.status),
     payment.reference_number || '-'
   ]);
@@ -268,8 +270,8 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
     ['Búsqueda:', filters.searchTerm || 'Sin filtros'],
     ...(filters.dateFrom || filters.dateTo ? [
       ['Tipo de fecha:', getDateTypeLabel(filters.dateType || 'due_date')],
-      ...(filters.dateFrom ? [['Fecha desde:', format(new Date(filters.dateFrom), 'dd/MM/yyyy')]] : []),
-      ...(filters.dateTo ? [['Fecha hasta:', format(new Date(filters.dateTo), 'dd/MM/yyyy')]] : [])
+      ...(filters.dateFrom ? [['Fecha desde:', businessClock.format(filters.dateFrom, 'dd/MM/yyyy')]] : []),
+      ...(filters.dateTo ? [['Fecha hasta:', businessClock.format(filters.dateTo, 'dd/MM/yyyy')]] : [])
     ] : []),
     [''],
     ['Métricas:'],
@@ -307,10 +309,10 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
       payment.description,
       getCategoryLabel(payment.category),
       payment.amount,
-      format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+      businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es }),
       getStatusLabel(payment.status),
       payment.reference_number || '-',
-      format(new Date(payment.created_at), 'dd/MM/yyyy', { locale: es })
+      businessClock.format(payment.created_at, 'dd/MM/yyyy', { locale: es })
     ]);
   });
   
@@ -362,7 +364,7 @@ const calculateMetrics = (payments: any[], filters: any) => {
   };
   
   payments.forEach(payment => {
-    const dueDate = new Date(payment.due_date);
+    const dueDate = parseDateValue(payment.due_date);
     
     if (payment.status === 'pending') {
       metrics.pendingCount++;
@@ -373,7 +375,7 @@ const calculateMetrics = (payments: any[], filters: any) => {
     }
     
     if (filters.reportType === 'future' && payment.status === 'pending') {
-      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = differenceInCalendarDates(dueDate, today);
       
       if (daysUntilDue <= 7) {
         metrics.next7Days++;

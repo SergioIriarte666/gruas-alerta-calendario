@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MaintenanceReportData } from '@/hooks/reports/useMaintenanceReport';
@@ -19,7 +21,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-CL');
+    return businessClock.dateLabel(dateString, 'es-CL');
   };
 
   const getTrendColor = (trend: 'increasing' | 'stable' | 'decreasing') => {

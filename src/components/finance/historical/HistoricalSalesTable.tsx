@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import {
   Table,
   TableBody,
@@ -247,7 +249,7 @@ export const HistoricalSalesTable = ({
                 </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">
-                  {format(new Date(invoice.issueDate), 'dd MMM yyyy', { locale: es })}
+                  {businessClock.format(invoice.issueDate, 'dd MMM yyyy', { locale: es })}
                 </TableCell>
                 <TableCell className="font-semibold text-sm">
                     {formatCurrency(invoice.total)}

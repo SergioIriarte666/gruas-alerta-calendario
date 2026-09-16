@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,7 +121,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
             <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
               <CreditCard className="size-3" />
               Pago: {payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
-              {payment.paid_date && ` (${format(new Date(payment.paid_date), 'dd/MM', { locale: es })})`}
+              {payment.paid_date && ` (${businessClock.format(payment.paid_date, 'dd/MM', { locale: es })})`}
             </Badge>
           </>
         )}

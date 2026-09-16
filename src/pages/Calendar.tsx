@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, CalendarClock } from 'lucide-react';
 import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
@@ -28,7 +28,7 @@ const Calendar = () => {
     getEventsForDate 
   } = useCalendar();
   
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(businessClock.todayDate());
 
   // Count upcoming service events for awareness (today and onwards)
   const upcomingCounts = useMemo(() => {

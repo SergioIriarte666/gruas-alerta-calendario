@@ -1,3 +1,6 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue as parseCalendarValue } from '@/utils/calendarDate';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -98,12 +101,12 @@ const relatedEntityLabel = (value: string | null) =>
 
 const formatDate = (value: string | null) => {
   if (!value) return '-';
-  return new Date(`${value}T12:00:00`).toLocaleDateString('es-CL');
+  return businessClock.dateLabel(value, 'es-CL');
 };
 
 const parseDateValue = (value?: string | null) => {
   if (!value) return undefined;
-  return new Date(`${value}T12:00:00`);
+  return parseCalendarValue(value);
 };
 
 const toDateValue = (date?: Date) => {
@@ -162,10 +165,10 @@ const formatBytes = (bytes: number | null) => {
 
 const getExpiryState = (expiresAt: string | null) => {
   if (!expiresAt) return 'none';
-  const today = new Date();
+  const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
-  const expiry = new Date(`${expiresAt}T12:00:00`);
-  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const expiry = parseDateValue(expiresAt);
+  const diffDays = differenceInCalendarDates(expiry, today);
 
   if (diffDays < 0) return 'expired';
   if (diffDays <= 30) return 'soon';

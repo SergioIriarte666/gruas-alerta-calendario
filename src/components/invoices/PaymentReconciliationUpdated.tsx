@@ -1,3 +1,4 @@
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -459,7 +460,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <TableRow key={payment.id}>
                     <TableCell>{payment.client?.name ? toTitleCase(payment.client.name) : 'Cliente no encontrado'}</TableCell>
                     <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatForDisplay(payment.payment_date)}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
                     <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
                     <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
@@ -519,7 +520,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     <TableRow key={payment.id}>
                       <TableCell>{payment.client?.name ? toTitleCase(payment.client.name) : 'Cliente no encontrado'}</TableCell>
                       <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatForDisplay(payment.payment_date)}</TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
                       <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
                       <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>

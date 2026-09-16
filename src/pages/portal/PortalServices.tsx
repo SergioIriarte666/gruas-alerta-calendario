@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useMemo, useState } from "react";
 import {
   addDays,
@@ -87,7 +88,7 @@ const PortalServices = () => {
       if (a.is_portal_request && !b.is_portal_request) return -1;
       if (!a.is_portal_request && b.is_portal_request) return 1;
       return (
-        new Date(b.service_date).getTime() - new Date(a.service_date).getTime()
+        parseDateValue(b.service_date).getTime() - parseDateValue(a.service_date).getTime()
       );
     });
   }, [monthServices]);
@@ -145,8 +146,8 @@ const PortalServices = () => {
           break;
         case "service_date":
           comparison =
-            new Date(a.service_date).getTime() -
-            new Date(b.service_date).getTime();
+            parseDateValue(a.service_date).getTime() -
+            parseDateValue(b.service_date).getTime();
           break;
         case "vehicle":
           comparison = formatVehicleInfo(a).localeCompare(

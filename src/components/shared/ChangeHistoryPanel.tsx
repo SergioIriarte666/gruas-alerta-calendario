@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -48,7 +50,7 @@ export const ChangeHistoryPanel: React.FC<Props> = ({ changes, isLoading }) => {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock className="size-3.5" />
-                {format(new Date(group.date), "dd 'de' MMMM yyyy, HH:mm", { locale: es })}
+                {businessClock.format(group.date, "dd 'de' MMMM yyyy, HH:mm", { locale: es })}
               </div>
             </div>
             <div className="space-y-2 pl-6 border-l-2 border-primary/20">

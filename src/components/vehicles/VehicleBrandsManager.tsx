@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -234,7 +235,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
               <TableRow key={brand.id} className="hover:bg-accent/40">
                 <TableCell className="font-medium">{brand.name}</TableCell>
                 <TableCell>
-                  {new Date(brand.created_at).toLocaleDateString('es-CL')}
+                  {businessClock.dateLabel(brand.created_at, 'es-CL')}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-x-2">

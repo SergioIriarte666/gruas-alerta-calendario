@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useFolioValidation } from '@/hooks/services/useFolioValidation';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 
 interface FolioInputProps {
@@ -117,7 +117,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     }
     
     if (validation.error && validation.existingService) {
-      const createdDate = formatForDisplay(parseFromDatabase(validation.existingService.createdAt));
+      const createdDate = formatForDisplay(validation.existingService.createdAt);
       return (
         <div className="text-sm text-danger-text">
           <div className="font-medium">❌ {validation.error}</div>

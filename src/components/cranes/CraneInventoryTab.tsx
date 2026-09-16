@@ -1,3 +1,5 @@
+import { getBusinessTimestampBounds } from '@/utils/timezoneUtils';
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,8 +66,8 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
   const reportRange = useMemo(() => {
     if (!reportDateFrom || !reportDateTo) return null;
-    const start = new Date(`${reportDateFrom}T12:00:00Z`);
-    const end = new Date(`${reportDateTo}T12:00:00Z`);
+    const start = parseDateValue(reportDateFrom);
+    const end = parseDateValue(reportDateTo);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
     return { start, end };
   }, [reportDateFrom, reportDateTo]);
@@ -148,8 +150,9 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
     setIsGeneratingPdf(true);
     try {
       const company = settings.company;
-      const startIso = reportRange.start.toISOString();
-      const endIso = reportRange.end.toISOString();
+      const bounds = getBusinessTimestampBounds(reportDateFrom, reportDateTo);
+      const startIso = bounds.gte!;
+      const endIso = bounds.lte!;
 
       const [inventoryRes, maintenanceRes] = await Promise.all([
         supabase
@@ -366,7 +369,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       })();
 
       const inventoryRows = inventoryMovementsDeduped.map((m) => {
-        const dateLabel = m.movement_date ? format(new Date(m.movement_date), 'dd/MM/yyyy HH:mm', { locale: es }) : '-';
+        const dateLabel = m.movement_date ? businessClock.format(m.movement_date, 'dd/MM/yyyy HH:mm', { locale: es }) : '-';
         const typeLabel = getMovementTypeLabelForReport(m.movement_type || '');
         const userLabel = m.creator?.full_name || m.creator?.email || m.created_by || '-';
         const productLabel = m.item?.name || '-';
@@ -434,7 +437,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       const maintenanceRows = maintenanceRecords.map((m) => {
         const dateSource = m.completed_date || m.scheduled_date || m.created_at;
-        const dateLabel = dateSource ? format(new Date(dateSource), 'dd/MM/yyyy', { locale: es }) : '-';
+        const dateLabel = dateSource ? businessClock.format(dateSource, 'dd/MM/yyyy', { locale: es }) : '-';
         const typeLabel = getMaintenanceTypeLabel(m.maintenance_type || '');
         const performedByLabel = (m as any).performed_by || '-';
         const userLabel = m.creator?.full_name || m.creator?.email || m.created_by || '-';
@@ -791,7 +794,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(movement.movement_date), 'dd/MM/yyyy', { locale: es })}
+                      {businessClock.format(movement.movement_date, 'dd/MM/yyyy', { locale: es })}
                     </p>
                   </div>
                 </div>
@@ -820,7 +823,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
             <p className="text-muted-foreground">
               Último consumo de inventario registrado el{' '}
               <span className="text-primary font-medium">
-                {format(new Date(metrics.lastMovementDate), 'dd/MM/yyyy HH:mm', { locale: es })}
+                {businessClock.format(metrics.lastMovementDate, 'dd/MM/yyyy HH:mm', { locale: es })}
               </span>
             </p>
           </CardContent>

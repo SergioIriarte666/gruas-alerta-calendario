@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,7 +17,7 @@ const DARK_TEXT = REPORT_PDF_COLORS.ink;
 
 const formatDate = (dateStr: string): string => {
   try {
-    const date = new Date(dateStr);
+    const date = parseDateValue(dateStr);
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear().toString().slice(-2);

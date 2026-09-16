@@ -30,7 +30,7 @@ export const useInspectionEmail = () => {
           clientName: service.client?.name || 'Cliente',
           clientEmail: service.client?.email || 'cliente@example.com',
           operatorName: service.operator?.name || 'Operador',
-          serviceDate: service.serviceDate || businessClock.format(businessClock.now(), 'dd/MM/yyyy'),
+          serviceDate: service.serviceDate || businessClock.today(),
           equipmentCount: inspection.equipment?.length || 0,
           phase,
         },

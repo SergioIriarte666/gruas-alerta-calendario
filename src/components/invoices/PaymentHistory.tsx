@@ -1,3 +1,4 @@
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import React, { useState, useEffect } from 'react';
 import { usePayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
@@ -255,8 +256,8 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                       {historyData.invoices.map((invoice: any) => (
                         <TableRow key={invoice.id}>
                           <TableCell className="text-foreground font-medium">{invoice.folio}</TableCell>
-                          <TableCell className="text-foreground">{new Date(invoice.issue_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-foreground">{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-foreground">{formatForDisplay(invoice.issue_date)}</TableCell>
+                          <TableCell className="text-foreground">{formatForDisplay(invoice.due_date)}</TableCell>
                           <TableCell className="text-foreground">{formatCurrency(invoice.total)}</TableCell>
                           <TableCell className="text-foreground">{formatCurrency(invoice.paid_amount)}</TableCell>
                           <TableCell className="text-foreground">{formatCurrency(invoice.remaining_amount)}</TableCell>

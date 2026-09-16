@@ -1,6 +1,6 @@
 import { businessClock } from '@/utils/businessClock';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,7 +55,7 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
   };
 
   const getDefaultDescription = (subcategoryName: string) => {
-    const now = businessClock.now();
+    const now = businessClock.todayDate();
     const dateString = businessClock.format(now, 'dd/MM/yyyy');
     const timeString = businessClock.format(now, 'HH:mm');
     const serviceInfo = baseData.service_folio ? ` - ${baseData.service_folio}` : '';

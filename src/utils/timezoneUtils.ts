@@ -1,5 +1,6 @@
+import { DATE_ONLY_PATTERN, calendarDateString, parseDateValue, differenceInCalendarDates, addCalendarDays } from './calendarDate';
 
-import { parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 'date-fns';
 import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { businessClock } from './businessClock';
@@ -112,14 +113,12 @@ export const fromChileTime = (date: Date): Date => {
 
 // Format date in user's timezone
 export const formatInChileTime = (date: Date | string, formatStr: string = 'yyyy-MM-dd'): string => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return formatInTimeZone(dateObj, getUserTimezoneSync(), formatStr);
+  return businessClock.format(date, formatStr);
 };
 
 // Format date for display in user's timezone with locale
 export const formatDateForDisplay = (date: Date | string): string => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return formatInTimeZone(dateObj, getUserTimezoneSync(), 'PPP', { locale: es });
+  return businessClock.format(date, 'PPP', { locale: es });
 };
 
 // ===================== FECHAS ACTUALES EN ZONA HORARIA CHILE =====================
@@ -206,26 +205,9 @@ export const createLocalDateFromCalendar = (calendarDate: Date): Date => {
 // Format date for form input (yyyy-MM-dd) manteniendo fecha exacta
 export const formatForInput = (date: Date | string): string => {
   if (!date) return '';
-  
-  let dateObj: Date;
-  
-  if (typeof date === 'string') {
-    // Si es string yyyy-MM-dd, parsearlo como fecha local sin conversión timezone
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return date; // Ya está en formato correcto
-    }
-    // Si es ISO string, convertir a Chile timezone
-    dateObj = parseISO(date);
-  } else {
-    dateObj = date;
-  }
-  
-  // Formatear la fecha manteniendo el día exacto (sin conversiones UTC)
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}`;
+  return typeof date === 'string' && !DATE_ONLY_PATTERN.test(date)
+    ? businessClock.format(date, 'yyyy-MM-dd')
+    : calendarDateString(date);
 };
 
 // Parse date from form input creando fecha local (sin conversión timezone)
@@ -238,64 +220,21 @@ export const parseFromInput = (dateString: string): Date => {
     return fallback;
   }
   
-  // Crear fecha local interpretando el string directamente
-  const [year, month, day] = dateString.split('-').map(Number);
-  logger.debug('[parseFromInput] Parsed components:', { year, month, day });
-  
-  // Usar mediodía para evitar problemas de DST
-  const localDate = new Date(year, month - 1, day, 12, 0, 0);
-  logger.debug('[parseFromInput] Created Date object:', localDate);
-  logger.debug('[parseFromInput] Date components check - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
-  
-  return localDate;
+  return parseDateValue(dateString);
 };
 
 // ===================== UTILIDADES PARA BASE DE DATOS =====================
 
 // Convertir fecha de string de base de datos a Date manteniendo día exacto
 export const parseFromDatabase = (dateString: string): Date => {
-  if (!dateString) return getCurrentChileDate();
-  
-  // Si es formato yyyy-MM-dd, parsearlo como fecha local sin conversiones timezone
-  if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day, 12, 0, 0);
-  }
-  
-  // Si es ISO string con timezone, extraer solo la fecha y parsear como local
-  if (dateString.includes('T')) {
-    const dateOnly = dateString.split('T')[0];
-    const [year, month, day] = dateOnly.split('-').map(Number);
-    return new Date(year, month - 1, day, 12, 0, 0);
-  }
-  
-  // Fallback: crear fecha local directamente
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0);
+  if (!dateString) return new Date(NaN);
+  return parseDateValue(DATE_ONLY_PATTERN.test(dateString)
+    ? dateString
+    : businessClock.format(dateString, 'yyyy-MM-dd'));
 };
 
 // Convertir Date a string para base de datos (formato yyyy-MM-dd)
-export const formatForDatabase = (date: Date): string => {
-  logger.debug('[formatForDatabase] Input date:', date);
-  logger.debug('[formatForDatabase] Date type:', typeof date);
-  logger.debug('[formatForDatabase] Is Date instance:', date instanceof Date);
-  
-  if (!date) {
-    logger.debug('[formatForDatabase] No date provided, returning empty string');
-    return '';
-  }
-  
-  // Formatear fecha local sin conversiones timezone
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  
-  const result = `${year}-${month}-${day}`;
-  logger.debug('[formatForDatabase] Components - Year:', year, 'Month:', month, 'Day:', day);
-  logger.debug('[formatForDatabase] Final result:', result);
-  
-  return result;
-};
+export const formatForDatabase = (date: Date): string => calendarDateString(date);
 
 // ===================== UTILIDADES PARA COMPARACIONES =====================
 
@@ -343,24 +282,14 @@ export const formatForDisplay = (date: Date | string): string => {
   const userFormat = getUserDateFormat();
   const dateFnsFormat = convertUserFormatToDateFns(userFormat);
 
-  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return businessClock.format(new Date(`${date}T12:00:00Z`), dateFnsFormat);
-  }
-
-  if (date instanceof Date) {
-    return businessClock.format(date, dateFnsFormat);
-  }
-
-  return 'N/A';
+  return businessClock.format(date instanceof Date ? calendarDateString(date) : date, dateFnsFormat);
 };
 
 // Format date for display with locale (respects user timezone)
 export const formatForDisplayLong = (date: Date | string): string => {
   if (!date) return 'N/A';
   
-  const dateObj = typeof date === 'string' ? parseFromDatabase(date) : date;
-  const userTimezone = getUserTimezoneSync();
-  return formatInTimeZone(dateObj, userTimezone, "dd 'de' MMMM, yyyy", { locale: es });
+  return businessClock.format(date instanceof Date ? calendarDateString(date) : date, "dd 'de' MMMM, yyyy", { locale: es });
 };
 
 // Format date for display short using user's format but short year
@@ -368,10 +297,6 @@ export const formatForDisplayShort = (date: Date | string): string => {
   if (!date) return 'N/A';
 
   const userFormat = getUserDateFormat();
-  const dateObj = typeof date === 'string'
-    ? (date.match(/^\d{4}-\d{2}-\d{2}$/) ? new Date(`${date}T12:00:00Z`) : parseFromDatabase(date))
-    : date;
-
   let shortFormat: string;
   switch (userFormat) {
     case 'MM/DD/YYYY': shortFormat = 'MM/dd/yy'; break;
@@ -380,16 +305,14 @@ export const formatForDisplayShort = (date: Date | string): string => {
     default: shortFormat = 'dd/MM/yy';
   }
 
-  return businessClock.format(dateObj, shortFormat);
+  return businessClock.format(date instanceof Date ? calendarDateString(date) : date, shortFormat);
 };
 
 // Format date for alerts and notifications (dd MMM, respects user timezone)
 export const formatForAlert = (date: Date | string): string => {
   if (!date) return 'N/A';
   
-  const dateObj = typeof date === 'string' ? parseFromDatabase(date) : date;
-  const userTimezone = getUserTimezoneSync();
-  return formatInTimeZone(dateObj, userTimezone, 'dd MMM', { locale: es });
+  return businessClock.format(date instanceof Date ? calendarDateString(date) : date, 'dd MMM', { locale: es });
 };
 
 // Format date and time for display (respects user's timezone and format)
@@ -397,9 +320,7 @@ export const formatForDisplayWithTime = (date: Date | string): string => {
   if (!date) return 'N/A';
 
   const userFormat = getUserDateFormat();
-  const dateObj = typeof date === 'string'
-    ? (date.match(/^\d{4}-\d{2}-\d{2}$/) ? new Date(`${date}T12:00:00Z`) : new Date(date))
-    : date;
+  if (typeof date === 'string' && DATE_ONLY_PATTERN.test(date)) return formatForDisplay(date);
 
   let displayFormat: string;
   switch (userFormat) {
@@ -409,60 +330,23 @@ export const formatForDisplayWithTime = (date: Date | string): string => {
     default: displayFormat = 'dd/MM/yyyy HH:mm';
   }
 
-  return businessClock.format(dateObj, displayFormat);
+  return businessClock.format(date, displayFormat);
 };
 
 // ===================== BUSINESS TIMEZONE (SINGLE SOURCE OF TRUTH) =====================
-
-// Cache for business timezone from company_data
-let businessTimezoneCache: {
-  timezone: string;
-  lastUpdate: number;
-} | null = null;
-
-const BUSINESS_TZ_CACHE_DURATION = 60000; // 60 seconds
 
 /**
  * Get the business timezone from company_data.report_timezone (single source of truth).
  * This is used for all report/business date calculations.
  */
 export const getBusinessTimezone = async (): Promise<string> => {
-  const now = Date.now();
-  if (businessTimezoneCache && (now - businessTimezoneCache.lastUpdate) < BUSINESS_TZ_CACHE_DURATION) {
-    return businessTimezoneCache.timezone;
-  }
-
-  try {
-    if (typeof window !== 'undefined') {
-      const { data } = await supabase
-        .from('company_data')
-        .select('report_timezone, report_use_system_timezone')
-        .limit(1)
-        .maybeSingle();
-
-      if (data) {
-        let tz: string;
-        if (data.report_use_system_timezone) {
-          tz = getSystemTimezone();
-        } else {
-          tz = data.report_timezone || CHILE_TIMEZONE;
-        }
-        businessTimezoneCache = { timezone: tz, lastUpdate: now };
-        return tz;
-      }
-    }
-  } catch (error) {
-    logger.warn('Error fetching business timezone, using fallback:', error);
-  }
-
-  const fallback = CHILE_TIMEZONE;
-  businessTimezoneCache = { timezone: fallback, lastUpdate: now };
-  return fallback;
+  await businessClock.bootstrap();
+  return businessClock.timezone();
 };
 
 /** Invalidate business timezone cache */
 export const invalidateBusinessTimezoneCache = () => {
-  businessTimezoneCache = null;
+  businessClock.invalidate();
 };
 
 // ===================== SAFE DATE-ONLY HELPERS =====================
@@ -472,13 +356,7 @@ export const invalidateBusinessTimezoneCache = () => {
  * Returns components as { year, month, day } to avoid any Date object issues.
  * Using noon local time to prevent DST edge cases.
  */
-export const safeParseDateOnly = (dateStr: string): Date => {
-  if (!dateStr) return new Date();
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return new Date(dateStr);
-  const [, y, m, d] = match;
-  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
-};
+export const safeParseDateOnly = (date: string | Date): Date => parseDateValue(date);
 
 /**
  * Format a YYYY-MM-DD string to dd-MM-yyyy for display (pure string operation, no Date).
@@ -516,9 +394,7 @@ export const formatBusinessDateLong = (dateStr: string): string => {
  * Pure date-only arithmetic — no timezone shift possible.
  */
 export const safeDaysSince = (dateStr: string, todayStr: string): number => {
-  const d = safeParseDateOnly(dateStr);
-  const t = safeParseDateOnly(todayStr);
-  return Math.floor((t.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  return differenceInCalendarDates(todayStr, dateStr);
 };
 
 /**
@@ -555,10 +431,7 @@ export const getCurrentTimeInBusinessTZ = async (): Promise<string> => {
  * Alias for formatForInput — avoids toISOString().split('T')[0] which shifts dates in negative UTC offsets.
  */
 export const toLocalDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return calendarDateString(date);
 };
 
 /**
@@ -660,8 +533,17 @@ export const getBusinessTimestampBounds = (
 ): { gte?: string; lte?: string } => {
   const tz = getUserTimezoneSync();
   const bounds: { gte?: string; lte?: string } = {};
-  if (from) bounds.gte = fromZonedTime(`${from}T00:00:00.000`, tz).toISOString();
-  if (to) bounds.lte = fromZonedTime(`${to}T23:59:59.999`, tz).toISOString();
+  const startOfBusinessDay = (day: string): Date => {
+    calendarDateString(day); // validate before constructing a timestamp
+    const start = fromZonedTime(`${day}T00:00:00.000`, tz);
+    // Some zones skip midnight when DST begins. Move to the first valid hour.
+    while (formatInTimeZone(start, tz, 'yyyy-MM-dd') < day) {
+      start.setTime(start.getTime() + 60 * 60 * 1000);
+    }
+    return start;
+  };
+  if (from) bounds.gte = startOfBusinessDay(from).toISOString();
+  if (to) bounds.lte = new Date(startOfBusinessDay(addCalendarDays(to, 1)).getTime() - 1).toISOString();
   return bounds;
 };
 

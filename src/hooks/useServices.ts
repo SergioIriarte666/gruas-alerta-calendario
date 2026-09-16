@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { Service, ServiceFormData } from '@/types';
 import { useServiceFetcher } from './services/useServiceFetcher';
@@ -30,10 +31,10 @@ export const useServices = () => {
     
     return services
       .filter(service => {
-        const serviceDate = new Date(service.serviceDate);
+        const serviceDate = parseDateValue(service.serviceDate);
         return serviceDate >= sixMonthsAgo;
       })
-      .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+      .sort((a, b) => parseDateValue(b.serviceDate).getTime() - parseDateValue(a.serviceDate).getTime());
   };
 
   const createService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {

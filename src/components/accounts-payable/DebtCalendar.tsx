@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useDebtInstallments, DebtInstallment } from '@/hooks/useDebtInstallments';
@@ -9,7 +9,7 @@ import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 
 export const DebtCalendar = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(businessClock.todayDate());
   const [payingInstallment, setPayingInstallment] = useState<DebtInstallment | null>(null);
   const { data: installments } = useDebtInstallments();
 

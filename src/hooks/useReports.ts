@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import { useEffect, useMemo, useState } from 'react';
 import { useServices } from './useServices';
@@ -365,7 +366,7 @@ export const useReports = (filters?: ReportFilters) => {
     const monthlyData: { [key: string]: { services: number; revenue: number } } = {};
     
     services.forEach(service => {
-      const date = new Date(service.serviceDate);
+      const date = parseDateValue(service.serviceDate);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
@@ -479,7 +480,7 @@ export const useReports = (filters?: ReportFilters) => {
     const monthlyData: { [key: string]: { total: number } } = {};
     
     costs.forEach(cost => {
-      const date = new Date(cost.date);
+      const date = parseDateValue(cost.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
@@ -497,8 +498,8 @@ export const useReports = (filters?: ReportFilters) => {
   const calculateServiceDetails = (services: Service[]) => {
     return [...services]
       .sort((a, b) => {
-        const dateA = new Date(a.serviceDate).getTime();
-        const dateB = new Date(b.serviceDate).getTime();
+        const dateA = parseDateValue(a.serviceDate).getTime();
+        const dateB = parseDateValue(b.serviceDate).getTime();
         return dateB - dateA;
       })
       .map(service => ({

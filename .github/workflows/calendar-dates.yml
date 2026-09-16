@@ -1,0 +1,22 @@
+name: Preserve business calendar dates
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  calendar-dates:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        timezone: [America/Santiago, UTC, Asia/Tokyo, Pacific/Kiritimati]
+    env:
+      TZ: ${{ matrix.timezone }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check:dates
+      - run: npm run test:dates

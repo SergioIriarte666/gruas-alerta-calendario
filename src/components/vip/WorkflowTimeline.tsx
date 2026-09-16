@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Service } from '@/types';
@@ -42,8 +43,8 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 }) => {
   const getWorkflowSteps = (): WorkflowStep[] => {
     const currentStatus = service.status;
-    const serviceDate = new Date(service.serviceDate);
-    const now = businessClock.now();
+    const serviceDate = parseDateValue(service.serviceDate);
+    const now = businessClock.todayDate();
 
     const steps: WorkflowStep[] = [
       {
@@ -278,7 +279,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                         )}
                         {step.completedAt && (
                           <span>
-                            Completado: {format(new Date(step.completedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
+                            Completado: {businessClock.format(step.completedAt, 'dd/MM/yyyy HH:mm', { locale: es })}
                           </span>
                         )}
                       </div>

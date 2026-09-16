@@ -1,7 +1,8 @@
+import { addCalendarDays } from '@/utils/calendarDate';
 import jsPDF from 'jspdf';
 import autoTable, { type RowInput } from 'jspdf-autotable';
 import { businessClock } from '@/utils/businessClock';
-import { safeParseDateOnly } from '@/utils/timezoneUtils';
+
 import { getCraneTypeLabel } from '@/utils/craneType';
 import { formatVehicleInfo } from '@/utils/statusHelpers';
 import { type Service } from '@/types';
@@ -81,8 +82,7 @@ export const formatDocumentDate = (value?: string | null) => {
   if (!value) return '-';
 
   try {
-    const parsed = safeParseDateOnly(value);
-    return businessClock.format(parsed, 'dd/MM/yyyy');
+    return businessClock.format(value, 'dd/MM/yyyy');
   } catch {
     return value;
   }
@@ -100,9 +100,7 @@ export const formatText = (value?: string | number | null) => {
 };
 
 export const addDaysToBusinessDate = (date: string, days: number) => {
-  const parsed = safeParseDateOnly(date);
-  parsed.setDate(parsed.getDate() + days);
-  return businessClock.format(parsed, 'yyyy-MM-dd');
+  return addCalendarDays(date, days);
 };
 
 export const buildFinancialSummary = (

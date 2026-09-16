@@ -8,21 +8,15 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { formatCurrency } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { 
-  getCurrentChileDate, 
-  parseFromDatabase, 
-  formatForInput, 
-  formatForDisplay,
-  toChileTime
-} from '@/utils/timezoneUtils';
+import { getCurrentChileDate, parseFromDatabase, formatForInput, formatForDisplay } from '@/utils/timezoneUtils';
 
 export const SupplierPaymentCalendar: React.FC = () => {
   const { payments } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const [currentDate, setCurrentDate] = useState(getCurrentChileDate());
 
-  const monthStart = startOfMonth(toChileTime(currentDate));
-  const monthEnd = endOfMonth(toChileTime(currentDate));
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const paymentsInMonth = useMemo(() => {
@@ -270,7 +264,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                         {formatCurrency(payment.amount)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {formatForDisplay(parseFromDatabase(payment.due_date))}
+                        {formatForDisplay(payment.due_date)}
                       </div>
                     </div>
                   </div>

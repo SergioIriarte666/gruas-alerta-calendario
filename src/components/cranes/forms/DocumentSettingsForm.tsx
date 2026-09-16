@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -139,7 +141,7 @@ export const DocumentSettingsForm = ({
                         <div>
                           <h4 className="text-foreground font-medium">{doc.name}</h4>
                           <p className="text-muted-foreground text-sm">
-                            Vence: {new Date(doc.expiryDate).toLocaleDateString()}
+                            Vence: {businessClock.dateLabel(doc.expiryDate)}
                           </p>
                         </div>
                       </div>

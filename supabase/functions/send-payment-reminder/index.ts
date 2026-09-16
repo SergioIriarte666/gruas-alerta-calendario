@@ -1,3 +1,4 @@
+import { formatDocumentDate } from '../_shared/calendarDate.ts';
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
@@ -99,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
     const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
 
     // Formatear fecha de vencimiento
-    const formattedDueDate = new Date(dueDate).toLocaleDateString('es-CL');
+    const formattedDueDate = formatDocumentDate(dueDate);
 
     // Formatear total
     const formattedTotal = new Intl.NumberFormat('es-CL', {

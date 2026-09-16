@@ -69,13 +69,13 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
       });
       lastY = (doc as any).lastAutoTable.finalY;
     }
-    
+
     // Monthly Costs Trend
     if (metrics.costsByMonth.length > 0) {
       doc.text('Tendencia de Costos Mensuales:', 14, lastY + 10);
       autoTable(doc, {
         head: [['Mes', 'Costo Total']],
-        body: metrics.costsByMonth.map(c => [businessClock.format(new Date(`${c.month}-02T12:00:00Z`), "MMM yyyy"), `$${c.total.toLocaleString()}`]),
+        body: metrics.costsByMonth.map(c => [businessClock.format(`${c.month}-02`, "MMM yyyy"), `$${c.total.toLocaleString()}`]),
         startY: lastY + 14
       });
       lastY = (doc as any).lastAutoTable.finalY;
@@ -98,7 +98,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
       autoTable(doc, {
         head: [serviceDetailHeaders],
         body: metrics.serviceDetails.map(service => ([
-          businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy'),
+          businessClock.format(service.serviceDate, 'dd/MM/yyyy'),
           service.folio,
           service.clientName,
           service.serviceTypeName,
@@ -114,7 +114,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
         styles: { fontSize: 7, cellPadding: 1.2 },
       });
     }
-    
+
     addStandardReportFooter(doc);
     doc.save(`${exportFileDefaultName}.pdf`);
 
@@ -149,7 +149,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
     // Add additional sheets
     if(metrics.servicesByMonth.length > 0) {
       const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth.map(s => ({
-        'Mes': businessClock.format(new Date(`${s.month}-02T12:00:00Z`), "MMM yyyy"),
+        'Mes': businessClock.format(`${s.month}-02`, "MMM yyyy"),
         'Servicios': s.services,
         'Ingresos': s.revenue
       })));
@@ -157,9 +157,9 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
     }
 
     if(metrics.costsByMonth.length > 0) {
-      const costs_month_ws = XLSX.utils.json_to_sheet(metrics.costsByMonth.map(c => ({ 
-        'Mes': businessClock.format(new Date(`${c.month}-02T12:00:00Z`), "MMM yyyy"), 
-        'Costo Total': c.total 
+      const costs_month_ws = XLSX.utils.json_to_sheet(metrics.costsByMonth.map(c => ({
+        'Mes': businessClock.format(`${c.month}-02`, "MMM yyyy"),
+        'Costo Total': c.total
       })));
       XLSX.utils.book_append_sheet(wb, costs_month_ws, 'Costos por Mes');
     }
@@ -197,7 +197,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
 
     if (metrics.serviceDetails.length > 0) {
       const service_detail_ws = XLSX.utils.json_to_sheet(metrics.serviceDetails.map(service => ({
-        'Fecha': businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'yyyy-MM-dd'),
+        'Fecha': businessClock.format(service.serviceDate, 'yyyy-MM-dd'),
         'Folio': service.folio,
         'Cliente': service.clientName,
         'Tipo de Servicio': service.serviceTypeName,

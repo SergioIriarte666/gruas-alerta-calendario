@@ -1,3 +1,6 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -195,7 +198,7 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     if (result.documents.length > 0 && result.documents[0].issue_date) {
       setBulkDueDate(format(addDays(safeParseDateOnly(result.documents[0].issue_date), 30), 'yyyy-MM-dd'));
     } else {
-      setBulkDueDate(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
+      setBulkDueDate(format(addDays(businessClock.todayDate(), 30), 'yyyy-MM-dd'));
     }
 
     const initialDueOverrides: Record<string, string> = {};
@@ -246,9 +249,9 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
           const decisions: Record<string, string | 'new'> = {};
           for (const doc of result.documents) {
             if (!doc.supplier_rut || !doc.total_amount) continue;
-            const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
-            const dateFrom = new Date(issueDate); dateFrom.setDate(dateFrom.getDate() - 30);
-            const dateTo = new Date(issueDate); dateTo.setDate(dateTo.getDate() + 30);
+            const issueDate = safeParseDateOnly(doc.issue_date || businessClock.today());
+            const dateFrom = parseDateValue(issueDate); dateFrom.setDate(dateFrom.getDate() - 30);
+            const dateTo = parseDateValue(issueDate); dateTo.setDate(dateTo.getDate() + 30);
             const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', { p_supplier_rut: doc.supplier_rut, p_amount: doc.total_amount, p_date_from: format(dateFrom, 'yyyy-MM-dd'), p_date_to: format(dateTo, 'yyyy-MM-dd') });
             if (!error && data && data.length > 0) {
               const exactMatch = data.find((m: any) => Math.abs(m.amount - doc.total_amount) < 1);
@@ -284,9 +287,9 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     const documentKey = getDocumentStateKey(doc);
     setExpandingSearchKey(documentKey);
     try {
-      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
-      const dateFrom = new Date(issueDate); dateFrom.setDate(dateFrom.getDate() - windowDays);
-      const dateTo = new Date(issueDate); dateTo.setDate(dateTo.getDate() + windowDays);
+      const issueDate = safeParseDateOnly(doc.issue_date || businessClock.today());
+      const dateFrom = parseDateValue(issueDate); dateFrom.setDate(dateFrom.getDate() - windowDays);
+      const dateTo = parseDateValue(issueDate); dateTo.setDate(dateTo.getDate() + windowDays);
       const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', { p_supplier_rut: doc.supplier_rut, p_amount: doc.total_amount, p_date_from: format(dateFrom, 'yyyy-MM-dd'), p_date_to: format(dateTo, 'yyyy-MM-dd') });
       if (error) throw error;
       const results = (data || []) as MatchedCost[];
@@ -316,8 +319,8 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
   const getCostAgeLabel = (cost: MatchedCost, doc: XMLDocumentData): string => {
     try {
       const costDate = safeParseDateOnly(cost.date);
-      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
-      const days = Math.round((issueDate.getTime() - costDate.getTime()) / (1000 * 60 * 60 * 24));
+      const issueDate = safeParseDateOnly(doc.issue_date || businessClock.today());
+      const days = differenceInCalendarDates(issueDate, costDate);
       if (days === 0) return 'mismo día';
       if (days > 0) return `${days} día${days > 1 ? 's' : ''} antes`;
       return `${Math.abs(days)} día${Math.abs(days) > 1 ? 's' : ''} después`;
@@ -413,7 +416,7 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
             const originalDoc = parseResult.documents.find(d => d.folio === docFolio && d.supplier_rut === paymentData.supplier_rut);
             const documentKey = originalDoc ? getDocumentStateKey(originalDoc) : `${paymentData.supplier_rut || 'sin-rut'}::${docFolio || 'sin-folio'}`;
             const status = statusOverrides[documentKey] || 'pending';
-            const paidDate = status === 'paid' ? paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd') : undefined;
+            const paidDate = status === 'paid' ? paidDateOverrides[documentKey] || businessClock.today() : undefined;
 
             let finalDueDate = paymentData.due_date;
             if (!finalDueDate) {

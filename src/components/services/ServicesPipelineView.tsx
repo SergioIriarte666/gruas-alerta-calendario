@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+
 import React, { useState, useMemo } from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -132,9 +134,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       // Calcular promedio de días desde la fecha de servicio
       const avgDays = statusServices.length > 0 ? Math.round(
         statusServices.reduce((sum, service) => {
-          const daysSince = Math.floor(
-            (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-          );
+          const daysSince = differenceInCalendarDates(businessClock.today(), service.serviceDate);
           return sum + Math.max(0, daysSince);
         }, 0) / statusServices.length
       ) : 0;

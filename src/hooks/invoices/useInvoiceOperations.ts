@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { businessClock } from '@/utils/businessClock';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -302,8 +303,8 @@ export const useInvoiceOperations = () => {
 
       // Validate date logic
       if (invoiceData.issueDate && invoiceData.dueDate) {
-        const issueDate = new Date(invoiceData.issueDate);
-        const dueDate = new Date(invoiceData.dueDate);
+        const issueDate = parseDateValue(invoiceData.issueDate);
+        const dueDate = parseDateValue(invoiceData.dueDate);
         if (dueDate <= issueDate) {
           throw new Error('La fecha de vencimiento debe ser posterior a la fecha de emisión');
         }

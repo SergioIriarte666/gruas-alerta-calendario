@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { Invoice } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ const formatSafeDate = (dateValue: any): string => {
   try {
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
     if (!isValid(date)) return 'Fecha inválida';
-    return formatForDisplay(date);
+    return formatForDisplay(dateValue);
   } catch {
     return 'Error';
   }
@@ -55,7 +56,7 @@ const getDaysUntilDueBadge = (dueDate: any, status: string) => {
   if (status === 'cancelled') return <Badge className="border-warning/30 bg-warning/10 text-warning text-xs">Anulada</Badge>;
   if (!dueDate) return null;
   try {
-    const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
+    const due = typeof dueDate === 'string' ? parseISO(dueDate) : parseDateValue(dueDate);
     if (!isValid(due)) return null;
     const today = businessClock.todayDate();
     today.setHours(0, 0, 0, 0);

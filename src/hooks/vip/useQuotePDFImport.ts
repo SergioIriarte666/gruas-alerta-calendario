@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
@@ -426,11 +427,11 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
 
       const matchingServices = clientServices
         .filter((service) => normalizePatente(service.licensePlate) === patenteNorm && !usedServiceIds.has(service.id))
-        .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+        .sort((a, b) => parseDateValue(b.serviceDate).getTime() - parseDateValue(a.serviceDate).getTime());
 
       const allPatenteCandidates = clientServices
         .filter((service) => normalizePatente(service.licensePlate) === patenteNorm)
-        .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+        .sort((a, b) => parseDateValue(b.serviceDate).getTime() - parseDateValue(a.serviceDate).getTime());
 
       if (matchingServices.length === 0) {
         const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);

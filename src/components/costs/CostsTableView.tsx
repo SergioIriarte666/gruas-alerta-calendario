@@ -1,4 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { businessClock } from '@/utils/businessClock';
+import { parseDateValue } from '@/utils/calendarDate';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -141,8 +143,8 @@ export const CostsTableView = ({
 
       switch (sortField) {
         case 'date':
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
+          aValue = parseDateValue(a.date);
+          bValue = parseDateValue(b.date);
           break;
         case 'description':
           aValue = a.description.toLowerCase();
@@ -292,7 +294,7 @@ export const CostsTableView = ({
                         </TableCell>
                       )}
                       <TableCell className="font-medium">
-                        {new Date(`${cost.date}T12:00:00Z`).toLocaleDateString('es-ES')}
+                        {businessClock.dateLabel(cost.date, 'es-ES')}
                       </TableCell>
                       <TableCell className="max-w-xs">
                         <div className="flex items-center gap-1.5">

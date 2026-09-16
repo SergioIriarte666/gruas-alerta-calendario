@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { useState } from 'react';
 import { Search, AlertTriangle, PackageX, Loader2, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +25,7 @@ import { formatCurrency } from '@/lib/utils';
 const formatDate = (d: string | null | undefined) => {
   if (!d) return '—';
   try {
-    return new Date(`${d}T12:00:00Z`).toLocaleDateString('es-CL');
+    return businessClock.dateLabel(d, 'es-CL');
   } catch {
     return d;
   }

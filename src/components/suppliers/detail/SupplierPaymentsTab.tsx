@@ -1,3 +1,4 @@
+
 import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,14 +31,14 @@ interface SupplierPaymentsTabProps {
 const getStatusColor = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'border-success/30 bg-success/10 text-success';
   if (status === 'overdue') return 'border-danger/30 bg-danger/10 text-danger';
-  if (dueDate && new Date(dueDate) < businessClock.now()) return 'border-danger/30 bg-danger/10 text-danger';
+  if (dueDate && dueDate < businessClock.today()) return 'border-danger/30 bg-danger/10 text-danger';
   return 'border-warning/30 bg-warning/10 text-warning';
 };
 
 const getStatusLabel = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'Pagado';
   if (status === 'overdue') return 'Vencido';
-  if (dueDate && new Date(dueDate) < businessClock.now()) return 'Vencido';
+  if (dueDate && dueDate < businessClock.today()) return 'Vencido';
   return 'Pendiente';
 };
 
@@ -124,13 +125,13 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
                   {formatCurrency(payment.amount)}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
-                  {payment.due_date ? format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                  {payment.due_date ? businessClock.format(payment.due_date, 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
                   {resolveSupplierPaymentCategoryLabel(payment.category, costCategories, '-')}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
-                  {payment.paid_date ? format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                  {payment.paid_date ? businessClock.format(payment.paid_date, 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell>
                   <Badge className={getStatusColor(payment.status, payment.due_date)}>

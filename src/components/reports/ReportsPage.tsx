@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { useReports } from '@/hooks/useReports';
 import { ReportsHeader } from './shared/ReportsHeader';
@@ -731,7 +732,7 @@ const ReportsPage = () => {
                   {visibleServiceDetails.map(service => (
                     <TableRow key={service.id}>
                       <TableCell className="whitespace-nowrap">
-                        {format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy')}
+                        {businessClock.format(service.serviceDate, 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="font-medium">{service.folio}</TableCell>
                       <TableCell className="min-w-56">{toTitleCase(service.clientName)}</TableCell>

@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
@@ -95,7 +95,7 @@ export const ServicesMobileView = ({
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-foreground text-sm">
                   <Calendar className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                  <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
+                  <span>{formatForDisplay(service.serviceDate)}</span>
                 </div>
 
                 <div className="flex items-center text-foreground text-sm">

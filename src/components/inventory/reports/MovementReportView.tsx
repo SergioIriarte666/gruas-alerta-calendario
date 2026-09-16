@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
@@ -27,7 +29,7 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM');
+      return businessClock.format(dateString, 'dd/MM');
     } catch {
       return dateString;
     }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Truck, DollarSign, Hash } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
@@ -69,7 +69,7 @@ export const ClientServiceHistory = ({ client }: { client: Client }) => {
                   {services.map(service => (
                     <TableRow key={service.id} className="border-border">
                       <TableCell className="font-medium"><Badge variant="tms" className="whitespace-nowrap">{service.folio}</Badge></TableCell>
-                      <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(service.serviceDate))}</TableCell>
+                      <TableCell className="text-foreground">{formatForDisplay(service.serviceDate)}</TableCell>
                       <TableCell className="text-foreground">{formatVehicleInfo(service)}</TableCell>
                       <TableCell className="text-foreground max-w-xs truncate">{service.origin} → {service.destination}</TableCell>
                       <TableCell className="text-foreground font-semibold">

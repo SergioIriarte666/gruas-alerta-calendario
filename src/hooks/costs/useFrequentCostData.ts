@@ -1,3 +1,4 @@
+import { calendarDateString } from '@/utils/calendarDate';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +13,7 @@ export const useFrequentCostData = (categoryId?: string) => {
   const oneYearAgo = (() => {
     const d = new Date(businessClock.todayDate());
     d.setFullYear(d.getFullYear() - 1);
-    return d.toISOString().slice(0, 10);
+    return calendarDateString(d);
   })();
 
   const { data: costs = [] } = useQuery({

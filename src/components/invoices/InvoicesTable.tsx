@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,7 @@ const formatSafeDate = (dateValue: any): string => {
       logger.warn('Invalid date provided to formatSafeDate:', dateValue);
       return 'Fecha inválida';
     }
-    return formatForDisplay(date);
+    return formatForDisplay(dateValue);
   } catch (error) {
     logger.error('Error formatting date:', error, 'Value:', dateValue);
     return 'Error en fecha';
@@ -73,7 +74,7 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
   if (!dueDate) return <Badge className="border-border/70 bg-muted/40 text-foreground">Sin fecha</Badge>;
   
   try {
-    const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
+    const due = typeof dueDate === 'string' ? parseISO(dueDate) : parseDateValue(dueDate);
     if (!isValid(due)) {
       return <Badge className="border-border/70 bg-muted/40 text-foreground">Fecha inválida</Badge>;
     }

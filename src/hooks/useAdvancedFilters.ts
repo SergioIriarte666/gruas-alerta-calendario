@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useState, useMemo } from 'react';
 import { Service } from '@/types';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
@@ -66,13 +67,13 @@ export const useAdvancedFilters = () => {
         if (!serviceDate) return false;
         
         if (filters.dateFrom) {
-          const fromDate = new Date(filters.dateFrom);
+          const fromDate = parseDateValue(filters.dateFrom);
           fromDate.setHours(0, 0, 0, 0);
           if (serviceDate < fromDate) return false;
         }
         
         if (filters.dateTo) {
-          const toDate = new Date(filters.dateTo);
+          const toDate = parseDateValue(filters.dateTo);
           toDate.setHours(23, 59, 59, 999);
           if (serviceDate > toDate) return false;
         }

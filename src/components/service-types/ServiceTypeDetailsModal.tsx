@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import { Check, X, Info, Settings, Car, Wrench } from "lucide-react";
 import { ServiceTypeConfig } from "@/types/serviceTypes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -47,7 +49,7 @@ export function ServiceTypeDetailsModal({
   };
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("es-CL", {
+    return businessClock.dateLabel(dateString, "es-CL", {
       year: "numeric",
       month: "long",
       day: "numeric",

@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,7 +6,7 @@ import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
-import { addDays } from 'date-fns';
+import { addDays, parseISO } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
@@ -25,8 +26,13 @@ const safeString = (value: any, fallback: string = ''): string => {
 const safeDate = (value: any): string | null => {
   if (!value) return null;
   try {
+    // SQL date fields are calendar dates, not UTC instants. Preserve them on
+    // every read/edit cycle instead of shifting them to the browser timezone.
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return isNaN(parseISO(value).getTime()) ? null : value;
+    }
     const date = new Date(value);
-    return isNaN(date.getTime()) ? null : toLocalDateString(date);
+    return isNaN(date.getTime()) ? null : businessClock.format(date, 'yyyy-MM-dd');
   } catch {
     return null;
   }
@@ -37,12 +43,7 @@ const shouldBeOverdue = (status: string, dueDate: string, remainingAmount: numbe
   if (status === 'cancelled' || status === 'draft') return false;
   if (remainingAmount <= 0) return false;
 
-  const today = businessClock.todayDate();
-  const due = new Date(dueDate);
-  today.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
-
-  return due < today;
+  return dueDate < businessClock.today();
 };
 
 // Update overdue invoices in database
@@ -208,8 +209,8 @@ export const validateInvoiceData = (invoiceData: Partial<Invoice>): { isValid: b
   const errors: string[] = [];
 
   if (invoiceData.issueDate && invoiceData.dueDate) {
-    const issueDate = new Date(invoiceData.issueDate);
-    const dueDate = new Date(invoiceData.dueDate);
+    const issueDate = parseDateValue(invoiceData.issueDate);
+    const dueDate = parseDateValue(invoiceData.dueDate);
     
     if (isNaN(issueDate.getTime())) errors.push('Fecha de emisión inválida');
     if (isNaN(dueDate.getTime())) errors.push('Fecha de vencimiento inválida');

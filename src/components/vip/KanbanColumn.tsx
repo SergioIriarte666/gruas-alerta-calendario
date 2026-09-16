@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import React from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { ServiceCard } from './ServiceCard';
@@ -53,9 +55,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   );
   const avgDays = services.length > 0 ? Math.round(
     services.reduce((sum, service) => {
-      const daysDiff = Math.floor(
-        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const daysDiff = differenceInCalendarDates(businessClock.today(), service.serviceDate);
       return sum + daysDiff;
     }, 0) / services.length
   ) : 0;
@@ -112,7 +112,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
           </div>
         ) : (
           services
-            .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
+            .sort((a, b) => parseDateValue(b.serviceDate).getTime() - parseDateValue(a.serviceDate).getTime())
             .map(service => (
               <ServiceCard
                 key={service.id}

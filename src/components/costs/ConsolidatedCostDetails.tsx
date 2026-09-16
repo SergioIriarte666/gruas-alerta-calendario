@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -251,7 +252,7 @@ export const ConsolidatedCostDetails = ({
                   <p className="text-xs text-muted-foreground">Fecha de Pago</p>
                   <p className="font-medium text-foreground">
                     {cost.payment_date 
-                      ? format(new Date(cost.payment_date + 'T12:00:00'), "d 'de' MMMM, yyyy", { locale: es })
+                      ? businessClock.format(cost.payment_date, "d 'de' MMMM, yyyy", { locale: es })
                       : 'Pendiente'}
                   </p>
                 </div>

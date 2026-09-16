@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Link2, ChevronDown, ChevronUp, Sparkles, Calendar, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+
 import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestion';
 import { normalizeGlosaText } from '@/utils/xml/xmlGlosaHelpers';
 import { computeLineTotal } from '@/utils/xml/xmlInventoryHelpers';
@@ -321,10 +322,10 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
             <div className="flex-1 min-w-52 max-w-64">
               <Label className="text-xs text-muted-foreground mb-1.5 block">Estado de pago</Label>
               <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
-                <Switch id={`paid-${documentKey}`} checked={isPaid} onCheckedChange={checked => { onPaidChange(checked); if (checked && !paidDate) onPaidDateChange(format(new Date(), 'yyyy-MM-dd')); }} />
+                <Switch id={`paid-${documentKey}`} checked={isPaid} onCheckedChange={checked => { onPaidChange(checked); if (checked && !paidDate) onPaidDateChange(businessClock.today()); }} />
                 <Label htmlFor={`paid-${documentKey}`} className="text-xs cursor-pointer">Marcar como pagado</Label>
               </div>
-              {isPaid && <div className="mt-2"><DatePickerInput value={paidDate || format(new Date(), 'yyyy-MM-dd')} onChange={onPaidDateChange} className="w-full" /></div>}
+              {isPaid && <div className="mt-2"><DatePickerInput value={paidDate || businessClock.today()} onChange={onPaidDateChange} className="w-full" /></div>}
               <p className="mt-1 text-xs text-muted-foreground">Si ya fue pagado, indica la fecha real del pago.</p>
             </div>
           </div>

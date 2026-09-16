@@ -56,7 +56,7 @@ export const exportOperatorReport = async ({
 
     autoTable(doc, {
       body: [
-        ['Período', `${businessClock.format(new Date(`${appliedFilters.dateRange.from}T12:00:00Z`), 'P')} - ${businessClock.format(new Date(`${appliedFilters.dateRange.to}T12:00:00Z`), 'P')}`],
+        ['Período', `${businessClock.format(appliedFilters.dateRange.from, 'P')} - ${businessClock.format(appliedFilters.dateRange.to, 'P')}`],
         ['Operador', operatorLabel],
       ],
       startY,
@@ -123,7 +123,7 @@ export const exportOperatorReport = async ({
       autoTable(doc, {
         head: [serviceDetailHeaders],
         body: metrics.serviceDetails.map(service => ([
-          businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy'),
+          businessClock.format(service.serviceDate, 'dd/MM/yyyy'),
           service.folio,
           service.clientName,
           service.serviceTypeName,
@@ -194,7 +194,7 @@ export const exportOperatorReport = async ({
   if (metrics.serviceDetails.length > 0) {
     const detailWs = XLSX.utils.json_to_sheet(
       metrics.serviceDetails.map(service => ({
-        'Fecha': businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'yyyy-MM-dd'),
+        'Fecha': businessClock.format(service.serviceDate, 'yyyy-MM-dd'),
         'Folio': service.folio,
         'Cliente': service.clientName,
         'Tipo de Servicio': service.serviceTypeName,

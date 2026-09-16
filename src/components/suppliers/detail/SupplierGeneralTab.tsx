@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -80,7 +81,7 @@ export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier
               <span className="text-muted-foreground">Fecha de Registro</span>
               <span className="text-foreground">
                 {supplier.created_at 
-                  ? format(new Date(supplier.created_at), "d 'de' MMMM, yyyy", { locale: es })
+                  ? businessClock.format(supplier.created_at, "d 'de' MMMM, yyyy", { locale: es })
                   : '-'
                 }
               </span>

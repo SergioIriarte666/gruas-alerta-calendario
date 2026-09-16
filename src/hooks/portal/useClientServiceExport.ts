@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/calendarDate';
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/contexts/UserContext';
@@ -215,8 +216,8 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       });
 
       // Calcular fechas
-      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
-      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => parseDateValue(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => parseDateValue(s.service_date).getTime()))) : businessClock.now());
 
       const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;
@@ -271,8 +272,8 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       });
 
       // Calcular fechas
-      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
-      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => parseDateValue(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => parseDateValue(s.service_date).getTime()))) : businessClock.now());
 
       const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;

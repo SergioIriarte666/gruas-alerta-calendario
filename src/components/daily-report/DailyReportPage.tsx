@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { parseDateValue } from '@/utils/calendarDate';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,13 +64,13 @@ const DailyReportPage = () => {
   const { toast } = useToast();
 
   const handlePreviousDay = () => {
-    const date = new Date(selectedDate);
+    const date = parseDateValue(selectedDate);
     date.setDate(date.getDate() - 1);
     setSelectedDate(formatForInput(date));
   };
 
   const handleNextDay = () => {
-    const date = new Date(selectedDate);
+    const date = parseDateValue(selectedDate);
     date.setDate(date.getDate() + 1);
     setSelectedDate(formatForInput(date));
   };

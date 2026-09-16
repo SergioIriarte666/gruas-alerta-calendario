@@ -1,7 +1,7 @@
 import React from "react";
 import { ClientService } from "@/hooks/portal/useClientServices";
 import { Badge } from "@/components/ui/badge";
-import { formatForDisplay, parseFromDatabase } from "@/utils/timezoneUtils";
+import { formatForDisplay } from "@/utils/timezoneUtils";
 import {
   getServiceStatusBadge,
   formatCurrency,
@@ -34,7 +34,7 @@ export const PortalServiceCard: React.FC<PortalServiceCardProps> = ({
         <div className="flex justify-between">
           <span className="text-muted-foreground">Fecha:</span>
           <span className="text-foreground">
-            {formatForDisplay(parseFromDatabase(service.service_date))}
+            {formatForDisplay(service.service_date)}
           </span>
         </div>
 

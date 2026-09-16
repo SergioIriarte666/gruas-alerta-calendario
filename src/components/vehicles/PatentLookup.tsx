@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -278,7 +279,7 @@ export const PatentLookup: React.FC = () => {
                           </Badge>
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="size-3" />
-                            {format(new Date(item.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                            {businessClock.format(item.created_at, "dd MMM yyyy, HH:mm", { locale: es })}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">

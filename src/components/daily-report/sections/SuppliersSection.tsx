@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -101,7 +103,7 @@ const PaymentCard: React.FC<{
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="size-4" />
-              Vence: {new Date(payment.due_date).toLocaleDateString()}
+              Vence: {businessClock.dateLabel(payment.due_date)}
             </div>
             <div className="flex items-center gap-1">
               <DollarSign className="size-4" />

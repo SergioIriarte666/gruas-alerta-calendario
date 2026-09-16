@@ -3,7 +3,7 @@ import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { FileText, AlertTriangle, Calculator, TrendingDown, Info, Users } from 'lucide-react';
 
 interface ServiceCostsSectionProps {
@@ -322,7 +322,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                           <p>
                             <span className="font-medium">Fecha:</span>{' '}
-                            {formatForDisplay(parseFromDatabase(cost.date))}
+                            {formatForDisplay(cost.date)}
                           </p>
                           
                           {cost.cranes && (

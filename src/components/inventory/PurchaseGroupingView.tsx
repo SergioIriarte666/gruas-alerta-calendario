@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { businessClock } from '@/utils/businessClock';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -301,7 +302,7 @@ export const PurchaseGroupingView = () => {
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                {format(new Date(movement.movement_date), 'dd/MM/yy HH:mm')}
+                                {businessClock.format(movement.movement_date, 'dd/MM/yy HH:mm')}
                               </div>
                             </TableCell>
                             <TableCell>

@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -465,7 +467,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground mt-1 truncate">
-                            {service.serviceType?.name || 'Sin tipo'} • {format(new Date(service.serviceDate), 'dd/MM/yy')}
+                            {service.serviceType?.name || 'Sin tipo'} • {businessClock.format(service.serviceDate, 'dd/MM/yy')}
                           </div>
                         </div>
                       </div>

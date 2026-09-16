@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -234,7 +235,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
                           {formatCurrency(app.applied_amount)}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(app.created_at).toLocaleDateString()}
+                          {businessClock.dateLabel(app.created_at)}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">

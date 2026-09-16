@@ -1,3 +1,4 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,8 +66,8 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
     if (!date) return 0;
     const expiry = parseFromDatabase(date);
     const today = getCurrentChileDate();
-    const diffTime = expiry.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffTime = differenceInCalendarDates(expiry, today);
+    return diffTime;
   };
 
   const getExpiryStatus = (days: number) => {
@@ -203,7 +204,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
                 <div className="flex items-center gap-2">
                   {isAlertAcknowledged && <Badge variant="secondary">Silenciada</Badge>}
                   <span className="text-foreground">
-                    {formatForDisplay(parseFromDatabase(expiryDate))}
+                    {formatForDisplay(expiryDate)}
                   </span>
                 </div>
               </div>

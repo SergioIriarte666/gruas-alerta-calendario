@@ -1,3 +1,5 @@
+import { businessClock } from '@/utils/businessClock';
+
 import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -112,10 +114,10 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
               <TableRow key={invoice.id} className="border-border">
                 <TableCell className="font-medium text-foreground text-sm">{invoice.invoice_number}</TableCell>
                 <TableCell className="text-foreground text-sm">
-                  {invoice.issue_date ? format(new Date(invoice.issue_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                  {invoice.issue_date ? businessClock.format(invoice.issue_date, 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
-                  {invoice.due_date ? format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                  {invoice.due_date ? businessClock.format(invoice.due_date, 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell className="text-right font-bold text-primary text-sm">
                   {formatCurrency(invoice.amount)}

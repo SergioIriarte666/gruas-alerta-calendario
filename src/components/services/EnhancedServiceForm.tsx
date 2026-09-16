@@ -1,3 +1,6 @@
+import { businessClock } from '@/utils/businessClock';
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service, ServiceSnakeCase, ServiceItemDraft, ServiceStopDraft } from '@/types';
@@ -726,10 +729,10 @@ export const EnhancedServiceForm = React.memo(({
   // Custody calculations - Calendar mode
   useEffect(() => {
     if (formData.custodyMode === 'calendar' && formData.custodyStartDate && formData.custodyEndDate && formData.custodyDailyRate) {
-      const start = new Date(formData.custodyStartDate);
-      const end = new Date(formData.custodyEndDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      const start = parseDateValue(formData.custodyStartDate);
+      const end = parseDateValue(formData.custodyEndDate);
+      const diffTime = Math.abs(differenceInCalendarDates(end, start));
+      const diffDays = diffTime + 1;
       
       let effectiveDailyRate = formData.custodyDailyRate;
       
@@ -1202,7 +1205,7 @@ export const EnhancedServiceForm = React.memo(({
                 data: {
                   folio: result.folio,
                   clientName: result.client?.name || '',
-                  fechaServicio: new Date(result.serviceDate).toLocaleDateString('es-CL', {
+                  fechaServicio: businessClock.dateLabel(result.serviceDate, 'es-CL', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',

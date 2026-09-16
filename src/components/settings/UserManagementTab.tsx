@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -230,7 +231,7 @@ export const UserManagementTab = () => {
                             ? `Operador: ${toTitleCase(user.operator_name)}`
                             : 'Operador: Sin asignar'}
                       </span>
-                      <span>{format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}</span>
+                      <span>{businessClock.format(user.created_at, 'dd/MM/yyyy', { locale: es })}</span>
                     </div>
 
                     {/* Actions */}
@@ -451,7 +452,7 @@ export const UserManagementTab = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-foreground">
-                        {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}
+                        {businessClock.format(user.created_at, 'dd/MM/yyyy', { locale: es })}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

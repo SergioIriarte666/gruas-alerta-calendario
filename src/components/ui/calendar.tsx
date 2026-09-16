@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,7 +20,7 @@ function Calendar({
   // Force re-render to bust cache
   const cacheKey = React.useMemo(() => `calendar-v2-${Date.now()}`, []);
   const [currentMonth, setCurrentMonth] = React.useState<Date>(
-    props.month || props.selected as Date || new Date()
+    props.month || props.selected as Date || businessClock.todayDate()
   );
 
   const months = [

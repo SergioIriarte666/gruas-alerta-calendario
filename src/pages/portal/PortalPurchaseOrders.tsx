@@ -1,3 +1,5 @@
+import { differenceInCalendarDates } from '@/utils/calendarDate';
+import { parseDateValue } from '@/utils/calendarDate';
 import React, { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -35,11 +37,11 @@ import { businessClock } from "@/utils/businessClock";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 
 const daysPending = (serviceDate: string): number => {
-  const svc = new Date(serviceDate);
+  const svc = parseDateValue(serviceDate);
   const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
   svc.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - svc.getTime()) / (1000 * 60 * 60 * 24));
+  return differenceInCalendarDates(today, svc);
 };
 
 const getDaysPendingClassName = (days: number) => {
