@@ -4,16 +4,19 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { PushNotificationManager } from '@/components/notifications/PushNotificationManager';
 import { toast } from 'sonner';
-import { Bell, Clock3, Loader2, Mail, ShieldAlert, Wrench } from 'lucide-react';
+import { Bell, Clock3, FileClock, Loader2, Mail, ShieldAlert, Wrench } from 'lucide-react';
 
 export const NotificationSettingsTab = () => {
   const {
+    systemSettings,
     notificationSettings,
     saving,
+    updateSystemSettings,
     updateNotificationSettings,
     saveSettings
   } = useSystemSettings();
@@ -78,7 +81,7 @@ export const NotificationSettingsTab = () => {
               Centro de notificaciones
             </Badge>
             <Badge variant="outline" className="rounded-full px-3 py-1">
-              {notificationOptions.length} controles disponibles
+              {notificationOptions.length + 1} controles disponibles
             </Badge>
           </div>
           <CardTitle className="text-foreground text-lg sm:text-xl">Configuración de Notificaciones</CardTitle>
@@ -116,6 +119,37 @@ export const NotificationSettingsTab = () => {
               </div>
             );
           })}
+
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                <FileClock className="size-4" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="ocAlertDays" className="text-sm font-medium text-foreground">
+                  Días para alerta de OC pendiente
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Un servicio cotizado o esperando OC sin orden de compra por más de estos
+                  días genera una alerta interna para los administradores.
+                </p>
+              </div>
+            </div>
+            <Input
+              id="ocAlertDays"
+              type="number"
+              min={1}
+              max={90}
+              className="w-20 shrink-0 text-center"
+              value={systemSettings.ocAlertDays}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value, 10);
+                if (!Number.isNaN(parsed)) {
+                  updateSystemSettings({ ocAlertDays: Math.min(90, Math.max(1, parsed)) });
+                }
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 

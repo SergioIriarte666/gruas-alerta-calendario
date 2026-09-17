@@ -61,6 +61,8 @@ export interface SystemSettings {
   reportColumnConfig?: ReportColumnsConfig;
   /** Margen de venta por defecto (%) para productos de inventario sin configuración propia. */
   defaultSaleMarkupPercent: number;
+  /** Días en cotizado/esperando OC sin orden de compra antes de alertar a los admins. */
+  ocAlertDays: number;
 }
 
 export interface NotificationSettings {
@@ -103,6 +105,7 @@ export const defaultSettings: Settings = {
     dataRetention: 12,
     maintenanceMode: false,
     defaultSaleMarkupPercent: 30,
+    ocAlertDays: 5,
   },
   notifications: {
     emailNotifications: true,

@@ -39,7 +39,8 @@ const SYSTEM_SETTINGS_SELECT = `
   overdue_notifications,
   system_updates,
   report_column_config,
-  default_sale_markup_percent
+  default_sale_markup_percent,
+  oc_alert_days
 `;
 
 export const useSystemSettings = () => {
@@ -51,6 +52,7 @@ export const useSystemSettings = () => {
     maintenanceMode: false,
     reportColumnConfig: defaultReportColumnConfig,
     defaultSaleMarkupPercent: 30,
+    ocAlertDays: 5,
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -97,6 +99,7 @@ export const useSystemSettings = () => {
           maintenanceMode: data.maintenance_mode,
           reportColumnConfig,
           defaultSaleMarkupPercent: data.default_sale_markup_percent ?? 30,
+          ocAlertDays: data.oc_alert_days ?? 5,
         });
 
         setNotificationSettings({
@@ -144,6 +147,7 @@ export const useSystemSettings = () => {
         system_updates: notificationSettings.systemUpdates,
         report_column_config: JSON.parse(JSON.stringify(systemSettings.reportColumnConfig)) as Json,
         default_sale_markup_percent: systemSettings.defaultSaleMarkupPercent,
+        oc_alert_days: systemSettings.ocAlertDays,
         updated_at: businessClock.nowISO(),
       };
 

@@ -32,7 +32,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     oldDraftInvoicesRes,
     expiringCranesRes,
     expiringOperatorsRes,
-    servicesWithoutOCRes
+    servicesWithoutOCRes,
+    pendingOcAlertsRes
   ] = await Promise.all([
     // 1A. Services today/tomorrow
     supabase
@@ -77,6 +78,15 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       .eq('status', 'completed')
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
+      .limit(100),
+    // 8. Persistent OC-pending alerts written by evaluate_pending_oc_alerts()
+    //    (pg_cron). RLS limits rows to the current user (admins only receive them).
+    supabase
+      .from('notifications')
+      .select('id, title, message, type, created_at, action_url, action_data, entity_id')
+      .eq('category', 'oc_pending')
+      .is('dismissed_at', null)
+      .order('created_at', { ascending: false })
       .limit(100)
   ]);
 
@@ -320,6 +330,21 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       actionType: 'navigate',
       actionUrl: '/invoices',
       actionData: { entityId: closure.id },
+    });
+  });
+
+  // Process persistent OC-pending alerts (one per service, generated server-side)
+  (pendingOcAlertsRes.data || []).forEach((row: any) => {
+    const actionData = (row.action_data ?? {}) as { entityId?: string };
+    notifications.push({
+      id: `oc-pending-${row.id}`,
+      title: row.title,
+      message: row.message,
+      type: ['info', 'success', 'warning', 'error'].includes(row.type) ? row.type : 'warning',
+      timestamp: parseISO(row.created_at),
+      actionType: 'navigate',
+      actionUrl: row.action_url || '/services',
+      actionData: { entityId: actionData.entityId ?? row.entity_id ?? undefined },
     });
   });
 

@@ -8142,6 +8142,7 @@ export type Database = {
           id: string
           invoice_alerts: boolean
           maintenance_mode: boolean
+          oc_alert_days: number
           overdue_notifications: boolean
           report_column_config: Json | null
           service_reminders: boolean
@@ -8162,6 +8163,7 @@ export type Database = {
           id?: string
           invoice_alerts?: boolean
           maintenance_mode?: boolean
+          oc_alert_days?: number
           overdue_notifications?: boolean
           report_column_config?: Json | null
           service_reminders?: boolean
@@ -8182,6 +8184,7 @@ export type Database = {
           id?: string
           invoice_alerts?: boolean
           maintenance_mode?: boolean
+          oc_alert_days?: number
           overdue_notifications?: boolean
           report_column_config?: Json | null
           service_reminders?: boolean
@@ -9462,6 +9465,7 @@ export type Database = {
         Returns: string
       }
       enqueue_tracking_silence_alerts: { Args: never; Returns: number }
+      evaluate_pending_oc_alerts: { Args: never; Returns: number }
       execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       execute_recovery_operation: {
         Args: { p_confirmation: string; p_operation_id: string }
