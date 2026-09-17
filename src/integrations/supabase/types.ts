@@ -7688,6 +7688,8 @@ export type Database = {
           linked_cost_id: string | null
           linked_sale_id: string | null
           net_amount: number
+          ref_doc_type: number | null
+          ref_folio: number | null
           source: string
           tax_amount: number
           total_amount: number
@@ -7708,6 +7710,8 @@ export type Database = {
           linked_cost_id?: string | null
           linked_sale_id?: string | null
           net_amount?: number
+          ref_doc_type?: number | null
+          ref_folio?: number | null
           source?: string
           tax_amount?: number
           total_amount?: number
@@ -7728,6 +7732,8 @@ export type Database = {
           linked_cost_id?: string | null
           linked_sale_id?: string | null
           net_amount?: number
+          ref_doc_type?: number | null
+          ref_folio?: number | null
           source?: string
           tax_amount?: number
           total_amount?: number

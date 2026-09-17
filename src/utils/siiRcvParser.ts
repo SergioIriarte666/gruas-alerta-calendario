@@ -15,6 +15,8 @@ export type ParsedRcvRow = {
   exempt_amount: number;
   tax_amount: number;
   total_amount: number;
+  ref_doc_type: number | null;
+  ref_folio: number | null;
   _rowIndex: number;
   _invalid: boolean;
   _invalidReason: string | null;
@@ -44,6 +46,10 @@ const HEADER_ALIASES: Record<string, string[]> = {
   tax_amount_primary: ['monto iva recuperable'],
   tax_amount_fallback: ['monto iva', 'monto iva no recuperable'],
   total_amount: ['monto total'],
+  // Columnas de referencia (notas de crédito/débito). Opcionales: el CSV de
+  // compras por-tipo no siempre las trae.
+  ref_doc_type: ['tipo docto. referencia', 'tipo docto referencia', 'tipo doc. referencia', 'tipo doc referencia'],
+  ref_folio: ['folio docto. referencia', 'folio docto referencia', 'folio doc. referencia', 'folio doc referencia'],
 };
 
 const findColumnIndex = (headers: string[], aliases: string[]): number =>
@@ -139,6 +145,8 @@ export async function parseSiiRcvCsv(file: File): Promise<ParseSiiRcvResult> {
   const taxAmountPrimaryIndex = findColumnIndex(headers, HEADER_ALIASES.tax_amount_primary);
   const taxAmountFallbackIndex = findColumnIndex(headers, HEADER_ALIASES.tax_amount_fallback);
   const totalAmountIndex = findColumnIndex(headers, HEADER_ALIASES.total_amount);
+  const refDocTypeIndex = findColumnIndex(headers, HEADER_ALIASES.ref_doc_type);
+  const refFolioIndex = findColumnIndex(headers, HEADER_ALIASES.ref_folio);
 
   if (docTypeIndex === -1) errors.push('No se encontró la columna "Tipo Doc".');
   if (folioIndex === -1) errors.push('No se encontró la columna "Folio".');
@@ -167,6 +175,13 @@ export async function parseSiiRcvCsv(file: File): Promise<ParseSiiRcvResult> {
       ? parseAmount(cells[taxAmountPrimaryIndex])
       : parseAmount(cells[taxAmountFallbackIndex]);
 
+    const refDocType = refDocTypeIndex !== -1
+      ? Number.parseInt((cells[refDocTypeIndex] ?? '').trim(), 10)
+      : Number.NaN;
+    const refFolio = refFolioIndex !== -1
+      ? Number.parseInt((cells[refFolioIndex] ?? '').trim(), 10)
+      : Number.NaN;
+
     return {
       doc_type: Number.isFinite(docType) ? docType : 0,
       folio: Number.isFinite(folio) ? folio : 0,
@@ -177,6 +192,8 @@ export async function parseSiiRcvCsv(file: File): Promise<ParseSiiRcvResult> {
       exempt_amount: exemptAmountIndex !== -1 ? parseAmount(cells[exemptAmountIndex]) : 0,
       tax_amount: taxAmount,
       total_amount: parseAmount(cells[totalAmountIndex]),
+      ref_doc_type: Number.isFinite(refDocType) ? refDocType : null,
+      ref_folio: Number.isFinite(refFolio) && refFolio > 0 ? refFolio : null,
       _rowIndex: rowIndex,
       _invalid: invalidReasons.length > 0,
       _invalidReason: invalidReasons.length > 0 ? invalidReasons.join(', ') : null,

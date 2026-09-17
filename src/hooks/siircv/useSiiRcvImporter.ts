@@ -63,6 +63,10 @@ export function useSiiRcvImporter() {
         exempt_amount: row.exempt_amount,
         tax_amount: row.tax_amount,
         total_amount: row.total_amount,
+        // Referencia (notas de crédito/débito): fuera del content_hash a propósito,
+        // para que la dedupe contra registros pre-existentes no cambie.
+        ref_doc_type: row.ref_doc_type,
+        ref_folio: row.ref_folio,
         content_hash: await computeRcvContentHash({
           entityRut,
           bookType: params.bookType,
