@@ -69,6 +69,18 @@ function cadenceAllows(daysUntil: number, todayISO: string): boolean {
   return isMondayInTZ(todayISO);
 }
 
+/**
+ * Errores de plantilla de la Meta Cloud API (132xxx: plantilla inexistente,
+ * aún no aprobada, parámetros que no calzan, etc.). Solo estos justifican el
+ * fallback del resumen v2→v1; con notified=0 por otra causa (token, red),
+ * reintentar con la v1 fallaría exactamente igual.
+ */
+function isTemplateError(error?: { code: string; message: string }): boolean {
+  if (!error) return false;
+  if (/^132\d{3}$/.test(error.code)) return true;
+  return /template/i.test(error.message ?? "");
+}
+
 async function getAdminPhones(supabase: any, settings: any): Promise<string[]> {
   const raw = [
     settings?.admin_phone_1 || Deno.env.get("ADMIN_WHATSAPP_1"),
@@ -272,13 +284,96 @@ Deno.serve(async (req: Request) => {
         .neq("status", "cancelled")
         .neq("source", "historico");
 
-      const outcome = await sendWhatsAppTemplateBulk(
-        phones,
-        "admin_resumen_diario",
-        [fmtDateDisplay(todayISO), String(scheduledToday ?? 0), String(pendingInvoices ?? 0)],
-        { event: "resumen_diario", context: { date: todayISO } },
+      // Sin OC: MISMO criterio canónico que evaluate_pending_oc_alerts() —
+      // status quoted/purchase_order_pending y ni purchase_order ni
+      // purchase_order_number con contenido (btrim). El btrim/COALESCE no se
+      // puede expresar en PostgREST, así que se traen ambas columnas y se
+      // filtra acá con el equivalente exacto.
+      const { data: quotedRows } = await supabase
+        .from("services")
+        .select("id, status, value, purchase_order, purchase_order_number, updated_at")
+        .in("status", ["quoted", "purchase_order_pending"])
+        .limit(5000);
+      const sinOc = ((quotedRows ?? []) as any[]).filter((svc) =>
+        !String(svc.purchase_order ?? "").trim() && !String(svc.purchase_order_number ?? "").trim(),
       );
-      results.daily_reminder = { notified: outcome.notified, failed: outcome.failed };
+      const sinOcMonto = sinOc.reduce((sum, svc) => sum + Number(svc.value ?? 0), 0);
+
+      // Días del más antiguo: entrada al estado según service_change_history
+      // (field_name='status', new_value = status actual); fallback updated_at,
+      // igual que la función SQL.
+      let sinOcMaxDias = 0;
+      if (sinOc.length > 0) {
+        const { data: history } = await supabase
+          .from("service_change_history")
+          .select("service_id, new_value, changed_at")
+          .eq("field_name", "status")
+          .in("service_id", sinOc.map((svc) => svc.id));
+        const statusById = new Map<string, string>(sinOc.map((svc) => [svc.id, String(svc.status)]));
+        const enteredAt = new Map<string, number>();
+        for (const h of (history ?? []) as any[]) {
+          if (h.new_value !== statusById.get(h.service_id)) continue;
+          const t = new Date(h.changed_at).getTime();
+          if (!Number.isFinite(t)) continue;
+          const prev = enteredAt.get(h.service_id);
+          if (prev === undefined || t > prev) enteredAt.set(h.service_id, t);
+        }
+        const nowMs = Date.now();
+        for (const svc of sinOc) {
+          const entered = enteredAt.get(svc.id) ?? new Date(svc.updated_at).getTime();
+          if (!Number.isFinite(entered)) continue;
+          const dias = Math.floor((nowMs - entered) / 86400000);
+          if (dias > sinOcMaxDias) sinOcMaxDias = dias;
+        }
+      }
+
+      // Por facturar: completados sin factura emitida. written_off queda fuera
+      // por construcción (es otro status).
+      const { data: completedRows } = await supabase
+        .from("services")
+        .select("value")
+        .eq("status", "completed")
+        .limit(5000);
+      const completados = (completedRows ?? []) as any[];
+      const completadosMonto = completados.reduce((sum, svc) => sum + Number(svc.value ?? 0), 0);
+
+      const paramsV1 = [fmtDateDisplay(todayISO), String(scheduledToday ?? 0), String(pendingInvoices ?? 0)];
+      const paramsV2 = [
+        fmtDateDisplay(todayISO),
+        String(scheduledToday ?? 0),
+        `${sinOc.length} (${fmtCLP(sinOcMonto)})`,
+        String(sinOcMaxDias),
+        `${completados.length} (${fmtCLP(completadosMonto)})`,
+        String(pendingInvoices ?? 0),
+      ];
+
+      let usedFallback = false;
+      let outcome = await sendWhatsAppTemplateBulk(phones, "admin_resumen_diario_v2", paramsV2, {
+        event: "resumen_diario",
+        context: { date: todayISO, template: "admin_resumen_diario_v2" },
+      });
+
+      // Transición: mientras Meta no apruebe la v2 (o si la degrada), el
+      // resumen sale igual con la plantilla v1 de 3 parámetros.
+      if (outcome.notified === 0 && outcome.failed.some((f) => isTemplateError(f.error))) {
+        usedFallback = true;
+        outcome = await sendWhatsAppTemplateBulk(phones, "admin_resumen_diario", paramsV1, {
+          event: "resumen_diario",
+          context: { date: todayISO, fallback: true, failed_template: "admin_resumen_diario_v2" },
+        });
+      }
+
+      results.daily_reminder = {
+        notified: outcome.notified,
+        failed: outcome.failed,
+        fallback: usedFallback,
+        metrics: {
+          scheduledToday: scheduledToday ?? 0,
+          sinOc: { count: sinOc.length, monto: sinOcMonto, maxDias: sinOcMaxDias },
+          porFacturar: { count: completados.length, monto: completadosMonto },
+          pendingInvoices: pendingInvoices ?? 0,
+        },
+      };
     } else {
       results.daily_reminder = { skipped: true };
     }

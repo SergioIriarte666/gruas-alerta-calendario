@@ -44,7 +44,7 @@ const notificationGroups: NotificationGroup[] = [
       { key: 'notifyServiceNoQuote', label: 'Servicio sin cotización', desc: 'Al crear un servicio sin precio asignado.', templates: 'admin_servicio_sin_cotizacion' },
       { key: 'notifyServiceNoOperator', label: 'Servicio sin operador', desc: 'Alerta diaria (lun-vie 08:00) de servicios de hoy/mañana sin operador.', templates: 'admin_servicio_sin_operador' },
       { key: 'notifyInvoiceOverdue', label: 'Factura vencida', desc: 'Alerta diaria (lun-vie 08:00) de facturas vencidas con saldo pendiente.', templates: 'admin_pago_pendiente' },
-      { key: 'notifyDailyReminder', label: 'Resumen diario', desc: 'Resumen diario (lun-vie 08:00) con servicios del día y facturas pendientes.', templates: 'admin_resumen_diario' },
+      { key: 'notifyDailyReminder', label: 'Resumen diario', desc: 'Resumen diario (lun-vie 08:00) con servicios del día, servicios sin OC (monto y días del más antiguo), completados por facturar y facturas pendientes.', templates: 'admin_resumen_diario_v2 · fallback admin_resumen_diario' },
       { key: 'notifyWeeklySummary', label: 'Resumen semanal', desc: 'Consolidado semanal para administradores.', templates: 'sin plantilla asociada', note: 'La columna existe en la base pero aún no hay un emisor activo para el resumen semanal.' },
       { key: 'notifyServiceResourceRisk', label: 'Recurso no apto', desc: 'Cuando un servicio queda con grúa u operador con documentos vencidos o por vencer.', templates: 'admin_servicio_recurso_no_apto' },
     ],
