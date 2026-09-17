@@ -45,3 +45,9 @@ supabase/functions/deno.lock
 
 # Auditoria local de codigo muerto (knip/jscpd) - no es codigo de la app
 audit/
+
+# Scratch de trabajos puntuales (SQL de auditoria, scripts .mjs de Excel, OCR)
+# y entregables generados. Nada de esto entra al build ni al deploy.
+.tmp/
+tools/
+outputs/
