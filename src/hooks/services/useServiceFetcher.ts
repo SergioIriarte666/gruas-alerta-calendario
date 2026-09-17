@@ -14,6 +14,7 @@ const SERVICE_SELECT = `
   origin, origin_lat, origin_lng, destination, destination_lat, destination_lng,
   service_type_id, value, crane_id, operator_id, operator_commission,
   status, observations, has_excess, client_covered_amount, excess_amount, third_party_client_id,
+  written_off_at, written_off_by, written_off_reason,
   invoice_folio, invoice_numero_fiscal,
   company_rut, company_name,
   custody_mode, custody_days, custody_daily_rate, custody_start_date, custody_end_date,

@@ -35,6 +35,10 @@ export interface Service {
   operatorCommission: number;
   status: ServiceStatus;
   observations?: string;
+  // Castigo formal (incobrable). Los escribe SOLO el RPC write_off_service.
+  writtenOffAt?: string | null;
+  writtenOffBy?: string | null;
+  writtenOffReason?: string | null;
   // Optional excess functionality
   hasExcess?: boolean;
   clientCoveredAmount?: number;
@@ -527,7 +531,7 @@ export interface ServiceClosure {
 }
 
 // Updated to match database enums - Added new states for special client workflow (Fase 1)
-export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'partially_invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
+export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'partially_invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed' | 'written_off';
 
 // Disputa de servicio: condición ortogonal al estado del servicio (no es un ServiceStatus).
 export type DisputeType = 'item_faltante_oc' | 'patente_incorrecta' | 'monto_distinto' | 'documento_faltante' | 'otro';

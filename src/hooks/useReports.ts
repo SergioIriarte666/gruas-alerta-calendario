@@ -28,6 +28,10 @@ export interface ReportMetrics {
   totalServices: number;
   totalRevenue: number;
   averageServiceValue: number;
+  /** Servicios castigados (incobrables). Categoría propia: NUNCA en totalRevenue. */
+  writtenOffServices: number;
+  /** Monto castigado en el período. Es pérdida reconocida, no ingreso pendiente. */
+  writtenOffAmount: number;
   pendingInvoices: number;
   overdueInvoices: number;
   activeClients: number;
@@ -236,6 +240,18 @@ export const useReports = (filters?: ReportFilters) => {
         // Excluir servicios cancelados de todos los cálculos
         filteredServices = filteredServices.filter(s => s.status !== 'cancelled');
 
+        // Los castigados (incobrables) salen de los ingresos y van a su propia
+        // categoría: contarlos como ingreso es exactamente lo que la auditoría
+        // encontró mal. Se quedan en el reparto por estado, que es un censo de
+        // la operación, no de la plata.
+        const writtenOffList = filteredServices.filter(s => s.status === 'written_off');
+        const writtenOffServices = writtenOffList.length;
+        const writtenOffAmount = Math.round(
+          writtenOffList.reduce((sum, service) => sum + getServiceValueForClosure(service), 0)
+        );
+        const servicesByStatusSource = filteredServices;
+        filteredServices = filteredServices.filter(s => s.status !== 'written_off');
+
         // Calcular métricas básicas
         const totalServices = filteredServices.length;
         const totalRevenue = Math.round(filteredServices.reduce((sum, service) => sum + getServiceValueForClosure(service), 0));
@@ -289,7 +305,7 @@ export const useReports = (filters?: ReportFilters) => {
         const servicesByMonth = calculateServicesByMonth(filteredServices);
 
         // Servicios por estado
-        const servicesByStatus = calculateServicesByStatus(filteredServices);
+        const servicesByStatus = calculateServicesByStatus(servicesByStatusSource);
 
         // Top clientes
         const topClients = calculateTopClients(filteredServices);
@@ -307,6 +323,8 @@ export const useReports = (filters?: ReportFilters) => {
           totalServices,
           totalRevenue,
           averageServiceValue,
+          writtenOffServices,
+          writtenOffAmount,
           pendingInvoices,
           overdueInvoices,
           activeClients,

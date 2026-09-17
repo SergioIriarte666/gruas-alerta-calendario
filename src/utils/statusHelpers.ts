@@ -1,7 +1,7 @@
 import React from 'react';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 
-export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
+export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed' | 'written_off';
 
 interface StatusConfig {
   label: string;
@@ -18,7 +18,10 @@ export const SERVICE_STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
   quoted: { label: 'Cotizado', tone: 'info' },
   purchase_order_pending: { label: 'OC Pendiente', tone: 'pending' },
   with_purchase_order: { label: 'Con O.C.', tone: 'info' },
-  failed: { label: 'Fallido', tone: 'overdue' }
+  failed: { label: 'Fallido', tone: 'overdue' },
+  // Incobrable castigado formalmente (RPC write_off_service). No es "pendiente
+  // de facturar" ni ingreso: es una pérdida reconocida.
+  written_off: { label: 'Castigado', tone: 'written_off' }
 };
 
 export const getServiceStatusBadge = (status: string) => {

@@ -18,6 +18,12 @@ describe('facturación separada de excedentes', () => {
     expect(CLOSURE_CANDIDATE_STATUSES).toContain('partially_invoiced');
   });
 
+  it('un servicio castigado no es candidato de cierre', () => {
+    // La lista es una lista blanca a propósito: un incobrable castigado no
+    // vuelve a aparecer en el wizard de cierres ni en pendientes de facturar.
+    expect(CLOSURE_CANDIDATE_STATUSES).not.toContain('written_off');
+  });
+
   it('deja disponible el excedente cuando la cobertura ya está en un cierre', () => {
     const usedKeys = new Set([getClosureValueKey(baseInput.serviceId, 'covered')]);
 

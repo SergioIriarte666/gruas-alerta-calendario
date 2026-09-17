@@ -49,6 +49,10 @@ const STATUS_LABELS: Record<string, string> = {
   quoted: 'Cotizado',
   purchase_order_pending: 'Orden de compra pendiente',
   with_purchase_order: 'Con orden de compra',
+  partially_invoiced: 'Parcialmente facturado',
+  failed: 'Fallido',
+  inspection_completed: 'Inspección completada',
+  written_off: 'Castigado',
 };
 
 function titleCaseWords(input: string): string {
@@ -193,6 +197,18 @@ export function formatAuditDescription(entry: AuditEntry): string {
     }
     case 'DELETE':
       return `Registro eliminado de ${moduleLabel(module)}`;
+    // Castigo formal de incobrables: lo escriben write_off_service y
+    // revert_write_off con el row completo en old_data/new_data.
+    case 'WRITE_OFF': {
+      const folio = entry.newData?.folio || entry.oldData?.folio;
+      const reason = entry.newData?.written_off_reason;
+      const subject = folio ? `Servicio ${folio} castigado` : 'Servicio castigado';
+      return reason ? `${subject} — ${reason}` : subject;
+    }
+    case 'WRITE_OFF_REVERT': {
+      const folio = entry.newData?.folio || entry.oldData?.folio;
+      return folio ? `Castigo del servicio ${folio} revertido` : 'Castigo de servicio revertido';
+    }
     default:
       return changeSummary || `Evento en ${tableName}`;
   }

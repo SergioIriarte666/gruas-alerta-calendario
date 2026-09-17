@@ -3,13 +3,14 @@ import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff, Ban } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
 import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { useServiceBillingLinks } from '@/hooks/services/useServiceBillingLinks';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +35,8 @@ interface ServicesTableProps {
   onEdit?: (service: Service) => void;
   onDelete?: (service: Service) => void;
   onCloseService?: (service: Service) => void;
+  /** Castigo formal (incobrable). Solo se pasa para admin. */
+  onWriteOff?: (service: Service) => void;
   onAddNewService?: () => void;
   sortField?: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null;
   sortDirection?: 'asc' | 'desc';
@@ -50,6 +53,7 @@ export const ServicesTable = React.memo(({
   onEdit,
   onDelete,
   onCloseService,
+  onWriteOff,
   onAddNewService,
   sortField,
   sortDirection,
@@ -61,6 +65,14 @@ export const ServicesTable = React.memo(({
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
+
+  // El castigo solo aplica a completados sin vínculo a factura ni cierre. Se
+  // consulta por página (2 consultas), no por fila.
+  const writeOffCandidateIds = useMemo(
+    () => (onWriteOff ? services.filter(s => s.status === 'completed').map(s => s.id) : []),
+    [onWriteOff, services],
+  );
+  const { linkedServiceIds } = useServiceBillingLinks(writeOffCandidateIds);
 
   const effectiveSelectAllIds = allFilteredIds ?? services.map(s => s.id);
   const allFilteredSelected = effectiveSelectAllIds.length > 0 && effectiveSelectAllIds.every(id => selectedServices.has(id));
@@ -374,6 +386,18 @@ export const ServicesTable = React.memo(({
                   <Trash2 className="size-4" />
                 </Button>
               )}
+
+              {onWriteOff && service.status === 'completed' && !linkedServiceIds.has(service.id) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="action-button border-dashed border-danger/40 bg-danger/5 text-danger hover:bg-danger/15 hover:border-danger/50"
+                  onClick={(e) => { e.stopPropagation(); onWriteOff(service); }}
+                  title="Castigar servicio (incobrable)"
+                >
+                  <Ban className="size-4" />
+                </Button>
+              )}
             </div>
           );
         },
@@ -381,7 +405,7 @@ export const ServicesTable = React.memo(({
     );
 
     return cols;
-  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, isAdmin, sortField, sortDirection, onSort]);
+  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, onWriteOff, linkedServiceIds, isAdmin, sortField, sortDirection, onSort]);
 
   const table = useReactTable({
     data: services,
@@ -408,6 +432,7 @@ export const ServicesTable = React.memo(({
             onEdit={onEdit}
             onDelete={onDelete}
             onCloseService={onCloseService}
+            onWriteOff={onWriteOff}
             onAddNewService={onAddNewService}
             sortField={sortField}
             sortDirection={sortDirection}

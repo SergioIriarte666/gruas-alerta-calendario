@@ -67,11 +67,18 @@ describe('describeTrackingShareFailure', () => {
 });
 
 describe('isFinalServiceStatus', () => {
-  it('cubre los cinco estados finales y ninguno más', () => {
+  it('cubre los estados finales y ninguno más', () => {
     expect(isFinalServiceStatus('completed')).toBe(true);
     expect(isFinalServiceStatus('partially_invoiced')).toBe(true);
     expect(isFinalServiceStatus('in_progress')).toBe(false);
     expect(isFinalServiceStatus('pending')).toBe(false);
     expect(isFinalServiceStatus(null)).toBe(false);
+  });
+
+  it('un servicio castigado tampoco pare tokens de seguimiento', () => {
+    // Espejo de reject_tracking_link_on_closed_service y
+    // get_or_create_tracking_token (migración 20260917100100). Si las listas
+    // se desincronizan, un castigado podría generar un link público vivo.
+    expect(isFinalServiceStatus('written_off')).toBe(true);
   });
 });

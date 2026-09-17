@@ -227,6 +227,7 @@ const ReportsPage = () => {
 
   const defaultMetrics: typeof metrics = {
     totalServices: 0, totalRevenue: 0, averageServiceValue: 0,
+    writtenOffServices: 0, writtenOffAmount: 0,
     pendingInvoices: 0, overdueInvoices: 0, activeClients: 0,
     activeCranes: 0, activeOperators: 0, totalCosts: 0,
     netProfit: 0, profitMargin: 0, servicesByMonth: [],
@@ -317,11 +318,19 @@ const ReportsPage = () => {
         );
       case 'finanzas':
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <ReportMetricCard title="Beneficio Neto" value={`$${m.netProfit.toLocaleString()}`} valueClassName={m.netProfit >= 0 ? 'text-success-text' : 'text-danger-text'} />
             <ReportMetricCard title="Margen" value={`${m.profitMargin.toFixed(1)}%`} />
             <ReportMetricCard title="Facturas Pendientes" value={m.pendingInvoices} valueClassName="text-warning-text" />
             <ReportMetricCard title="Vencidas" value={m.overdueInvoices} valueClassName="text-danger-text" />
+            {/* Categoría propia: los castigados no entran en ingresos ni en
+                pendientes de facturar. */}
+            <ReportMetricCard
+              title="Castigados"
+              value={`$${m.writtenOffAmount.toLocaleString()}`}
+              description={`${m.writtenOffServices} servicio(s) incobrables`}
+              valueClassName="text-danger-text"
+            />
           </div>
         );
       case 'costos':

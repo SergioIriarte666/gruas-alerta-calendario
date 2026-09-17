@@ -21,6 +21,8 @@ import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-prog
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
+import { ServiceWriteOffDialog, type WriteOffMode } from '@/components/services/ServiceWriteOffDialog';
+import { useServiceWriteOff } from '@/hooks/services/useServiceWriteOff';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -78,6 +80,8 @@ const Services = () => {
   const [batchDeleteError, setBatchDeleteError] = useState('');
   const [serviceToClose, setServiceToClose] = useState<Service | null>(null);
   const [serviceToEditWarning, setServiceToEditWarning] = useState<Service | null>(null);
+  const [serviceToWriteOff, setServiceToWriteOff] = useState<Service | null>(null);
+  const [writeOffMode, setWriteOffMode] = useState<WriteOffMode>('write_off');
   const [isBatchCloseConfirmOpen, setIsBatchCloseConfirmOpen] = useState(false);
   const [isBatchDeleteConfirmOpen, setIsBatchDeleteConfirmOpen] = useState(false);
   const [isBatchDuplicateConfirmOpen, setIsBatchDuplicateConfirmOpen] = useState(false);
@@ -187,6 +191,7 @@ const Services = () => {
   } = useServicesPendingExport(services);
 
   const isMobile = useIsMobile();
+  const { writeOffService, revertWriteOff, isWritingOff, isReverting } = useServiceWriteOff();
 
   // Calculate selected services data
   const selectedServicesData = useMemo(() => {
@@ -340,6 +345,24 @@ const Services = () => {
     setServiceToClose(null);
   };
 
+  // Castigo formal de incobrables. Solo admin: el RPC valida el rol igual, pero
+  // la acción no se ofrece a quien no puede ejecutarla.
+  const handleRequestWriteOff = (service: Service) => {
+    setWriteOffMode('write_off');
+    setServiceToWriteOff(service);
+  };
+
+  // El listado solo castiga; la reversión vive en el detalle del servicio
+  // (ServiceDetailsModal), que es donde se ve el motivo registrado.
+  const handleConfirmWriteOff = async (service: Service, reason: string) => {
+    if (writeOffMode === 'revert') {
+      await revertWriteOff(service);
+    } else {
+      await writeOffService(service, reason);
+    }
+    setServiceToWriteOff(null);
+  };
+
   const handleRequestEdit = (service: Service) => {
     if (service.status === 'invoiced' && !isAdmin) {
       toast.error('No se puede editar un servicio facturado. Solo los administradores pueden hacerlo');
@@ -467,6 +490,7 @@ const Services = () => {
               onEdit={isAdmin ? handleRequestEdit : undefined}
               onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
               onCloseService={handleRequestCloseService}
+              onWriteOff={isAdmin ? handleRequestWriteOff : undefined}
               onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -480,6 +504,7 @@ const Services = () => {
               onEdit={isAdmin ? handleRequestEdit : undefined}
               onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
               onCloseService={handleRequestCloseService}
+              onWriteOff={isAdmin ? handleRequestWriteOff : undefined}
               onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -505,6 +530,15 @@ const Services = () => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={handleConfirmDelete}
+      />
+
+      <ServiceWriteOffDialog
+        service={serviceToWriteOff}
+        mode={writeOffMode}
+        open={!!serviceToWriteOff}
+        onOpenChange={(open) => !open && setServiceToWriteOff(null)}
+        onConfirm={handleConfirmWriteOff}
+        isSubmitting={isWritingOff || isReverting}
       />
 
       <Dialog open={isBatchDeletePasswordOpen} onOpenChange={setIsBatchDeletePasswordOpen}>

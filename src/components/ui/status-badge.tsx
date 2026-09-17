@@ -16,7 +16,8 @@ export type StatusTone =
   | "cancelled"
   | "draft"
   | "info"
-  | "neutral";
+  | "neutral"
+  | "written_off";
 
 const toneClasses: Record<StatusTone, string> = {
   paid: "bg-success-soft text-success-text border-success/30",
@@ -28,6 +29,10 @@ const toneClasses: Record<StatusTone, string> = {
   draft: "bg-muted text-muted-foreground border-border",
   info: "bg-info-soft text-info-text border-info/30",
   neutral: "bg-muted text-foreground border-border",
+  // Castigado (incobrable): borde discontinuo para no confundirlo con
+  // "vencido" (danger sólido) ni con "cancelado" (gris plano). Es una pérdida
+  // asumida, no una deuda por cobrar ni un servicio que no ocurrió.
+  written_off: "bg-danger-soft/60 text-danger-text border-dashed border-danger/50",
 };
 
 export interface StatusBadgeProps {

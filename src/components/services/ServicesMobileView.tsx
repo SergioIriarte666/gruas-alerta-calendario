@@ -2,7 +2,7 @@ import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign, Ban } from 'lucide-react';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -17,6 +17,8 @@ interface ServicesMobileViewProps {
   onEdit?: (service: Service) => void;
   onDelete?: (service: Service) => void;
   onCloseService?: (service: Service) => void;
+  /** Castigo formal (incobrable). Solo se pasa para admin. */
+  onWriteOff?: (service: Service) => void;
   onAddNewService?: () => void;
   sortField?: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null;
   sortDirection?: 'asc' | 'desc';
@@ -29,6 +31,7 @@ export const ServicesMobileView = ({
   onViewDetails,
   onEdit,
   onDelete,
+  onWriteOff,
   onCloseService,
   onAddNewService,
   sortField: _sortField,
@@ -171,6 +174,18 @@ export const ServicesMobileView = ({
                     disabled={isInvoiced}
                   >
                     <Trash2 className="size-4" />
+                  </Button>
+                )}
+
+                {onWriteOff && service.status === 'completed' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-dashed border-danger/40 bg-danger/5 px-3 text-danger hover:bg-danger/15"
+                    onClick={() => onWriteOff(service)}
+                    title="Castigar servicio (incobrable)"
+                  >
+                    <Ban className="size-4" />
                   </Button>
                 )}
               </div>

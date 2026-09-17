@@ -153,6 +153,10 @@ export const useServiceTransformer = () => {
         operatorCommission: parseFloat(item.operator_commission) || 0,
         status: item.status || 'pending',
         observations: item.observations || '',
+        // Castigo formal: null cuando el servicio nunca se castigó.
+        writtenOffAt: item.written_off_at ?? null,
+        writtenOffBy: item.written_off_by ?? null,
+        writtenOffReason: item.written_off_reason ?? null,
         purchaseOrder: item.purchase_order || '',
         purchaseOrderNumber: item.purchase_order_number || '',
         quoteNumber: item.quote_number || '',

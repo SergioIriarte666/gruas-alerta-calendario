@@ -7402,6 +7402,9 @@ export type Database = {
           value: number
           vehicle_brand: string | null
           vehicle_model: string | null
+          written_off_at: string | null
+          written_off_by: string | null
+          written_off_reason: string | null
         }
         Insert: {
           client_covered_amount?: number | null
@@ -7470,6 +7473,9 @@ export type Database = {
           value: number
           vehicle_brand?: string | null
           vehicle_model?: string | null
+          written_off_at?: string | null
+          written_off_by?: string | null
+          written_off_reason?: string | null
         }
         Update: {
           client_covered_amount?: number | null
@@ -7538,6 +7544,9 @@ export type Database = {
           value?: number
           vehicle_brand?: string | null
           vehicle_model?: string | null
+          written_off_at?: string | null
+          written_off_by?: string | null
+          written_off_reason?: string | null
         }
         Relationships: [
           {
@@ -7615,6 +7624,13 @@ export type Database = {
             columns: ["third_party_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_written_off_by_fkey"
+            columns: ["written_off_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -9129,10 +9145,21 @@ export type Database = {
       }
       backfill_maintenance_costs: { Args: never; Returns: Json }
       backfill_supplier_payments_from_costs: { Args: never; Returns: number }
+      backup_dump_chunk: {
+        Args: { p_max_bytes?: number; p_page?: number; p_start_table?: string }
+        Returns: {
+          body: string
+          next_table: string
+          rows_by_table: Json
+        }[]
+      }
       build_import_batch_summary: {
         Args: { p_batch_id: string }
         Returns: Json
       }
+      business_date: { Args: { value: string }; Returns: string }
+      business_timezone: { Args: never; Returns: string }
+      business_today: { Args: never; Returns: string }
       calculate_billing_date: {
         Args: {
           billing_cycle_day?: number
@@ -10217,6 +10244,7 @@ export type Database = {
         Args: { p_payment_id?: string }
         Returns: Json
       }
+      revert_write_off: { Args: { p_service_id: string }; Returns: undefined }
       rollback_import_batch: { Args: { p_batch_id: string }; Returns: Json }
       safe_update_service: {
         Args: { service_id_param: string; update_data: Json }
@@ -10445,6 +10473,15 @@ export type Database = {
         Returns: Json
       }
       verify_auth_system: { Args: never; Returns: Json }
+      verify_backup_sample: {
+        Args: { p_inserts: string; p_table: string }
+        Returns: {
+          rows_differing: number
+          rows_identical: number
+          rows_only_in_backup: number
+          rows_restored: number
+        }[]
+      }
       verify_operator_pin: {
         Args: { p_operator_id: string; p_pin: string }
         Returns: boolean
@@ -10459,6 +10496,10 @@ export type Database = {
           p_revert_payment?: boolean
         }
         Returns: Json
+      }
+      write_off_service: {
+        Args: { p_reason: string; p_service_id: string }
+        Returns: undefined
       }
     }
     Enums: {
@@ -10499,6 +10540,7 @@ export type Database = {
         | "with_purchase_order"
         | "failed"
         | "partially_invoiced"
+        | "written_off"
       supplier_category:
         | "combustible"
         | "mantenimiento"
@@ -10525,12 +10567,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -10554,11 +10596,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -10579,11 +10621,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -10604,11 +10646,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -10621,11 +10663,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -10680,6 +10722,7 @@ export const Constants = {
         "with_purchase_order",
         "failed",
         "partially_invoiced",
+        "written_off",
       ],
       supplier_category: [
         "combustible",

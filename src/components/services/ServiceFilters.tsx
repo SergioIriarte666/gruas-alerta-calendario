@@ -34,6 +34,7 @@ const STATUS_OPTIONS = [
   { value: 'purchase_order_pending', label: 'Esperando O.C.' },
   { value: 'with_purchase_order', label: 'Con O.C.' },
   { value: 'failed', label: 'Fallido' },
+  { value: 'written_off', label: 'Castigado' },
 ];
 
 export const ServiceFilters = React.memo(({

@@ -28,7 +28,8 @@ import {
   Plus,
   ExternalLink,
   Share2,
-  Route
+  Route,
+  RotateCcw
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,6 +68,8 @@ import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
 import { isFinalServiceStatus } from '@/utils/serviceTrackingLifecycle';
+import { ServiceWriteOffDialog } from '@/components/services/ServiceWriteOffDialog';
+import { useServiceWriteOff } from '@/hooks/services/useServiceWriteOff';
 import { fetchStopEventsForServices } from '@/services/serviceStopEventService';
 import { STOP_REASON_LABELS, stopEventMinutes } from '@/types/serviceStopEvent';
 import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
@@ -568,6 +571,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const currentDispute = service?.id ? openDisputesByServiceId.get(service.id) : undefined;
   const [showMarkDispute, setShowMarkDispute] = React.useState(false);
   const [showResolveDispute, setShowResolveDispute] = React.useState(false);
+  const [showRevertWriteOff, setShowRevertWriteOff] = React.useState(false);
+  const { revertWriteOff, isReverting } = useServiceWriteOff();
 
   const isProductSaleService = serviceData?.serviceType?.id === VENTA_PRODUCTOS_SERVICE_TYPE_ID
     || serviceData?.serviceType?.name === 'Venta de Productos';
@@ -741,6 +746,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
             <DialogTitle className="text-xl font-semibold tracking-tight text-foreground text-center">
               Detalle Operativo y Financiero
             </DialogTitle>
+            {serviceData.status === 'written_off' && (
+              <div className="rounded-lg border border-dashed border-danger/40 bg-danger/5 px-3 py-2 text-sm">
+                <span className="font-medium text-danger">Servicio castigado (incobrable).</span>
+                {serviceData.writtenOffReason ? (
+                  <span className="text-muted-foreground"> Motivo: {serviceData.writtenOffReason}</span>
+                ) : null}
+                {serviceData.writtenOffAt ? (
+                  <span className="text-muted-foreground"> · {formatForDisplayWithTime(serviceData.writtenOffAt)}</span>
+                ) : null}
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Button
@@ -843,6 +859,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 >
                   <AlertTriangle className="size-4" />
                   Marcar en Disputa
+                </Button>
+              )}
+              {/* Revertir el castigo: solo admin y solo sobre un servicio
+                  castigado. Pasa por el mismo diálogo de contraseña que el
+                  castigo, y el RPC revert_write_off lo audita. */}
+              {isAdmin && serviceData.status === 'written_off' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRevertWriteOff(true)}
+                  className="flex items-center gap-2 border-dashed border-danger/40 text-danger"
+                >
+                  <RotateCcw className="size-4" />
+                  Revertir castigo
                 </Button>
               )}
               {/* Interruptor, no botón: es un ESTADO del servicio, no una
@@ -1298,6 +1328,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
         onOpenChange={setShowResolveDispute}
         dispute={currentDispute || null}
         serviceFolio={serviceData.folio}
+      />
+      <ServiceWriteOffDialog
+        service={showRevertWriteOff ? (serviceData as Service) : null}
+        mode="revert"
+        open={showRevertWriteOff}
+        onOpenChange={setShowRevertWriteOff}
+        onConfirm={async (svc) => { await revertWriteOff(svc); }}
+        isSubmitting={isReverting}
       />
     </Dialog>
   );

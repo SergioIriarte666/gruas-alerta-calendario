@@ -18,6 +18,8 @@ export const FINAL_SERVICE_STATUSES: readonly ServiceStatus[] = [
   'failed',
   'invoiced',
   'partially_invoiced',
+  // Castigado: incobrable, cerrado contablemente. Tampoco pare tokens.
+  'written_off',
 ];
 
 export const isFinalServiceStatus = (status?: ServiceStatus | string | null): boolean =>

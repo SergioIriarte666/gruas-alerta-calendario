@@ -22,6 +22,8 @@ const statusLabels: Record<string, string> = {
   with_purchase_order: 'Con O.C.',
   failed: 'Fallido',
   inspection_completed: 'Inspección completada',
+  partially_invoiced: 'Parcialmente facturado',
+  written_off: 'Castigado',
 };
 
 export const exportOperatorReport = async ({

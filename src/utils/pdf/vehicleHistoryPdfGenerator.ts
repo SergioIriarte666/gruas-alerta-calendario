@@ -33,6 +33,7 @@ const getStatusLabel = (status: string): string => {
     in_progress: 'En Progreso',
     completed: 'Completado',
     invoiced: 'Facturado',
+    written_off: 'Castigado',
     cancelled: 'Cancelado',
     failed: 'Fallido',
     quoted: 'Cotizado',

@@ -185,7 +185,8 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
         in_progress: 'En Progreso', assigned: 'Asignado', invoiced: 'Facturado',
         quoted: 'Cotizado', purchase_order_pending: 'Esperando O.C.',
         with_purchase_order: 'Con Orden de Compra', failed: 'Fallido',
-        inspection_completed: 'Inspección Completada'
+        inspection_completed: 'Inspección Completada',
+        partially_invoiced: 'Parcialmente Facturado', written_off: 'Castigado'
       };
       const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus.map(s => ({
         'Estado': statusLabels[s.status] || s.status,
