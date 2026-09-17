@@ -6,6 +6,9 @@ export interface Notification {
   type: 'info' | 'success' | 'warning' | 'error';
   timestamp: Date;
   read: boolean;
+  /** UUID en public.notifications cuando la alerta es persistente (generada en
+   * servidor). Su estado leído vive en la base (read_at), no en localStorage. */
+  dbId?: string;
   actionType?: 'navigate' | 'filter' | 'highlight';
   actionUrl?: string;
   actionData?: {

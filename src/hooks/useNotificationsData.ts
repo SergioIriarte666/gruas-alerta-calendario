@@ -9,7 +9,12 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useNotificationsData");
-const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> => {
+
+/** Las derivadas en cliente no traen `read` (lo resuelve el contexto vía
+ * localStorage); las persistentes lo traen desde la base (read_at). */
+export type FetchedNotification = Omit<Notification, 'read'> & { read?: boolean };
+
+const fetchNotificationsData = async (): Promise<FetchedNotification[]> => {
   const today = startOfToday();
   const tomorrow = addDays(today, 1);
   const nextWeek = addDays(today, 7);
@@ -22,7 +27,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   const closureInvoiceThreshold = addDays(today, -15);
   const criticalServiceThreshold = addDays(today, -60);
 
-  const notifications: Omit<Notification, 'read'>[] = [];
+  const notifications: FetchedNotification[] = [];
+  const nowISO = businessClock.nowISO();
 
   const [
     urgentServicesRes,
@@ -33,7 +39,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     expiringCranesRes,
     expiringOperatorsRes,
     servicesWithoutOCRes,
-    pendingOcAlertsRes
+    persistentRes
   ] = await Promise.all([
     // 1A. Services today/tomorrow
     supabase
@@ -79,13 +85,16 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
       .limit(100),
-    // 8. Persistent OC-pending alerts written by evaluate_pending_oc_alerts()
-    //    (pg_cron). RLS limits rows to the current user (admins only receive them).
+    // 8. Persistent notifications written server-side (OC pendiente, watchdog
+    //    de telemetría, etc.). RLS limits rows to the current user; same active
+    //    semantics as get_notification_summary: not dismissed, not expired,
+    //    not snoozed. Read state comes from the DB (read_at), not localStorage.
     supabase
       .from('notifications')
-      .select('id, title, message, type, created_at, action_url, action_data, entity_id')
-      .eq('category', 'oc_pending')
+      .select('id, title, message, type, created_at, read_at, action_url, action_data, entity_id')
       .is('dismissed_at', null)
+      .or(`expires_at.is.null,expires_at.gt.${nowISO}`)
+      .or(`snoozed_until.is.null,snoozed_until.lte.${nowISO}`)
       .order('created_at', { ascending: false })
       .limit(100)
   ]);
@@ -333,15 +342,17 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   });
 
-  // Process persistent OC-pending alerts (one per service, generated server-side)
-  (pendingOcAlertsRes.data || []).forEach((row: any) => {
+  // Process persistent server-side notifications
+  (persistentRes.data || []).forEach((row: any) => {
     const actionData = (row.action_data ?? {}) as { entityId?: string };
     notifications.push({
-      id: `oc-pending-${row.id}`,
+      id: `db-${row.id}`,
+      dbId: row.id,
       title: row.title,
       message: row.message,
       type: ['info', 'success', 'warning', 'error'].includes(row.type) ? row.type : 'warning',
       timestamp: parseISO(row.created_at),
+      read: row.read_at != null,
       actionType: 'navigate',
       actionUrl: row.action_url || '/services',
       actionData: { entityId: actionData.entityId ?? row.entity_id ?? undefined },

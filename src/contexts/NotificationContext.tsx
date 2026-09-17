@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { Notification } from '@/types/notifications';
+import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('NotificationContext');
@@ -39,9 +40,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       try {
         const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
         const readIds = new Set<string>(storedReadIds);
+        // Las persistentes (dbId) traen su estado leído desde la base (read_at);
+        // las derivadas en cliente lo siguen guardando en localStorage.
         const mergedNotifications = fetchedNotifications.map(n => ({
             ...n,
-            read: readIds.has(n.id)
+            read: n.dbId ? (n.read ?? false) : readIds.has(n.id)
         }));
         setNotifications(mergedNotifications);
       } catch (error) {
@@ -63,12 +66,21 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const markAsRead = (id: string) => {
     try {
-      const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
-      const readIds = new Set<string>(storedReadIds);
-      readIds.add(id);
-      localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
-      setNotifications(prev => 
-        prev.map(notification => 
+      const target = notifications.find(n => n.id === id);
+      if (target?.dbId) {
+        supabase
+          .rpc('mark_notification_read', { p_notification_id: target.dbId })
+          .then(({ error }) => {
+            if (error) logger.error('Error persisting read_at:', error);
+          });
+      } else {
+        const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+        const readIds = new Set<string>(storedReadIds);
+        readIds.add(id);
+        localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
+      }
+      setNotifications(prev =>
+        prev.map(notification =>
           notification.id === id ? { ...notification, read: true } : notification
         )
       );
@@ -79,9 +91,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const markAllAsRead = () => {
     try {
-      const allIds = notifications.map(n => n.id);
-      localStorage.setItem('read_notification_ids', JSON.stringify(allIds));
-      setNotifications(prev => 
+      const localIds = notifications.filter(n => !n.dbId).map(n => n.id);
+      localStorage.setItem('read_notification_ids', JSON.stringify(localIds));
+      if (notifications.some(n => n.dbId)) {
+        supabase.rpc('mark_all_notifications_read').then(({ error }) => {
+          if (error) logger.error('Error persisting read_at (all):', error);
+        });
+      }
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
     } catch (error) {
