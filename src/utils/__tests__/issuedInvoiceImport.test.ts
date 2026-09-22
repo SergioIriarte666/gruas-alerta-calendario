@@ -3,6 +3,7 @@ import {
   invoiceFieldErrors,
   normalizeInvoiceOC,
   parseIssuedInvoiceText,
+  prepareIssuedInvoiceDraft,
   reconciliationErrors,
   suggestedInvoiceKeys,
   type InvoiceCandidate,
@@ -114,6 +115,33 @@ describe('issued invoice import', () => {
       parseIssuedInvoiceText('NOTA DE CREDITO\nREFERENCIA FACTURA ELECTRONICA')
         .documentType,
     ).toBe('');
+  });
+  it('reads the standard SII recipient block and written dates', () => {
+    const parsed = parseIssuedInvoiceText(
+      `R.U.T.: 76.123.456-0\nFACTURA ELECTRONICA\nN° 4369\nSEÑOR(ES): CLIENTE EJEMPLO\nR.U.T.: 77.222.333-4\nGIRO: TRANSPORTES\nFECHA EMISION: 01 de Septiembre del 2026\nOrden de Compra: 00821`,
+    );
+    expect(parsed.clientRut).toBe('77.222.333-4');
+    expect(parsed.issuerRut).toBe('761234560');
+    expect(parsed.issueDate).toBe('2026-09-01');
+    expect(parsed.purchaseOrder).toBe('00821');
+  });
+  it('prepares the closure from the invoice OC without a mandatory manual step', () => {
+    const input = {
+      fields: { ...fields, description: '', dueDate: '' },
+      selectedKeys: [],
+      reviewed: false,
+      manualReason: '',
+    };
+    const result = prepareIssuedInvoiceDraft(input, [candidate('a')]);
+    expect(result.selectedKeys).toEqual(['a:covered']);
+    expect(result.fields.description).toBe('Factura SII 4369 · OC 00821');
+    expect(result.fields.dueDate).toBe('2026-10-01');
+    expect(result.dueDateDefaulted).toBe(true);
+    expect(result.reviewed).toBe(false);
+    expect(
+      prepareIssuedInvoiceDraft({ ...input, fields }, [candidate('a')]).fields
+        .dueDate,
+    ).toBe('2026-09-30');
   });
   it('blocks missing dates, invalid totals and exempt VAT', () => {
     expect(invoiceFieldErrors(fields)).toEqual([]);

@@ -30,6 +30,7 @@ export interface IssuedInvoiceDraft {
   selectedKeys: string[];
   reviewed: boolean;
   manualReason: string;
+  dueDateDefaulted?: boolean;
 }
 export interface ImportedInvoiceResult {
   invoiceId: string;
@@ -93,10 +94,61 @@ function singleMatch(text: string, expression: RegExp) {
   return found.length === 1 ? found[0] : '';
 }
 function dateValue(value: string) {
-  const m = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  let m = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (!m) {
+    const written = value.match(
+      /^(\d{1,2})\s+(?:DE\s+)?([A-Z]+)\s+(?:DEL?\s+)?(\d{4})$/,
+    );
+    const months = [
+      'ENERO',
+      'FEBRERO',
+      'MARZO',
+      'ABRIL',
+      'MAYO',
+      'JUNIO',
+      'JULIO',
+      'AGOSTO',
+      'SEPTIEMBRE',
+      'OCTUBRE',
+      'NOVIEMBRE',
+      'DICIEMBRE',
+    ];
+    if (written && months.includes(written[2]))
+      m = [
+        written[0],
+        written[1],
+        String(months.indexOf(written[2]) + 1),
+        written[3],
+      ] as RegExpMatchArray;
+  }
   if (!m) return '';
   const iso = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   return isCalendarDate(iso) ? iso : '';
+}
+// Same 30-day default used by the individual invoice form, relative to the
+// invoice's original issue date. Keep its provenance visible in the proposal.
+export function prepareIssuedInvoiceDraft(
+  draft: IssuedInvoiceDraft,
+  candidates: InvoiceCandidate[],
+): IssuedInvoiceDraft {
+  const fields = { ...draft.fields };
+  let dueDateDefaulted = draft.dueDateDefaulted;
+  if (!fields.dueDate && isCalendarDate(fields.issueDate)) {
+    const date = new Date(`${fields.issueDate}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + 30);
+    fields.dueDate = date.toISOString().slice(0, 10);
+    dueDateDefaulted = true;
+  }
+  if (!fields.description && fields.fiscalNumber && fields.purchaseOrder)
+    fields.description = `Factura SII ${fields.fiscalNumber} · OC ${normalizeInvoiceOC(fields.purchaseOrder)}`;
+  return {
+    ...draft,
+    fields,
+    ...(dueDateDefaulted ? { dueDateDefaulted } : {}),
+    selectedKeys: draft.selectedKeys.length
+      ? draft.selectedKeys
+      : suggestedInvoiceKeys(fields, candidates),
+  };
 }
 // Conservative extraction: ambiguous/missing fields stay empty for explicit review.
 // Never infer a fiscal number from a filename or assign a client from an unlabeled RUT.
@@ -123,17 +175,44 @@ export function parseIssuedInvoiceText(text: string): IssuedInvoiceFields {
         ? '33'
         : '';
   const rutPattern = '(\\d{1,2}\\.?\\d{3}\\.?\\d{3}-[0-9K])';
-  const issuer = singleMatch(
+  let issuer = singleMatch(
     t,
     new RegExp(`R\\.?U\\.?T\\.?\\s*(?:EMISOR)?\\s*:?\\s*${rutPattern}`, 'g'),
   );
-  const receptor = singleMatch(
+  let receptor = singleMatch(
     t,
     new RegExp(
       `(?:R\\.?U\\.?T\\.?\\s*(?:RECEPTOR|CLIENTE)|(?:RECEPTOR|CLIENTE)\\s+R\\.?U\\.?T\\.?)\\s*:?\\s*${rutPattern}`,
       'g',
     ),
   );
+  // Standard SII documents label the recipient block SEÑOR(ES), then use
+  // an unqualified RUT. Keep roles contextual instead of taking the first RUT.
+  if (!receptor) {
+    const recipientBlock =
+      t.match(
+        /SENOR(?:\(ES\)|ES)?\s*:?([\s\S]*?)(?=\n\s*(?:GIRO|DIRECCION|COMUNA|CIUDAD)\b|$)/,
+      )?.[1] || '';
+    receptor = singleMatch(
+      recipientBlock,
+      new RegExp(`R\\.?U\\.?T\\.?\\s*:?\\s*${rutPattern}`, 'g'),
+    );
+  }
+  if (!issuer && receptor) {
+    const ruts = unique(
+      [
+        ...t.matchAll(
+          new RegExp(
+            `R\\.?U\\.?T\\.?\\s*(?:EMISOR|RECEPTOR|CLIENTE)?\\s*:?\\s*${rutPattern}`,
+            'g',
+          ),
+        ),
+      ]
+        .map((m) => normalizeInvoiceRut(m[1]))
+        .filter((r) => r !== normalizeInvoiceRut(receptor)),
+    );
+    if (ruts.length === 1) issuer = ruts[0];
+  }
   const vat = amount('(?:MONTO\\s+)?I\\.?V\\.?A\\.?(?:\\s*19\\s*%)?');
   return {
     documentType: type,
@@ -150,13 +229,13 @@ export function parseIssuedInvoiceText(text: string): IssuedInvoiceFields {
     issueDate: dateValue(
       singleMatch(
         t,
-        /(?:FECHA\s+(?:DE\s+)?EMISION)\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4})/g,
+        /(?:FECHA\s+(?:DE\s+)?EMISION)\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{1,2}\s+(?:DE\s+)?[A-Z]+\s+(?:DEL?\s+)?\d{4})/g,
       ),
     ),
     dueDate: dateValue(
       singleMatch(
         t,
-        /(?:FECHA\s+(?:DE\s+)?)?VENCIMIENTO\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4})/g,
+        /(?:FECHA\s+(?:DE\s+)?)?VENCIMIENTO\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{1,2}\s+(?:DE\s+)?[A-Z]+\s+(?:DEL?\s+)?\d{4})/g,
       ),
     ),
     net: amount(type === '34' ? '(?:MONTO\\s+)?EXENTO' : '(?:MONTO\\s+)?NETO'),

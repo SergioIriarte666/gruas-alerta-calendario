@@ -42,7 +42,7 @@ type ImportDatabase = Omit<Database, 'public'> & {
         };
         Returns: Json;
       };
-      register_issued_invoice: {
+      confirm_and_register_issued_invoice: {
         Args: { p_document_id: string; p_expected_draft: Json };
         Returns: Json;
       };
@@ -71,14 +71,6 @@ export async function listIssuedInvoiceDrafts(): Promise<
     all.push(...(data as unknown as IssuedInvoiceDocument[]));
     if (data.length < 500) break;
   }
-  const recent = await db
-    .from('issued_invoice_imports')
-    .select('*')
-    .not('result', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(100);
-  if (recent.error) throw recent.error;
-  all.push(...(recent.data as unknown as IssuedInvoiceDocument[]));
   return all;
 }
 export async function findIssuedInvoiceFile(hash: string) {
@@ -120,7 +112,7 @@ export async function registerIssuedInvoice(
   id: string,
   draft: IssuedInvoiceDraft,
 ): Promise<ImportedInvoiceResult> {
-  const { data, error } = await db.rpc('register_issued_invoice', {
+  const { data, error } = await db.rpc('confirm_and_register_issued_invoice', {
     p_document_id: id,
     p_expected_draft: JSON.parse(JSON.stringify(draft)) as Json,
   });

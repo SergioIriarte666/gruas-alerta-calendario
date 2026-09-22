@@ -1,11 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  FileUp,
-  Loader2,
-  RefreshCw,
-  Download,
-  ExternalLink,
-} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { FileUp, Loader2, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,8 +48,10 @@ function InvoiceReview({
   doc,
   onClose,
   onSave,
+  initialCandidates,
 }: {
   doc: IssuedInvoiceDocument;
+  initialCandidates: InvoiceCandidate[];
   onClose: () => void;
   onSave: (draft: IssuedInvoiceDraft) => Promise<void>;
 }) {
@@ -63,13 +59,15 @@ function InvoiceReview({
     ...doc.draft,
     fields: { ...doc.draft.fields },
   }));
-  const [rows, setRows] = useState<InvoiceCandidate[]>([]);
+  const [rows, setRows] = useState<InvoiceCandidate[]>(initialCandidates);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [url, setUrl] = useState('');
   const [allOC, setAllOC] = useState(false);
   const [search, setSearch] = useState('');
-  const [loadedRut, setLoadedRut] = useState('');
+  const [loadedRut, setLoadedRut] = useState(
+    initialCandidates.length ? doc.draft.fields.clientRut : '',
+  );
   useEffect(() => {
     let active = true;
     supabase.storage
@@ -112,6 +110,7 @@ function InvoiceReview({
     setDraft((d) => ({
       ...d,
       reviewed: false,
+      ...(field === 'dueDate' ? { dueDateDefaulted: false } : {}),
       selectedKeys:
         field === 'clientRut' || field === 'purchaseOrder'
           ? []
@@ -140,7 +139,7 @@ function InvoiceReview({
         .includes(search.toLowerCase()),
   );
   const chosen = rows.filter((r) => draft.selectedKeys.includes(r.key));
-  const errors = reconciliationErrors(draft, rows);
+  const errors = reconciliationErrors({ ...draft, reviewed: true }, rows);
   const save = async () => {
     setBusy(true);
     setError('');
@@ -365,23 +364,6 @@ function InvoiceReview({
                   placeholder="Explica la referencia comprobada en el PDF"
                 />
               </div>
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={draft.reviewed}
-                  disabled={
-                    !loadedRut ||
-                    !!reconciliationErrors({ ...draft, reviewed: true }, rows)
-                      .length
-                  }
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, reviewed: e.target.checked }))
-                  }
-                />
-                Revisé el PDF, sus datos, OC, servicios y montos. Confirmo esta
-                asignación.
-              </label>
             </fieldset>
             {!doc.result && errors.length > 0 && (
               <ul className="space-y-1 text-xs text-muted-foreground">
@@ -397,7 +379,7 @@ function InvoiceReview({
               {!doc.result && (
                 <Button onClick={save} disabled={busy}>
                   {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-                  {errors.length ? 'Guardar borrador' : 'Guardar revisión'}
+                  {errors.length ? 'Guardar pendientes' : 'Aplicar corrección'}
                 </Button>
               )}
             </div>
@@ -413,73 +395,18 @@ export function IssuedInvoiceBatchImport() {
   const { isAdmin } = useUserPermissions();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<IssuedInvoiceDocument | null>(null);
-  const [confirm, setConfirm] = useState(false);
-  const [filter, setFilter] = useState('all');
   const input = useRef<HTMLInputElement>(null);
   const readyIds = new Set(batch.ready.map((d) => d.id));
   const selected = batch.ready.filter((d) => batch.selected.has(d.id));
-  const total = selected.reduce((n, d) => n + d.draft.fields.total, 0);
-  const shown = batch.documents.filter(
-    (d) =>
-      filter === 'all' ||
-      (filter === 'done'
-        ? !!d.result
-        : filter === 'ready'
-          ? readyIds.has(d.id)
-          : !d.result && !readyIds.has(d.id)),
+  const pending = batch.documents.filter(
+    (d) => !d.result && !readyIds.has(d.id),
   );
-  const closureSummary = useMemo(() => {
-    let fresh = 0;
-    const reused = new Set<string>();
-    selected.forEach((d) => {
-      const rows = (batch.candidates[d.id] || []).filter((c) =>
-        d.draft.selectedKeys.includes(c.key),
-      );
-      fresh += new Set(rows.filter((c) => !c.closureId).map((c) => c.valueType))
-        .size;
-      rows.forEach((c) => {
-        if (c.closureId) reused.add(c.closureId);
-      });
-    });
-    return { fresh, reused: reused.size };
-  }, [selected, batch.candidates]);
-  const exportResults = () => {
-    const quote = (v: string) =>
-      `"${v.replace(/^[=+@-]/, "'$&").replace(/"/g, '""')}"`;
-    const rows = [
-      ['Archivo', 'Folio fiscal', 'Factura TMS', 'Cierres', 'Resultado'],
-      ...batch.documents.map((d) => [
-        d.file_name,
-        d.draft.fields.fiscalNumber,
-        d.result?.invoiceFolio || '',
-        d.result?.closureFolios.join(', ') || '',
-        d.result ? 'Registrada' : batch.issues[d.id]?.join(' / ') || 'Lista',
-      ]),
-    ];
-    const url = URL.createObjectURL(
-      new Blob(
-        ['\ufeff' + rows.map((r) => r.map(quote).join(';')).join('\r\n')],
-        { type: 'text/csv;charset=utf-8' },
-      ),
-    );
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'resultado-importacion-facturas.csv';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
   if (!isAdmin) return null;
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => {
-          setOpen(true);
-          void batch.load();
-        }}
-      >
+      <Button variant="outline" onClick={() => setOpen(true)}>
         <FileUp className="mr-2 size-4" />
-        Importar facturas emitidas
+        Cierres desde facturas PDF
       </Button>
       <Dialog
         open={open}
@@ -488,14 +415,14 @@ export function IssuedInvoiceBatchImport() {
         }}
       >
         <DialogContent
-          className="finance-dialog max-w-[95vw] max-h-[92vh] overflow-y-auto sm:max-w-7xl"
+          className="finance-dialog max-w-[95vw] max-h-[92vh] overflow-y-auto sm:max-w-5xl"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle>Cierres y facturación por lotes</DialogTitle>
+            <DialogTitle>Crear cierres desde facturas</DialogTitle>
             <DialogDescription>
-              Carga PDF ya emitidos en el SII. Revisa RUT + OC, servicios y
-              montos antes de registrar en TMS.
+              Sube tus facturas. Leeremos la OC y buscaremos sus servicios para
+              crear el cierre y registrar cada factura en TMS.
             </DialogDescription>
           </DialogHeader>
           {batch.error && (
@@ -512,269 +439,254 @@ export function IssuedInvoiceBatchImport() {
               </AlertDescription>
             </Alert>
           )}
-          {batch.busy && (
-            <p role="status" className="flex items-center gap-2 text-sm">
-              <Loader2 className="size-4 animate-spin" />
-              {batch.busy}
-            </p>
-          )}
           <div
-            className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed p-4"
+            className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-dashed bg-muted/20 p-6"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              if (!batch.busy) {
-                setConfirm(false);
+              if (!batch.busy)
                 void batch.upload(Array.from(e.dataTransfer.files));
-              }
             }}
           >
+            <div>
+              <p className="font-medium">Arrastra las facturas PDF aquí</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                OC → servicios → cierre y factura
+              </p>
+            </div>
             <input
               ref={input}
               type="file"
               accept="application/pdf,.pdf"
               multiple
               className="hidden"
-              aria-label="Agregar facturas PDF"
+              aria-label="Seleccionar facturas PDF"
               onChange={(e) => {
-                if (e.target.files) {
-                  setConfirm(false);
+                if (e.target.files)
                   void batch.upload(Array.from(e.target.files));
-                }
                 e.target.value = '';
               }}
             />
             <Button
-              onClick={() => input.current?.click()}
               disabled={!!batch.busy}
+              onClick={() => input.current?.click()}
             >
               <FileUp className="mr-2 size-4" />
-              Agregar PDF
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              o arrástralos aquí · 20 MB / 30 páginas por documento
-            </span>
-            <Button
-              variant="outline"
-              disabled={!!batch.busy}
-              onClick={() => {
-                setConfirm(false);
-                void batch.retry();
-              }}
-            >
-              <RefreshCw className="mr-2 size-4" />
-              Revalidar / reintentar
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!batch.documents.length || !!batch.busy}
-              onClick={exportResults}
-            >
-              <Download className="mr-2 size-4" />
-              Resultados
+              Seleccionar PDF
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              ['all', 'Todas'],
-              ['ready', 'Listas'],
-              ['review', 'Revisar'],
-              ['done', 'Registradas'],
-            ].map(([v, label]) => (
-              <Button
-                key={v}
-                variant={filter === v ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter(v)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-          <div className="grid items-start gap-4 xl:grid-cols-[1fr_270px]">
-            <div className="min-w-0 overflow-auto rounded-xl border">
+          {batch.busy && (
+            <p role="status" className="flex items-center gap-2 text-sm">
+              <Loader2 className="size-4 animate-spin" />
+              {batch.busy}
+            </p>
+          )}
+          {batch.documents.length > 0 && (
+            <div className="overflow-auto rounded-xl border">
               <table className="w-full text-sm">
                 <thead className="bg-muted text-left">
                   <tr>
                     <th className="p-3">
                       <input
-                        aria-label="Seleccionar todas las listas"
                         type="checkbox"
+                        aria-label="Seleccionar todas las coincidencias"
                         disabled={!!batch.busy || !batch.ready.length}
                         checked={
                           !!batch.ready.length &&
                           selected.length === batch.ready.length
                         }
-                        onChange={(e) => {
-                          setConfirm(false);
+                        onChange={(e) =>
                           batch.setSelected(
                             e.target.checked
                               ? new Set(batch.ready.map((d) => d.id))
                               : new Set(),
-                          );
-                        }}
+                          )
+                        }
                       />
                     </th>
-                    <th className="p-3">Documento / OC PDF</th>
-                    <th className="p-3">Neto / total</th>
-                    <th className="p-3">Estado</th>
-                    <th className="p-3">Acciones</th>
+                    <th className="p-3">Factura</th>
+                    <th className="p-3">OC leída</th>
+                    <th className="p-3">Servicios del cierre</th>
+                    <th className="p-3">Total factura</th>
+                    <th className="p-3">Resultado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((d) => (
-                    <tr key={d.id} className="border-t align-top">
-                      <td className="p-3">
-                        <input
-                          aria-label={`Seleccionar ${d.file_name}`}
-                          type="checkbox"
-                          disabled={!!batch.busy || !readyIds.has(d.id)}
-                          checked={
-                            batch.selected.has(d.id) && readyIds.has(d.id)
-                          }
-                          onChange={(e) => {
-                            setConfirm(false);
-                            batch.setSelected((s) => {
-                              const n = new Set(s);
-                              if (e.target.checked) n.add(d.id);
-                              else n.delete(d.id);
-                              return n;
-                            });
-                          }}
-                        />
-                      </td>
-                      <td className="p-3">
-                        <strong>{d.file_name}</strong>
-                        <div className="text-xs text-muted-foreground">
-                          Folio SII: {d.draft.fields.fiscalNumber || 'Revisar'}
-                          <br />
-                          RUT: {d.draft.fields.clientRut || 'Revisar'}
-                          <br />
-                          OC PDF: {d.draft.fields.purchaseOrder || 'Sin leer'}
-                          <br />
-                          OC TMS:{' '}
-                          {[
-                            ...new Set(
-                              (batch.candidates[d.id] || [])
-                                .filter((c) =>
-                                  d.draft.selectedKeys.includes(c.key),
-                                )
-                                .map((c) => c.purchaseOrder || 'Sin OC'),
-                            ),
-                          ].join(', ') || 'Sin asignar'}
-                        </div>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
-                        {money(d.draft.fields.net)}
-                        <div className="text-xs text-muted-foreground">
-                          Total {money(d.draft.fields.total)}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge
-                          variant={
-                            d.result
-                              ? 'secondary'
+                  {batch.documents.map((d) => {
+                    const rows = (batch.candidates[d.id] || []).filter((c) =>
+                      d.draft.selectedKeys.includes(c.key),
+                    );
+                    return (
+                      <tr key={d.id} className="border-t align-top">
+                        <td className="p-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Incluir factura ${d.draft.fields.fiscalNumber || d.file_name}`}
+                            disabled={!!batch.busy || !readyIds.has(d.id)}
+                            checked={
+                              batch.selected.has(d.id) && readyIds.has(d.id)
+                            }
+                            onChange={(e) =>
+                              batch.setSelected((prev) => {
+                                const next = new Set(prev);
+                                if (e.target.checked) next.add(d.id);
+                                else next.delete(d.id);
+                                return next;
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="p-3">
+                          <strong>
+                            {d.draft.fields.fiscalNumber || 'Sin leer'}
+                          </strong>
+                          <p className="text-xs text-muted-foreground">
+                            {d.file_name}
+                          </p>
+                        </td>
+                        <td className="p-3 font-medium">
+                          {d.draft.fields.purchaseOrder || 'Sin identificar'}
+                        </td>
+                        <td className="p-3">
+                          <details>
+                            <summary className="cursor-pointer">
+                              {rows.length} servicios ·{' '}
+                              {money(
+                                rows.reduce((sum, c) => sum + c.amount, 0),
+                              )}{' '}
+                              neto
+                            </summary>
+                            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                              {rows.map((c) => (
+                                <li key={c.key}>
+                                  {c.folio} · OC {c.purchaseOrder} ·{' '}
+                                  {money(c.amount)}
+                                  {c.valueType === 'excess'
+                                    ? ' (excedente)'
+                                    : ''}
+                                </li>
+                              ))}
+                            </ul>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              RUT: {d.draft.fields.clientRut || 'Sin leer'}
+                              <br />
+                              Emisión: {d.draft.fields.issueDate || 'Sin leer'}
+                              <br />
+                              Vencimiento:{' '}
+                              {d.draft.fields.dueDate || 'Sin leer'}
+                              {d.draft.dueDateDefaulted
+                                ? ' (30 días, valor habitual)'
+                                : ''}
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="link"
+                              disabled={!!batch.busy}
+                              onClick={() => setEditing(d)}
+                            >
+                              Ver PDF / corregir datos
+                            </Button>
+                          </details>
+                        </td>
+                        <td className="p-3 whitespace-nowrap">
+                          {money(d.draft.fields.total)}
+                        </td>
+                        <td className="p-3">
+                          <Badge
+                            variant={readyIds.has(d.id) ? 'default' : 'outline'}
+                          >
+                            {d.result
+                              ? 'Creado'
                               : readyIds.has(d.id)
-                                ? 'default'
-                                : 'outline'
-                          }
-                        >
-                          {d.result
-                            ? 'Registrada'
-                            : readyIds.has(d.id)
-                              ? 'Lista'
-                              : 'Revisar'}
-                        </Badge>
-                        <div className="mt-2 max-w-64 text-xs text-muted-foreground">
-                          {d.result
-                            ? `${d.result.invoiceFolio} · ${d.result.closureFolios.join(', ')}`
-                            : batch.issues[d.id]?.[0]}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!!batch.busy}
-                          onClick={() => {
-                            setConfirm(false);
-                            setEditing(d);
-                          }}
-                        >
-                          {d.result ? 'Ver PDF' : 'Revisar'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={!!batch.busy}
-                          onClick={() => {
-                            setConfirm(false);
-                            batch.removeFromView(d.id);
-                          }}
-                        >
-                          Quitar del lote
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                                ? 'Coincide'
+                                : 'Revisar'}
+                          </Badge>
+                          {d.result ? (
+                            <p className="mt-2 text-xs">
+                              {d.result.closureFolios.join(', ')} ·{' '}
+                              {d.result.invoiceFolio}
+                            </p>
+                          ) : (
+                            !readyIds.has(d.id) && (
+                              <>
+                                <p className="mt-2 max-w-52 text-xs text-muted-foreground">
+                                  {batch.issues[d.id]?.[0]}
+                                </p>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  disabled={!!batch.busy}
+                                  onClick={() => setEditing(d)}
+                                >
+                                  Resolver
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!!batch.busy}
+                                  onClick={() => batch.removeFromView(d.id)}
+                                >
+                                  Omitir
+                                </Button>
+                              </>
+                            )
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-              {!shown.length && (
-                <p className="p-8 text-center text-muted-foreground">
-                  Agrega PDF o recupera tus borradores pendientes al abrir esta
-                  ventana.
-                </p>
-              )}
             </div>
-            <aside className="space-y-4 rounded-xl border bg-muted/20 p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Resumen del lote
-              </p>
-              <p className="text-4xl font-semibold">{selected.length}</p>
-              <p className="text-sm">facturas seleccionadas</p>
-              <div className="text-sm">
-                {closureSummary.fresh} cierres nuevos
-                <br />
-                {closureSummary.reused} cierres existentes
-              </div>
-              <p className="text-2xl font-semibold">{money(total)}</p>
-              <p className="text-xs text-muted-foreground">
-                Total de las facturas seleccionadas. El registro no implica pago
-                ni genera una emisión nueva en SII.
-              </p>
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  disabled={!selected.length || !!batch.busy}
-                  checked={confirm}
-                  onChange={(e) => setConfirm(e.target.checked)}
-                />
-                Confirmo registrar estas facturas y sus cierres en TMS.
-              </label>
-              <Button
-                className="w-full"
-                disabled={!confirm || !selected.length || !!batch.busy}
-                onClick={() => {
-                  setConfirm(false);
-                  void batch.run();
-                }}
-              >
-                Crear cierres y registrar
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Los borradores y resultados se guardan. Cada factura se procesa
-                completa; puedes reintentar las que fallen.
-              </p>
-            </aside>
+          )}
+          {pending.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {pending.length} factura(s) requieren resolver una diferencia.
+              Puedes continuar con las que coinciden.
+            </p>
+          )}
+          {batch.documents.some(
+            (d) => d.draft.dueDateDefaulted && !d.result,
+          ) && (
+            <p className="text-xs text-muted-foreground">
+              Si el PDF no indica vencimiento, se propone emisión + 30 días,
+              como valor habitual de la creación de facturas. Puedes cambiarlo
+              en el detalle.
+            </p>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!!batch.busy}
+              onClick={() =>
+                void (batch.documents.length ? batch.retry() : batch.load())
+              }
+            >
+              <RefreshCw className="mr-2 size-4" />
+              {batch.documents.length
+                ? 'Volver a comprobar'
+                : 'Retomar pendientes'}
+            </Button>
+            <Button
+              disabled={!selected.length || !!batch.busy}
+              onClick={() => void batch.run()}
+            >
+              Crear cierres y registrar {selected.length || ''}{' '}
+              {selected.length === 1 ? 'factura' : 'facturas'}
+            </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            El botón confirma los servicios propuestos. Se conserva el folio SII
+            original y la factura se registra sin marcarla pagada.
+          </p>
         </DialogContent>
       </Dialog>
       {editing && (
         <InvoiceReview
           key={editing.id}
           doc={editing}
+          initialCandidates={batch.candidates[editing.id] || []}
           onClose={() => setEditing(null)}
           onSave={(draft) => batch.save(editing, draft)}
         />

@@ -72,6 +72,29 @@ describe('issued invoice batch orchestration', () => {
     mocks.candidates.mockResolvedValue([candidate('1'), candidate('2')]);
     mocks.existing.mockResolvedValue(new Set());
   });
+  it('automatically proposes the OC services and selects the matching invoice before final confirmation', async () => {
+    const doc = makeDoc('1');
+    doc.draft.reviewed = false;
+    doc.draft.selectedKeys = [];
+    doc.draft.fields.description = '';
+    mocks.list.mockResolvedValue([doc]);
+    mocks.candidates.mockResolvedValue([candidate('1')]);
+    mocks.save.mockImplementation(async (document, draft) => ({
+      ...document,
+      draft,
+    }));
+    const { result } = renderHook(() => useIssuedInvoiceImport());
+    await act(() => result.current.load());
+    expect(result.current.ready.map((d) => d.id)).toEqual(['1']);
+    expect(result.current.selected.has('1')).toBe(true);
+    expect(result.current.documents[0].draft.selectedKeys).toEqual([
+      '1:covered',
+    ]);
+    expect(result.current.documents[0].draft.reviewed).toBe(false);
+    expect(mocks.register).not.toHaveBeenCalled();
+    await act(() => result.current.run());
+    expect(mocks.register).toHaveBeenCalledTimes(1);
+  });
   it('registers only selected ready documents and preserves partial results for retry', async () => {
     mocks.register
       .mockResolvedValueOnce({

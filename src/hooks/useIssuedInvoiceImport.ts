@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { readIssuedInvoicePdf } from '@/utils/readIssuedInvoicePdf';
 import {
   normalizeInvoiceRut,
+  normalizeInvoiceOC,
   parseIssuedInvoiceText,
   reconciliationErrors,
+  prepareIssuedInvoiceDraft,
   type InvoiceCandidate,
   type IssuedInvoiceDocument,
   type IssuedInvoiceDraft,
@@ -38,31 +40,63 @@ export function useIssuedInvoiceImport() {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [fileErrors, setFileErrors] = useState<string[]>([]);
-  const refresh = useCallback(async (docs: IssuedInvoiceDocument[]) => {
-    const next: Record<string, InvoiceCandidate[]> = {};
-    const issues: Record<string, string> = {};
-    const byRut = new Map<string, InvoiceCandidate[]>();
-    for (const doc of docs.filter((d) => !d.result)) {
-      const rut = normalizeInvoiceRut(doc.draft.fields.clientRut || '');
-      if (!rut) {
-        issues[doc.id] = 'Completa el RUT receptor para buscar servicios.';
-        continue;
+  const refresh = useCallback(
+    async (docs: IssuedInvoiceDocument[], suggest = true) => {
+      const prepared = [...docs];
+      const next: Record<string, InvoiceCandidate[]> = {};
+      const issues: Record<string, string> = {};
+      const byRut = new Map<string, InvoiceCandidate[]>();
+      for (const doc of docs.filter((d) => !d.result)) {
+        const rut = normalizeInvoiceRut(doc.draft.fields.clientRut || '');
+        if (!rut) {
+          issues[doc.id] = 'Completa el RUT receptor para buscar servicios.';
+          continue;
+        }
+        try {
+          if (!byRut.has(rut))
+            byRut.set(rut, await getIssuedInvoiceCandidates(rut));
+          next[doc.id] = byRut.get(rut)!;
+          if (
+            suggest &&
+            !doc.draft.reviewed &&
+            !doc.draft.selectedKeys.length
+          ) {
+            const proposal = prepareIssuedInvoiceDraft(doc.draft, next[doc.id]);
+            if (JSON.stringify(proposal) !== JSON.stringify(doc.draft)) {
+              const saved = await saveIssuedInvoiceDraft(doc, proposal);
+              prepared[prepared.findIndex((d) => d.id === doc.id)] = saved;
+            }
+          }
+        } catch (e) {
+          issues[doc.id] = message(e);
+        }
       }
-      try {
-        if (!byRut.has(rut))
-          byRut.set(rut, await getIssuedInvoiceCandidates(rut));
-        next[doc.id] = byRut.get(rut)!;
-      } catch (e) {
-        issues[doc.id] = message(e);
-      }
-    }
-    const duplicates = await existingFiscalNumbers(
-      docs.filter((d) => !d.result).map((d) => d.draft.fields.fiscalNumber),
-    );
-    setCandidates(next);
-    setProblems(issues);
-    setExisting(duplicates);
-  }, []);
+      const duplicates = await existingFiscalNumbers(
+        docs.filter((d) => !d.result).map((d) => d.draft.fields.fiscalNumber),
+      );
+      setDocuments(prepared);
+      if (suggest)
+        setSelected(
+          new Set(
+            prepared
+              .filter(
+                (d) =>
+                  !d.result &&
+                  !issues[d.id] &&
+                  !reconciliationErrors(
+                    { ...d.draft, reviewed: true },
+                    next[d.id] || [],
+                  ).length,
+              )
+              .map((d) => d.id),
+          ),
+        );
+      setCandidates(next);
+      setProblems(issues);
+      setExisting(duplicates);
+    },
+    [],
+  );
   const load = useCallback(async () => {
     setBusy('Cargando borradores guardados…');
     setError('');
@@ -154,8 +188,8 @@ export function useIssuedInvoiceImport() {
       const saved = await saveIssuedInvoiceDraft(doc, draft);
       const docs = documents.map((d) => (d.id === saved.id ? saved : d));
       setDocuments(docs);
-      setSelected((prev) => new Set([...prev].filter((id) => id !== doc.id)));
-      await refresh(docs);
+      setSelected((prev) => new Set([...prev, doc.id]));
+      await refresh(docs, false);
     } finally {
       setBusy('');
     }
@@ -166,9 +200,25 @@ export function useIssuedInvoiceImport() {
         documents.map((doc) => {
           if (doc.result) return [doc.id, []];
           const reasons = reconciliationErrors(
-            doc.draft,
+            { ...doc.draft, reviewed: true },
             candidates[doc.id] || [],
           );
+          const oc = normalizeInvoiceOC(doc.draft.fields.purchaseOrder);
+          if (!doc.draft.selectedKeys.length && !problems[doc.id]) {
+            if (!oc) reasons.unshift('No se pudo identificar la OC del PDF.');
+            else if (
+              (candidates[doc.id] || []).some(
+                (c) => !c.blocked && normalizeInvoiceOC(c.purchaseOrder) === oc,
+              )
+            )
+              reasons.unshift(
+                'OC encontrada: el monto de sus servicios no coincide con el neto de la factura.',
+              );
+            else
+              reasons.unshift(
+                'No hay servicios disponibles para la OC de esta factura.',
+              );
+          }
           if (problems[doc.id]) reasons.unshift(problems[doc.id]);
           if (
             documents.some(

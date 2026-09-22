@@ -62,6 +62,12 @@ await sql(
     'utf8',
   ),
 );
+await sql(
+  await readFile(
+    'supabase/migrations/20260922190000_confirm_issued_invoice_proposal.sql',
+    'utf8',
+  ),
+);
 let counter = 0;
 const fields = {
   documentType: '33',
@@ -265,12 +271,32 @@ assert.equal(
   (await scalar("SELECT normalize_import_oc('OCEANO') AS oc")).oc,
   'OCEANO',
 );
-const explicit = await scalar("INSERT INTO service_closures(folio) VALUES('CIE-950') RETURNING folio");
+const explicit = await scalar(
+  "INSERT INTO service_closures(folio) VALUES('CIE-950') RETURNING folio",
+);
 assert.equal(explicit.folio, 'CIE-950');
 // Folio counter must never truncate 1000 to 100.
 await sql("SELECT setval('service_closure_folio_seq',1000,false)");
 const next = await register(await draft([(await service()) + ':covered']));
 assert.equal(next.closureFolios[0], 'CIE-1000');
+// One final action confirms a proposed OC assignment and registers atomically.
+const proposal = await draft([(await service()) + ':covered']);
+proposal.draft.reviewed = false;
+await db.query(
+  'UPDATE issued_invoice_imports SET draft=$2::jsonb WHERE id=$1',
+  [proposal.id, JSON.stringify(proposal.draft)],
+);
+const confirm = async (doc) =>
+  (
+    await scalar(
+      'SELECT confirm_and_register_issued_invoice($1,$2::jsonb) AS result',
+      [doc.id, JSON.stringify(doc.draft)],
+    )
+  ).result;
+const registeredProposal = await confirm(proposal);
+assert.equal(registeredProposal.closureFolios.length, 1);
+assert.deepEqual(await confirm(proposal), registeredProposal);
+await fails(() => confirm(stale), /propuesta cambió/);
 await sql("SET test.admin='false'");
 await fails(() => register(doc), /Solo administradores/);
 await fails(
