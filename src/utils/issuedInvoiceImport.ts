@@ -161,7 +161,7 @@ export function parseIssuedInvoiceText(text: string): IssuedInvoiceFields {
     const raw = singleMatch(
       t,
       new RegExp(
-        `(?:^|\\n)\\s*(?:${label})\\s*[:$]?\\s*([\\d.]+)(?=\\s|$)`,
+        `(?:^|\\n)\\s*(?:${label})\\s*:?\\s*\\$?\\s*([\\d.]+)(?=\\s|$)`,
         'g',
       ),
     );
@@ -213,24 +213,35 @@ export function parseIssuedInvoiceText(text: string): IssuedInvoiceFields {
     );
     if (ruts.length === 1) issuer = ruts[0];
   }
-  const vat = amount('(?:MONTO\\s+)?I\\.?V\\.?A\\.?(?:\\s*19\\s*%)?');
+  const vat = amount(
+    '(?:19\\s*%\\s*)?(?:MONTO\\s+)?I\\.?V\\.?A\\.?(?:\\s*19\\s*%)?',
+  );
+  // Fiscal box and city/date header can be interleaved with the issuer's
+  // contact column. Only inspect the header, before recipient/references.
+  const header = t.split(/SENOR(?:\(ES\)|ES)?\s*:/)[0];
   return {
     documentType: type,
     issuerRut: issuer,
     clientRut: receptor,
-    fiscalNumber: singleMatch(
-      t,
-      /(?:FACTURA(?:\s+NO\s+AFECTA\s+O)?(?:\s+EXENTA)?\s+ELECTRONICA\s*\n?\s*(?:N[°ºO.]|NUMERO|FOLIO)\s*[:.]?\s*|FOLIO\s*:\s*)(\d+)/g,
-    ),
+    fiscalNumber:
+      singleMatch(
+        t,
+        /(?:FACTURA(?:\s+NO\s+AFECTA\s+O)?(?:\s+EXENTA)?\s+ELECTRONICA\s*\n?\s*(?:N[°ºO.]|NUMERO|FOLIO)\s*[:.]?\s*|FOLIO\s*:\s*)(\d+)/g,
+      ) ||
+      (type ? singleMatch(header, /(?:^|\s)N[°º]\s*:?\s*(\d+)(?=\s|$)/g) : ''),
     purchaseOrder: singleMatch(
       t,
-      /(?:ORDEN\s+DE\s+COMPRA|\bO\.?C\.?)(?=[\s:#0-9-]|$)\s*(?:N[°ºO.]\s*)?[:#-]?\s*([A-Z0-9][A-Z0-9/-]*)/g,
+      /(?:ORDEN\s+DE\s+COMPRA|\bO\.?C\.?)(?=[\s:#0-9-]|$)\s*[:#-]?\s*(?:(?:NRO\.?|NUMERO|N[°ºO.])\s*[:#-]?\s*)?([A-Z0-9][A-Z0-9/-]*)/g,
     ),
     issueDate: dateValue(
       singleMatch(
         t,
         /(?:FECHA\s+(?:DE\s+)?EMISION)\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{1,2}\s+(?:DE\s+)?[A-Z]+\s+(?:DEL?\s+)?\d{4})/g,
-      ),
+      ) ||
+        singleMatch(
+          header,
+          /(?:^|\n)[A-Z][A-Z .'-]+,\s*(\d{1,2}\s+DE\s+[A-Z]+\s+DE(?:L)?\s+\d{4})(?=\s|$)/g,
+        ),
     ),
     dueDate: dateValue(
       singleMatch(

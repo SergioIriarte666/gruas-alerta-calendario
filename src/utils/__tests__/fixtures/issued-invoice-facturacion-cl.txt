@@ -1,0 +1,29 @@
+EMISOR EJEMPLO SPA
+R.U.T.: 76.123.456-0
+SERVICIO DE REMOLQUE DE VEHICULOS
+FACTURA ELECTRONICA
+Dirección:
+CALLE EJEMPLO 150
+Tierrra Amarilla - Copiapo
+Fono: +56900000000 Nº 4369
+Email: ejemplo@example.com
+Web: example.com
+S.I.I. - COPIAPO
+Tierra Amarilla, 22 de septiembre de 2026
+Señor(es) : CLIENTE EJEMPLO S.A. Teléfono :
+R.U.T. : 77.222.333-4 Vencimiento : 22/10/2026
+Giro : ARRIENDO Y COMERCIALIZACIÓN DE VEHÍCULOS Forma de Pago : CREDITO
+Dirección : CALLE CLIENTE 2130 Vendedor : VENDEDOR EJEMPLO
+Comuna : SANTIAGO Ciudad : SANTIAGO
+Referencia : en ORDEN DE COMPRA : Nro. 4701775661 del 22-09-2026
+Ítem Código Descripción U.M. Cant. Precio Unit. Valor Dscto. Total
+1 1 Remolque de Vehiculos UN 1 195.000 0 195.000
+SON: DOSCIENTOS TREINTA Y DOS MIL CINCUENTA PESOS.--
+Neto: $ 195.000
+19 % I.V.A.: $ 37.050
+Total: $ 232.050
+Observaciones:
+Timbre Electronico S.I.I.
+Resolución 80 del 22/08/2014 Verifique Documento: http://www.sii.cl
+Cancelado por :
+Documento creado por www.facturacion.cl

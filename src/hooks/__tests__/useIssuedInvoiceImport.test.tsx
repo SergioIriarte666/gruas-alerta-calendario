@@ -1,3 +1,5 @@
+import { webcrypto } from 'node:crypto';
+import facturacionText from '@/utils/__tests__/fixtures/issued-invoice-facturacion-cl.txt?raw';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IssuedInvoiceDocument } from '@/utils/issuedInvoiceImport';
@@ -8,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   register: vi.fn(),
   invalidate: vi.fn(),
   save: vi.fn(),
+  find: vi.fn(),
+  read: vi.fn(),
 }));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidate }),
@@ -18,14 +22,18 @@ vi.mock('@/utils/issuedInvoiceApi', () => ({
   existingFiscalNumbers: mocks.existing,
   registerIssuedInvoice: mocks.register,
   saveIssuedInvoiceDraft: mocks.save,
-  findIssuedInvoiceFile: vi.fn(),
+  findIssuedInvoiceFile: mocks.find,
   INVOICE_PDF_BUCKET: 'issued-invoice-pdfs',
   fiscalKey: (v: string) => (/^\d+$/.test(v) ? BigInt(v).toString() : v),
 }));
 vi.mock('@/utils/readIssuedInvoicePdf', () => ({
-  readIssuedInvoicePdf: vi.fn(),
+  readIssuedInvoicePdf: mocks.read,
 }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: { getUser: async () => ({ data: { user: { id: 'test-user' } } }) },
+  },
+}));
 import { useIssuedInvoiceImport } from '../useIssuedInvoiceImport';
 const makeDoc = (id: string): IssuedInvoiceDocument => ({
   id,
@@ -94,6 +102,47 @@ describe('issued invoice batch orchestration', () => {
     expect(mocks.register).not.toHaveBeenCalled();
     await act(() => result.current.run());
     expect(mocks.register).toHaveBeenCalledTimes(1);
+  });
+  it('re-reads an earlier failed extraction when the same original is uploaded again', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const doc = makeDoc('4369');
+    doc.draft.reviewed = false;
+    doc.draft.selectedKeys = [];
+    doc.draft.fields.fiscalNumber = '';
+    doc.draft.fields.purchaseOrder = 'NRO';
+    mocks.find.mockResolvedValue(doc);
+    mocks.read.mockResolvedValue(facturacionText);
+    mocks.candidates.mockResolvedValue([
+      { ...candidate('6943'), purchaseOrder: 'OC-4701775661', amount: 195000 },
+    ]);
+    mocks.save.mockImplementation(async (document, draft) => ({
+      ...document,
+      draft,
+    }));
+    const file = new File(['pdf'], '4369.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'arrayBuffer', {
+      value: async () => new Uint8Array([1, 2, 3]).buffer,
+    });
+    try {
+      const { result } = renderHook(() => useIssuedInvoiceImport());
+      await act(() => result.current.upload([file]));
+      expect(result.current.fileErrors).toEqual([]);
+      expect(result.current.ready).toHaveLength(1);
+      expect(result.current.documents[0].draft.selectedKeys).toEqual([
+        '6943:covered',
+      ]);
+      expect(result.current.documents[0].draft.fields.purchaseOrder).toBe(
+        '4701775661',
+      );
+      expect(mocks.register).not.toHaveBeenCalled();
+      // Uploading a ready or manually assigned document preserves its work.
+      mocks.find.mockResolvedValue(result.current.documents[0]);
+      await act(() => result.current.upload([file]));
+      expect(mocks.read).toHaveBeenCalledTimes(1);
+      expect(result.current.documents).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it('registers only selected ready documents and preserves partial results for retry', async () => {
     mocks.register

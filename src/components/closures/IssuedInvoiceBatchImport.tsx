@@ -550,7 +550,10 @@ export function IssuedInvoiceBatchImport() {
                         <td className="p-3">
                           <details>
                             <summary className="cursor-pointer">
-                              {rows.length} servicios ·{' '}
+                              {rows.length === 1
+                                ? rows[0].folio
+                                : `${rows.length} servicios`}{' '}
+                              ·{' '}
                               {money(
                                 rows.reduce((sum, c) => sum + c.amount, 0),
                               )}{' '}
@@ -598,7 +601,7 @@ export function IssuedInvoiceBatchImport() {
                             {d.result
                               ? 'Creado'
                               : readyIds.has(d.id)
-                                ? 'Coincide'
+                                ? 'Listo para crear'
                                 : 'Revisar'}
                           </Badge>
                           {d.result ? (

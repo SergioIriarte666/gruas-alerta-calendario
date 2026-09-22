@@ -1,3 +1,4 @@
+import facturacionText from './fixtures/issued-invoice-facturacion-cl.txt?raw';
 import { describe, expect, it } from 'vitest';
 import {
   invoiceFieldErrors,
@@ -142,6 +143,49 @@ describe('issued invoice import', () => {
       prepareIssuedInvoiceDraft({ ...input, fields }, [candidate('a')]).fields
         .dueDate,
     ).toBe('2026-09-30');
+  });
+  it('reads the Facturacion.cl layout and proposes its OC service without typing any fields', () => {
+    const parsed = parseIssuedInvoiceText(facturacionText);
+    expect(parsed).toMatchObject({
+      documentType: '33',
+      issuerRut: '761234560',
+      clientRut: '77.222.333-4',
+      fiscalNumber: '4369',
+      purchaseOrder: '4701775661',
+      issueDate: '2026-09-22',
+      dueDate: '2026-10-22',
+      net: 195000,
+      vat: 37050,
+      total: 232050,
+    });
+    const service = candidate('6943', {
+      folio: 'SRV-6943',
+      purchaseOrder: 'OC-4701775661',
+      amount: 195000,
+    });
+    const draft = prepareIssuedInvoiceDraft(
+      { fields: parsed, selectedKeys: [], reviewed: false, manualReason: '' },
+      [service],
+    );
+    expect(draft.selectedKeys).toEqual(['6943:covered']);
+    expect(
+      reconciliationErrors({ ...draft, reviewed: true }, [service]),
+    ).toEqual([]);
+    expect(draft.dueDateDefaulted).toBeUndefined();
+  });
+  it('does not take the fiscal number or issue date from references or details', () => {
+    const text = facturacionText
+      .replace('Nº 4369', '')
+      .replace('Tierra Amarilla, 22 de septiembre de 2026', '');
+    const parsed = parseIssuedInvoiceText(
+      text + '\nReferencia Factura Nº 9999 del 01-09-2026',
+    );
+    expect(parsed.fiscalNumber).toBe('');
+    expect(parsed.issueDate).toBe('');
+    expect(
+      parseIssuedInvoiceText(facturacionText + '\nOC: Nro. 99999')
+        .purchaseOrder,
+    ).toBe('');
   });
   it('blocks missing dates, invalid totals and exempt VAT', () => {
     expect(invoiceFieldErrors(fields)).toEqual([]);

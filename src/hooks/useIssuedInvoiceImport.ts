@@ -163,8 +163,24 @@ export function useIssuedInvoiceImport() {
                 manualReason: '',
               },
             );
+          } else if (
+            !doc.result &&
+            !doc.draft.reviewed &&
+            !doc.draft.selectedKeys.length &&
+            !doc.draft.manualReason
+          ) {
+            // Re-read an unresolved automatic draft with the current parser when
+            // its original is uploaded again. Preserve confirmed/manual work.
+            doc = await saveIssuedInvoiceDraft(doc, {
+              fields: parseIssuedInvoiceText(await readIssuedInvoicePdf(file)),
+              selectedKeys: [],
+              reviewed: false,
+              manualReason: '',
+            });
           }
-          if (!docs.some((d) => d.id === doc.id)) docs.push(doc);
+          const existingIndex = docs.findIndex((d) => d.id === doc.id);
+          if (existingIndex < 0) docs.push(doc);
+          else docs[existingIndex] = doc;
           setDocuments([...docs]);
         } catch (e) {
           errors.push(`${file.name}: ${message(e)}`);
