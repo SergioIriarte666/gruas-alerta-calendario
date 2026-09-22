@@ -6,8 +6,9 @@ import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSi
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
-import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
-import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { formatVehicleInfo, getServiceStatusBadge } from '@/utils/statusHelpers';
+import { ServiceValueWithProfit } from './ServiceValueWithProfit';
+import { useServiceCostTotals } from '@/hooks/services/useServiceCostTotals';
 import { toTitleCase } from '@/lib/utils';
 
 interface ServicesMobileViewProps {
@@ -39,6 +40,7 @@ export const ServicesMobileView = ({
   onSort: _onSort,
 }: ServicesMobileViewProps) => {
   const { user } = useUser();
+  const { data: serviceCostTotals, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
   const { isMobile: _isMobile, isTablet: _isTablet } = useDeviceType();
   const isAdmin = user?.role === 'admin';
 
@@ -121,7 +123,7 @@ export const ServicesMobileView = ({
 
                 <div className="flex items-center text-primary text-sm font-semibold">
                   <DollarSign className="size-4 mr-2 flex-shrink-0" />
-                  <span>{formatCurrency(getDisplayServiceValue(service))}</span>
+                  <ServiceValueWithProfit service={service} totalCost={serviceCostTotals?.[service.id]} isError={costsError} />
                 </div>
               </div>
 

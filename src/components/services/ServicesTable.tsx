@@ -9,10 +9,12 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
-import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { formatVehicleInfo, getServiceStatusBadge } from '@/utils/statusHelpers';
 import { useServiceBillingLinks } from '@/hooks/services/useServiceBillingLinks';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
+import { useServiceCostTotals } from '@/hooks/services/useServiceCostTotals';
+import { ServiceValueWithProfit } from './ServiceValueWithProfit';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
@@ -65,6 +67,7 @@ export const ServicesTable = React.memo(({
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
+  const { data: serviceCostTotals, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
 
   // El castigo solo aplica a completados sin vínculo a factura ni cierre. Se
   // consulta por página (2 consultas), no por fila.
@@ -253,9 +256,11 @@ export const ServicesTable = React.memo(({
           </button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium">
-            {formatCurrency(getDisplayServiceValue(row.original))}
-          </span>
+          <ServiceValueWithProfit
+            service={row.original}
+            totalCost={serviceCostTotals?.[row.original.id]}
+            isError={costsError}
+          />
         ),
       },
       {
@@ -405,7 +410,7 @@ export const ServicesTable = React.memo(({
     );
 
     return cols;
-  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, onWriteOff, linkedServiceIds, isAdmin, sortField, sortDirection, onSort]);
+  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, onWriteOff, linkedServiceIds, serviceCostTotals, costsError, isAdmin, sortField, sortDirection, onSort]);
 
   const table = useReactTable({
     data: services,
