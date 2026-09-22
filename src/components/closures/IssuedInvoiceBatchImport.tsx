@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileUp, Loader2, RefreshCw, ExternalLink } from 'lucide-react';
+import {
+  FileUp,
+  Loader2,
+  RefreshCw,
+  ExternalLink,
+  CheckCircle2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -401,6 +407,9 @@ export function IssuedInvoiceBatchImport() {
   const pending = batch.documents.filter(
     (d) => !d.result && !readyIds.has(d.id),
   );
+  const completed = batch.documents.filter((d) => d.result).length;
+  const allCompleted =
+    batch.documents.length > 0 && completed === batch.documents.length;
   if (!isAdmin) return null;
   return (
     <>
@@ -425,6 +434,19 @@ export function IssuedInvoiceBatchImport() {
               crear el cierre y registrar cada factura en TMS.
             </DialogDescription>
           </DialogHeader>
+          {completed > 0 && (
+            <Alert
+              role="status"
+              className="border-green-200 bg-green-50 text-green-900"
+            >
+              <CheckCircle2 className="size-4" />
+              <AlertDescription>
+                {allCompleted
+                  ? 'Proceso terminado. Los cierres y las facturas ya están guardados en TMS.'
+                  : `${completed} factura(s) registradas con sus cierres. Puedes continuar con las pendientes o cerrar esta ventana.`}
+              </AlertDescription>
+            </Alert>
+          )}
           {batch.error && (
             <Alert variant="destructive">
               <AlertDescription>{batch.error}</AlertDescription>
@@ -587,7 +609,9 @@ export function IssuedInvoiceBatchImport() {
                               disabled={!!batch.busy}
                               onClick={() => setEditing(d)}
                             >
-                              Ver PDF / corregir datos
+                              {d.result
+                                ? 'Ver PDF y datos'
+                                : 'Ver PDF / corregir datos'}
                             </Button>
                           </details>
                         </td>
@@ -658,31 +682,46 @@ export function IssuedInvoiceBatchImport() {
             </p>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!!batch.busy}
-              onClick={() =>
-                void (batch.documents.length ? batch.retry() : batch.load())
-              }
-            >
-              <RefreshCw className="mr-2 size-4" />
-              {batch.documents.length
-                ? 'Volver a comprobar'
-                : 'Retomar pendientes'}
-            </Button>
-            <Button
-              disabled={!selected.length || !!batch.busy}
-              onClick={() => void batch.run()}
-            >
-              Crear cierres y registrar {selected.length || ''}{' '}
-              {selected.length === 1 ? 'factura' : 'facturas'}
-            </Button>
+            {!allCompleted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!!batch.busy}
+                onClick={() =>
+                  void (batch.documents.length ? batch.retry() : batch.load())
+                }
+              >
+                <RefreshCw className="mr-2 size-4" />
+                {batch.documents.length
+                  ? 'Volver a comprobar'
+                  : 'Retomar pendientes'}
+              </Button>
+            )}
+            <div className="ml-auto flex gap-3">
+              <Button
+                variant={allCompleted ? 'default' : 'outline'}
+                disabled={!!batch.busy}
+                onClick={() => setOpen(false)}
+              >
+                {allCompleted ? 'Finalizar' : 'Cerrar'}
+              </Button>
+              {!allCompleted && (
+                <Button
+                  disabled={!selected.length || !!batch.busy}
+                  onClick={() => void batch.run()}
+                >
+                  Crear cierres y registrar {selected.length || ''}{' '}
+                  {selected.length === 1 ? 'factura' : 'facturas'}
+                </Button>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            El botón confirma los servicios propuestos. Se conserva el folio SII
-            original y la factura se registra sin marcarla pagada.
-          </p>
+          {!allCompleted && (
+            <p className="text-xs text-muted-foreground">
+              El botón confirma los servicios propuestos. Se conserva el folio
+              SII original y la factura se registra sin marcarla pagada.
+            </p>
+          )}
         </DialogContent>
       </Dialog>
       {editing && (
