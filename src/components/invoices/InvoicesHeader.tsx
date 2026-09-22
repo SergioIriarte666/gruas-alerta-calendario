@@ -1,3 +1,4 @@
+import { IssuedInvoiceBatchImport } from '@/components/closures/IssuedInvoiceBatchImport';
 import { Button } from '@/components/ui/button';
 import { Plus, FileDown, ReceiptText } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -18,6 +19,7 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderPr
         <p className="dashboard-section-description">Emisión, vencimientos y seguimiento de pagos.</p>
       </div>
         <div className={`flex gap-2 ${isMobile ? 'w-full flex-col' : 'flex-wrap'}`}>
+          <IssuedInvoiceBatchImport />
           <Button
             variant="outline"
             size={isMobile ? 'default' : 'sm'}

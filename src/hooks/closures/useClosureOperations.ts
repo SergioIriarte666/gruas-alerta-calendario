@@ -194,7 +194,7 @@ export const useClosureOperations = () => {
 
       if (!options?.silent) {
         toast.success("Cierre creado", {
-          description: `Cierre ${folio} creado exitosamente.`,
+          description: `Cierre ${data.folio} creado exitosamente.`,
         });
       }
 

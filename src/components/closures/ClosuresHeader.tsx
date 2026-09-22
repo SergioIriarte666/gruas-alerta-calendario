@@ -1,4 +1,5 @@
 import { Landmark, Plus } from 'lucide-react';
+import { IssuedInvoiceBatchImport } from './IssuedInvoiceBatchImport';
 import { Button } from '@/components/ui/button';
 
 interface ClosuresHeaderProps {
@@ -14,6 +15,7 @@ const ClosuresHeader = ({ onCreateClosure }: ClosuresHeaderProps) => {
         <p className="dashboard-section-description">Revisión de periodos y preparación de la facturación.</p>
       </div>
         <div className="flex flex-wrap items-center gap-2">
+          <IssuedInvoiceBatchImport />
           <Button
             onClick={onCreateClosure}
             title="Crear un nuevo cierre de servicios"

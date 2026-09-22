@@ -23,6 +23,7 @@
     "release:bundle": "node scripts/publish-bundle.mjs",
     "knip": "knip",
     "check:dates": "node scripts/check-calendar-dates.mjs",
+    "test:invoice-import-sql": "node scripts/tests/issued-invoice-import.mjs",
     "test:dates": "vitest run src/utils/__tests__/calendarDate.test.ts src/utils/__tests__/invoiceUtils.test.ts src/components/invoices/__tests__/InvoiceSummaryPanel.dates.test.tsx"
   },
   "dependencies": {
@@ -112,6 +113,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^9.9.0",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/typography": "^0.5.15",
