@@ -15,6 +15,12 @@ export const ServiceValueWithProfit = ({ service, totalCost, isError }: ServiceV
     <div className="space-y-1 whitespace-nowrap tabular-nums">
       <div className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</div>
       <div
+        className="text-xs font-normal text-muted-foreground"
+        title="Costos registrados del servicio, incluidas las comisiones registradas como costo"
+      >
+        {isError ? 'Costos no disponibles' : totalCost === undefined ? 'Cargando costos…' : `Costos: ${formatCurrency(totalCost)}`}
+      </div>
+      <div
         className={`text-xs font-normal ${isError || profit === undefined || profit === 0 ? 'text-muted-foreground' : profit < 0 ? 'text-destructive' : 'text-success'}`}
         title="Valor del servicio menos costos registrados, incluidas las comisiones registradas como costo"
       >
