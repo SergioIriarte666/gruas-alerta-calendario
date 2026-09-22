@@ -34,6 +34,7 @@ export interface ServiceAuditRow {
 
 export const AUDIT_CATEGORIES = [
   ['all', 'Todos los cambios'], ['dates', 'Fechas y horarios'], ['folio', 'Folio'],
+  ['folio_or_plate', 'Cambio de Folio y Patente'],
   ['plate', 'Patente'], ['costs', 'Costos y comisiones'], ['value', 'Valor del servicio'],
   ['status', 'Estado'], ['other', 'Otros cambios'],
 ] as const;
@@ -179,7 +180,7 @@ export function formatAuditValue(row: ServiceAuditRow, value: string | null): st
 
 export function filterServiceAuditRows(rows: ServiceAuditRow[], search: string, category: string, userId = 'all', clientId = 'all'): ServiceAuditRow[] {
   const term = search.toLocaleLowerCase().replace(/[\s#.-]/g, '');
-  return rows.filter(row => (category === 'all' || row.category === category)
+  return rows.filter(row => (category === 'all' || row.category === category || (category === 'folio_or_plate' && (row.category === 'folio' || row.category === 'plate')))
     && (clientId === 'all' || (clientId === 'unknown' ? !row.clients.length : row.clients.some(client => client.id === clientId)))
     && (userId === 'all' || (row.userId || 'system') === userId)
     && (!term || [...row.folios, ...row.plates].some(value => value.toLocaleLowerCase().replace(/[\s#.-]/g, '').includes(term))));
