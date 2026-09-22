@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,7 @@ export function useIssuedInvoiceImport() {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [fileErrors, setFileErrors] = useState<string[]>([]);
+  const [processedNotices, setProcessedNotices] = useState<string[]>([]);
   const refresh = useCallback(
     async (docs: IssuedInvoiceDocument[], suggest = true) => {
       const prepared = [...docs];
@@ -115,7 +117,9 @@ export function useIssuedInvoiceImport() {
     setBusy('Preparando documentos…');
     setError('');
     setFileErrors([]);
-    const docs = [...documents];
+    setProcessedNotices([]);
+    const docs = documents.filter((d) => !d.result);
+    setDocuments(docs);
     const errors: string[] = [];
     try {
       const {
@@ -177,6 +181,15 @@ export function useIssuedInvoiceImport() {
               reviewed: false,
               manualReason: '',
             });
+          }
+          if (doc.result) {
+            const notice = `La factura ${doc.draft.fields.fiscalNumber || file.name} ya fue procesada. ${doc.result.closureFolios.join(', ')} · ${doc.result.invoiceFolio}. No se volverá a cargar ni duplicar.`;
+            setProcessedNotices((previous) => [...previous, notice]);
+            toast.info('Esta factura ya fue procesada', {
+              description: notice,
+              duration: 8000,
+            });
+            continue;
           }
           const existingIndex = docs.findIndex((d) => d.id === doc.id);
           if (existingIndex < 0) docs.push(doc);
@@ -314,6 +327,18 @@ export function useIssuedInvoiceImport() {
   };
   return {
     documents,
+    processedNotices,
+    reset: () => {
+      if (busy) return;
+      setDocuments([]);
+      setCandidates({});
+      setProblems({});
+      setExisting(new Set());
+      setSelected(new Set());
+      setError('');
+      setFileErrors([]);
+      setProcessedNotices([]);
+    },
     candidates,
     issues,
     problems,

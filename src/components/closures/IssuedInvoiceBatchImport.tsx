@@ -410,17 +410,30 @@ export function IssuedInvoiceBatchImport() {
   const completed = batch.documents.filter((d) => d.result).length;
   const allCompleted =
     batch.documents.length > 0 && completed === batch.documents.length;
+  const close = () => {
+    if (batch.busy) return;
+    setOpen(false);
+    setEditing(null);
+    batch.reset();
+  };
   if (!isAdmin) return null;
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        variant="outline"
+        onClick={() => {
+          batch.reset();
+          setOpen(true);
+        }}
+      >
         <FileUp className="mr-2 size-4" />
         Cierres desde facturas PDF
       </Button>
       <Dialog
         open={open}
         onOpenChange={(v) => {
-          if (!batch.busy) setOpen(v);
+          if (!v) close();
+          else setOpen(true);
         }}
       >
         <DialogContent
@@ -434,6 +447,20 @@ export function IssuedInvoiceBatchImport() {
               crear el cierre y registrar cada factura en TMS.
             </DialogDescription>
           </DialogHeader>
+          {batch.processedNotices.length > 0 && (
+            <Alert
+              role="status"
+              className="border-amber-300 bg-amber-50 text-amber-950"
+            >
+              <AlertDescription>
+                {batch.processedNotices.map((notice, index) => (
+                  <p key={index} className="font-semibold">
+                    {notice}
+                  </p>
+                ))}
+              </AlertDescription>
+            </Alert>
+          )}
           {completed > 0 && (
             <Alert
               role="status"
@@ -718,7 +745,7 @@ export function IssuedInvoiceBatchImport() {
               <Button
                 variant={allCompleted ? 'default' : 'outline'}
                 disabled={!!batch.busy}
-                onClick={() => setOpen(false)}
+                onClick={close}
               >
                 {allCompleted ? 'Finalizar' : 'Cerrar'}
               </Button>

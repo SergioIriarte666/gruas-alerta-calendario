@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   find: vi.fn(),
   read: vi.fn(),
+  toast: vi.fn(),
 }));
+vi.mock('sonner', () => ({ toast: { info: mocks.toast } }));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidate }),
 }));
@@ -140,6 +142,47 @@ describe('issued invoice batch orchestration', () => {
       await act(() => result.current.upload([file]));
       expect(mocks.read).toHaveBeenCalledTimes(1);
       expect(result.current.documents).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+  it('clears the session and shows a fresh duplicate notice without restoring processed rows', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const done = {
+      ...makeDoc('4369'),
+      result: {
+        invoiceId: 'invoice',
+        invoiceFolio: 'FACT-4569',
+        closureFolios: ['CIE-596'],
+      },
+    };
+    mocks.find.mockResolvedValue(done);
+    const file = new File(['pdf'], '4369.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'arrayBuffer', {
+      value: async () => new Uint8Array([1, 2, 3]).buffer,
+    });
+    try {
+      const { result } = renderHook(() => useIssuedInvoiceImport());
+      await act(() => result.current.load());
+      expect(result.current.documents).toHaveLength(2);
+      act(() => result.current.reset());
+      expect(result.current.documents).toEqual([]);
+      expect(result.current.selected.size).toBe(0);
+      expect(result.current.candidates).toEqual({});
+      for (let i = 0; i < 2; i++) {
+        await act(() => result.current.upload([file]));
+        expect(result.current.documents).toEqual([]);
+        expect(result.current.processedNotices).toHaveLength(1);
+        expect(result.current.processedNotices[0]).toContain(
+          'La factura 4369 ya fue procesada',
+        );
+        expect(mocks.toast).toHaveBeenCalledTimes(i + 1);
+        act(() => result.current.reset());
+        expect(result.current.processedNotices).toEqual([]);
+      }
+      expect(mocks.read).not.toHaveBeenCalled();
+      expect(mocks.save).not.toHaveBeenCalled();
+      expect(mocks.register).not.toHaveBeenCalled();
     } finally {
       vi.unstubAllGlobals();
     }
