@@ -1,3 +1,4 @@
+import { FIELD_LABELS } from '@/lib/serviceHistoryPresentation';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -81,10 +82,10 @@ describe('contrato del historial de cambios de servicios', () => {
       'src/components/services/ClientNotificationsToggle.tsx',
     );
 
-    expect(historyComponent).toContain("vehicle_brand: 'Marca Vehículo'");
-    expect(historyComponent).toContain("vehicle_model: 'Modelo Vehículo'");
-    expect(historyComponent).toContain("license_plate: 'Patente'");
-    expect(historyComponent).toContain("resource_commission: 'Comisión del Operador'");
+    expect(FIELD_LABELS.vehicle_brand).toBe('Marca Vehículo');
+    expect(FIELD_LABELS.vehicle_model).toBe('Modelo Vehículo');
+    expect(FIELD_LABELS.license_plate).toBe('Patente');
+    expect(FIELD_LABELS.resource_commission).toBe('Comisión del Operador');
     expect(historyComponent).toContain('hasInitialSnapshot');
     expect(serviceManager).toContain(
       "queryClient.invalidateQueries({ queryKey: ['service-change-history', id] })",

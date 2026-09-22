@@ -36,6 +36,7 @@ export const Header = ({
   const routeMeta: Record<string, { title: string; description: string }> = {
     '/dashboard': { title: 'Dashboard Principal', description: 'Resumen ejecutivo y actividad reciente' },
     '/services': { title: 'Servicios', description: 'Operaciones y seguimiento diario' },
+    '/services/audit': { title: 'Auditoría de servicios', description: 'Historial de modificaciones y costos' },
     '/admin/external-services': { title: 'Servicios Externos', description: 'Proveedores, evidencias y cierres administrativos' },
     '/costs': { title: 'Costos', description: 'Control operativo y financiero' },
     '/closures': { title: 'Cierres', description: 'Consolidado de cierre e ingresos' },

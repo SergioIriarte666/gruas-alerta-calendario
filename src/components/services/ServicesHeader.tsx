@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff, Activity } from 'lucide-react';
+import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff, Activity, History } from 'lucide-react';
 import { ServicesMetrics } from './ServicesMetrics';
 import { ServicesDateFilter, DateFilter } from './ServicesDateFilter';
 import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
@@ -94,6 +95,7 @@ export const ServicesHeader = ({
 
           {isAdmin && (
             <>
+              <Button asChild variant="outline" size="sm"><Link to="/services/audit"><History className="mr-2 size-4" />Auditoría</Link></Button>
               <Button
                 onClick={onExportPending}
                 disabled={isExportingPending || pendingServicesCount === 0}

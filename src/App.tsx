@@ -42,6 +42,7 @@ const routeImports = {
   Dashboard: () => import('@/pages/Dashboard'),
   Auth: () => import('@/pages/Auth'),
   Services: () => import('@/pages/Services'),
+  ServiceAudit: () => import('@/pages/ServiceAudit'),
   Clients: () => import('@/pages/Clients'),
   Operators: () => import('@/pages/Operators'),
   Cranes: () => import('@/pages/Cranes'),
@@ -95,6 +96,7 @@ const Profile = lazy(routeImports.Profile);
 const Dashboard = lazy(routeImports.Dashboard);
 const Auth = lazy(routeImports.Auth);
 const Services = lazy(routeImports.Services);
+const ServiceAudit = lazy(routeImports.ServiceAudit);
 const Clients = lazy(routeImports.Clients);
 const Operators = lazy(routeImports.Operators);
 const Cranes = lazy(routeImports.Cranes);
@@ -308,6 +310,7 @@ function AppContent() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/audit" element={<AdminOnlyRoute><ServiceAudit /></AdminOnlyRoute>} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/closures" element={<Closures />} />
           <Route path="/clients" element={<Clients />} />
