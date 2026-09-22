@@ -16,6 +16,7 @@ export interface IssuedInvoiceFields {
 export interface InvoiceCandidate {
   key: string;
   serviceId: string;
+  clientId?: string;
   folio: string;
   date: string;
   purchaseOrder: string;
@@ -281,6 +282,10 @@ export function reconciliationErrors(
     new Set(draft.selectedKeys).size !== draft.selectedKeys.length
   )
     errors.push('Selecciona servicios disponibles.');
+  if (new Set(rows.map((c) => c.clientId).filter(Boolean)).size > 1)
+    errors.push(
+      'Los servicios pertenecen a distintas fichas de cliente. Selecciona los de una misma ficha.',
+    );
   if (rows.some((c) => c.blocked)) errors.push('Hay servicios bloqueados.');
   if (rows.reduce((s, c) => s + c.amount, 0) !== draft.fields.net)
     errors.push('El neto/base de los servicios no coincide con el PDF.');

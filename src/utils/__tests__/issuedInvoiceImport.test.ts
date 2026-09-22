@@ -187,6 +187,27 @@ describe('issued invoice import', () => {
         .purchaseOrder,
     ).toBe('');
   });
+  it('matches OC across branches sharing a RUT, without mixing different client records', () => {
+    const own = candidate('a', { clientId: 'branch-copiapo' });
+    const other = candidate('b', {
+      clientId: 'branch-santiago',
+      purchaseOrder: 'OTHER',
+    });
+    expect(suggestedInvoiceKeys(fields, [other, own])).toEqual(['a:covered']);
+    const selected = prepareIssuedInvoiceDraft(
+      { fields, selectedKeys: [], reviewed: true, manualReason: '' },
+      [other, own],
+    );
+    expect(reconciliationErrors(selected, [other, own])).toEqual([]);
+    expect(
+      reconciliationErrors(
+        { ...selected, selectedKeys: ['a:covered', 'b:covered'] },
+        [own, other],
+      ),
+    ).toContain(
+      'Los servicios pertenecen a distintas fichas de cliente. Selecciona los de una misma ficha.',
+    );
+  });
   it('blocks missing dates, invalid totals and exempt VAT', () => {
     expect(invoiceFieldErrors(fields)).toEqual([]);
     expect(invoiceFieldErrors({ ...fields, dueDate: '' })).not.toEqual([]);

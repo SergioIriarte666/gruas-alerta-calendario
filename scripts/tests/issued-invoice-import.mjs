@@ -68,6 +68,12 @@ await sql(
     'utf8',
   ),
 );
+await sql(
+  await readFile(
+    'supabase/migrations/20260922210000_resolve_invoice_client_from_services.sql',
+    'utf8',
+  ),
+);
 let counter = 0;
 const fields = {
   documentType: '33',
@@ -297,6 +303,101 @@ const registeredProposal = await confirm(proposal);
 assert.equal(registeredProposal.closureFolios.length, 1);
 assert.deepEqual(await confirm(proposal), registeredProposal);
 await fails(() => confirm(stale), /propuesta cambió/);
+// Three branches share a tax ID; the invoice OC identifies the service's branch.
+const branchA = '00000000-0000-0000-0000-000000000030';
+const branchB = '00000000-0000-0000-0000-000000000040';
+await db.query('INSERT INTO clients(id,rut) VALUES ($1,$3),($2,$3)', [
+  branchA,
+  branchB,
+  '77222333-4',
+]);
+const branchService = await service({
+  client_id: branchB,
+  purchase_order: 'OC-4701775661',
+  value: 195000,
+});
+const otherBranchService = await service({
+  client_id: branchA,
+  purchase_order: 'OTHER-OC',
+});
+const { matches } = await scalar(
+  "SELECT issued_invoice_candidates('77.222.333-4') AS matches",
+);
+const matchingOC = matches.filter(
+  (c) => c.purchaseOrder === 'OC-4701775661' && !c.blocked,
+);
+assert.equal(matchingOC.length, 1);
+assert.equal(matchingOC[0].serviceId, branchService);
+assert.equal(matchingOC[0].clientId, branchB);
+const branchInvoice = await confirm(
+  await draft([branchService + ':covered'], {
+    purchaseOrder: '4701775661',
+    net: 195000,
+    vat: 37050,
+    total: 232050,
+  }),
+);
+assert.equal(
+  (
+    await scalar('SELECT client_id FROM invoices WHERE id=$1', [
+      branchInvoice.invoiceId,
+    ])
+  ).client_id,
+  branchB,
+);
+assert.equal(
+  (
+    await scalar('SELECT client_id FROM service_closures WHERE folio=$1', [
+      branchInvoice.closureFolios[0],
+    ])
+  ).client_id,
+  branchB,
+);
+// Matching RUT does not authorize combining different client records into one invoice.
+const branchService2 = await service({
+  client_id: branchB,
+  purchase_order: 'OTHER-OC',
+});
+const beforeMixed = await count('invoices');
+await fails(
+  async () =>
+    register(
+      await draft(
+        [otherBranchService + ':covered', branchService2 + ':covered'],
+        { purchaseOrder: 'OTHER-OC', net: 200000, vat: 38000, total: 238000 },
+      ),
+    ),
+  /distintas fichas/,
+);
+assert.equal(await count('invoices'), beforeMixed);
+// A selected service belonging to another tax ID must still be rejected.
+await fails(
+  async () =>
+    register(
+      await draft([otherBranchService + ':covered'], {
+        clientRut: '78.222.333-4',
+      }),
+    ),
+  /disponibilidad/,
+);
+// Excess amounts resolve to the third-party branch, not the main client.
+const excessBranch = await service({
+  has_excess: true,
+  third_party_client_id: branchA,
+  excess_amount: 100000,
+  client_id: '00000000-0000-0000-0000-000000000020',
+});
+const excessBranchResult = await register(
+  await draft([excessBranch + ':excess']),
+);
+assert.equal(
+  (
+    await scalar('SELECT client_id FROM invoices WHERE id=$1', [
+      excessBranchResult.invoiceId,
+    ])
+  ).client_id,
+  branchA,
+);
 await sql("SET test.admin='false'");
 await fails(() => register(doc), /Solo administradores/);
 await fails(

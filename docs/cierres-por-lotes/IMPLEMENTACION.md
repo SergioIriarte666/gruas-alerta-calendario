@@ -15,11 +15,12 @@ Aplicar las migraciones del repositorio antes de publicar el frontend:
 - `20260922175900_add_partial_invoice_service_status.sql`
 - `20260922180000_issued_invoice_batch_import.sql`
 - `20260922190000_confirm_issued_invoice_proposal.sql`
+- `20260922210000_resolve_invoice_client_from_services.sql`
 
-La última permite confirmar la propuesta y registrar la factura en una sola transacción, conservando la comprobación de cambios desde otras sesiones y todas las validaciones anteriores. Los PDF son privados; reimportar un archivo no duplica registros.
+La migración de confirmación permite confirmar la propuesta y registrar la factura en una sola transacción, conservando la comprobación de cambios desde otras sesiones y todas las validaciones anteriores. Los PDF son privados; reimportar un archivo no duplica registros.
 
 ## Reglas
-- Coincidencia principal: RUT del receptor/pagador + OC. La igualdad del monto por sí sola no asigna servicios.
+- Coincidencia principal: RUT del receptor/pagador + OC. El mismo RUT puede tener varias fichas o sucursales: se buscan sus servicios y se conserva el cliente del servicio seleccionado, tanto en el cierre como en la factura. No se exige RUT único ni se elige una ficha arbitrariamente. Una factura no combina fichas distintas. La igualdad del monto por sí sola no asigna servicios.
 - Comparación del neto/base con servicios; IVA y total se conservan del documento revisado. No se calcula una tasa por defecto al registrar.
 - RUT emisor debe coincidir con la empresa configurada en TMS.
 - Folios duplicados contra TMS o dentro del lote, servicios repetidos entre facturas, disputas y diferencias bloquean el procesamiento.
