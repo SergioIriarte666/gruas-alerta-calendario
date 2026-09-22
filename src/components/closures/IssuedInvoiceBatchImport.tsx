@@ -441,9 +441,24 @@ export function IssuedInvoiceBatchImport() {
             >
               <CheckCircle2 className="size-4" />
               <AlertDescription>
-                {allCompleted
-                  ? 'Proceso terminado. Los cierres y las facturas ya están guardados en TMS.'
-                  : `${completed} factura(s) registradas con sus cierres. Puedes continuar con las pendientes o cerrar esta ventana.`}
+                <div className="space-y-2">
+                  {batch.documents
+                    .filter((d) => d.result)
+                    .map((d) => (
+                      <div key={d.id}>
+                        <p className="font-semibold">
+                          La factura{' '}
+                          {d.draft.fields.fiscalNumber || d.file_name} ya fue
+                          procesada.
+                        </p>
+                        <p>
+                          {d.result!.closureFolios.join(', ')} ·{' '}
+                          {d.result!.invoiceFolio}. No es necesario volver a
+                          procesarla.
+                        </p>
+                      </div>
+                    ))}
+                </div>
               </AlertDescription>
             </Alert>
           )}
@@ -574,10 +589,12 @@ export function IssuedInvoiceBatchImport() {
                             <summary className="cursor-pointer">
                               {rows.length === 1
                                 ? rows[0].folio
-                                : `${rows.length} servicios`}{' '}
+                                : `${d.result ? d.draft.selectedKeys.length : rows.length} servicios`}{' '}
                               ·{' '}
                               {money(
-                                rows.reduce((sum, c) => sum + c.amount, 0),
+                                d.result
+                                  ? d.draft.fields.net
+                                  : rows.reduce((sum, c) => sum + c.amount, 0),
                               )}{' '}
                               neto
                             </summary>
@@ -623,7 +640,7 @@ export function IssuedInvoiceBatchImport() {
                             variant={readyIds.has(d.id) ? 'default' : 'outline'}
                           >
                             {d.result
-                              ? 'Creado'
+                              ? 'Ya procesada'
                               : readyIds.has(d.id)
                                 ? 'Listo para crear'
                                 : 'Revisar'}
