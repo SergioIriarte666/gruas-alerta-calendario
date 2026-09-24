@@ -1,6 +1,7 @@
 import { parseDateValue } from '@/utils/calendarDate';
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
+import { stripNamespaces } from '@/utils/xmlParser/xmlNamespace';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
@@ -50,7 +51,7 @@ export class XMLSupplierParser {
 
   public parseXMLCompleteString(xmlString: string): XMLCompleteParseResult {
     try {
-      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
+      const doc = this.parser.parseFromString(stripNamespaces(xmlString), 'text/xml');
       
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
@@ -104,7 +105,7 @@ export class XMLSupplierParser {
 
   public parseXMLString(xmlString: string): XMLSupplierParseResult {
     try {
-      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
+      const doc = this.parser.parseFromString(stripNamespaces(xmlString), 'text/xml');
       
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
@@ -785,10 +786,6 @@ export class XMLSupplierParser {
     const date = parseDateValue(issueDate);
     date.setDate(date.getDate() + 30); // 30 días por defecto
     return toLocalDateString(date);
-  }
-
-  private stripNamespaces(xml: string): string {
-    return xml.replace(/\sxmlns(:\w+)?="[^"]*"/g, '');
   }
 
   private sanitizeDecodedText(value: string): string {

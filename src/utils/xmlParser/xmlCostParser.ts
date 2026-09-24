@@ -1,5 +1,6 @@
 import { parseDateValue } from '@/utils/calendarDate';
 import { XMLCostData, XMLParseResult, XMLStructure } from '@/types/costs';
+import { stripNamespaces } from '@/utils/xmlParser/xmlNamespace';
 import { createLogger } from "@/lib/logger";
 
 
@@ -29,7 +30,7 @@ export class XMLCostParser {
 
   public parseXMLString(xmlString: string): XMLParseResult {
     try {
-      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
+      const doc = this.parser.parseFromString(stripNamespaces(xmlString), 'text/xml');
       
       // Verificar errores de parsing
       const parseError = doc.querySelector('parsererror');
@@ -359,10 +360,6 @@ export class XMLCostParser {
       item.descripcion && 
       item.descripcion.trim().length > 0
     );
-  }
-
-  private stripNamespaces(xml: string): string {
-    return xml.replace(/\sxmlns(:\w+)?="[^"]*"/g, '');
   }
 
   private cleanExtractedText(value?: string | null): string {
