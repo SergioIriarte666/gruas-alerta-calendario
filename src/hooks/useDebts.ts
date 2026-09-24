@@ -116,7 +116,7 @@ export const useDebtsWithProgress = () => {
         return {
           ...debt,
           paid_count: paid.length,
-          paid_amount: paid.reduce((s, i) => s + Number(i.paid_amount || 0), 0),
+          paid_amount: di.reduce((s, i) => s + Number(i.paid_amount || 0), 0),
           pending_amount: pendingAmount,
           overdue_count: overdue.length,
         } as DebtWithProgress;

@@ -88,7 +88,11 @@ export const usePayInstallment = () => {
       uf_value?: number | null;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const installmentAmount = Number(installment.total_amount);
+      const previouslyPaid = Number(installment.paid_amount || 0);
+      const installmentAmount = Number(installment.total_amount) - previouslyPaid;
+      if (installmentAmount <= 0) {
+        throw new Error('La cuota ya está completamente pagada');
+      }
       const isUF = installment.debts?.currency === 'UF';
       const ufValue = isUF ? Number(uf_value || 0) : 0;
       if (isUF && (!ufValue || ufValue <= 0)) {
@@ -103,7 +107,7 @@ export const usePayInstallment = () => {
         .update({
           status: 'paid',
           paid_date: paymentDate,
-          paid_amount: installmentAmount,
+          paid_amount: Number(installment.total_amount),
           updated_by: userId,
         })
         .eq('id', installment.id);

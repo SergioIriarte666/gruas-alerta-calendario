@@ -55,6 +55,8 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
       return <Badge variant="outline" className="border-success/30 bg-success-soft text-xs text-success-text">Pagada</Badge>;
     if (inst.due_date < today)
       return <Badge variant="destructive" className="text-xs">Vencida</Badge>;
+    if (Number(inst.paid_amount || 0) > 0)
+      return <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs text-primary">Abonada</Badge>;
     return <Badge variant="outline" className="border-warning/30 bg-warning-soft text-xs text-warning-text">Pendiente</Badge>;
   };
 
@@ -208,6 +210,11 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
                   </TableCell>
                   <TableCell className="text-foreground font-medium">
                     {formatAmount(Number(inst.total_amount), debt.currency)}
+                    {inst.status === 'pending' && Number(inst.paid_amount || 0) > 0 && (
+                      <div className="text-xs font-normal text-muted-foreground">
+                        Saldo: {formatAmount(Number(inst.total_amount) - Number(inst.paid_amount), debt.currency)}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{getStatusBadge(inst)}</TableCell>
                   <TableCell className="text-foreground">

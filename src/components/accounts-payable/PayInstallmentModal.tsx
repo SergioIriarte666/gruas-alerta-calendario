@@ -27,7 +27,8 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
   const { mutate: pay, isPending } = usePayInstallment();
 
   const isUF = installment.debts?.currency === 'UF';
-  const installmentAmount = Number(installment.total_amount);
+  const previouslyPaid = Number(installment.paid_amount || 0);
+  const installmentAmount = Number(installment.total_amount) - previouslyPaid;
   const ufValueNumber = Number(ufValue);
   const clpAmount = isUF && ufValueNumber > 0 ? Math.round(installmentAmount * ufValueNumber) : Math.round(installmentAmount);
 
@@ -67,6 +68,13 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
             <p className="text-lg font-bold text-foreground">
               {displayInstallmentAmount}
             </p>
+            {previouslyPaid > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Saldo restante tras abono previo de {isUF
+                  ? `UF ${previouslyPaid.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
+                  : `$${previouslyPaid.toLocaleString('es-CL')}`}
+              </p>
+            )}
             {isUF && (
               <p className="text-xs text-muted-foreground">
                 Pago en CLP: <span className="font-medium text-foreground">{formatCurrency(clpAmount, 'CLP')}</span>
