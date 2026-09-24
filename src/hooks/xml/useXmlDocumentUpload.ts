@@ -435,7 +435,7 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
 
             const linkCostId = linkDecisions[documentKey];
             if (linkCostId && linkCostId !== 'new' && originalDoc) {
-              await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: docFolio, issueDate: originalDoc.issue_date, dueDate: originalDoc.due_date || paymentData.due_date, amount: originalDoc.total_amount, netAmount: originalDoc.net_amount, taxAmount: originalDoc.vat_amount, description: originalDoc.description, currency: originalDoc.currency, paidDate, status: status as 'pending' | 'paid' } });
+              await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: docFolio, issueDate: originalDoc.issue_date, dueDate: originalDoc.due_date || paymentData.due_date, amount: originalDoc.total_amount, netAmount: originalDoc.net_amount, taxAmount: originalDoc.vat_amount, description: originalDoc.description, currency: originalDoc.currency, paidDate, status: status as 'pending' | 'paid' }, items: originalDoc.items ?? [] });
               linkedCount++; processed++; continue;
             }
 

@@ -7808,7 +7808,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
-          inventory_item_id: string
+          inventory_item_id: string | null
           line_number: number
           movement_id: string | null
           product_code: string | null
@@ -7827,7 +7827,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
-          inventory_item_id: string
+          inventory_item_id?: string | null
           line_number: number
           movement_id?: string | null
           product_code?: string | null
@@ -7846,7 +7846,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
-          inventory_item_id?: string
+          inventory_item_id?: string | null
           line_number?: number
           movement_id?: string | null
           product_code?: string | null

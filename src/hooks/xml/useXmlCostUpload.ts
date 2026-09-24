@@ -26,6 +26,7 @@ import {
   getDocumentStateKey,
 } from '@/utils/xml/xmlGlosaHelpers';
 import { computeSelectedTotal } from '@/utils/xml/xmlInventoryHelpers';
+import { createSupplierInvoiceForImportedCost } from '@/services/xmlCostInvoiceSync';
 
 const logger = createLogger('useXmlCostUpload');
 
@@ -480,6 +481,9 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     batchProgress.start('Cargando Gastos desde XML', docsToImport.length);
     let successCount = 0, errorCount = 0, skippedDuplicatesCount = 0;
     const failureMessages: string[] = [];
+    // Costos creados cuya factura/detalle no se pudo guardar: el costo queda,
+    // pero se avisa en vez de perder el detalle en silencio.
+    const invoiceDetailWarnings: string[] = [];
 
     const getErrorMessage = (error: unknown) => {
       if (error instanceof Error && error.message.trim()) return error.message;
@@ -552,6 +556,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         const documentKey = getDocumentStateKey(doc);
         // Monto y glosa se calculan solo con las líneas seleccionadas del DTE.
         const docItems = doc.items ?? [];
+        const selectedLineSet = getSelectedLineSet(doc);
+        const selectedItems = docItems.filter((_, index) => selectedLineSet.has(index));
         const selectedLineCount = getSelectedLineCount(doc);
         const isPartialSelection = docItems.length > 0 && selectedLineCount > 0 && selectedLineCount < docItems.length;
         const recalculatedAmount = getDocumentAmount(doc);
@@ -580,7 +586,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
               continue;
             }
             const computedDueDate = getComputedDueDate(doc) || emissionDate;
-            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: recalculatedAmount, netAmount: Math.round(doc.net_amount * amountFactor), taxAmount: Math.round(doc.vat_amount * amountFactor), description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' } });
+            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: recalculatedAmount, netAmount: Math.round(doc.net_amount * amountFactor), taxAmount: Math.round(doc.vat_amount * amountFactor), description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' }, items: selectedItems });
             successCount++;
             continue;
           }
@@ -663,6 +669,32 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                       .is('linked_cost_id', null);
                   } catch (linkErr) { logger.warn('[useXmlCostUpload] Auto-vinculación con sii_rcv_records falló para el costo:', costRecord.id, linkErr); }
                 }
+                // Guardar la factura del proveedor con el Detalle del DTE (líneas
+                // seleccionadas) y vincularla al costo, para que "Detalle de Factura"
+                // aparezca al visualizar el costo, igual que en la importación manual.
+                if (costRecord?.id && doc.folio) {
+                  try {
+                    await createSupplierInvoiceForImportedCost({
+                      costId: costRecord.id,
+                      supplierId,
+                      folio: doc.folio,
+                      issueDate: emissionDate,
+                      dueDate: dueDateOverrides[documentKey] || getComputedDueDate(doc) || emissionDate,
+                      amount: recalculatedAmount,
+                      netAmount: Math.round(doc.net_amount * amountFactor),
+                      taxAmount: Math.round(doc.vat_amount * amountFactor),
+                      description: effectiveGlosa,
+                      currency: doc.currency,
+                      isPaid: !!paymentDate,
+                      xmlFileName: selectedFile?.name || `${doc.folio}.xml`,
+                      items: selectedItems,
+                      userId,
+                    });
+                  } catch (invoiceErr) {
+                    logger.warn('[useXmlCostUpload] No se pudo guardar la factura con detalle para el costo:', costRecord.id, invoiceErr);
+                    invoiceDetailWarnings.push(`Folio ${doc.folio}: costo creado, pero sin detalle de factura (${getErrorMessage(invoiceErr)})`);
+                  }
+                }
                 if (effectiveSyncToInventory && costRecord?.id) {
                   try {
                     if (isLowboyImmediateConsumption) {
@@ -700,6 +732,12 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           failureMessages.push(`Folio ${doc.folio}: ${getErrorMessage(docError)}`);
           errorCount++;
         }
+      }
+
+      if (invoiceDetailWarnings.length > 0) {
+        toast.warning(`${invoiceDetailWarnings.length} costo(s) quedaron sin detalle de factura`, {
+          description: invoiceDetailWarnings[0],
+        });
       }
 
       if (errorCount === 0) {

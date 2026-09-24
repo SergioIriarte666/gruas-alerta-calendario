@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData } from '@/types/costs';
+import { XMLDocumentItem } from '@/types/suppliers';
+import { buildDocumentalInvoiceItemRows } from '@/services/xmlCostInvoiceSync';
 import { EntityKey } from '@/lib/entities';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
@@ -634,6 +636,7 @@ export const useLinkInvoiceToCost = () => {
       costId,
       supplierId,
       invoiceData,
+      items,
     }: {
       costId: string;
       supplierId: string;
@@ -649,6 +652,8 @@ export const useLinkInvoiceToCost = () => {
         paidDate?: string;
         status?: 'pending' | 'paid';
       };
+      // Detalle del DTE: se guarda como líneas documentales (sin inventario).
+      items?: XMLDocumentItem[];
     }) => {
       // 1. Create supplier_invoice
       const isPaid = invoiceData.status === 'paid';
@@ -673,6 +678,17 @@ export const useLinkInvoiceToCost = () => {
         .single();
 
       if (invoiceError) throw new Error(`Error creando factura: ${invoiceError.message}`);
+
+      // 1b. Guardar el Detalle del DTE como líneas documentales de la factura
+      if (items && items.length > 0) {
+        const { error: itemsError } = await supabase
+          .from('supplier_invoice_items')
+          .insert(buildDocumentalInvoiceItemRows(invoice.id, items, null));
+        if (itemsError) {
+          // La factura y el vínculo son lo esencial; el detalle no debe abortar el link.
+          logger.warn('[useLinkInvoiceToCost] No se pudo guardar el detalle de la factura:', itemsError.message);
+        }
+      }
 
       // 2. Update cost with real invoice data
       const costUpdate: Record<string, any> = {
