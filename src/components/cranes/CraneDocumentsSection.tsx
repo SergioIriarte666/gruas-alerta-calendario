@@ -140,7 +140,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
 
   const DocumentCard = ({ type }: { type: typeof documentTypes[0] }) => {
     const document = getDocumentByType(type.key);
-    const expiryDate = crane[type.craneField] as string;
+    const expiryDate = document?.expiryDate ?? (crane[type.craneField] as string);
     const daysUntilExpiry = expiryDate ? getDaysUntilExpiry(expiryDate) : 0;
     const status = getExpiryStatus(daysUntilExpiry);
     const alertStatus = expiryDate ? (daysUntilExpiry < 0 ? 'vencido' : 'por_vencer') : null;
