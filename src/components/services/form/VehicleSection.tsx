@@ -1064,8 +1064,12 @@ export const VehicleSection = ({
                 </div>
                 {patentData?.rtResultado && (() => {
                   const today = getBusinessTodayDate();
+                  // rtFecha llega normalizado ('YYYY-MM-DD' | null) desde
+                  // parseVehiclePayload; el isNaN es cinturón de seguridad para
+                  // que un dato inesperado degrade a "RT Vencida" y nunca
+                  // reviente el render (RangeError en Safari).
                   const rtDate = patentData.rtFecha ? parseFromDatabase(patentData.rtFecha) : null;
-                  const isRTValid = rtDate ? rtDate >= today : false;
+                  const isRTValid = rtDate && !isNaN(rtDate.getTime()) ? rtDate >= today : false;
                   return (
                     <div className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium",

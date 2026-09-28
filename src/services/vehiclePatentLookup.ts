@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { isChileanPlate } from '@/utils/vehicleIdentifiers';
+import { isCalendarDate } from '@/utils/calendarDate';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('vehiclePatentLookup');
@@ -17,6 +18,7 @@ export interface VehicleData {
   combustible?: string | null;
   transmision?: string | null;
   motor?: string | null;
+  /** Siempre 'YYYY-MM-DD' o null (normalizado desde la API). */
   rtFecha?: string | null;
   rtResultado?: string | null;
   mesRT?: string | null;
@@ -57,6 +59,19 @@ export const invokeVehicleApi = async (
   return null;
 };
 
+/**
+ * GetAPI Chile entrega rtDate en formatos variables:
+ * "2026-02-25 00:00:00.000 +00:00", "2026-05-14 00:00:00", "2026-05-05".
+ * Safari no parsea los dos primeros con new Date() (Invalid Date → RangeError
+ * al formatear). Se normaliza aquí, en la frontera, a 'YYYY-MM-DD' o null:
+ * ningún consumidor debe recibir un string de fecha no calendario.
+ */
+const normalizeApiDate = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match && isCalendarDate(match[1]) ? match[1] : null;
+};
+
 /** Normaliza los distintos formatos de respuesta (vehicle-api vs check-vehicle-patent). */
 export const parseVehiclePayload = (plateResult: unknown): VehicleData | null => {
   if (!plateResult || typeof plateResult !== 'object') return null;
@@ -81,7 +96,7 @@ export const parseVehiclePayload = (plateResult: unknown): VehicleData | null =>
     combustible: r.combustible  ?? r.fuel               ?? null,
     transmision: r.transmision  ?? r.transmission       ?? null,
     motor:       r.motor        ?? r.engine             ?? null,
-    rtFecha:     r.rtFecha      ?? r.rtDate             ?? null,
+    rtFecha:     normalizeApiDate(r.rtFecha ?? r.rtDate),
     rtResultado: r.rtResultado  ?? r.rtResult           ?? null,
     mesRT:       r.mesRT        ?? r.monthRT            ?? null,
   };
