@@ -184,9 +184,14 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     }
   }, [uploadProgress?.percentage]);
 
-  const handleDownloadExcelTemplate = () => {
+  const handleDownloadExcelTemplate = async () => {
     try {
-      downloadExcelTemplate();
+      const result = await downloadExcelTemplate();
+      if (result.format === 'csv') {
+        toast.warning('No se pudo generar la plantilla Excel; se descargó la plantilla CSV.', {
+          description: result.reason,
+        });
+      }
     } catch (error) {
       logger.error('Error downloading Excel template:', error);
       toast.error('Error al descargar la plantilla de Excel');

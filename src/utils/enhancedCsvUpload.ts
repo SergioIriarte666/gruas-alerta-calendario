@@ -1,6 +1,7 @@
 import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { DataMapper, MappedServiceData } from './dataMapper';
+import { TemplateGenerator, type ExcelTemplateResult } from './csvUpload/templateGenerator';
 import type { Database } from '@/integrations/supabase/types';
 
 import { createLogger } from '@/lib/logger';
@@ -406,7 +407,14 @@ export class EnhancedCSVUploader {
       for (const field of requiredFields) {
         const value = mappedRow[field];
         const isEmpty = isMissingRequiredValue(value);
-        
+
+        // Operador RUT puede venir vacío si la fila trae Operador Nombre (columna
+        // auxiliar de la plantilla): el rowMapper lo resuelve por nombre.
+        if (isEmpty && field === 'operatorRut' && !isMissingRequiredValue(mappedRow.operatorName)) {
+          logger.debug(`ℹ️ Row ${i + 1} operatorRut vacío; se resolverá por operatorName:`, mappedRow.operatorName);
+          continue;
+        }
+
         if (isEmpty) {
           logger.debug(`❌ Row ${i + 1} missing field '${field}':`, value);
           errors.push({
@@ -719,34 +727,8 @@ export class EnhancedCSVUploader {
     document.body.removeChild(link);
   }
 
-  generateExcelTemplate(): void {
-    const sampleData = [{
-      'Folio': 'SRV-001',
-      'Fecha Solicitud': '2024-01-15',
-      'Fecha Servicio': '2024-01-16',
-      'Cliente RUT': '12.345.678-9',
-      'Cliente Nombre': 'Transportes Ejemplo Ltda.',
-      'Cliente Departamento': 'Seguros',
-      'Vehículo Marca': 'Mercedes',
-      'Vehículo Modelo': 'Actros',
-      'Patente': 'ABCD-12',
-      'Origen': 'Santiago Centro',
-      'Destino': 'Las Condes',
-      'Tipo Servicio': 'Grúa Pesada',
-      'Valor': 150000,
-      'Grúa Patente': 'GRUA-01',
-      'Operador RUT': '16.123.456-7',
-      'Comisión Operador': 15000,
-      'Observaciones': 'Servicio de ejemplo',
-      'Combustible': '',
-      'Viáticos': '',
-      'Peajes': ''
-    }];
-
-    const worksheet = XLSX.utils.json_to_sheet(sampleData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Servicios');
-
-    XLSX.writeFile(workbook, 'plantilla_servicios.xlsx');
+  /** Plantilla Excel con catálogos y listas desplegables; ver TemplateGenerator. */
+  generateExcelTemplate(): Promise<ExcelTemplateResult> {
+    return TemplateGenerator.downloadExcelTemplate();
   }
 }

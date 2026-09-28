@@ -49,6 +49,10 @@ export default defineConfig(({ mode: _mode }) => ({
             return "vendor-xlsx";
           }
 
+          if (id.includes("exceljs")) {
+            return "vendor-exceljs";
+          }
+
           if (id.includes("@supabase/supabase-js")) {
             return "vendor-supabase";
           }

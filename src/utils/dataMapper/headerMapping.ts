@@ -161,6 +161,11 @@ export class HeaderMapper {
     'PEAJES': 'tollExpense',
     'peajes': 'tollExpense',
     
+    // Columna auxiliar de la plantilla (solo ayuda a rellenar Operador RUT)
+    'Operador Nombre': 'operatorName',
+    'OPERADOR NOMBRE': 'operatorName',
+    'operador nombre': 'operatorName',
+
     // Observaciones
     'OBSERVACIONES': 'observations',
     'observaciones': 'observations',
@@ -221,7 +226,7 @@ export class HeaderMapper {
 
     const mappedHeaders = this.mapHeaders(headers);
     const missing = required.filter(req => !mappedHeaders.includes(req));
-    const optional = ['observations', 'fuelExpense', 'allowanceExpense', 'tollExpense'];
+    const optional = ['observations', 'fuelExpense', 'allowanceExpense', 'tollExpense', 'operatorName'];
     const extra = mappedHeaders.filter(h => !required.includes(h) && !optional.includes(h));
 
     const result = {

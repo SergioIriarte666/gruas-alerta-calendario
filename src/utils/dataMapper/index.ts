@@ -79,6 +79,10 @@ export class DataMapper {
     return this.entityFinders.findOperatorByRut(rut);
   }
 
+  findOperatorByName(name: string) {
+    return this.entityFinders.findOperatorByName(name);
+  }
+
   findServiceTypeByName(name: string) {
     return this.entityFinders.findServiceTypeByName(name);
   }

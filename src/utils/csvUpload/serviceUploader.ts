@@ -2,7 +2,7 @@
 import { parse } from 'papaparse';
 import * as XLSX from 'xlsx';
 import { UploadProgress, UploadResult } from './types';
-import { TemplateGenerator } from './templateGenerator';
+import { TemplateGenerator, type ExcelTemplateResult } from './templateGenerator';
 
 export class CSVServiceUploader {
   parseCSV(file: File): Promise<any[]> {
@@ -114,7 +114,7 @@ export class CSVServiceUploader {
     TemplateGenerator.downloadTemplate();
   }
 
-  downloadExcelTemplate(): void {
-    TemplateGenerator.downloadExcelTemplate();
+  downloadExcelTemplate(): Promise<ExcelTemplateResult> {
+    return TemplateGenerator.downloadExcelTemplate();
   }
 }

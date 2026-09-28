@@ -60,6 +60,26 @@ export class EntityFinders {
     ) || null;
   }
 
+  /**
+   * Resuelve un operador por nombre (insensible a mayúsculas y acentos). Primero
+   * igualdad exacta; si no, contención en cualquier sentido —mismo criterio que
+   * findServiceTypeByName— pero solo cuando hay UN candidato, para que "Juan" no
+   * elija a ciegas entre "Juan Pérez" y "Juan Soto".
+   */
+  findOperatorByName(name: string): Operator | null {
+    const cleanName = normalizeText(name || '');
+    if (!cleanName) return null;
+
+    const exact = this.operators.find(operator => normalizeText(operator.name || '') === cleanName);
+    if (exact) return exact;
+
+    const partial = this.operators.filter(operator => {
+      const operatorName = normalizeText(operator.name || '');
+      return operatorName !== '' && (operatorName.includes(cleanName) || cleanName.includes(operatorName));
+    });
+    return partial.length === 1 ? partial[0] : null;
+  }
+
   findServiceTypeByName(name: string): ServiceType | null {
     const cleanName = normalizeText(name);
     return this.serviceTypes.find(serviceType => {

@@ -25,7 +25,7 @@ export class RowMapper {
       for (const field of [
         'folio', 'clientRut', 'clientName', 'clientDepartment', 'vehicleBrand',
         'vehicleModel', 'licensePlate', 'origin', 'destination', 'serviceType',
-        'craneLicensePlate', 'operatorRut', 'observations',
+        'craneLicensePlate', 'operatorRut', 'operatorName', 'observations',
       ]) {
         rowData[field] = String(rowData[field] ?? '');
       }
@@ -106,12 +106,22 @@ export class RowMapper {
         logger.debug('✅ Crane found:', crane.brand, crane.model, '(', crane.id, ')');
       }
 
-      // Find operator
-      logger.debug('👷 Finding operator by RUT:', rowData.operatorRut);
-      const operator = this.entityFinders.findOperatorByRut(rowData.operatorRut);
+      // Find operator: por RUT; si el RUT viene vacío, por nombre (columna auxiliar
+      // "Operador Nombre" de la plantilla).
+      const operatorRut = rowData.operatorRut.trim();
+      const operatorName = rowData.operatorName.trim();
+      logger.debug('👷 Finding operator by RUT:', operatorRut, 'name:', operatorName);
+      let operator = operatorRut ? this.entityFinders.findOperatorByRut(operatorRut) : null;
+      if (!operator && !operatorRut && operatorName) {
+        operator = this.entityFinders.findOperatorByName(operatorName);
+        if (operator) {
+          logger.debug('⚠️ Operator resolved by name:', operator.name, '(', operator.rut, ')');
+          warnings.push(`Operador RUT vacío: se usó "${operator.name}" (${operator.rut}) resuelto por nombre`);
+        }
+      }
       if (!operator) {
-        logger.debug('❌ Operator not found:', rowData.operatorRut);
-        errors.push(`Operador no encontrado: ${rowData.operatorRut}`);
+        logger.debug('❌ Operator not found:', operatorRut || operatorName);
+        errors.push(`Operador no encontrado: ${operatorRut || operatorName || 'valor vacío'}`);
       } else {
         logger.debug('✅ Operator found:', operator.name, '(', operator.id, ')');
       }

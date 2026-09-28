@@ -164,7 +164,7 @@ export const useCSVUpload = () => {
 
   // Download Excel template
   const downloadExcelTemplate = useCallback(() => {
-    csvUploader.downloadExcelTemplate();
+    void csvUploader.downloadExcelTemplate();
   }, [csvUploader]);
 
   // Reset state

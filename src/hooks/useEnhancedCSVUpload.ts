@@ -187,9 +187,7 @@ export const useEnhancedCSVUpload = () => {
     uploader.generateTemplate();
   }, [uploader]);
 
-  const downloadExcelTemplate = useCallback(() => {
-    uploader.generateExcelTemplate();
-  }, [uploader]);
+  const downloadExcelTemplate = useCallback(() => uploader.generateExcelTemplate(), [uploader]);
 
   const reset = useCallback(() => {
     setFile(null);

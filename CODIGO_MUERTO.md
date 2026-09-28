@@ -4,7 +4,7 @@
 > **No lo usa nadie. Si un refactor lo toca, es trabajo perdido.**
 > **Verificar alcanzabilidad antes de editar.**
 
-Son **161 archivos, 26.608 LOC** — el 10,4% de `src/`. Ninguno es alcanzable desde
+Son **160 archivos, 26.488 LOC** — el 10,4% de `src/`. Ninguno es alcanzable desde
 los entry points (`index.html`, `src/main.tsx`, `vite.config.ts`, `tailwind.config.ts`,
 `capacitor.config.ts`). No se borra ninguno: este archivo existe para que nadie les
 siga haciendo mantenimiento por error.
@@ -18,8 +18,11 @@ mitad al vacío. No se detectó al escribirlas ni al revisarlas.
 
 - [Muertos desactualizados — peligrosos de revivir](#muertos-desactualizados--peligrosos-de-revivir)
 - [Alertas de inventario — muertos, se reemplazan por algo más chico](#alertas-de-inventario--muertos-se-reemplazan-por-algo-más-chico)
-- [Los 161, por módulo](#los-161-por-módulo)
+- [Los 160, por módulo](#los-160-por-módulo)
 - [Baseline y chequeo automático](#baseline-y-chequeo-automático)
+
+> Revivido 2026-09-28: `src/utils/csvUpload/templateGenerator.ts` volvió a estar vivo (la plantilla Excel
+> con catálogos de `EnhancedCSVUploader.generateExcelTemplate()` delega en él). Baseline 161 → 160.
 
 ## Cómo leer la fecha de muerte
 
@@ -121,7 +124,7 @@ contexto:
   `074013f9` y se reemplazó por `.slice()` en cliente. Es el mismo patrón que causó el
   "solo 8" de Bodega → Movimientos.
 
-## Los 161, por módulo
+## Los 160, por módulo
 
 Dentro de cada módulo, del más recientemente muerto al más antiguo: mientras más fresca
 la muerte, más fácil es confundirlo con código vivo.
@@ -188,7 +191,6 @@ la muerte, más fácil es confundirlo con código vivo.
 | 2025-08-19 | `2c974bab` | 139 | `src/hooks/useCraneStatistics.ts` | quedó colgando de otro muerto |
 | 2025-08-19 | `2c974bab` | 127 | `src/utils/testUnifiedSystem.ts` | nunca lo importó nadie |
 | 2025-08-19 | `2c974bab` | 120 | `src/utils/csvUpload/serviceUploader.ts` | quedó colgando de otro muerto |
-| 2025-08-19 | `2c974bab` | 120 | `src/utils/csvUpload/templateGenerator.ts` | quedó colgando de otro muerto |
 | 2025-08-19 | `2c974bab` | 116 | `src/utils/connectionManager.ts` | quedó colgando de otro muerto |
 | 2025-08-19 | `2c974bab` | 102 | `src/components/reports/ReportsHeader.tsx` | nunca lo importó nadie |
 | 2025-08-19 | `2c974bab` | 95 | `src/hooks/useFormPersistence.ts` | nunca lo importó nadie |
@@ -349,7 +351,7 @@ la muerte, más fácil es confundirlo con código vivo.
 
 ## Baseline y chequeo automático
 
-**Baseline: 161 archivos muertos** (26.608 LOC), medido con knip 6.31 y verificado sobre
+**Baseline: 160 archivos muertos** (26.488 LOC), medido con knip 6.31 y verificado sobre
 `8bb2c6ba` (2026-08-02). La configuración vive en `knip.json`.
 
 Para reproducirlo en local:
