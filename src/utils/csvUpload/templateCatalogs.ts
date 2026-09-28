@@ -116,6 +116,50 @@ export function buildOperatorCatalog(
     .sort((a, b) => collator.compare(a.label, b.label));
 }
 
+export interface VehicleCatalog {
+  /** Marcas activas, únicas, ordenadas. */
+  brands: string[];
+  /**
+   * Pares marca/modelo ordenados por marca y luego modelo. El orden por marca es
+   * obligatorio: la lista dependiente de Excel usa MATCH+COUNTIF sobre esta columna
+   * y necesita que cada marca ocupe filas contiguas.
+   */
+  models: Array<{ brand: string; model: string }>;
+}
+
+/** Marcas y modelos activos del catálogo; un modelo cuya marca no está activa se omite. */
+export function buildVehicleCatalog(
+  brands: Array<{ id: string; name: string | null }>,
+  models: Array<{ brand_id: string; name: string | null }>,
+): VehicleCatalog {
+  const brandById = new Map<string, string>();
+  const seenBrands = new Set<string>();
+  for (const b of brands) {
+    const name = (b.name ?? '').trim();
+    const key = normalizeKey(name);
+    if (!name || seenBrands.has(key)) continue;
+    seenBrands.add(key);
+    brandById.set(b.id, name);
+  }
+
+  const seenModels = new Set<string>();
+  const pairs: VehicleCatalog['models'] = [];
+  for (const m of models) {
+    const brand = brandById.get(m.brand_id);
+    const model = (m.name ?? '').trim();
+    if (!brand || !model) continue;
+    const key = `${normalizeKey(brand)}|${normalizeKey(model)}`;
+    if (seenModels.has(key)) continue;
+    seenModels.add(key);
+    pairs.push({ brand, model });
+  }
+
+  return {
+    brands: Array.from(brandById.values()).sort(collator.compare),
+    models: pairs.sort((a, b) => collator.compare(a.brand, b.brand) || collator.compare(a.model, b.model)),
+  };
+}
+
 /**
  * Máximo numérico real de los folios SRV-NNNN, ignorando los outliers por sobre el
  * umbral. Devuelve 0 si no hay ninguno válido.

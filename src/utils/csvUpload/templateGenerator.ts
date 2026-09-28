@@ -6,6 +6,7 @@ import {
   SERVICE_TEMPLATE_DATA_ROWS,
   buildClientCatalog,
   buildOperatorCatalog,
+  buildVehicleCatalog,
   catalogCollator,
   computeMaxFolioNumber,
 } from './templateCatalogs';
@@ -65,14 +66,16 @@ const fetchFolioStartNumber = async (): Promise<number> => {
 };
 
 const loadCatalogs = async () => {
-  const [clientsRes, typesRes, cranesRes, operatorsRes, folioStart] = await Promise.all([
+  const [clientsRes, typesRes, cranesRes, operatorsRes, brandsRes, modelsRes, folioStart] = await Promise.all([
     supabase.from('clients').select('name, rut, department').eq('is_active', true).order('name'),
     supabase.from('service_types').select('name').eq('is_active', true).order('name'),
     supabase.from('cranes').select('license_plate, brand, model').eq('is_active', true).order('license_plate'),
     supabase.from('operators').select('name, rut').eq('is_active', true).order('name'),
+    supabase.from('vehicle_brands').select('id, name').eq('is_active', true).order('name'),
+    supabase.from('vehicle_models').select('brand_id, name').eq('is_active', true).order('name'),
     fetchFolioStartNumber(),
   ]);
-  for (const res of [clientsRes, typesRes, cranesRes, operatorsRes]) {
+  for (const res of [clientsRes, typesRes, cranesRes, operatorsRes, brandsRes, modelsRes]) {
     if (res.error) throw res.error;
   }
 
@@ -88,6 +91,7 @@ const loadCatalogs = async () => {
       .filter(c => c.plate !== '')
       .sort((a, b) => catalogCollator.compare(a.plate, b.plate)),
     operators: buildOperatorCatalog(operatorsRes.data ?? []),
+    vehicles: buildVehicleCatalog(brandsRes.data ?? [], modelsRes.data ?? []),
     folioStart,
   };
 };
@@ -105,7 +109,10 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
   const ins = wb.addWorksheet('Instrucciones');
 
   // ---------- Catalogos ----------
-  cat.getRow(1).values = ['Etiqueta', 'Nombre', 'RUT', 'Departamento', '', 'Tipo Servicio', '', 'Patente', 'Equipo', '', 'Nombre', 'RUT'];
+  cat.getRow(1).values = [
+    'Etiqueta', 'Nombre', 'RUT', 'Departamento', '', 'Tipo Servicio', '', 'Patente', 'Equipo', '', 'Nombre', 'RUT',
+    '', 'Marca', '', 'Marca', 'Modelo',
+  ];
   cat.getRow(1).font = { bold: true };
   catalogs.clients.forEach((c, i) => {
     cat.getRow(i + 2).getCell(1).value = c.label;
@@ -122,7 +129,12 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
     cat.getRow(i + 2).getCell(11).value = o.label;
     cat.getRow(i + 2).getCell(12).value = o.rut;
   });
-  [40, 32, 14, 18, 3, 24, 3, 12, 24, 3, 30, 14].forEach((w, i) => { cat.getColumn(i + 1).width = w; });
+  catalogs.vehicles.brands.forEach((b, i) => { cat.getRow(i + 2).getCell(14).value = b; });
+  catalogs.vehicles.models.forEach((m, i) => {
+    cat.getRow(i + 2).getCell(16).value = m.brand;
+    cat.getRow(i + 2).getCell(17).value = m.model;
+  });
+  [40, 32, 14, 18, 3, 24, 3, 12, 24, 3, 30, 14, 3, 18, 3, 18, 22].forEach((w, i) => { cat.getColumn(i + 1).width = w; });
 
   // Un rango vacío rompe el nombre definido: como mínimo apunta a la fila 2.
   const lastRow = (n: number) => Math.max(2, n + 1);
@@ -132,6 +144,8 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
   wb.definedNames.add(`Catalogos!$H$2:$H$${lastRow(catalogs.cranes.length)}`, 'GruasLista');
   wb.definedNames.add(`Catalogos!$K$2:$L$${lastRow(catalogs.operators.length)}`, 'OperadoresTabla');
   wb.definedNames.add(`Catalogos!$K$2:$K$${lastRow(catalogs.operators.length)}`, 'OperadoresLista');
+  wb.definedNames.add(`Catalogos!$N$2:$N$${lastRow(catalogs.vehicles.brands.length)}`, 'MarcasLista');
+  wb.definedNames.add(`Catalogos!$P$2:$P$${lastRow(catalogs.vehicles.models.length)}`, 'ModelosMarcas');
 
   // ---------- Servicios ----------
   const header = ws.getRow(1);
@@ -157,7 +171,7 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
     row.getCell('F').value = { formula: `IF($E${r}="","",IFERROR(VLOOKUP($E${r},ClientesTabla,4,0),""))` };
     row.getCell('O').value = { formula: `IF($U${r}="","",IFERROR(VLOOKUP($U${r},OperadoresTabla,2,0),""))` };
     for (const col of ['A', 'D', 'F', 'O']) row.getCell(col).fill = FILL_AUTO;
-    for (const col of ['E', 'L', 'N', 'U']) row.getCell(col).fill = FILL_LIST;
+    for (const col of ['E', 'G', 'H', 'L', 'N', 'U']) row.getCell(col).fill = FILL_LIST;
   }
 
   const listValidation = (name: string, prompt: string) => ({
@@ -173,6 +187,13 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
   ws.dataValidations.add(`L${first}:L${last}`, listValidation('TiposLista', 'un tipo de servicio'));
   ws.dataValidations.add(`N${first}:N${last}`, listValidation('GruasLista', 'una grúa'));
   ws.dataValidations.add(`U${first}:U${last}`, listValidation('OperadoresLista', 'un operador'));
+  ws.dataValidations.add(`G${first}:G${last}`, listValidation('MarcasLista', 'una marca'));
+  // Lista dependiente: los modelos de la marca elegida en G. ModelosMarcas está
+  // ordenada por marca, así que MATCH da la primera fila y COUNTIF el largo del bloque.
+  ws.dataValidations.add(`H${first}:H${last}`, {
+    ...listValidation('ModelosLista', 'un modelo de la marca elegida'),
+    formulae: [`OFFSET(Catalogos!$Q$2,MATCH($G${first},ModelosMarcas,0)-1,0,COUNTIF(ModelosMarcas,$G${first}),1)`],
+  });
 
   // ---------- Instrucciones ----------
   const lines = [
@@ -180,7 +201,8 @@ const buildWorkbook = (ExcelJS: ExcelJSModule, catalogs: Catalogs) => {
     '',
     `1. Folio: se calcula solo (parte en SRV-${folioStart + 1}) apenas se elige un cliente. No lo escriba a mano.`,
     '2. Celdas grises (Folio, Cliente RUT, Cliente Departamento, Operador RUT) son automáticas: no las toque.',
-    '3. Celdas amarillas (Cliente Nombre, Tipo Servicio, Grúa Patente, Operador Nombre) se eligen de la lista desplegable.',
+    '3. Celdas amarillas (Cliente Nombre, Vehículo Marca, Vehículo Modelo, Tipo Servicio, Grúa Patente, Operador Nombre) se eligen de la lista desplegable. Solo se acepta lo que está en el catálogo.',
+    '   El modelo depende de la marca: elija primero la marca y la lista de modelos se acota a esa marca.',
     '4. Fechas en formato dd/mm/aaaa. Valores en pesos, sin puntos ni signo $.',
     '5. Combustible, Viaticos y Peajes son opcionales: si llevan monto se registran como costos del servicio.',
     '6. Guarde el archivo en Excel (Ctrl+S) antes de subirlo, para que las fórmulas queden calculadas.',
@@ -225,6 +247,8 @@ export class TemplateGenerator {
         tipos: catalogs.serviceTypes.length,
         gruas: catalogs.cranes.length,
         operadores: catalogs.operators.length,
+        marcas: catalogs.vehicles.brands.length,
+        modelos: catalogs.vehicles.models.length,
         folioStart: catalogs.folioStart,
       });
       return { format: 'xlsx' };

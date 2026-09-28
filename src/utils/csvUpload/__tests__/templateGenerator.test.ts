@@ -17,6 +17,8 @@ const tables: Record<string, Row[]> = {
   cranes: [{ license_plate: 'ABCD12', brand: 'Volvo', model: 'FH' }],
   operators: [{ name: 'Juan Soto', rut: '11.1-1' }, { name: 'Ana Díaz', rut: '22.2-2' }],
   services: [{ folio: 'SRV-7019' }, { folio: 'SRV-7020' }, { folio: 'SRV-826894' }, { folio: 'SRV-0003' }],
+  vehicle_brands: [{ id: 'b1', name: 'Toyota' }, { id: 'b2', name: 'BMW' }],
+  vehicle_models: [{ brand_id: 'b1', name: 'Yaris' }, { brand_id: 'b1', name: 'Hilux' }, { brand_id: 'b2', name: 'X5' }],
   company_data: [{ next_service_folio_number: 7005 }],
 };
 
@@ -84,9 +86,13 @@ describe('TemplateGenerator.downloadExcelTemplate', () => {
     expect([cat.getCell('F2').value, cat.getCell('F3').value]).toEqual(['Rescate', 'Traslado']);
     expect([cat.getCell('H2').value, cat.getCell('I2').value]).toEqual(['ABCD12', 'Volvo FH']);
     expect([cat.getCell('K2').value, cat.getCell('L2').value]).toEqual(['Ana Díaz', '22.2-2']);
+    expect([cat.getCell('N2').value, cat.getCell('N3').value]).toEqual(['BMW', 'Toyota']);
+    expect([2, 3, 4].map(r => [cat.getCell(`P${r}`).value, cat.getCell(`Q${r}`).value])).toEqual([
+      ['BMW', 'X5'], ['Toyota', 'Hilux'], ['Toyota', 'Yaris'],
+    ]);
 
     const names = Object.fromEntries(
-      ['ClientesTabla', 'ClientesLista', 'TiposLista', 'GruasLista', 'OperadoresTabla', 'OperadoresLista']
+      ['ClientesTabla', 'ClientesLista', 'TiposLista', 'GruasLista', 'OperadoresTabla', 'OperadoresLista', 'MarcasLista', 'ModelosMarcas']
         .map(n => [n, wb.definedNames.getRanges(n).ranges]),
     );
     expect(names.ClientesTabla).toEqual(['Catalogos!$A$2:$D$4']);
@@ -96,6 +102,8 @@ describe('TemplateGenerator.downloadExcelTemplate', () => {
     expect(names.GruasLista).toEqual(['Catalogos!$H$2']);
     expect(names.OperadoresTabla).toEqual(['Catalogos!$K$2:$L$3']);
     expect(names.OperadoresLista).toEqual(['Catalogos!$K$2:$K$3']);
+    expect(names.MarcasLista).toEqual(['Catalogos!$N$2:$N$3']);
+    expect(names.ModelosMarcas).toEqual(['Catalogos!$P$2:$P$4']);
 
     const ws = wb.getWorksheet('Servicios')!;
     expect(ws.views[0]).toMatchObject({ state: 'frozen', ySplit: 1 });
@@ -105,6 +113,12 @@ describe('TemplateGenerator.downloadExcelTemplate', () => {
     expect(findDv('L')).toMatchObject({ type: 'list', formulae: ['TiposLista'] });
     expect(findDv('N')).toMatchObject({ type: 'list', formulae: ['GruasLista'] });
     expect(findDv('U')).toMatchObject({ type: 'list', formulae: ['OperadoresLista'] });
+    expect(findDv('G')).toMatchObject({ type: 'list', formulae: ['MarcasLista'], errorStyle: 'stop' });
+    expect(findDv('H')).toMatchObject({
+      type: 'list',
+      errorStyle: 'stop',
+      formulae: ['OFFSET(Catalogos!$Q$2,MATCH($G2,ModelosMarcas,0)-1,0,COUNTIF(ModelosMarcas,$G2),1)'],
+    });
 
     // max real 7020 (ignora SRV-826894) > secuencia 7004 → correlativo parte en SRV-7021
     const formula = (addr: string) => (ws.getCell(addr).value as { formula: string }).formula;

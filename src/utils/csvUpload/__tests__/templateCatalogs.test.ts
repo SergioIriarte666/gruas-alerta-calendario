@@ -3,6 +3,7 @@ import {
   SERVICE_TEMPLATE_HEADERS,
   buildClientCatalog,
   buildOperatorCatalog,
+  buildVehicleCatalog,
   computeMaxFolioNumber,
 } from '@/utils/csvUpload/templateCatalogs';
 
@@ -64,6 +65,32 @@ describe('buildOperatorCatalog', () => {
     ]);
     expect(rows.map(r => r.label)).toEqual(['Ana Díaz', 'Pedro Soto (8-8)', 'Pedro Soto (9-9)']);
     expect(rows[1]).toMatchObject({ name: 'Pedro Soto', rut: '8-8' });
+  });
+});
+
+describe('buildVehicleCatalog', () => {
+  it('ordena marcas y modelos por marca (bloques contiguos) y omite modelos de marcas inactivas', () => {
+    const result = buildVehicleCatalog(
+      [{ id: 'b-toyota', name: 'Toyota' }, { id: 'b-bmw', name: 'BMW' }, { id: 'b-dup', name: 'toyota ' }],
+      [
+        { brand_id: 'b-toyota', name: 'Yaris' },
+        { brand_id: 'b-bmw', name: 'X5' },
+        { brand_id: 'b-toyota', name: 'Hilux' },
+        { brand_id: 'b-toyota', name: 'hilux' },
+        { brand_id: 'b-inactiva', name: 'Fantasma' },
+        { brand_id: 'b-bmw', name: '  ' },
+      ],
+    );
+    expect(result.brands).toEqual(['BMW', 'Toyota']);
+    expect(result.models).toEqual([
+      { brand: 'BMW', model: 'X5' },
+      { brand: 'Toyota', model: 'Hilux' },
+      { brand: 'Toyota', model: 'Yaris' },
+    ]);
+  });
+
+  it('devuelve listas vacías sin datos', () => {
+    expect(buildVehicleCatalog([], [])).toEqual({ brands: [], models: [] });
   });
 });
 
