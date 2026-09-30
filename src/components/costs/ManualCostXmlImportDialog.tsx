@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Supplier } from '@/types/suppliers';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -28,6 +32,8 @@ import {
   buildManualCostXmlPreview,
   getLatestRevertibleManualCostXmlImport,
   ManualCostXmlFieldChange,
+  ManualCostXmlFieldSelection,
+  ManualCostXmlFieldSelections,
   ManualCostXmlImportMode,
   ManualCostXmlPreview,
   revertManualCostXmlImport,
@@ -45,7 +51,6 @@ import {
   ShieldCheck,
   Waypoints,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
@@ -67,6 +72,7 @@ export const ManualCostXmlImportDialog = ({
   const queryClient = useQueryClient();
   const { suppliers = [] } = useSuppliers();
   const { invalidateAll } = useUniversalSync();
+  const [fieldSelections, setFieldSelections] = useState<ManualCostXmlFieldSelections>({});
   const [mode, setMode] = useState<ManualCostXmlImportMode>('complement');
   const [preview, setPreview] = useState<ManualCostXmlPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -90,6 +96,12 @@ export const ManualCostXmlImportDialog = ({
     queryFn: () => getLatestRevertibleManualCostXmlImport(cost.id),
     enabled: open,
   });
+
+  useEffect(() => {
+    setFieldSelections({});
+    setConfirmedConflictCodes([]);
+    setConfirmImportOpen(false);
+  }, [open, cost.id, selectedFile, parseResult]);
 
   useEffect(() => {
     if (!open) {
@@ -138,16 +150,16 @@ export const ManualCostXmlImportDialog = ({
         supplierMatch,
         mode,
         fileName: selectedFile.name,
+        fieldSelections,
       });
 
       setPreview(nextPreview);
       setPreviewError(null);
-      setConfirmedConflictCodes([]);
     } catch (error) {
       setPreview(null);
       setPreviewError(error instanceof Error ? error.message : 'No se pudo generar la vista previa del XML');
     }
-  }, [cost, mode, parseResult, selectedFile, suppliers]);
+  }, [cost, mode, parseResult, selectedFile, suppliers, fieldSelections]);
 
   const applyMutation = useMutation({
     mutationFn: async () => {
@@ -163,6 +175,7 @@ export const ManualCostXmlImportDialog = ({
         supplier: preview.supplier,
         suppliers,
         confirmedConflictCodes,
+        fieldSelections,
       });
     },
     onSuccess: async (result) => {
@@ -214,16 +227,20 @@ export const ManualCostXmlImportDialog = ({
   const warningConflicts = preview?.conflicts.filter((item) => item.severity === 'warning') || [];
 
   const canSubmit = useMemo(() => {
-    if (!preview || blockingConflicts.length > 0) return false;
+    if (!preview || preview.validationErrors.length > 0 || blockingConflicts.length > 0) return false;
     if (warningConflicts.length === 0) return true;
     return warningConflicts.every((item) => confirmedConflictCodes.includes(item.code));
   }, [blockingConflicts.length, confirmedConflictCodes, preview, warningConflicts]);
 
-  const changeRows = useMemo(() => {
-    return (preview?.fieldChanges || []).filter(
-      (item) => item.action !== 'keep' || String(item.currentValue ?? '') !== String(item.incomingValue ?? '')
-    );
-  }, [preview]);
+  const changeRows = preview?.fieldChanges || [];
+  const customized = Object.keys(fieldSelections).length > 0;
+  const handleModeChange = (nextMode: ManualCostXmlImportMode) => {
+    setMode(nextMode);
+    setFieldSelections({});
+  };
+  const handleFieldSelection = (field: ManualCostXmlFieldChange['field'], selection: ManualCostXmlFieldSelection) => {
+    setFieldSelections((current) => ({ ...current, [field]: selection }));
+  };
 
   const handleConflictToggle = (code: string, checked: boolean) => {
     setConfirmedConflictCodes((current) => {
@@ -319,21 +336,22 @@ export const ManualCostXmlImportDialog = ({
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
                           <Waypoints className="size-4 text-primary" />
-                          Modo de actualización
+                          Configuración inicial
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="grid gap-3 md:grid-cols-2">
+                        <p className="text-sm text-muted-foreground md:col-span-2">Elige una base y ajusta cada campo en “Cambios a aplicar”. Elegir una base nuevamente restablece tus ajustes.</p>
                         <ModeCard
-                          active={mode === 'complement'}
+                          active={!customized && mode === 'complement'}
                           title="Complementar"
                           description="Completa campos vacíos y conserva los datos existentes."
-                          onClick={() => setMode('complement')}
+                          onClick={() => handleModeChange('complement')}
                         />
                         <ModeCard
-                          active={mode === 'overwrite'}
+                          active={!customized && mode === 'overwrite'}
                           title="Sobrescribir"
                           description="Reemplaza los datos actuales del costo con la información del XML."
-                          onClick={() => setMode('overwrite')}
+                          onClick={() => handleModeChange('overwrite')}
                         />
                       </CardContent>
                     </Card>
@@ -397,13 +415,24 @@ export const ManualCostXmlImportDialog = ({
                     <CardTitle className="flex items-center gap-2 text-base">
                       <ArrowRightLeft className="size-4 text-primary" />
                       Cambios a aplicar
+                      {customized ? <Badge variant="outline">Personalizado</Badge> : null}
                     </CardTitle>
+                    <p className="text-sm text-muted-foreground">Decide qué guardar en cada campo del costo. La factura y el pago vinculado conservan los datos del XML.</p>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {preview?.validationErrors.map((message) => (
+                      <Alert key={message} variant="destructive"><AlertDescription>{message}</AlertDescription></Alert>
+                    ))}
                     {changeRows.length > 0 ? (
                       changeRows.map((change) => (
                         <div key={change.field}>
-                          <FieldChangeRow change={change} />
+                          <FieldChangeRow
+                            change={change}
+                            selection={fieldSelections[change.field]}
+                            suppliers={suppliers}
+                            xmlSupplierName={preview?.supplierMatch?.name || preview?.supplier?.name}
+                            onSelectionChange={(selection) => handleFieldSelection(change.field, selection)}
+                          />
                         </div>
                       ))
                     ) : (
@@ -612,26 +641,70 @@ const ModeCard = ({
   </button>
 );
 
-const FieldChangeRow = ({ change }: { change: ManualCostXmlFieldChange }) => (
-  <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-    <div className="mb-2 flex items-center justify-between gap-3">
-      <p className="text-sm font-medium">{change.label}</p>
-      <Badge className={change.action === 'overwrite' ? 'bg-destructive text-destructive-foreground' : ''}>
-        {change.action === 'fill' ? 'Completa' : change.action === 'overwrite' ? 'Sobrescribe' : 'Sin cambio'}
-      </Badge>
-    </div>
-    <div className="grid gap-2 text-sm md:grid-cols-2">
-      <div>
-        <p className="text-xs text-muted-foreground">Actual</p>
-        <p>{formatValue(change.currentValue)}</p>
+export const FieldChangeRow = ({ change, selection, suppliers, xmlSupplierName, onSelectionChange }: {
+  change: ManualCostXmlFieldChange;
+  selection?: ManualCostXmlFieldSelection;
+  suppliers: Supplier[];
+  xmlSupplierName?: string;
+  onSelectionChange: (selection: ManualCostXmlFieldSelection) => void;
+}) => {
+  const id = `xml-cost-${change.field}`;
+  const displayValue = (value: unknown, xml = false) => change.field === 'supplier_id'
+    ? (xml ? xmlSupplierName : suppliers.find((supplier) => supplier.id === value)?.name) || 'Sin proveedor'
+    : formatValue(value);
+  const customValue = selection?.value ?? (change.field === 'supplier_id'
+    ? String(change.currentValue || '') : String(change.finalValue ?? ''));
+  return (
+    <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">{change.label}</p>
+        <Badge variant={change.action === 'keep' ? 'outline' : 'default'}>
+          {change.action === 'fill' ? 'Completa' : change.action === 'overwrite' ? 'Actualiza' : 'Conserva'}
+        </Badge>
       </div>
-      <div>
-        <p className="text-xs text-muted-foreground">XML</p>
-        <p>{formatValue(change.incomingValue)}</p>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div><p className="text-xs text-muted-foreground">Actual</p><p className="break-words whitespace-pre-wrap">{displayValue(change.currentValue)}</p></div>
+        <div><p className="text-xs text-muted-foreground">XML</p><p className="break-words whitespace-pre-wrap">{displayValue(change.incomingValue, true)}</p></div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`${id}-source`}>Qué guardar</Label>
+        <Select value={change.source} onValueChange={(source: ManualCostXmlFieldSelection['source']) =>
+          onSelectionChange({ source, value: customValue })}>
+          <SelectTrigger id={`${id}-source`}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="current">Conservar actual</SelectItem>
+            <SelectItem value="xml">Usar XML</SelectItem>
+            <SelectItem value="custom">Personalizar</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {change.source === 'custom' ? (
+        <div className="space-y-2">
+          <Label htmlFor={`${id}-value`}>Valor personalizado</Label>
+          {change.field === 'supplier_id' ? (
+            <Select value={customValue || 'none'} onValueChange={(value) => onSelectionChange({ source: 'custom', value: value === 'none' ? '' : value })}>
+              <SelectTrigger id={`${id}-value`}><SelectValue placeholder="Seleccione proveedor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin proveedor</SelectItem>
+                {suppliers.map((supplier) => <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : change.field === 'notes' || change.field === 'description' ? (
+            <Textarea id={`${id}-value`} value={customValue} onChange={(event) => onSelectionChange({ source: 'custom', value: event.target.value })} />
+          ) : (
+            <Input id={`${id}-value`} type={change.field === 'amount' ? 'number' : 'text'} min={change.field === 'amount' ? 0 : undefined}
+              step={change.field === 'amount' ? 'any' : undefined} value={customValue}
+              onChange={(event) => onSelectionChange({ source: 'custom', value: event.target.value })} />
+          )}
+        </div>
+      ) : null}
+      <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+        <p className="text-xs text-muted-foreground">Resultado en el costo</p>
+        <p className="break-words whitespace-pre-wrap font-medium">{displayValue(change.finalValue, change.source === 'xml')}</p>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const InfoLine = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
@@ -649,6 +722,6 @@ const formatCurrency = (value: number) =>
 
 const formatValue = (value: unknown) => {
   if (value === null || value === undefined || value === '') return 'Sin valor';
-  if (typeof value === 'number') return formatCurrency(value);
+  if (typeof value === 'number') return Number.isFinite(value) ? formatCurrency(value) : 'Valor inválido';
   return String(value);
 };

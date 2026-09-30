@@ -24,8 +24,14 @@ Use esta opcion cuando:
 7. Elija una opcion:
    - `Complementar`: conserva lo registrado y solo completa lo faltante
    - `Sobrescribir`: reemplaza los datos actuales con la informacion del XML
-8. Si aparecen advertencias, marque la confirmacion correspondiente.
-9. Haga clic en `Aplicar importacion XML`.
+8. Personalice cada campo en `Cambios a aplicar`:
+   - `Conservar actual`: mantiene el valor guardado.
+   - `Usar XML`: toma el dato de la factura, incluso si eligió Complementar.
+   - `Personalizar`: permite escribir un valor propio o elegir un proveedor del sistema.
+   - Revise `Resultado en el costo` antes de confirmar. Puede vaciar campos opcionales, como notas o folio de referencia.
+   - Elegir nuevamente Complementar o Sobrescribir restablece los ajustes individuales.
+9. Si aparecen advertencias, marque la confirmacion correspondiente.
+10. Haga clic en `Aplicar importacion XML`.
 
 ## Revertir una importacion
 
@@ -48,3 +54,5 @@ Si detecta un error despues de importar:
 - `La factura del XML ya esta vinculada a otro costo`: revise si el documento ya fue importado previamente.
 - `Debe confirmar explicitamente los conflictos`: marque las advertencias antes de aplicar la importacion.
 - `No tienes permisos para importar XML sobre un costo`: solicite acceso de edicion a un administrador.
+
+Los ajustes se aplican a los campos del costo. La factura vinculada, sus conceptos y el pago relacionado usan la información original del XML. El monto personalizado debe ser mayor o igual a cero y la descripción debe tener al menos tres caracteres.

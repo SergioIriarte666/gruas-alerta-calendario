@@ -100,3 +100,7 @@ La reversion restaura:
 - `costs.date` no se reemplaza con `issue_date`; se preserva la fecha original del gasto.
 - La importacion manual se desactiva si el formulario tiene cambios sin guardar para evitar inconsistencias entre el estado local y el snapshot persistido.
 - Se corrigio el parseo de fechas `YYYY-MM-DD` en `xmlSupplierParser` para evitar desfases por zona horaria.
+
+## Personalización por campo
+
+`fieldSelections` permite elegir `current`, `xml` o `custom` para cada campo importable. La vista previa incluye `source`, `finalValue` y `validationErrors`; `buildCostPatchForApply` usa esa misma resolución al guardar y no incluye campos conservados. Los valores personalizados vacíos se normalizan a `null` en campos opcionales. Se validan monto finito no negativo, descripción de al menos tres caracteres y proveedor existente antes de realizar escrituras. El proveedor del XML se resuelve por separado para la factura y el pago; no sobrescribe la elección del proveedor en el costo. Las selecciones se incluyen en la auditoría y el snapshot del costo mantiene la reversión existente.

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   applyManualCostXmlImport,
   buildManualCostXmlPreview,
+  buildCostPatchForApply,
   parseManualCostXmlFile,
   revertManualCostXmlImport,
 } from '@/services/manualCostXmlImport';
@@ -192,7 +193,63 @@ describe('manualCostXmlImport', () => {
     );
   });
 
-  it('aplica la importación manual, actualiza costo y registra auditoría', async () => {
+  const buildSelectionPreview = (fieldSelections = {}, mode: 'complement' | 'overwrite' = 'overwrite', costOverrides: Partial<Cost> = {}) => buildManualCostXmlPreview({
+    cost: createBaseCost(costOverrides),
+    document: {
+      folio: '12345', document_type: 'Factura Electrónica', issue_date: '2026-01-16',
+      total_amount: 119000, net_amount: 100000, vat_amount: 19000, supplier_rut: '761234567',
+      description: 'Asistencia Vial', currency: 'CLP',
+    },
+    supplier: null, supplierMatch: createSupplier(), mode, fileName: 'factura.xml', fieldSelections,
+  });
+
+  it('combina valores actuales, XML y personalizados y permite vaciar campos opcionales', () => {
+    const cost = createBaseCost({ service_folio: 'SRV-7021' });
+    const preview = buildSelectionPreview({
+      amount: { source: 'custom', value: '71400' },
+      description: { source: 'current' },
+      service_folio: { source: 'current' },
+      document_number: { source: 'xml' },
+      notes: { source: 'custom', value: '' },
+      supplier_id: { source: 'current' },
+    }, 'overwrite', cost);
+    expect(preview.validationErrors).toEqual([]);
+    expect(buildCostPatchForApply({ cost, preview, supplierId: 'xml-supplier' })).toEqual({
+      amount: 71400, document_number: '12345', document_type: 'Factura Electrónica', notes: null,
+    });
+  });
+
+  it('permite usar XML sobre un campo completo aunque la base sea Complementar', () => {
+    const cost = createBaseCost();
+    const preview = buildSelectionPreview({ amount: { source: 'xml' } }, 'complement');
+    const patch = buildCostPatchForApply({ cost, preview, supplierId: 'supplier-1' });
+    expect(patch.amount).toBe(119000);
+    expect(patch).not.toHaveProperty('description');
+    expect(patch).not.toHaveProperty('notes');
+  });
+
+  it.each(['', '-1', 'abc', 'Infinity'])('rechaza el monto personalizado inválido %s', (value) => {
+    expect(buildSelectionPreview({ amount: { source: 'custom', value } }).validationErrors).toHaveLength(1);
+  });
+
+  it('acepta monto cero y valida descripciones vacías', () => {
+    const preview = buildSelectionPreview({ amount: { source: 'custom', value: '0' }, description: { source: 'custom', value: ' ' } });
+    expect(preview.validationErrors).toEqual(['La descripción personalizada debe tener al menos 3 caracteres']);
+    expect(preview.fieldChanges.find((change) => change.field === 'amount')?.finalValue).toBe(0);
+  });
+
+  it('resuelve el proveedor nuevo del XML solo si se elige usarlo en el costo', () => {
+    const cost = createBaseCost({ supplier_id: null });
+    const preview = buildManualCostXmlPreview({
+      ...buildSelectionPreview(), cost, supplierMatch: null,
+      supplier: { name: 'Nuevo proveedor', rut: '761234567' } as any,
+    });
+    expect(buildCostPatchForApply({ cost, preview, supplierId: 'created-supplier' }).supplier_id).toBe('created-supplier');
+    const kept = buildSelectionPreview({ supplier_id: { source: 'current' } });
+    expect(buildCostPatchForApply({ cost: createBaseCost(), preview: kept, supplierId: 'other-supplier' })).not.toHaveProperty('supplier_id');
+  });
+
+  it.each([false, true])('aplica la importación y respeta personalización=%s con auditoría', async (customized) => {
     const currentCost = createBaseCost();
     const updatedCost = createBaseCost({
       amount: 119000,
@@ -274,11 +331,17 @@ describe('manualCostXmlImport', () => {
                 single: vi.fn().mockImplementation(async () => {
                   expect(payload).toEqual(
                     expect.objectContaining({
-                      amount: 119000,
+                      amount: customized ? 71400 : 119000,
                       document_number: '12345',
                       supplier_invoice_id: 'inv-1',
                     })
                   );
+                  if (customized) {
+                    expect(payload.description).toBe('Entrega en La Serena');
+                    expect(payload.supplier_id).toBe('supplier-2');
+                    expect(payload.notes).toBeNull();
+                    expect(payload).not.toHaveProperty('service_folio');
+                  }
                   expect(payload).not.toHaveProperty('entity');
                   expect(payload).not.toHaveProperty('paid_by');
                   return { data: updatedCost, error: null };
@@ -374,7 +437,14 @@ describe('manualCostXmlImport', () => {
         category: 'mantenimiento',
         is_active: true,
       },
-      suppliers: [supplier],
+      suppliers: [supplier, { ...supplier, id: 'supplier-2', name: 'Otro proveedor' }],
+      fieldSelections: customized ? {
+        amount: { source: 'custom', value: '71400' },
+        description: { source: 'custom', value: 'Entrega en La Serena' },
+        service_folio: { source: 'current' },
+        supplier_id: { source: 'custom', value: 'supplier-2' },
+        notes: { source: 'custom', value: '' },
+      } : undefined,
       confirmedConflictCodes: ['amount_mismatch'],
     });
 

@@ -58,6 +58,9 @@ export interface ManualCostXmlConflict {
   message: string;
 }
 
+export type ManualCostXmlFieldSelection = { source: 'current' | 'xml' | 'custom'; value?: string };
+export type ManualCostXmlFieldSelections = Partial<Record<ManualCostXmlFieldChange['field'], ManualCostXmlFieldSelection>>;
+
 export interface ManualCostXmlFieldChange {
   field:
     | 'amount'
@@ -71,6 +74,8 @@ export interface ManualCostXmlFieldChange {
   currentValue: unknown;
   incomingValue: unknown;
   action: 'fill' | 'overwrite' | 'keep';
+  source: ManualCostXmlFieldSelection['source'];
+  finalValue: unknown;
 }
 
 export interface ManualCostXmlPreview {
@@ -81,6 +86,7 @@ export interface ManualCostXmlPreview {
   mode: ManualCostXmlImportMode;
   fileName: string;
   fieldChanges: ManualCostXmlFieldChange[];
+  validationErrors: string[];
   conflicts: ManualCostXmlConflict[];
   suggestedCostPatch: Partial<Cost>;
   invoicePayload: {
@@ -110,6 +116,7 @@ type ManualImportSnapshotContext = {
   snapshotId: string;
   fileName: string;
   importMode: ManualCostXmlImportMode;
+  fieldSelections?: ManualCostXmlFieldSelections;
   document: XMLDocumentData;
   supplier: XMLSupplierData | null;
   invoiceBefore: SupplierInvoiceSnapshot | null;
@@ -144,6 +151,7 @@ export interface LatestManualCostXmlImportSnapshot {
 const SNAPSHOT_FIELD_PREFIX = 'manual_xml_import_snapshot:';
 const REVERT_FIELD_PREFIX = 'manual_xml_import_revert:';
 const MANUAL_XML_SOURCE = 'manual_cost_xml';
+const NEW_XML_SUPPLIER = '__new_xml_supplier__';
 
 const MANUAL_COST_FIELDS: Array<{
   field: ManualCostXmlFieldChange['field'];
@@ -190,6 +198,7 @@ export const buildManualCostXmlPreview = (params: {
   supplierMatch: Supplier | null;
   mode: ManualCostXmlImportMode;
   fileName: string;
+  fieldSelections?: ManualCostXmlFieldSelections;
 }): ManualCostXmlPreview => {
   const { cost, document, supplier, supplierMatch, mode, fileName } = params;
   const notes = buildImportedNotes(cost.notes, document, supplier);
@@ -200,22 +209,35 @@ export const buildManualCostXmlPreview = (params: {
     document_number: document.folio,
     document_type: document.document_type,
     service_folio: document.folio,
-    supplier_id: supplierMatch?.id || cost.supplier_id,
+    supplier_id: supplierMatch?.id || (supplier ? NEW_XML_SUPPLIER : cost.supplier_id),
     notes,
   };
 
   const fieldChanges = MANUAL_COST_FIELDS.map(({ field, label }) => {
     const currentValue = getManualFieldValue(cost, field);
     const incomingValue = getManualFieldValue(suggestedCostPatch as Cost, field);
+    const defaultAction = resolveFieldAction(currentValue, incomingValue, mode);
+    const selection = params.fieldSelections?.[field];
+    const source = selection?.source || (defaultAction === 'keep' ? 'current' : 'xml');
+    const finalValue = source === 'current' ? currentValue : source === 'xml' ? incomingValue
+      : field === 'amount' ? (selection?.value?.trim() ? Number(selection.value) : NaN)
+      : selection?.value?.trim() || null;
     return {
-      field,
-      label,
-      currentValue,
-      incomingValue,
-      action: resolveFieldAction(currentValue, incomingValue, mode),
+      field, label, currentValue, incomingValue, source, finalValue,
+      action: valuesEqual(currentValue, finalValue) ? 'keep' : hasValue(currentValue) ? 'overwrite' : 'fill',
     } satisfies ManualCostXmlFieldChange;
   });
 
+  const validationErrors: string[] = [];
+  for (const change of fieldChanges) {
+    if (change.source !== 'custom') continue;
+    if (change.field === 'amount' && (!Number.isFinite(change.finalValue) || Number(change.finalValue) < 0)) {
+      validationErrors.push('El monto personalizado debe ser un número mayor o igual a cero');
+    }
+    if (change.field === 'description' && String(change.finalValue || '').length < 3) {
+      validationErrors.push('La descripción personalizada debe tener al menos 3 caracteres');
+    }
+  }
   const conflicts = collectPreviewConflicts({ cost, document, supplierMatch });
 
   return {
@@ -226,6 +248,7 @@ export const buildManualCostXmlPreview = (params: {
     mode,
     fileName,
     fieldChanges,
+    validationErrors,
     conflicts,
     suggestedCostPatch,
     invoicePayload: {
@@ -253,6 +276,7 @@ export const applyManualCostXmlImport = async (params: {
   supplier: XMLSupplierData | null;
   suppliers: Supplier[];
   confirmedConflictCodes?: string[];
+  fieldSelections?: ManualCostXmlFieldSelections;
 }): Promise<ManualCostXmlImportResult> => {
   const {
     data: { user },
@@ -276,7 +300,15 @@ export const applyManualCostXmlImport = async (params: {
     supplierMatch,
     mode: params.mode,
     fileName: params.fileName,
+    fieldSelections: params.fieldSelections,
   });
+
+  if (preview.validationErrors.length) throw new Error(preview.validationErrors[0]);
+  const supplierSelection = params.fieldSelections?.supplier_id;
+  if (supplierSelection?.source === 'custom' && supplierSelection.value &&
+      !params.suppliers.some((supplier) => supplier.id === supplierSelection.value)) {
+    throw new Error('El proveedor seleccionado no existe en el sistema');
+  }
 
   const blockingConflicts = preview.conflicts.filter((conflict) => conflict.severity === 'error');
   if (blockingConflicts.length > 0) {
@@ -299,7 +331,6 @@ export const applyManualCostXmlImport = async (params: {
     cost: currentCost,
     preview,
     supplierId: resolvedSupplier?.id || currentCost.supplier_id,
-    mode: params.mode,
   });
 
   const createdInvoiceIds: string[] = [];
@@ -327,7 +358,6 @@ export const applyManualCostXmlImport = async (params: {
 
     const patchWithInvoice = {
       ...costPatch,
-      supplier_id: resolvedSupplier?.id || currentCost.supplier_id,
       supplier_invoice_id: invoiceAfter.id,
     };
 
@@ -358,6 +388,7 @@ export const applyManualCostXmlImport = async (params: {
         snapshotId,
         fileName: params.fileName,
         importMode: params.mode,
+        fieldSelections: params.fieldSelections || {},
         document: params.document,
         supplier: params.supplier,
         invoiceBefore,
@@ -382,6 +413,7 @@ export const applyManualCostXmlImport = async (params: {
         payment: paymentAfter,
         fileName: params.fileName,
         importMode: params.mode,
+        fieldSelections: params.fieldSelections || {},
         source: MANUAL_XML_SOURCE,
       },
       operation: 'MANUAL_XML_IMPORT',
@@ -866,41 +898,18 @@ const ensureSupplierForImport = async (
   } as Supplier;
 };
 
-const buildCostPatchForApply = (params: {
+export const buildCostPatchForApply = (params: {
   cost: Cost;
   preview: ManualCostXmlPreview;
   supplierId: string | null;
-  mode: ManualCostXmlImportMode;
 }) => {
-  const { cost, preview, supplierId, mode } = params;
   const patch: Record<string, unknown> = {};
-
-  const candidateValues: Record<string, unknown> = {
-    amount: preview.document.total_amount,
-    description: buildImportedDescription(preview.document),
-    document_number: preview.document.folio,
-    document_type: preview.document.document_type,
-    service_folio: preview.document.folio,
-    supplier_id: supplierId,
-    notes: buildImportedNotes(cost.notes, preview.document, preview.supplier),
-  };
-
-  Object.entries(candidateValues).forEach(([key, value]) => {
-    const currentValue = (cost as any)[key];
-    if (!hasValue(value)) return;
-
-    if (mode === 'overwrite') {
-      if (!valuesEqual(currentValue, value)) {
-        patch[key] = value;
-      }
-      return;
-    }
-
-    if (!hasValue(currentValue)) {
-      patch[key] = value;
-    }
-  });
-
+  for (const change of params.preview.fieldChanges) {
+    if (change.source === 'current') continue;
+    const value = change.field === 'supplier_id' && change.source === 'xml'
+      ? params.supplierId : change.finalValue;
+    if (!valuesEqual(params.cost[change.field], value)) patch[change.field] = value;
+  }
   return patch;
 };
 
