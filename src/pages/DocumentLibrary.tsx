@@ -1,7 +1,6 @@
-import { differenceInCalendarDates } from '@/utils/calendarDate';
-import { businessClock } from '@/utils/businessClock';
 import { parseDateValue as parseCalendarValue } from '@/utils/calendarDate';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   Archive,
@@ -13,6 +12,8 @@ import {
   FileCheck2,
   FileText,
   FilterX,
+  FolderTree,
+  LayoutList,
   Loader2,
   Lock,
   Plus,
@@ -59,19 +60,44 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   BusinessDocument,
   BusinessDocumentFilters,
   BusinessDocumentMetadata,
   DOCUMENT_CATEGORIES,
+  PROJECT_TAG_CATEGORY,
   RELATED_ENTITY_TYPES,
   useBusinessDocuments,
   validateBusinessDocumentFile,
 } from '@/hooks/useBusinessDocuments';
+import { DocumentsFolderView } from '@/components/documents/DocumentsFolderView';
+import { DocumentExpiryBadge, DocumentRowActions, formatDocumentDate } from '@/components/documents/DocumentRowActions';
 import { useUser } from '@/contexts/UserContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useReAuth } from '@/hooks/useReAuth';
 import { cn } from '@/lib/utils';
+import {
+  collectProjectTags,
+  documentCategoryLabel as categoryLabel,
+  getDocumentExpiryState as getExpiryState,
+  getDocumentProjectTag,
+  normalizeProjectTag,
+  relatedEntityTypeLabel as relatedEntityLabel,
+} from '@/utils/businessDocuments';
 import { createLocalDateFromCalendar } from '@/utils/timezoneUtils';
+
+type DocumentsViewMode = 'list' | 'folders';
+const VIEW_MODE_STORAGE_KEY = 'docs-view-mode';
+
+const readStoredViewMode = (): DocumentsViewMode => {
+  try {
+    const stored = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return stored === 'folders' ? 'folders' : 'list';
+  } catch {
+    return 'list';
+  }
+};
 
 const DEFAULT_FORM: BusinessDocumentMetadata = {
   title: '',
@@ -93,16 +119,7 @@ const expiryFilters = [
   { value: 'no_expiry', label: 'Sin vencimiento' },
 ] as const;
 
-const categoryLabel = (value: string) =>
-  DOCUMENT_CATEGORIES.find((category) => category.value === value)?.label || value;
-
-const relatedEntityLabel = (value: string | null) =>
-  RELATED_ENTITY_TYPES.find((entity) => entity.value === value)?.label || value || 'Sin relación';
-
-const formatDate = (value: string | null) => {
-  if (!value) return '-';
-  return businessClock.dateLabel(value, 'es-CL');
-};
+const formatDate = formatDocumentDate;
 
 const parseDateValue = (value?: string | null) => {
   if (!value) return undefined;
@@ -163,36 +180,15 @@ const formatBytes = (bytes: number | null) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const getExpiryState = (expiresAt: string | null) => {
-  if (!expiresAt) return 'none';
-  const today = businessClock.todayDate();
-  today.setHours(0, 0, 0, 0);
-  const expiry = parseDateValue(expiresAt);
-  const diffDays = differenceInCalendarDates(expiry, today);
-
-  if (diffDays < 0) return 'expired';
-  if (diffDays <= 30) return 'soon';
-  return 'valid';
-};
-
-const expiryBadge = (expiresAt: string | null) => {
-  const state = getExpiryState(expiresAt);
-  if (state === 'expired') {
-    return <Badge className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/10">Vencido</Badge>;
-  }
-  if (state === 'soon') {
-    return <Badge className="border-warning/30 bg-warning/10 text-warning hover:bg-warning/10">Por vencer</Badge>;
-  }
-  if (state === 'valid') {
-    return <Badge className="border-success/30 bg-success/10 text-success hover:bg-success/10">Vigente</Badge>;
-  }
-  return <Badge variant="outline">Sin vencimiento</Badge>;
-};
+const expiryBadge = (expiresAt: string | null) => <DocumentExpiryBadge expiresAt={expiresAt} />;
 
 const DocumentLibrary = () => {
   const { user } = useUser();
   const { verifyPassword } = useReAuth();
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [viewMode, setViewMode] = useState<DocumentsViewMode>(readStoredViewMode);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
@@ -206,6 +202,7 @@ const DocumentLibrary = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [form, setForm] = useState<BusinessDocumentMetadata>(DEFAULT_FORM);
   const [tagsText, setTagsText] = useState('');
+  const [projectTag, setProjectTag] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState('');
   const [deletePasswordError, setDeletePasswordError] = useState('');
@@ -235,6 +232,26 @@ const DocumentLibrary = () => {
   } = useBusinessDocuments(filters);
 
   const canManageConfidential = user?.role === 'admin';
+  const isProjectCategory = form.category === PROJECT_TAG_CATEGORY;
+
+  // Sugerencias de proyecto: unión de todo lo que ya está en caché de la
+  // queryKey existente (cualquier combinación de filtros), sin consulta extra.
+  const projectTagSuggestions = useMemo(() => {
+    if (!isFormOpen || !isProjectCategory) return [] as string[];
+    const cached = queryClient
+      .getQueriesData<BusinessDocument[]>({ queryKey: ['business-documents'] })
+      .flatMap(([, data]) => data || []);
+    return collectProjectTags([...cached, ...documents]);
+  }, [documents, isFormOpen, isProjectCategory, queryClient]);
+
+  const changeViewMode = (mode: DocumentsViewMode) => {
+    setViewMode(mode);
+    try {
+      sessionStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      // sessionStorage no disponible (modo privado): la preferencia vive sólo en memoria
+    }
+  };
 
   const metrics = useMemo(() => {
     const expired = documents.filter((document) => getExpiryState(document.expires_at) === 'expired').length;
@@ -268,6 +285,7 @@ const DocumentLibrary = () => {
   const resetForm = () => {
     setForm(DEFAULT_FORM);
     setTagsText('');
+    setProjectTag('');
     setSelectedFile(null);
     setEditingDocument(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -281,7 +299,10 @@ const DocumentLibrary = () => {
   const openEditForm = (document: BusinessDocument) => {
     setEditingDocument(document);
     setSelectedFile(null);
-    setTagsText((document.tags || []).join(', '));
+    const tags = document.tags || [];
+    const existingProjectTag = document.category === PROJECT_TAG_CATEGORY ? getDocumentProjectTag(document) : null;
+    setProjectTag(existingProjectTag || '');
+    setTagsText((existingProjectTag ? tags.filter((tag) => normalizeProjectTag(tag) !== existingProjectTag) : tags).join(', '));
     setForm({
       title: document.title,
       description: document.description || '',
@@ -335,9 +356,20 @@ const DocumentLibrary = () => {
       return;
     }
 
+    const freeTags = tagsText.split(',').map((tag) => tag.trim()).filter(Boolean);
+    const normalizedProjectTag = isProjectCategory ? normalizeProjectTag(projectTag) : '';
+    if (isProjectCategory && !normalizedProjectTag) {
+      toast.error('Indica el proyecto de importación (ej. fontaine-pxkz26)');
+      return;
+    }
+    // El tag de proyecto va primero: es la subcarpeta en la vista Carpetas.
+    const tags = normalizedProjectTag
+      ? [normalizedProjectTag, ...freeTags.filter((tag) => normalizeProjectTag(tag) !== normalizedProjectTag)]
+      : freeTags;
+
     const metadata = {
       ...form,
-      tags: tagsText.split(',').map((tag) => tag.trim()).filter(Boolean),
+      tags,
       related_entity_type: form.related_entity_type || null,
       related_entity_id: form.related_entity_id?.trim() || null,
       document_date: form.document_date || null,
@@ -428,10 +460,28 @@ const DocumentLibrary = () => {
           </div>
           <p className="dashboard-section-description">Contratos, permisos, seguros y respaldos críticos con trazabilidad.</p>
         </div>
-        <Button onClick={openCreateForm} size="sm" className="dashboard-report-button gap-2">
-          <Plus className="size-4" />
-          Subir documento
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && changeViewMode(value as DocumentsViewMode)}
+            aria-label="Modo de vista de documentos"
+            className="rounded-lg border border-border/70 bg-background/70 p-0.5"
+          >
+            <ToggleGroupItem value="list" size="sm" className="gap-1.5 px-3" aria-label="Vista lista">
+              <LayoutList className="size-4" />
+              {!isMobile && 'Lista'}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="folders" size="sm" className="gap-1.5 px-3" aria-label="Vista carpetas">
+              <FolderTree className="size-4" />
+              {!isMobile && 'Carpetas'}
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Button onClick={openCreateForm} size="sm" className="dashboard-report-button gap-2">
+            <Plus className="size-4" />
+            Subir documento
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -534,6 +584,17 @@ const DocumentLibrary = () => {
           </div>
         </div>
 
+        {viewMode === 'folders' ? (
+          <DocumentsFolderView
+            documents={documents}
+            isLoading={isLoading}
+            onDownload={handleDownload}
+            onEdit={openEditForm}
+            onDelete={setDocumentToDelete}
+            downloadingId={downloadingId}
+          />
+        ) : (
+        <>
         <div className="hidden overflow-x-auto border-t border-border/70 md:block">
           <Table>
             <TableHeader>
@@ -605,29 +666,13 @@ const DocumentLibrary = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDownload(document)}
-                          disabled={downloadingId === document.id}
-                          title="Descargar"
-                        >
-                          {downloadingId === document.id ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEditForm(document)} title="Editar">
-                          <Edit className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDocumentToDelete(document)}
-                          className="text-destructive hover:text-destructive"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
+                      <DocumentRowActions
+                        document={document}
+                        onDownload={handleDownload}
+                        onEdit={openEditForm}
+                        onDelete={setDocumentToDelete}
+                        downloadingId={downloadingId}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -685,6 +730,8 @@ const DocumentLibrary = () => {
             ))
           )}
         </div>
+        </>
+        )}
       </SectionCard>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => {
@@ -758,13 +805,32 @@ const DocumentLibrary = () => {
                   </SelectContent>
                 </Select>
               </div>
+              {isProjectCategory && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="project-tag">Proyecto de importación</Label>
+                  <Input
+                    id="project-tag"
+                    list="project-tag-options"
+                    value={projectTag}
+                    onChange={(event) => setProjectTag(event.target.value)}
+                    placeholder="fontaine-pxkz26"
+                    autoComplete="off"
+                  />
+                  <datalist id="project-tag-options">
+                    {projectTagSuggestions.map((tag) => <option key={tag} value={tag} />)}
+                  </datalist>
+                  <p className="text-xs text-muted-foreground">
+                    Se guarda como primera etiqueta y agrupa el expediente en Carpetas › Importaciones.
+                  </p>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="tags">Etiquetas</Label>
                 <Input
                   id="tags"
                   value={tagsText}
                   onChange={(event) => setTagsText(event.target.value)}
-                  placeholder="mantención, póliza, cliente"
+                  placeholder={isProjectCategory ? 'din, bl, factura, título' : 'mantención, póliza, cliente'}
                 />
               </div>
               <div className="space-y-1.5">

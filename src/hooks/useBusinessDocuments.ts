@@ -37,8 +37,14 @@ export const DOCUMENT_CATEGORIES = [
   { value: 'proveedores', label: 'Proveedores' },
   { value: 'clientes', label: 'Clientes' },
   { value: 'facturas_y_respaldo', label: 'Facturas y respaldo' },
+  { value: 'importaciones', label: 'Importaciones' },
   { value: 'otros', label: 'Otros' },
 ] as const;
+
+export type DocumentCategoryValue = (typeof DOCUMENT_CATEGORIES)[number]['value'];
+
+/** Categoría cuyo primer tag actúa como subcarpeta de proyecto (ej. "fontaine-pxkz26"). */
+export const PROJECT_TAG_CATEGORY: DocumentCategoryValue = 'importaciones';
 
 export const RELATED_ENTITY_TYPES = [
   { value: 'service', label: 'Servicio' },
