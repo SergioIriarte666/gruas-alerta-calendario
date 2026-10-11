@@ -10291,6 +10291,53 @@ export type Database = {
         }
         Returns: string
       }
+      search_costs: {
+        Args: { p_search: string }
+        Returns: {
+          amount: number
+          category_id: string
+          cost_center_id: string | null
+          crane_id: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          document_number: string | null
+          document_type: string | null
+          dte_folio: number | null
+          dte_rut_emisor: string | null
+          dte_tipo: number | null
+          entity: string
+          id: string
+          immediate_consumption: boolean | null
+          inventory_movement_id: string | null
+          is_manual_adjustment: boolean
+          location_text: string | null
+          maintenance_id: string | null
+          notes: string | null
+          operator_id: string | null
+          other_reason: string | null
+          paid_by: string
+          payment_batch_id: string | null
+          payment_date: string | null
+          purchase_quantity: number | null
+          purchase_unit_cost: number | null
+          receipt_photo_paths: string[] | null
+          service_folio: string | null
+          service_id: string | null
+          subcategory: string | null
+          supplier_id: string | null
+          supplier_invoice_id: string | null
+          supplier_payment_id: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "costs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       search_voidable_inventory_purchases: {
         Args: { p_search?: string }
         Returns: {

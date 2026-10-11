@@ -195,7 +195,7 @@ export const UnifiedCostFilters = ({
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Buscar por descripción, categoría, folio, ID corto, notas o mantenimiento..."
+              placeholder="Buscar descripción, proveedor, productos de factura, código, folio o notas..."
               className="h-11 rounded-xl border-border/70 bg-background/70 pl-10"
             />
           </div>

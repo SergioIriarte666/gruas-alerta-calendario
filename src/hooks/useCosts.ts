@@ -183,48 +183,41 @@ export const usePagedCosts = (
     queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo, searchTerm: searchTerm ?? '', entity }],
     queryFn: async (): Promise<{ costs: Cost[]; total: number }> => {
       const hasSearch = !!searchTerm;
-      const searchLower = searchTerm?.toLowerCase() ?? '';
+      const costs: Cost[] = [];
+      const batchSize = hasSearch ? 1000 : pageSize;
+      let from = hasSearch ? 0 : (page - 1) * pageSize;
+      let total = 0;
 
-      const from = hasSearch ? 0 : (page - 1) * pageSize;
-      const to   = hasSearch ? 499 : from + pageSize - 1;
+      // La tabla pagina localmente durante una búsqueda. Recorrer todas las
+      // coincidencias evita truncarlas a las primeras 500 y perder resultados.
+      do {
+        const source = hasSearch
+          ? supabase.rpc('search_costs', { p_search: searchTerm! }).select(COSTS_LIST_SELECT_CLAUSE)
+          : supabase.from('costs').select(COSTS_LIST_SELECT_CLAUSE, { count: 'exact' });
+        let query = source
+          .order('payment_date', { ascending: false, nullsFirst: false })
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, from + batchSize - 1);
 
-      let query = supabase
-        .from('costs')
-        .select(COSTS_LIST_SELECT_CLAUSE, { count: 'exact' })
-        .order('payment_date', { ascending: false, nullsFirst: false })
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .range(from, to);
+        if (dateFrom) query = query.gte('date', dateFrom);
+        if (dateTo) query = query.lte('date', dateTo);
+        if (entity) query = query.eq('entity', entity);
 
-      if (dateFrom) query = query.gte('date', dateFrom);
-      if (dateTo) query = query.lte('date', dateTo);
-      if (entity) query = query.eq('entity', entity);
+        const { data, error, count } = await query;
+        if (error) {
+          logger.error('Error fetching paged costs:', error);
+          throw new Error(error.message);
+        }
+        const rows = (data || []) as unknown as Cost[];
+        costs.push(...rows);
+        total = typeof count === 'number' ? count : costs.length;
+        if (!hasSearch || rows.length < batchSize) break;
+        from += rows.length;
+      } while (true);
 
-      if (hasSearch) {
-        query = query.or(
-          [
-            `description.ilike.%${searchLower}%`,
-            `notes.ilike.%${searchLower}%`,
-            `subcategory.ilike.%${searchLower}%`,
-            `service_folio.ilike.%${searchLower}%`,
-          ].join(',')
-        );
-      }
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        logger.error('Error fetching paged costs:', error);
-        throw new Error(error.message);
-      }
-
-      const total = typeof count === 'number' ? count : (data as any[])?.length || 0;
-
-      return {
-        costs: ((data as any) || []) as Cost[],
-        total,
-      };
+      return { costs, total };
     },
     placeholderData: keepPreviousData,
     enabled: page > 0 && pageSize > 0,
