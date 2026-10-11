@@ -10291,6 +10291,10 @@ export type Database = {
         }
         Returns: string
       }
+      search_service_ids: {
+        Args: { p_search: string }
+        Returns: { id: string }[]
+      }
       search_costs: {
         Args: { p_search: string }
         Returns: {

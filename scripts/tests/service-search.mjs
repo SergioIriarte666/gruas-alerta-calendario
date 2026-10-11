@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+const db = new PGlite();
+await db.exec(`
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+CREATE TABLE services(id uuid primary key,client_id uuid,third_party_client_id uuid,crane_id uuid,operator_id uuid,service_type_id uuid,folio text,purchase_order text,purchase_order_number text,quote_number text,vehicle_brand text,vehicle_model text,license_plate text,origin text,destination text,observations text,invoice_folio text,invoice_numero_fiscal text,insured_name text,company_name text,company_rut text,custody_notes text,outsourced_notes text,visible bool default true);
+CREATE TABLE clients(id uuid primary key,name text,rut text,department text);
+CREATE TABLE cranes(id uuid primary key,license_plate text,brand text,model text);
+CREATE TABLE operators(id uuid primary key,name text,rut text);
+CREATE TABLE service_types(id uuid primary key,name text,description text);
+CREATE TABLE service_items(service_id uuid,glosa text);
+CREATE TABLE service_resources(service_id uuid,crane_id uuid,operator_id uuid);
+CREATE TABLE service_stops(service_id uuid,label text,address text,notes text);
+INSERT INTO clients VALUES('00000000-0000-0000-0000-000000000001','Implementos S.A.','76.123.456-7','Logística');
+INSERT INTO cranes VALUES('00000000-0000-0000-0000-000000000002','PXKZ-26','Fontaine','352SS-48');
+INSERT INTO operators VALUES('00000000-0000-0000-0000-000000000003','José Pérez','12345678-9');
+INSERT INTO service_types VALUES('00000000-0000-0000-0000-000000000004','Traslado','Transporte de vehículos');
+INSERT INTO services(id,client_id,service_type_id,folio,license_plate,vehicle_model,origin,destination,observations,invoice_numero_fiscal,insured_name,purchase_order_number) VALUES('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000004','SRV-001234','ABCD-12','Hilux','Viña del Mar','Quilpué','Rescate de camión con falla','7047249','María González','OC-987');
+INSERT INTO services(id,folio,observations,visible) VALUES('00000000-0000-0000-0000-000000000099','Privado','Cadena de rescate',false);
+INSERT INTO service_items VALUES('00000000-0000-0000-0000-000000000010','Cadena de amarre BLKCAR0020');
+INSERT INTO service_resources VALUES('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000003');
+INSERT INTO service_stops VALUES('00000000-0000-0000-0000-000000000010','Retiro intermedio','Concón','Portón azul');
+ALTER TABLE services ENABLE ROW LEVEL SECURITY;
+CREATE POLICY visible_services ON services FOR SELECT TO authenticated USING(visible);
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+`);
+await db.exec(readFileSync('supabase/migrations/20261011220000_search_service_details.sql','utf8'));
+await db.exec('SET ROLE authenticated');
+for (const term of ['implementos quilpue','quilpue implementos','CAMIONES','cadenas','fontaine','jose perez','ABCD12','SRV001234','7047249','OC987','hilux','maria','concon azul','BLKCAR','logistica']) {
+  assert.deepEqual((await db.query('SELECT id FROM search_service_ids($1)',[term])).rows.map(r=>r.id),['00000000-0000-0000-0000-000000000010'],term);
+}
+for (const term of ['implementos inexistente','%','abc),id.neq.null']) assert.equal((await db.query('SELECT * FROM search_service_ids($1)',[term])).rows.length,0,term);
+await db.exec('RESET ROLE; ALTER TABLE service_items ENABLE ROW LEVEL SECURITY; SET ROLE authenticated;');
+assert.equal((await db.query("SELECT * FROM search_service_ids('cadenas')")).rows.length,0,'RLS del detalle');
+await db.exec('RESET ROLE;');
+await db.exec("INSERT INTO services(id,observations) SELECT md5(i::text)::uuid,'Camión de transporte' FROM generate_series(1,1100)i;");
+assert.equal((await db.query("SELECT count(*)::int AS n FROM search_service_ids('camiones')")).rows[0].n,1101);
+await assert.rejects(db.exec("SET ROLE anon; SELECT * FROM search_service_ids('camiones');"));
+await db.close();
+console.log('Servicios: palabras combinadas, plurales, acentos, documentos, recursos, productos, RLS y más de 1000 resultados verificados.');

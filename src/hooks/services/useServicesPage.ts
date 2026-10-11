@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { getCurrentMonthRange, formatForInput } from '@/utils/timezoneUtils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useServices } from '@/hooks/useServices';
+import { useServiceSearch } from './useServiceSearch';
 import { useUser } from '@/contexts/UserContext';
 import { Service } from '@/types';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export const useServicesPage = () => {
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { ids: searchIds, loading: searchLoading, error: searchError } = useServiceSearch(searchTerm, services);
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
@@ -99,23 +101,9 @@ export const useServicesPage = () => {
   const hasAdvancedFilters = advancedFilters !== null;
 
   const filteredAndSortedServices = useMemo(() => {
-    const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
-    
     const filtered = baseServices.filter(service => {
-      // 1. Basic search filter
-      const matchesSearch = normalizedSearchTerm === '' || (
-        normalizeSearchTerm(service.folio || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.client?.name || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.licensePlate || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.vehicleBrand || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.origin || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.destination || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.quoteNumber || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.purchaseOrder || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.purchaseOrderNumber || '').includes(normalizedSearchTerm) ||
-        normalizeSearchTerm(service.invoiceNumeroFiscal || '').includes(normalizedSearchTerm)
-      );
-      
+      const matchesSearch = !searchTerm.trim() || searchIds?.has(service.id);
+
       if (!matchesSearch) return false;
 
       // 2. Status filter
@@ -282,7 +270,7 @@ export const useServicesPage = () => {
     }
 
     return filtered;
-  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, sortDirection, sortField, statusFilter, withoutCoordinates]);
+  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, searchIds, sortDirection, sortField, statusFilter, withoutCoordinates]);
 
   const totalPages = Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
 
@@ -563,6 +551,8 @@ export const useServicesPage = () => {
     isCSVUploadOpen,
     editingService,
     searchTerm,
+    searchLoading,
+    searchError,
     statusFilter,
     currentPage,
     refreshing,

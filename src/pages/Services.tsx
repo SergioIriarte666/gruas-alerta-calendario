@@ -97,6 +97,8 @@ const Services = () => {
     isCSVUploadOpen,
     editingService,
     searchTerm,
+    searchLoading,
+    searchError,
     statusFilter,
     currentPage,
     refreshing,
@@ -482,7 +484,10 @@ const Services = () => {
             onWithoutCoordinatesChange={(value) => { setWithoutCoordinates(value); setCurrentPage(1); }}
           />
 
-          {isMobile ? (
+          {searchLoading && <p role="status" className="text-sm text-muted-foreground">Buscando servicios...</p>}
+          {searchError && <p role="alert" className="text-sm text-destructive">No se pudo completar la búsqueda. Intenta nuevamente.</p>}
+
+          {!searchLoading && !searchError && (isMobile ? (
             <ServicesMobileView
               services={paginatedServices}
               hasInitialServices={services.length > 0}
@@ -513,9 +518,9 @@ const Services = () => {
               onSelectionChange={setSelectedServiceIds}
               allFilteredIds={filteredServices.map(s => s.id)}
             />
-          )}
+          ))}
 
-          {totalPages > 1 && (
+          {!searchLoading && !searchError && totalPages > 1 && (
             <AppPagination
               currentPage={currentPage}
               totalPages={totalPages}

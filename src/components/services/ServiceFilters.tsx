@@ -82,7 +82,9 @@ export const ServiceFilters = React.memo(({
       <div className="relative">
         <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
         <Input
-          placeholder="Folio, cliente, patente..."
+          placeholder="Cliente, patente, ruta, glosa..."
+          aria-label="Buscar servicios"
+          title="Busca por varias palabras: folio, cliente, RUT, patente, ruta, observaciones, productos, grúa, operador o factura. Reconoce plurales y acentos."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className={cn('w-56 pl-8', controlClassName)}
