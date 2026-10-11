@@ -163,7 +163,7 @@ export const CostFormStep2 = ({
           form={form}
           disabled={isInventorySynced}
           disabledReason={isInventorySynced
-            ? 'Este costo ya tiene un movimiento de bodega registrado. Para modificar la cantidad o precio, edita directamente el movimiento en el módulo de Inventario.'
+            ? 'Puedes editar la descripción de este costo y guardar los cambios. La cantidad y el precio pertenecen al movimiento ya registrado y se modifican desde Inventario.'
             : undefined
           }
         />

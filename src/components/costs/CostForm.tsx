@@ -390,6 +390,10 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 return rejectSubmission(2, "Valor Inválido", "El monto debe ser mayor a 0");
             }
 
+            // Los movimientos ya registrados son la fuente de cantidad/precio.
+            // Editar la glosa no registra una compra nueva ni requiere esos datos.
+            const hasInventoryMovement = Boolean(cost?.inventory_movement_id);
+
             if (values.subcategory) {
                 // La configuración ya se carga al pasar por el paso 2. Reutilizarla
                 // evita una consulta de red adicional justo después de pulsar Guardar.
@@ -434,7 +438,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                     if (subcategoryConfig.requires_other_reason && !values.other_reason) {
                         return rejectSubmission(2, "Campo Requerido", "Debe seleccionar un motivo");
                     }
-                    if (subcategoryConfig.routes_to_inventory) {
+                    if (subcategoryConfig.routes_to_inventory && !hasInventoryMovement) {
                         if (!values.purchase_quantity || values.purchase_quantity <= 0) {
                             return rejectSubmission(2, "Campo Requerido", "Debe indicar cantidad de compra");
                         }
@@ -454,7 +458,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             const isFinancialCategory = selectedCategoryName === 'Deudas y Obligaciones'
                 || selectedCategoryName === 'Comisiones'
                 || selectedCategoryName === 'Impuestos';
-            const requiresInventorySync = !isFinancialCategory && (isInventoryCategory || values.immediate_consumption === true);
+            const requiresInventorySync = !hasInventoryMovement && !isFinancialCategory && (isInventoryCategory || values.immediate_consumption === true);
             if (requiresInventorySync) {
                 if (!values.purchase_quantity || values.purchase_quantity <= 0) {
                     return rejectSubmission(
