@@ -1,9 +1,9 @@
-import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { useXmlCostUpload } from '@/hooks/xml/useXmlCostUpload';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 import { BatchProgressModal } from '@/components/ui/batch-progress-modal';
-import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid, XMLImportStepGuide } from '@/components/common/XMLImportShared';
+import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
+import { CostXmlImportReview } from '@/components/costs/CostXmlImportReview';
 import { CostSupplierRow } from '@/components/costs/CostSupplierRow';
 import { CostDocumentRow } from '@/components/costs/CostDocumentRow';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -16,10 +16,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertCircle, Loader2, Users, Receipt, DollarSign, Building, ShieldAlert, Link2, Package, Info, Code, Database } from 'lucide-react';
-import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { getDocumentStateKey } from '@/utils/xml/xmlGlosaHelpers';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface XMLCostUploadProps {
   isOpen: boolean;
@@ -28,34 +26,37 @@ interface XMLCostUploadProps {
 }
 
 export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps) => {
+  const upload = useXmlCostUpload({ onSuccess, onClose });
   const {
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive, triggerAnalyze,
     isUploading, uploadProgress,
     isCheckingDuplicates, isSearchingMatches, showDuplicateWarning, setShowDuplicateWarning,
     selectedSuppliers, selectedDocuments, selectedTotal, uploadableCount,
     getSelectedLineSet, getSelectedLineCount, hasSelectedLines, getDocumentAmount, toggleLineSelection, toggleAllLines,
-    supplierCategoryMapping, supplierSubcategoryMapping,
+    supplierCategoryMapping, lineSubcategories, setLineSubcategories, costSubcategories,
+    step, setStep, configurationError, reviewError, getDocumentDueDate,
     supplierPaymentCondition: _supplierPaymentCondition, setSupplierPaymentCondition,
     supplierCreditDate, setSupplierCreditDate,
-    dueDateOverrides, setDueDateOverrides,
+    setDueDateOverrides,
     paidOverrides, setPaidOverrides,
     paidDateOverrides, setPaidDateOverrides,
     documentDescriptionOverrides, setDocumentDescriptionOverrides,
     expandedDocumentDetails, setExpandedDocumentDetails,
     historicalGlosaSuggestions,
     duplicateResults, matchedCosts,
-    linkDecisions, setLinkDecisions,
+    linkDecisions, handleLinkDecisionChange,
     syncToInventory, setSyncToInventory,
-    defaultDaysToAdd,
     activeCategories, paymentTerms, loadingTerms, batchProgress,
     getSupplierCondition, getDuplicateInfoForDocument,
     buildSuggestedGlosa, applyConditionToSupplierDocuments, resolveCategoryId,
     handleUploadCosts, reset,
-    handleCategoryChange, handleSubcategoryChange,
+    handleCategoryChange,
     toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
     getDocumentEntity, lowboyCraneOptions, craneIdByDocument, setCraneIdByDocument,
     paidByDocument, setPaidByDocument, hasLowboyDocuments,
-  } = useXmlCostUpload({ onSuccess, onClose });
+  } = upload;
+  const busy = isUploading || isAnalyzing || isCheckingDuplicates || isSearchingMatches;
+  const steps = ['Costo y proveedores', 'Productos y pago', 'Revisión'];
 
   const handleClose = () => {
     if (isUploading) return;
@@ -66,16 +67,31 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="finance-dialog flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[100rem] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,100rem)]">
-        <XMLImportDialogHeader icon={Code} title="Cargar Gastos desde XML" description="Analiza documentos XML, detecta duplicados y registra gastos con categorización automática." fileName={selectedFile?.name} documentCount={parseResult?.totalDocuments} />
+      <DialogContent className="finance-dialog flex h-[94dvh] w-[calc(100vw-1rem)] max-w-[84rem] flex-col gap-0 overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,84rem)]">
+        <XMLImportDialogHeader icon={Code} title="Importar gastos XML" description="Clasifica cada producto, registra el pago y revisa antes de guardar." fileName={selectedFile?.name} documentCount={parseResult?.totalDocuments} />
+        <div className="shrink-0 space-y-3 border-b px-3 py-3 sm:px-6">
+          <nav className="grid grid-cols-3 gap-2" aria-label="Etapas de importación de costos">
+            {steps.map((name, index) => <Button key={name} type="button" variant="outline"
+              aria-current={step === index + 1 ? 'step' : undefined}
+              disabled={busy || (index > 0 && (!parseResult || !!configurationError)) || (index === 2 && !!reviewError)}
+              onClick={() => setStep(index + 1)} className={cn('h-auto min-h-10 whitespace-normal px-2 text-xs sm:text-sm', step === index + 1 && 'border-primary bg-primary/10')}>
+              {index + 1}. {name}
+            </Button>)}
+          </nav>
+          <div className="flex flex-wrap justify-between gap-2 rounded-xl bg-primary/5 px-3 py-2 text-sm" aria-live="polite">
+            <span>{uploadableCount} factura(s) incluidas · {upload.uploadableDocuments.filter(document => paidOverrides[getDocumentStateKey(document)]).length} pagada(s)</span>
+            <strong>{`$${selectedTotal.toLocaleString('es-CL')}`}</strong>
+          </div>
+        </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-muted/20 px-3 pb-5 pt-4 sm:px-6 sm:pb-6">
-          <XMLDropzoneArea selectedFile={selectedFile} parseResult={parseResult} isAnalyzing={isAnalyzing} isDragActive={isDragActive} getRootProps={getRootProps} getInputProps={getInputProps} onAnalyze={triggerAnalyze} onReset={reset} badges={['Detección de duplicados', 'Sync con Bodega', 'Categorización']} />
+          {step === 1 && <XMLDropzoneArea selectedFile={selectedFile} parseResult={parseResult} isAnalyzing={isAnalyzing} isDragActive={isDragActive} getRootProps={getRootProps} getInputProps={getInputProps} onAnalyze={triggerAnalyze} onReset={reset} badges={['Detección de duplicados', 'Sync con Bodega', 'Clasificación por producto']} />}
 
           {isUploading && uploadProgress > 0 && <XMLImportProgressCard label="Subiendo datos..." value={uploadProgress} />}
 
           {parseResult && (
             <div className="space-y-6">
+              {step === 1 && <>
               <XMLImportStatsGrid items={[
                 { title: 'Proveedores', value: `${parseResult.validSuppliers}/${parseResult.totalSuppliers}`, icon: Users, tone: 'neutral' },
                 { title: 'Documentos', value: `${parseResult.validDocuments}/${parseResult.totalDocuments}`, icon: Receipt, tone: 'success' },
@@ -103,6 +119,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                   {syncToInventory && <p className="ml-8 text-xs text-success">✓ Los costos se sincronizarán con el módulo de Bodega</p>}
                   {syncToInventory && hasLowboyDocuments && <p className="ml-8 text-xs text-info">ℹ️ Los documentos LowBoy se sincronizan con su propia bodega (Bodega LowBoy); si asignas un equipo, además se registra el consumo inmediato hacia esa grúa.</p>}
                   <p className="text-xs text-muted-foreground">Activa esta opción solo si además quieres reflejar estos documentos como entradas en inventario.</p>
+                  {syncToInventory && <Alert><AlertDescription>Esta sincronización crea una entrada consolidada por factura. Para registrar productos individuales, distintas grúas o consumo parcial, utiliza Importar XML a Bodega.</AlertDescription></Alert>}
                 </CardContent>
               </Card>
 
@@ -211,7 +228,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </div>
               )}
 
-              <XMLImportStepGuide step={1} title="Revisa proveedor y configuración base" description="Ajusta la forma de pago y la categoría solo si quieres cambiar cómo se registrarán los gastos de este proveedor." />
 
               {parseResult.suppliers.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -221,6 +237,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       {parseResult.suppliers.map((supplier, index) => (
                         <CostSupplierRow
                           key={index}
+                          perProductClassification
                           supplier={supplier}
                           isSelected={selectedSuppliers.has(supplier.rut)}
                           onToggle={() => toggleSupplierSelection(supplier.rut)}
@@ -229,9 +246,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                           onPaymentConditionChange={val => setSupplierPaymentCondition(prev => ({ ...prev, [supplier.rut]: val as any }))}
                           onCreditDateChange={date => setSupplierCreditDate(prev => ({ ...prev, [supplier.rut]: date }))}
                           categoryId={resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category)}
-                          subcategory={supplierSubcategoryMapping[supplier.rut] || ''}
                           onCategoryChange={val => handleCategoryChange(supplier.rut, val)}
-                          onSubcategoryChange={val => handleSubcategoryChange(supplier.rut, val)}
                           activeCategories={activeCategories}
                           paymentTerms={paymentTerms}
                           loadingTerms={loadingTerms}
@@ -243,7 +258,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </Card>
               )}
 
-              <XMLImportStepGuide step={2} title="Revisa cada documento" description="Primero valida el estado del documento. Luego, solo si hace falta, abre los detalles para editar la descripción o el vencimiento." />
+              </>}
+              {step === 2 && <>
+              <Alert><AlertDescription>Elige la subcategoría de cada producto y el estado de pago de cada factura. Las condiciones del proveedor solo definen el vencimiento.</AlertDescription></Alert>
 
               {parseResult.documents.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -252,7 +269,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     <div className="space-y-3">
                       {parseResult.documents.map((document, index) => {
                         const documentKey = getDocumentStateKey(document);
-                        const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || (() => { const d = safeParseDateOnly(document.issue_date || businessClock.today()); d.setDate(d.getDate() + defaultDaysToAdd); return format(d, 'yyyy-MM-dd'); })();
+                        const defaultDueDate = getDocumentDueDate(document);
                         const dupInfo = getDuplicateInfoForDocument(document);
                         const isExactDup = dupInfo?.matchType === 'exact' || dupInfo?.matchType === 'folio';
                         const isLowboy = getDocumentEntity(document) === 'lowboy';
@@ -261,6 +278,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             key={index}
                             document={document}
                             documentKey={documentKey}
+                            subcategories={costSubcategories.filter(option => option.category_id === resolveCategoryId(supplierCategoryMapping[document.supplier_rut]))}
+                            lineSubcategories={lineSubcategories}
+                            onLineSubcategoryChange={(index, value) => setLineSubcategories(previous => ({ ...previous, [`${documentKey}:${index}`]: value }))}
                             isLowboy={isLowboy}
                             craneOptions={lowboyCraneOptions}
                             craneId={craneIdByDocument[documentKey] ?? null}
@@ -273,7 +293,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             duplicateInfo={dupInfo}
                             costsForDoc={matchedCosts[documentKey] || []}
                             currentDecision={linkDecisions[documentKey] || 'new'}
-                            onDecisionChange={val => setLinkDecisions(prev => ({ ...prev, [documentKey]: val }))}
+                            onDecisionChange={val => handleLinkDecisionChange(documentKey, val)}
                             showDetails={expandedDocumentDetails[documentKey] ?? !isExactDup}
                             onToggleDetails={() => setExpandedDocumentDetails(prev => ({ ...prev, [documentKey]: !(expandedDocumentDetails[documentKey] ?? !isExactDup) }))}
                             descriptionValue={Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey) ? documentDescriptionOverrides[documentKey] : buildSuggestedGlosa(document)}
@@ -304,22 +324,24 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </Card>
               )}
 
-              <XMLImportStepGuide step={3} title="Confirma la carga" description="Revisa el resumen antes de confirmar." />
-
-              <div className="sticky bottom-0 z-10 -mx-3 flex flex-col gap-4 border-t border-border/70 bg-card/95 px-3 py-4 shadow-lg backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="text-sm text-muted-foreground">
-                  {uploadableCount > 0 && <div className="space-y-1"><span className="block">{uploadableCount} documento(s) seleccionados</span><span className="block">Total seleccionado: ${selectedTotal.toLocaleString('es-CL')}</span></div>}
-                </div>
-                <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <Button variant="outline" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
-                  <Button onClick={handleUploadCosts} disabled={isUploading || uploadableCount === 0}>
-                    {isUploading ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Database className="size-4 mr-2" />}
-                    Confirmar carga{uploadableCount > 0 && ` (${uploadableCount})`}
-                  </Button>
-                </div>
-              </div>
+              </>}
+              {step === 3 && <CostXmlImportReview upload={upload} />}
             </div>
           )}
+        </div>
+
+        <div className="shrink-0 space-y-2 border-t bg-card px-3 py-3 sm:px-6">
+          {(step === 1 ? configurationError : reviewError) && parseResult && <p role="status" className="text-sm text-warning">{step === 1 ? configurationError : reviewError}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
+            <div className="flex gap-2">
+              {step > 1 && <Button type="button" variant="outline" disabled={busy} onClick={() => setStep(step - 1)}>Atrás</Button>}
+              {step < 3 ? <Button type="button" disabled={busy || !parseResult || !!(step === 1 ? configurationError : reviewError)} onClick={() => setStep(step + 1)}>{step === 1 ? 'Continuar' : 'Revisar carga'}</Button>
+                : <Button type="button" onClick={handleUploadCosts} disabled={busy || !!reviewError}>
+                  {isUploading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Database className="mr-2 size-4" />}Confirmar carga ({uploadableCount})
+                </Button>}
+            </div>
+          </div>
         </div>
 
         <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />

@@ -1,6 +1,7 @@
 import { businessClock } from '@/utils/businessClock';
 import { parseDateValue } from '@/utils/calendarDate';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { useAddCost, useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
@@ -27,6 +28,8 @@ import {
 } from '@/utils/xml/xmlGlosaHelpers';
 import { computeSelectedTotal } from '@/utils/xml/xmlInventoryHelpers';
 import { createSupplierInvoiceForImportedCost } from '@/services/xmlCostInvoiceSync';
+import { classifySelectedCostItems, getConsolidatedCostSubcategory, resolveXmlCostPaymentDate } from '@/utils/xml/xmlCostWizard';
+import { isImportDateValid } from '@/utils/xml/xmlInventoryWizard';
 
 const logger = createLogger('useXmlCostUpload');
 
@@ -40,7 +43,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
   const [isUploading, setIsUploading] = useState(false);
   const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
   const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
-  const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
+  const [lineSubcategories, setLineSubcategories] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(1);
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
@@ -69,15 +73,20 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
   const linkInvoiceMutation = useLinkInvoiceToCost();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const { data: costSubcategories = [], isPending: loadingSubcategories, isError: subcategoriesError } = useQuery({
+    queryKey: ['xml-cost-active-subcategories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('cost_subcategories').select('id, name, category_id').eq('is_active', true).order('display_order');
+      if (error) throw error;
+      return data || [];
+    },
+  });
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { cranes } = useCranes();
   const lowboyCraneOptions = cranes
     .filter(c => (LOWBOY_CRANE_IDS as readonly string[]).includes(c.id))
     .map(c => ({ id: c.id, label: `${c.licensePlate || 'Sin patente'} - ${c.brand} ${c.model}`.trim() }));
-  const firstActiveLowboyCraneId = cranes.find(c => (LOWBOY_CRANE_IDS as readonly string[]).includes(c.id) && c.isActive)?.id
-    ?? lowboyCraneOptions[0]?.id
-    ?? null;
 
   const getDocumentEntity = (doc: XMLDocumentData): EntityKey => entityByRut(doc.receiver_rut) ?? ENTITIES.GRUAS_5_NORTE.key;
 
@@ -193,11 +202,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setSelectedDocuments(validDocuments);
 
     const categoryMap: Record<string, string> = {};
-    const subcategoryMap: Record<string, string> = {};
     uniqueSuppliers.forEach(supplier => {
-      const parsedSubcategory = (supplier as any).subcategory?.trim();
       categoryMap[supplier.rut] = supplier.category || 'otros';
-      if (parsedSubcategory) subcategoryMap[supplier.rut] = parsedSubcategory;
     });
 
     const initialSupplierCondition: Record<string, 'none' | 'credit' | string> = {};
@@ -216,7 +222,6 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           data.forEach((row: any) => {
             if (!row?.rut) return;
             if (row.category) categoryMap[row.rut] = row.category;
-            if (row.subcategory?.trim()) subcategoryMap[row.rut] = row.subcategory.trim();
             if (row.credit_date) {
               initialSupplierCondition[row.rut] = 'credit';
               initialSupplierCreditDate[row.rut] = row.credit_date;
@@ -287,7 +292,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     });
 
     setSupplierCategoryMapping(categoryMap);
-    setSupplierSubcategoryMapping(subcategoryMap);
+    setLineSubcategories({});
     setSupplierPaymentCondition(initialSupplierCondition);
     setSupplierCreditDate(initialSupplierCreditDate);
     setHistoricalGlosaSuggestions(nextHistoricalGlosaSuggestions);
@@ -297,7 +302,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     result.documents.forEach(doc => {
       if (getDocumentEntity(doc) === ENTITIES.LOWBOY.key) {
         const key = getDocumentStateKey(doc);
-        initialCraneByDoc[key] = firstActiveLowboyCraneId;
+        initialCraneByDoc[key] = null;
         initialPaidByDoc[key] = ENTITIES.GRUAS_5_NORTE.key;
       }
     });
@@ -306,7 +311,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
     const initialDueOverrides: Record<string, string> = {};
     result.documents.forEach(doc => {
-      if (doc.issue_date) initialDueOverrides[getDocumentStateKey(doc)] = format(addDays(safeParseDateOnly(doc.issue_date), defaultDaysToAdd), 'yyyy-MM-dd');
+      if (doc.issue_date) initialDueOverrides[getDocumentStateKey(doc)] = doc.due_date || format(addDays(safeParseDateOnly(doc.issue_date), defaultDaysToAdd), 'yyyy-MM-dd');
     });
     setDueDateOverrides(initialDueOverrides);
 
@@ -428,6 +433,22 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
               decisions[getDocumentStateKey(doc)] = exactMatch ? (exactMatch as any).id : 'new';
             }
           }
+          const matchIds = [...new Set(Object.values(matches).flat().map(cost => cost.id))];
+          if (matchIds.length) {
+            const { data: paymentStates, error: paymentStatesError } = await supabase.from('costs').select('id, payment_date').in('id', matchIds);
+            if (paymentStatesError) throw paymentStatesError;
+            Object.keys(matches).forEach(key => {
+              matches[key] = matches[key].map(cost => ({ ...cost, payment_date: paymentStates?.find(state => state.id === cost.id)?.payment_date || null }));
+            });
+            const paidStates: Record<string, boolean> = {};
+            const paidDates: Record<string, string> = {};
+            Object.entries(decisions).forEach(([key, decision]) => {
+              const match = matches[key]?.find(cost => cost.id === decision);
+              if (match) { paidStates[key] = !!match.payment_date; paidDates[key] = match.payment_date || ''; }
+            });
+            setPaidOverrides(previous => ({ ...previous, ...paidStates }));
+            setPaidDateOverrides(previous => ({ ...previous, ...paidDates }));
+          }
           setMatchedCosts(matches);
           setLinkDecisions(decisions);
           const matchCount = Object.keys(matches).length;
@@ -455,12 +476,14 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const handleUploadCosts = async () => {
     if (!parseResult) return;
+    if (isUploading || isAnalyzing || isCheckingDuplicates || isSearchingMatches) return;
+    if (reviewError) { toast.error(reviewError); return; }
     if (costCategoriesData.length === 0) {
       toast.error('No hay categorías de costo cargadas. Reintenta en unos segundos o configura categorías.');
       return;
     }
 
-    const docsToImport = parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut) && hasSelectedLines(d));
+    const docsToImport = uploadableDocuments;
     if (docsToImport.length === 0) { toast.error('No hay documentos seleccionados para importar'); return; }
 
     const selectedSupplierRuts = Array.from(new Set(docsToImport.map(d => d.supplier_rut)));
@@ -498,18 +521,12 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       const userId = (await supabase.auth.getUser()).data.user?.id || null;
 
       const getSelectedCondition = (rut: string) => supplierPaymentCondition[rut] ?? 'none';
-      const getComputedDueDate = (doc: XMLDocumentData) => {
-        const condition = getSelectedCondition(doc.supplier_rut);
-        if (condition === 'credit') { const d = supplierCreditDate[doc.supplier_rut]; if (d) return d; }
-        else if (condition !== 'none') { const term = paymentTerms.find(t => t.id === condition); if (term && doc.issue_date) return format(addDays(safeParseDateOnly(doc.issue_date), term.days), 'yyyy-MM-dd'); }
-        return null;
-      };
 
       const ensureSupplierId = async (rut: string, name: string) => {
         if (supplierIdByRut.has(rut)) return supplierIdByRut.get(rut)!;
         const existingId = await findSupplierByRutOrName(rut, name);
         if (existingId) { supplierIdByRut.set(rut, existingId); return existingId; }
-        const { data: created, error } = await supabase.from('inventory_suppliers').insert([{ name: name || 'Proveedor', rut: rut || null, category: resolveCategoryId(supplierCategoryMapping[rut] || 'otros') || null, subcategory: (supplierSubcategoryMapping[rut] || '').trim() || null, is_active: true, created_by: userId }]).select('id').single();
+        const { data: created, error } = await supabase.from('inventory_suppliers').insert([{ name: name || 'Proveedor', rut: rut || null, category: resolveCategoryId(supplierCategoryMapping[rut] || 'otros') || null, is_active: true, created_by: userId }]).select('id').single();
         if (error || !created?.id) throw error || new Error('No se pudo crear el proveedor');
         supplierIdByRut.set(rut, created.id);
         return created.id;
@@ -517,7 +534,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
       const updateSupplierDefaults = async (supplierId: string, supplierRut: string) => {
         const condition = getSelectedCondition(supplierRut);
-        const updateData: Record<string, any> = { category: resolveCategoryId(supplierCategoryMapping[supplierRut] || 'otros') || null, subcategory: (supplierSubcategoryMapping[supplierRut] || '').trim() || null, updated_by: userId };
+        const updateData: Record<string, any> = { category: resolveCategoryId(supplierCategoryMapping[supplierRut] || 'otros') || null, updated_by: userId };
         if (condition === 'credit') { updateData.credit_date = supplierCreditDate[supplierRut] || null; updateData.default_payment_term_id = null; }
         else if (condition !== 'none') { updateData.default_payment_term_id = condition; updateData.credit_date = null; }
         else { updateData.default_payment_term_id = null; updateData.credit_date = null; }
@@ -556,8 +573,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         const documentKey = getDocumentStateKey(doc);
         // Monto y glosa se calculan solo con las líneas seleccionadas del DTE.
         const docItems = doc.items ?? [];
-        const selectedLineSet = getSelectedLineSet(doc);
-        const selectedItems = docItems.filter((_, index) => selectedLineSet.has(index));
+        const selectedItems = getClassifiedItems(doc);
         const selectedLineCount = getSelectedLineCount(doc);
         const isPartialSelection = docItems.length > 0 && selectedLineCount > 0 && selectedLineCount < docItems.length;
         const recalculatedAmount = getDocumentAmount(doc);
@@ -572,9 +588,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
         try {
           const emissionDate = doc.issue_date || businessClock.today();
-          const condition = getSelectedCondition(doc.supplier_rut);
           const isManuallyPaid = !!paidOverrides[documentKey];
-          const paymentDate = isManuallyPaid ? (paidDateOverrides[documentKey] || businessClock.today()) : (condition === 'none' ? emissionDate : null);
+          const paymentDate = resolveXmlCostPaymentDate(isManuallyPaid, paidDateOverrides[documentKey], businessClock.today());
 
           const linkCostId = linkDecisions[documentKey];
           if (linkCostId && linkCostId !== 'new') {
@@ -585,8 +600,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
               errorCount++;
               continue;
             }
-            const computedDueDate = getComputedDueDate(doc) || emissionDate;
-            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: recalculatedAmount, netAmount: Math.round(doc.net_amount * amountFactor), taxAmount: Math.round(doc.vat_amount * amountFactor), description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' }, items: selectedItems });
+            const computedDueDate = getDocumentDueDate(doc);
+            await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: recalculatedAmount, netAmount: Math.round(doc.net_amount * amountFactor), taxAmount: Math.round(doc.vat_amount * amountFactor), description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending', categoryId: resolveCategoryId(supplierCategoryMapping[doc.supplier_rut]), subcategory: getConsolidatedCostSubcategory(selectedItems) }, items: selectedItems });
             successCount++;
             continue;
           }
@@ -600,7 +615,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
             const otrosId = resolveCategoryId('otros') || activeCategories.find(c => c.name.toLowerCase() === 'otros')?.id;
             if (otrosId) categoryId = otrosId;
           }
-          const subcatName = supplierSubcategoryMapping[doc.supplier_rut] || null;
+          const subcatName = getConsolidatedCostSubcategory(selectedItems);
           const supplierId = supplierIdByRut.get(doc.supplier_rut);
           if (!supplierId) {
             logger.warn(`[useXmlCostUpload] Proveedor ${doc.supplier_rut} no encontrado en cache, omitiendo documento`);
@@ -679,20 +694,21 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                       supplierId,
                       folio: doc.folio,
                       issueDate: emissionDate,
-                      dueDate: dueDateOverrides[documentKey] || getComputedDueDate(doc) || emissionDate,
+                      dueDate: getDocumentDueDate(doc),
                       amount: recalculatedAmount,
                       netAmount: Math.round(doc.net_amount * amountFactor),
                       taxAmount: Math.round(doc.vat_amount * amountFactor),
                       description: effectiveGlosa,
                       currency: doc.currency,
                       isPaid: !!paymentDate,
+                      paymentDate,
                       xmlFileName: selectedFile?.name || `${doc.folio}.xml`,
                       items: selectedItems,
                       userId,
                     });
                   } catch (invoiceErr) {
                     logger.warn('[useXmlCostUpload] No se pudo guardar la factura con detalle para el costo:', costRecord.id, invoiceErr);
-                    invoiceDetailWarnings.push(`Folio ${doc.folio}: costo creado, pero sin detalle de factura (${getErrorMessage(invoiceErr)})`);
+                    invoiceDetailWarnings.push(`Folio ${doc.folio}: costo creado, pero no se completó la factura o su registro de pago (${getErrorMessage(invoiceErr)}). Revisa el costo antes de reintentar.`);
                   }
                 }
                 if (effectiveSyncToInventory && costRecord?.id) {
@@ -712,7 +728,10 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                       await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: recalculatedAmount, date: emissionDate, supplierId, entity: docEntity });
                     }
                   }
-                  catch (invErr) { logger.warn('[useXmlCostUpload] Inventory sync failed for cost:', costRecord.id, invErr); }
+                  catch (invErr) {
+                    logger.warn('[useXmlCostUpload] Inventory sync failed for cost:', costRecord.id, invErr);
+                    invoiceDetailWarnings.push(`Folio ${doc.folio}: costo creado, pero la sincronización con Bodega falló (${getErrorMessage(invErr)}). No repitas la importación; revisa el costo registrado.`);
+                  }
                 }
                 resolve();
               },
@@ -735,7 +754,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       }
 
       if (invoiceDetailWarnings.length > 0) {
-        toast.warning(`${invoiceDetailWarnings.length} costo(s) quedaron sin detalle de factura`, {
+        toast.warning(`${invoiceDetailWarnings.length} advertencia(s) al completar los costos`, {
           description: invoiceDetailWarnings[0],
         });
       }
@@ -768,7 +787,18 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       setUploadProgress(0);
       setDocumentDescriptionOverrides({});
       setSupplierCategoryMapping({});
-      setSupplierSubcategoryMapping({});
+      setLineSubcategories({});
+      setStep(1);
+      setPaidOverrides({});
+      setPaidDateOverrides({});
+      setDueDateOverrides({});
+      setSupplierPaymentCondition({});
+      setSupplierCreditDate({});
+      setDuplicateResults([]);
+      setMatchedCosts({});
+      setLinkDecisions({});
+      setCraneIdByDocument({});
+      setPaidByDocument({});
       setSelectedSuppliers(new Set());
       setSelectedDocuments(new Set());
       setExpandedDocumentDetails({});
@@ -783,11 +813,9 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const handleCategoryChange = (supplierRut: string, category: string) => {
     setSupplierCategoryMapping(prev => ({ ...prev, [supplierRut]: category }));
-    setSupplierSubcategoryMapping(prev => ({ ...prev, [supplierRut]: '' }));
+    const keys = new Set((parseResult?.documents || []).filter(doc => doc.supplier_rut === supplierRut).map(getDocumentStateKey));
+    setLineSubcategories(previous => Object.fromEntries(Object.entries(previous).filter(([key]) => ![...keys].some(documentKey => key.startsWith(`${documentKey}:`)))));
   };
-
-  const handleSubcategoryChange = (supplierRut: string, subcategory: string) =>
-    setSupplierSubcategoryMapping(prev => ({ ...prev, [supplierRut]: subcategory }));
 
   const toggleSupplierSelection = (rut: string) =>
     setSelectedSuppliers(prev => {
@@ -814,11 +842,21 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const clearSelectedDocuments = () => setSelectedDocuments(new Set());
 
+  const handleLinkDecisionChange = (key: string, decision: string) => {
+    setLinkDecisions(previous => ({ ...previous, [key]: decision }));
+    const match = matchedCosts[key]?.find(cost => cost.id === decision);
+    if (match) {
+      setPaidOverrides(previous => ({ ...previous, [key]: !!match.payment_date }));
+      setPaidDateOverrides(previous => ({ ...previous, [key]: match.payment_date || '' }));
+    }
+  };
+
   const reset = () => {
     resetParsing();
     setUploadProgress(0);
     setSupplierCategoryMapping({});
-    setSupplierSubcategoryMapping({});
+    setLineSubcategories({});
+    setStep(1);
     setSelectedSuppliers(new Set());
     setSelectedDocuments(new Set());
     setDueDateOverrides({});
@@ -841,10 +879,30 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   // Documentos realmente cargables: seleccionados y con al menos una línea del DTE.
   const uploadableDocuments = parseResult
-    ? parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && hasSelectedLines(d))
+    ? parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut) && hasSelectedLines(d) && (!['exact', 'folio'].includes(getDuplicateInfoForDocument(d)?.matchType || '') || (linkDecisions[getDocumentStateKey(d)] && linkDecisions[getDocumentStateKey(d)] !== 'new')))
     : [];
   const uploadableCount = uploadableDocuments.length;
   const selectedTotal = uploadableDocuments.reduce((sum, d) => sum + getDocumentAmount(d), 0);
+  const getClassifiedItems = (document: XMLDocumentData) => classifySelectedCostItems(document, getSelectedLineSet(document), lineSubcategories, costSubcategories, resolveCategoryId(supplierCategoryMapping[document.supplier_rut]));
+  const getDocumentDueDate = (document: XMLDocumentData) => {
+    const key = getDocumentStateKey(document);
+    if (dueDateOverrides[key]) return dueDateOverrides[key];
+    const condition = getSupplierCondition(document.supplier_rut);
+    if (condition === 'credit' && supplierCreditDate[document.supplier_rut]) return supplierCreditDate[document.supplier_rut];
+    const term = paymentTerms.find(term => term.id === condition);
+    return term ? format(addDays(safeParseDateOnly(document.issue_date || businessClock.today()), term.days), 'yyyy-MM-dd')
+      : document.due_date || format(addDays(safeParseDateOnly(document.issue_date || businessClock.today()), defaultDaysToAdd), 'yyyy-MM-dd');
+  };
+  const configurationError = uploadableCount === 0 ? 'Selecciona al menos un documento no duplicado y su proveedor.'
+    : uploadableDocuments.some(doc => !activeCategories.some(category => category.id === resolveCategoryId(supplierCategoryMapping[doc.supplier_rut]))) ? 'Selecciona una categoría válida para cada proveedor incluido.' : null;
+  const reviewError = configurationError || (loadingSubcategories ? 'Cargando subcategorías…' : subcategoriesError ? 'No se pudieron cargar las subcategorías. Reintenta antes de importar.' : null)
+    || (uploadableDocuments.some(doc => paidOverrides[getDocumentStateKey(doc)] && !isImportDateValid(paidDateOverrides[getDocumentStateKey(doc)])) ? 'Indica una fecha de pago válida para cada documento pagado.' : null)
+    || (uploadableDocuments.some(doc => !isImportDateValid(getDocumentDueDate(doc))) ? 'Revisa las fechas de vencimiento.' : null)
+    || (uploadableDocuments.some(doc => getSupplierCondition(doc.supplier_rut) === 'credit' && (!isImportDateValid(supplierCreditDate[doc.supplier_rut]) || (doc.issue_date && supplierCreditDate[doc.supplier_rut] < doc.issue_date))) ? 'Indica una fecha de crédito válida, no anterior a la emisión.' : null)
+    || (uploadableDocuments.some(doc => (doc.items || []).some((_, index) => {
+      const assignment = lineSubcategories[`${getDocumentStateKey(doc)}:${index}`];
+      return getSelectedLineSet(doc).has(index) && assignment && !costSubcategories.some(option => option.id === assignment && option.category_id === resolveCategoryId(supplierCategoryMapping[doc.supplier_rut]));
+    })) ? 'Revisa las subcategorías: deben pertenecer a la categoría del proveedor.' : null);
 
   return {
     // Parsing
@@ -859,7 +917,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     getSelectedLineSet, getSelectedLineCount, hasSelectedLines, isLineSelected,
     getDocumentAmount, toggleLineSelection, toggleAllLines,
     // Per-item state
-    supplierCategoryMapping, supplierSubcategoryMapping,
+    supplierCategoryMapping, lineSubcategories, setLineSubcategories, costSubcategories,
+    step, setStep, configurationError, reviewError, uploadableDocuments, getClassifiedItems, getDocumentDueDate,
     supplierPaymentCondition, setSupplierPaymentCondition,
     supplierCreditDate, setSupplierCreditDate,
     dueDateOverrides, setDueDateOverrides,
@@ -871,6 +930,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     // Duplicates & matches
     duplicateResults, matchedCosts,
     linkDecisions, setLinkDecisions,
+    handleLinkDecisionChange,
     // Options
     syncToInventory, setSyncToInventory,
     defaultDaysToAdd,
@@ -886,7 +946,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     buildSuggestedGlosa, applyConditionToSupplierDocuments, resolveCategoryId,
     // Handlers
     handleUploadCosts, reset,
-    handleCategoryChange, handleSubcategoryChange,
+    handleCategoryChange,
     toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
   };
 }

@@ -152,7 +152,7 @@ describe('useLinkInvoiceToCost', () => {
     );
   });
 
-  it('Test 5 — cuando la factura NO está pagada, payment_date no se escribe', async () => {
+  it('Test 5 — pendiente explícito limpia una fecha de pago previa', async () => {
     const { costsUpdate } = buildMocks();
     const { result } = renderHook(() => useLinkInvoiceToCost());
 
@@ -165,7 +165,22 @@ describe('useLinkInvoiceToCost', () => {
     });
 
     const calledWith = costsUpdate.mock.calls[0][0];
-    expect(calledWith).not.toHaveProperty('payment_date');
+    expect(calledWith).toHaveProperty('payment_date', null);
+  });
+
+  it('conserva el comportamiento anterior si no se indica estado de pago', async () => {
+    const { costsUpdate } = buildMocks();
+    const { result } = renderHook(() => useLinkInvoiceToCost());
+    await result.current.mutateAsync({ costId: 'costo-1', supplierId: 'supplier-1', invoiceData: { ...BASE_INVOICE_DATA, status: undefined } });
+    expect(costsUpdate.mock.calls[0][0]).not.toHaveProperty('payment_date');
+  });
+
+  it('guarda la clasificación consolidada y sincroniza el pago pendiente con su vencimiento', async () => {
+    const { costsUpdate, supplierPaymentsUpdate } = buildMocks({ costsSelectResult: { data: { supplier_payment_id: 'pago-99' }, error: null } });
+    const { result } = renderHook(() => useLinkInvoiceToCost());
+    await result.current.mutateAsync({ costId: 'costo-1', supplierId: 'supplier-1', invoiceData: { ...BASE_INVOICE_DATA, categoryId: 'inventory', subcategory: null } });
+    expect(costsUpdate).toHaveBeenCalledWith(expect.objectContaining({ category_id: 'inventory', subcategory: null }));
+    expect(supplierPaymentsUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending', paid_amount: 0, paid_date: null, due_date: '2025-04-10' }));
   });
 
   it('Test 6 — propaga el error si falla la creación de supplier_invoice', async () => {

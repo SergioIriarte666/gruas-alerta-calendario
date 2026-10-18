@@ -61,6 +61,9 @@ interface CostDocumentRowProps {
   hasSelectedLines: boolean;
   onToggleLine: (index: number) => void;
   onToggleAllLines: (selectAll: boolean) => void;
+  subcategories?: { id: string; name: string }[];
+  lineSubcategories?: Record<string, string>;
+  onLineSubcategoryChange?: (index: number, value: string) => void;
 }
 
 const autoResize = (el: HTMLTextAreaElement | null) => {
@@ -80,6 +83,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
   paidDate, onPaidDateChange, paymentTerms, loadingTerms, applyCondition,
   isLowboy, craneOptions = [], craneId, onCraneIdChange, paidBy = 'gruas_5_norte', onPaidByChange,
   documentAmount, selectedLineSet, selectedLineCount, hasSelectedLines, onToggleLine, onToggleAllLines,
+  subcategories = [], lineSubcategories = {}, onLineSubcategoryChange,
 }) => {
   const isDuplicate = !!duplicateInfo;
   const isExactDuplicate = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
@@ -90,6 +94,15 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
   const isPartialSelection = totalLineCount > 0 && selectedLineCount > 0 && selectedLineCount < totalLineCount;
   const headerCheckboxState: boolean | 'indeterminate' = allLinesSelected ? true : selectedLineCount > 0 ? 'indeterminate' : false;
   const trimmedDescription = descriptionValue.trim();
+  const renderSubcategory = (index: number) => (
+    <Select value={lineSubcategories[`${documentKey}:${index}`] || '__none__'}
+      disabled={!selectedLineSet.has(index)} onValueChange={value => onLineSubcategoryChange?.(index, value === '__none__' ? '' : value)}>
+      <SelectTrigger aria-label={`Subcategoría del producto ${index + 1}`} className="mt-2 w-full min-w-40"><SelectValue /></SelectTrigger>
+      <SelectContent><SelectItem value="__none__">Sin subcategoría</SelectItem>
+        {subcategories.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [pendingFocus, setPendingFocus] = React.useState(false);
@@ -183,6 +196,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', statusMeta.badgeClass)}>{statusMeta.label}</span>
+              <Badge variant={isPaid ? 'default' : 'outline'}>{isPaid ? `Pagado · ${paidDate || 'Falta fecha'}` : 'Pendiente de pago'}</Badge>
               <span className="text-xs text-muted-foreground">{statusMeta.hint}</span>
               {isLowboy && <Badge className="bg-primary/15 text-primary border-primary/30">LowBoy Chile SpA</Badge>}
             </div>
@@ -239,6 +253,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                           <td className="px-3 py-2">
                             <span className={cn(lineSelected ? 'text-foreground' : 'text-muted-foreground line-through')}>{item.description || item.product_name}</span>
                             {item.product_code && <span className="ml-2 font-mono text-xs text-muted-foreground">{item.product_code}</span>}
+                            {renderSubcategory(i)}
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums">{formatQty(item.quantity)}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{formatClp(item.unit_price)}</td>
@@ -265,6 +280,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                       <div className="min-w-0 flex-1">
                         <p className={cn('font-medium', lineSelected ? 'text-foreground' : 'text-muted-foreground line-through')}>{item.description || item.product_name}</p>
                         {item.product_code && <p className="font-mono text-xs text-muted-foreground">{item.product_code}</p>}
+                        {renderSubcategory(i)}
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span className="tabular-nums">{formatQty(item.quantity)} × {formatClp(item.unit_price)}</span>
                           <span className="font-medium text-foreground tabular-nums">{formatClp(computeLineTotal(item))}</span>
@@ -275,7 +291,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                 })}
               </div>
 
-              <p className="mt-1 text-xs text-muted-foreground">Selecciona las líneas a incluir. Se registra un único gasto con el total de las líneas seleccionadas.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Clasifica cada producto. Se registra un único gasto con el total seleccionado y sus subcategorías en el detalle, sin dividir la factura.</p>
             </div>
           )}
 
@@ -303,7 +319,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
 
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-44 max-w-56">
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de vencimiento del proveedor</Label>
               <Select value={paymentCondition} onValueChange={val => { onPaymentConditionChange(val); applyCondition(document.supplier_rut, val === 'credit' ? 'credit' : val); }} disabled={loadingTerms}>
                 <SelectTrigger className="w-full"><SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición'} /></SelectTrigger>
                 <SelectContent>
@@ -312,7 +328,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                   {paymentTerms.map(term => <SelectItem key={term.id} value={term.id}>{term.name} ({term.days} días)</SelectItem>)}
                 </SelectContent>
               </Select>
-              <p className="mt-1 text-xs text-muted-foreground">Define si el gasto queda con vencimiento o se manejará manualmente.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Afecta los vencimientos del proveedor; el estado de pago se define por factura.</p>
             </div>
             <div className="flex-1 min-w-44 max-w-56">
               <Label className="text-xs text-muted-foreground mb-1.5 block">Vencimiento</Label>
@@ -325,7 +341,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
                 <Switch id={`paid-${documentKey}`} checked={isPaid} onCheckedChange={checked => { onPaidChange(checked); if (checked && !paidDate) onPaidDateChange(businessClock.today()); }} />
                 <Label htmlFor={`paid-${documentKey}`} className="text-xs cursor-pointer">Marcar como pagado</Label>
               </div>
-              {isPaid && <div className="mt-2"><DatePickerInput value={paidDate || businessClock.today()} onChange={onPaidDateChange} className="w-full" /></div>}
+              {isPaid && <div className="mt-2"><Label className="text-xs">Fecha real de pago *</Label><DatePickerInput value={paidDate} onChange={onPaidDateChange} className="w-full" /></div>}
               <p className="mt-1 text-xs text-muted-foreground">Si ya fue pagado, indica la fecha real del pago.</p>
             </div>
           </div>

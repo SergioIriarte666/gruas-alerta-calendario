@@ -644,6 +644,8 @@ export const useLinkInvoiceToCost = () => {
         currency?: string;
         paidDate?: string;
         status?: 'pending' | 'paid';
+        categoryId?: string;
+        subcategory?: string | null;
       };
       // Detalle del DTE: se guarda como líneas documentales (sin inventario).
       items?: XMLDocumentItem[];
@@ -694,7 +696,11 @@ export const useLinkInvoiceToCost = () => {
       };
       if (isPaid && invoiceData.paidDate) {
         costUpdate.payment_date = invoiceData.paidDate;
+      } else if (invoiceData.status === 'pending') {
+        costUpdate.payment_date = null;
       }
+      if (invoiceData.categoryId) costUpdate.category_id = invoiceData.categoryId;
+      if (invoiceData.subcategory !== undefined) costUpdate.subcategory = invoiceData.subcategory;
       const { error: costError } = await supabase
         .from('costs')
         .update(costUpdate)
@@ -713,11 +719,16 @@ export const useLinkInvoiceToCost = () => {
         const paymentUpdate: Record<string, any> = {
           supplier_invoice_id: invoice.id,
           reference_number: invoiceData.folio,
+          due_date: invoiceData.dueDate,
         };
         if (isPaid && invoiceData.paidDate) {
           paymentUpdate.status = 'paid';
           paymentUpdate.paid_date = invoiceData.paidDate;
           paymentUpdate.paid_amount = invoiceData.amount;
+        } else if (invoiceData.status === 'pending') {
+          paymentUpdate.status = 'pending';
+          paymentUpdate.paid_date = null;
+          paymentUpdate.paid_amount = 0;
         }
         await supabase
           .from('supplier_payments')
@@ -735,11 +746,16 @@ export const useLinkInvoiceToCost = () => {
           const paymentUpdate2: Record<string, any> = {
             supplier_invoice_id: invoice.id,
             reference_number: invoiceData.folio,
+            due_date: invoiceData.dueDate,
           };
           if (isPaid && invoiceData.paidDate) {
             paymentUpdate2.status = 'paid';
             paymentUpdate2.paid_date = invoiceData.paidDate;
             paymentUpdate2.paid_amount = invoiceData.amount;
+          } else if (invoiceData.status === 'pending') {
+            paymentUpdate2.status = 'pending';
+            paymentUpdate2.paid_date = null;
+            paymentUpdate2.paid_amount = 0;
           }
           await supabase
             .from('supplier_payments')

@@ -20,9 +20,10 @@ interface CostSupplierRowProps {
   onPaymentConditionChange: (val: string) => void;
   onCreditDateChange: (date: string) => void;
   categoryId: string;
-  subcategory: string;
+  subcategory?: string;
+  onSubcategoryChange?: (val: string) => void;
+  perProductClassification?: boolean;
   onCategoryChange: (val: string) => void;
-  onSubcategoryChange: (val: string) => void;
   activeCategories: Category[];
   paymentTerms: PaymentTerm[];
   loadingTerms: boolean;
@@ -43,8 +44,9 @@ const SubcategorySelect: React.FC<{ categoryId: string; value: string; onValueCh
 
 export const CostSupplierRow: React.FC<CostSupplierRowProps> = ({
   supplier, isSelected, onToggle, paymentCondition, creditDate,
-  onPaymentConditionChange, onCreditDateChange, categoryId, subcategory,
-  onCategoryChange, onSubcategoryChange, activeCategories, paymentTerms,
+  onPaymentConditionChange, onCreditDateChange, categoryId,
+  onCategoryChange, activeCategories, paymentTerms,
+  subcategory = '', onSubcategoryChange, perProductClassification = false,
   loadingTerms, applyCondition,
 }) => (
   <div className="grid gap-4 rounded-xl border border-border/70 border-l-4 border-l-primary bg-card p-4 shadow-sm xl:grid-cols-[minmax(220px,0.75fr)_minmax(0,2fr)]">
@@ -57,9 +59,9 @@ export const CostSupplierRow: React.FC<CostSupplierRowProps> = ({
         </div>
       </div>
     </div>
-    <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className={`grid w-full gap-3 sm:grid-cols-2 ${perProductClassification ? '' : 'xl:grid-cols-4'}`}>
       <div>
-        <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago por defecto</Label>
+        <Label className="text-xs text-muted-foreground mb-1.5 block">{perProductClassification ? 'Condición de vencimiento del proveedor' : 'Forma de pago por defecto'}</Label>
         <Select
           value={paymentCondition}
           onValueChange={val => {
@@ -76,7 +78,7 @@ export const CostSupplierRow: React.FC<CostSupplierRowProps> = ({
             {paymentTerms.map(term => <SelectItem key={term.id} value={term.id}>{term.name} ({term.days} días)</SelectItem>)}
           </SelectContent>
         </Select>
-        <p className="mt-1 text-xs text-muted-foreground">Se aplicará como sugerencia a los documentos de este proveedor.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{perProductClassification ? 'Sugiere el vencimiento; no marca la compra como pagada.' : 'Se aplicará como sugerencia a los documentos de este proveedor.'}</p>
       </div>
       {paymentCondition === 'credit' && (
         <div>
@@ -92,12 +94,8 @@ export const CostSupplierRow: React.FC<CostSupplierRowProps> = ({
         </Select>
         <p className="mt-1 text-xs text-muted-foreground">Ayuda a clasificar el gasto y sus reportes asociados.</p>
       </div>
-      {categoryId && (
-        <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">Subcategoría</Label>
-          <SubcategorySelect categoryId={categoryId} value={subcategory} onValueChange={onSubcategoryChange} />
-        </div>
-      )}
+      {perProductClassification ? <p className="text-sm text-muted-foreground sm:col-span-2">Las subcategorías se eligen por producto en el siguiente paso. Una factura puede incluir varias.</p>
+        : categoryId && onSubcategoryChange && <div><Label className="mb-1.5 block text-xs text-muted-foreground">Subcategoría</Label><SubcategorySelect categoryId={categoryId} value={subcategory} onValueChange={onSubcategoryChange} /></div>}
     </div>
   </div>
 );

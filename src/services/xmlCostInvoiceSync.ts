@@ -1,6 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { XMLDocumentItem } from '@/types/suppliers';
 
+export interface ClassifiedXmlCostItem extends XMLDocumentItem {
+  cost_subcategory_id?: string | null;
+  cost_subcategory?: string | null;
+}
+
 /**
  * Persistencia del Detalle del DTE para costos importados desde XML.
  *
@@ -18,7 +23,7 @@ const normalizeQuantity = (quantity: number | undefined) => {
 
 export const buildDocumentalInvoiceItemRows = (
   invoiceId: string,
-  items: XMLDocumentItem[],
+  items: ClassifiedXmlCostItem[],
   userId: string | null
 ) =>
   items.map((item, index) => {
@@ -38,6 +43,10 @@ export const buildDocumentalInvoiceItemRows = (
       total_amount: Number(item.total || 0),
       movement_id: null,
       created_by: userId,
+      ...(item.cost_subcategory !== undefined && {
+        cost_subcategory_id: item.cost_subcategory_id || null,
+        cost_subcategory: item.cost_subcategory || '',
+      }),
     };
   });
 
@@ -66,8 +75,9 @@ export interface CreateInvoiceForImportedCostParams {
   description: string;
   currency?: string;
   isPaid: boolean;
+  paymentDate?: string | null;
   xmlFileName: string | null;
-  items: XMLDocumentItem[];
+  items: ClassifiedXmlCostItem[];
   userId: string | null;
 }
 
@@ -145,6 +155,18 @@ export const createSupplierInvoiceForImportedCost = async (
 
   if (linkError) {
     throw new Error(`No se pudo vincular la factura al costo: ${linkError.message}`);
+  }
+
+  const { error: paymentError } = await supabase.from('supplier_payments').update({
+    supplier_invoice_id: invoiceId,
+    reference_number: params.folio,
+    due_date: params.dueDate,
+    status: params.isPaid ? 'paid' : 'pending',
+    paid_amount: params.isPaid ? params.amount : 0,
+    paid_date: params.isPaid ? params.paymentDate || params.issueDate : null,
+  }).eq('cost_id', params.costId);
+  if (paymentError) {
+    throw new Error(`No se pudo actualizar el registro de pago: ${paymentError.message}`);
   }
 
   return invoiceId;
