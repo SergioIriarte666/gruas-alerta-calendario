@@ -24,7 +24,7 @@ import { CostFormStep3 } from './form/CostFormStep3';
 import { CostFormStep4 } from './form/CostFormStep4';
 import { toast } from 'sonner';
 import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Save, Loader2, FileUp } from 'lucide-react';
 import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +49,12 @@ interface CostFormProps {
 
 export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onInventoryCostCreated }: CostFormProps) => {
     const queryClient = useQueryClient();
+    const supplierInvoiceId = (cost as Record<string, unknown> | null)?.supplier_invoice_id as string | undefined;
+    const { data: hasLineConsumption = false } = useQuery({
+        queryKey: ['invoice-line-consumption', supplierInvoiceId],
+        queryFn: () => UnifiedPurchaseService.hasInvoiceLineConsumption(supplierInvoiceId!),
+        enabled: isOpen && Boolean(supplierInvoiceId),
+    });
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
     const { deleteEntry } = useQuickEntry();
@@ -268,7 +274,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 : getCurrentChileDateString();
             const hasImmediateConsumptionAssociation = Boolean(
                 cost.immediate_consumption ||
-                (cost.crane_parts && cost.crane_parts.length > 0)
+                (!hasLineConsumption && cost.crane_parts && cost.crane_parts.length > 0)
             );
 
             reset({
@@ -362,7 +368,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             });
             setCalculatedServiceTotal(0);
         }
-    }, [cost, prefilledData, reset, isOpen]);
+    }, [cost, prefilledData, reset, isOpen, hasLineConsumption]);
     
     const finishSubmission = () => {
         submissionLockRef.current = false;
@@ -521,6 +527,16 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 (cost?.crane_parts && cost.crane_parts.length > 0)
             );
             const previousCraneId = cost?.crane_id || null;
+            const preserveLineConsumption = supplierInvoiceId ? await queryClient.fetchQuery({
+                queryKey: ['invoice-line-consumption', supplierInvoiceId],
+                queryFn: () => UnifiedPurchaseService.hasInvoiceLineConsumption(supplierInvoiceId),
+            }) : false;
+            if (preserveLineConsumption && cost) {
+                submissionData.crane_id = cost.crane_id || null;
+                submissionData.immediate_consumption = Boolean(cost.immediate_consumption);
+                submissionData.purchase_quantity = cost.purchase_quantity || null;
+                submissionData.purchase_unit_cost = cost.purchase_unit_cost || null;
+            }
         
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
@@ -537,6 +553,10 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                         const hasCraneSelected = submissionData.crane_id && submissionData.crane_id !== 'none';
                         
                         onClose();
+                        if (preserveLineConsumption) {
+                            toast.success('Costo actualizado', { description: 'Se conservaron los destinos y las cantidades de cada producto.' });
+                            return;
+                        }
                         
                         if (submissionData.purchase_quantity && submissionData.purchase_unit_cost) {
                             if (!submissionData.immediate_consumption || hasNoCraneSelected) {
@@ -813,6 +833,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                         <div className="flex flex-col flex-1 min-h-0">
                                             {/* Step Content */}
                                             <div className="flex-1 overflow-y-auto p-6">
+                                                {hasLineConsumption && <p className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">Esta compra XML tiene destinos por producto. Los consumos y saldos de bodega se conservan al editar el costo; gestiona los movimientos desde Inventario.</p>}
                                                 {currentStep === 1 && (
                                                     <CostFormStep1
                                                         form={form}
@@ -828,6 +849,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                         categories={categories}
                                                         isNewCost={!cost}
                                                         isInventorySynced={Boolean(cost?.inventory_movement_id)}
+                                                        hasLineConsumption={hasLineConsumption}
                                                         onServiceExpenseSelect={!cost ? handleServiceExpenseSelect : undefined}
                                                         calculatedServiceTotal={calculatedServiceTotal}
                                                     />
@@ -842,6 +864,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                         services={servicesForCosts}
                                                         isLoadingServices={isLoadingServices}
                                                         hasCraneParts={Boolean(cost?.crane_parts && (cost.crane_parts as Array<Record<string, unknown>>).length > 0)}
+                                                        hasLineConsumption={hasLineConsumption}
                                                     />
                                                 )}
                                                 {currentStep === 4 && (

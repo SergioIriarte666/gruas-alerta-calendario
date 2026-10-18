@@ -8,6 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { resolveLineConsumption, validateLineConsumption, type LineConsumption } from '@/utils/xml/xmlInventoryConsumption';
 import { cn } from '@/lib/utils';
 import { formatCurrency, computeLineTotal } from '@/utils/xml/xmlInventoryHelpers';
 import type { ValidatedDocument, ValidatedInvoiceLine, InventoryCatalogItem } from '@/hooks/xml/useXmlInventoryUpload';
@@ -31,12 +35,17 @@ interface InventoryValidatedDocumentCardProps {
   onEditDescription: (value: string) => void;
   onUpdateLineDescription: (lineNumber: number, desc: string) => void;
   onCreateMissingProduct: (line: ValidatedInvoiceLine) => void;
+  lineConsumptions: Record<string, LineConsumption>;
+  onConsumptionChange: (key: string, value: LineConsumption) => void;
+  cranes: { id: string; licensePlate: string }[];
+  defaultCraneId: string;
 }
 
 export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocumentCardProps> = ({
   validatedDoc, isSelected, onToggleSelected, isImporting, discardedLines, onDiscardLine, onRestoreLine,
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
+  lineConsumptions, onConsumptionChange, cranes, defaultCraneId,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
     <CardHeader className="pb-3">
@@ -71,6 +80,8 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
           <tbody>
             {validatedDoc.lines.map(line => {
               const isDiscarded = discardedLines.has(line.key);
+              const consumption = resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]);
+              const consumptionError = validateLineConsumption(Number(line.item.quantity), consumption, defaultCraneId);
               return (
                 <tr key={line.key} className={cn('border-b last:border-0 align-top transition-opacity', isDiscarded && 'opacity-40')}>
                   <td className="py-2 pr-3">{line.lineNumber}</td>
@@ -81,6 +92,30 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                         disabled={isImporting} rows={2} className="min-h-[4.5rem] resize-y"
                         placeholder="Edita la glosa para mejorar la coincidencia con el catálogo" />
                       <p className="text-xs text-muted-foreground">La validación y la coincidencia se recalculan al editar la glosa.</p>
+                      <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-2">
+                        <Label htmlFor={`destination-${line.key}`} className="text-xs">Destino del producto</Label>
+                        <Select value={consumption.immediate ? 'consume' : 'store'} disabled={isImporting || isDiscarded}
+                          onValueChange={value => onConsumptionChange(line.key, { ...consumption, immediate: value === 'consume' })}>
+                          <SelectTrigger id={`destination-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="store">Mantener en bodega</SelectItem><SelectItem value="consume">Consumo inmediato</SelectItem></SelectContent>
+                        </Select>
+                        {consumption.immediate && <>
+                          <Label htmlFor={`crane-${line.key}`} className="text-xs">Grúa de destino</Label>
+                          <Select value={consumption.craneId || defaultCraneId || 'none'} disabled={isImporting || isDiscarded}
+                            onValueChange={value => onConsumptionChange(line.key, { ...consumption, craneId: value === 'none' ? '' : value })}>
+                            <SelectTrigger id={`crane-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="none">Selecciona una grúa</SelectItem>{cranes.map(crane => <SelectItem key={crane.id} value={crane.id}>{crane.licensePlate}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <div className="flex items-center justify-between gap-2">
+                            <Label htmlFor={`consume-${line.key}`} className="text-xs">Cantidad a consumir</Label>
+                            <Input id={`consume-${line.key}`} type="number" min={1} max={Number(line.item.quantity)} step={1}
+                              className="h-8 w-24" value={Number.isNaN(consumption.quantity) ? '' : consumption.quantity} disabled={isImporting || isDiscarded}
+                              onChange={event => onConsumptionChange(line.key, { ...consumption, quantity: event.target.value === '' ? NaN : Number(event.target.value) })} />
+                          </div>
+                          {consumptionError ? <p role="alert" className="text-xs text-destructive">{consumptionError}</p>
+                            : <p className="text-xs text-muted-foreground">{consumption.quantity} a consumo · {Number(line.item.quantity) - consumption.quantity} permanece(n) en bodega</p>}
+                        </>}
+                      </div>
                     </div>
                   </td>
                   <td className="py-2 pr-3">{line.item.quantity}</td>

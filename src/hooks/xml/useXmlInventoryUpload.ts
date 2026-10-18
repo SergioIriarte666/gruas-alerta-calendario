@@ -24,6 +24,8 @@ import {
   getLineKey, computeLineSubtotal, computeLineTaxAmount, computeLineTotal,
 } from '@/utils/xml/xmlInventoryHelpers';
 
+import { buildLineConsumptionPayload, resolveLineConsumption, validateLineConsumption, type LineConsumption } from '@/utils/xml/xmlInventoryConsumption';
+
 const logger = createLogger('useXmlInventoryUpload');
 
 export interface InventoryCatalogItem {
@@ -85,6 +87,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [manualMatchedItems, setManualMatchedItems] = useState<Record<string, InventoryCatalogItem>>({});
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
   const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
+  const [lineConsumptions, setLineConsumptions] = useState<Record<string, LineConsumption>>({});
   const [catalogSearchOpen, setCatalogSearchOpen] = useState<Record<string, boolean>>({});
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
@@ -152,6 +155,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       setLineDescriptionOverrides({});
       setManualMatchedItems({});
       setDiscardedLines(new Set());
+      setLineConsumptions({});
       setEditedDescriptions(new Map());
     },
     onParsed: (result) => {
@@ -238,6 +242,15 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     return map;
   }, [parseResult]);
 
+  const consumptionSummary = useMemo(() => {
+    const lines = selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key));
+    const consumed = lines.filter(line => lineConsumptions[line.key]?.immediate);
+    return {
+      consumed: consumed.length,
+      stored: lines.filter(line => !lineConsumptions[line.key]?.immediate || lineConsumptions[line.key].quantity < Number(line.item.quantity)).length,
+    };
+  }, [selectedValidatedDocuments, discardedLines, lineConsumptions]);
+
   const summary = useMemo(() => ({
     totalDocs: validatedDocuments.length,
     validDocs: validatedDocuments.filter(item => item.isValid).length,
@@ -298,6 +311,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setLineDescriptionOverrides({});
     setManualMatchedItems({});
     setDiscardedLines(new Set());
+    setLineConsumptions({});
     setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
@@ -419,6 +433,12 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     if (!selectedCostCategoryId) { toast.error('Selecciona una categoría de costo'); return; }
     if (selectedValidatedDocuments.length === 0) { toast.error('Selecciona al menos una factura válida para importar'); return; }
     if (selectedValidatedDocuments.some(item => !item.isValid)) { toast.error('Hay facturas seleccionadas con errores bloqueantes'); return; }
+    for (const document of selectedValidatedDocuments) {
+      for (const line of document.lines.filter(line => !discardedLines.has(line.key))) {
+        const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId);
+        if (error) { toast.error(`Factura ${document.doc.folio}, línea ${line.lineNumber}: ${error}`); return; }
+      }
+    }
 
     setIsImporting(true);
     setProgress(0);
@@ -441,6 +461,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
+            ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId),
             line_number: line.lineNumber, inventory_item_id: line.matchedItem!.id,
             product_code: line.item.product_code || line.matchedItem?.sku || line.matchedItem?.barcode || null,
             product_name: line.item.product_name || line.matchedItem?.name || null, description: line.item.description,
@@ -489,7 +510,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
       invalidateAll('full');
       await refetchCritical();
-      const importSuccessMessage = buildImportSuccessMessage({ importedCount, hasImmediateConsumption: Boolean(selectedCraneId), craneLabel: selectedCrane?.licensePlate || null });
+      const importSuccessMessage = buildImportSuccessMessage({ importedCount, hasImmediateConsumption: consumptionSummary.consumed > 0, craneLabel: null });
+      if (consumptionSummary.consumed > 0) {
+        importSuccessMessage.description = `Se registraron las entradas y los consumos seleccionados: ${consumptionSummary.consumed} línea(s) con consumo y ${consumptionSummary.stored} con saldo en bodega.`;
+      }
       toast.success(importSuccessMessage.title, { description: importSuccessMessage.description });
       onSuccess(importedCount);
       handleClose();
@@ -509,6 +533,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     manualMatchedItems, setManualMatchedItems,
     editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines,
+    lineConsumptions, setLineConsumptions, consumptionSummary,
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,
     selectedCostCategoryId, setSelectedCostCategoryId,

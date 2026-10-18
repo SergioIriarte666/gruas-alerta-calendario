@@ -25,6 +25,7 @@ interface CostFormStep3Props {
   services: Service[];
   isLoadingServices: boolean;
   hasCraneParts?: boolean;
+  hasLineConsumption?: boolean;
 }
 
 export const CostFormStep3 = ({
@@ -36,6 +37,7 @@ export const CostFormStep3 = ({
   services,
   isLoadingServices,
   hasCraneParts = false,
+  hasLineConsumption = false,
 }: CostFormStep3Props) => {
   const { data: costCenters = [] } = useCostCenters();
   const watchedEntity = form.watch('entity');
@@ -128,7 +130,7 @@ export const CostFormStep3 = ({
                 <Select
                   onValueChange={field.onChange}
                   value={field.value ?? 'none'}
-                  disabled={isLoadingCranes || hasCraneParts}
+                  disabled={isLoadingCranes || hasCraneParts || hasLineConsumption}
                 >
                   <FormControl>
                     <SelectTrigger>

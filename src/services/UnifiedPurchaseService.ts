@@ -608,6 +608,11 @@ export class UnifiedPurchaseService {
   }
 
   static async clearImmediateConsumptionForCost(costId: string): Promise<void> {
+    const { data: cost, error: costError } = await supabase.from('costs').select('supplier_invoice_id').eq('id', costId).single();
+    if (costError) throw costError;
+    if (cost.supplier_invoice_id && await this.hasInvoiceLineConsumption(cost.supplier_invoice_id)) {
+      throw new Error('Esta compra XML tiene destinos por producto. Gestiona sus movimientos desde Inventario.');
+    }
     const { data: exitMovements, error: exitMovementsError } = await supabase
       .from('inventory_movements')
       .select('id')
@@ -651,6 +656,9 @@ export class UnifiedPurchaseService {
     supplierName?: string | null;
     referenceDocument?: string | null;
   }): Promise<void> {
+    if (await this.hasInvoiceLineConsumption(params.supplierInvoiceId)) {
+      throw new Error('Esta compra XML tiene destinos por producto. No se puede consumir toda la factura desde Costos.');
+    }
     const { data: invoiceItems, error: invoiceItemsError } = await supabase
       .from('supplier_invoice_items')
       .select('id, description, quantity, unit_price, total_amount, inventory_item_id, movement_id')
@@ -710,6 +718,13 @@ export class UnifiedPurchaseService {
     if (firstExitMovementId) {
       await this.linkCostToMovement(params.costId, firstExitMovementId);
     }
+  }
+
+  static async hasInvoiceLineConsumption(invoiceId: string): Promise<boolean> {
+    const { data, error } = await supabase.from('supplier_invoice_items')
+      .select('id').eq('supplier_invoice_id', invoiceId).not('consumption_quantity', 'is', null).limit(1);
+    if (error) throw new Error(`No se pudo verificar el destino por producto: ${error.message}`);
+    return Boolean(data?.length);
   }
 
   /**

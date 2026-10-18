@@ -99,6 +99,10 @@ RPC y tooling frecuentes:
 
 ### 6. Importacion XML
 - `XMLInventoryUpload` soporta validacion de lineas, matching con catalogo, alta manual de producto y enlaces con compras/costos.
+- Cada linea permite mantener el producto en bodega o indicar consumo inmediato, cantidad entera y grua de destino. El saldo no consumido permanece en la bodega seleccionada.
+- La grua general es una sugerencia para las lineas marcadas; no activa el consumo de toda la factura. Se conserva una factura, un costo consolidado y un pago, con movimientos vinculados por linea.
+- Los destinos se guardan en `supplier_invoice_items.consumption_quantity` y `consumption_crane_id`; los registros anteriores mantienen ambos campos nulos. Las compras con destinos por linea conservan sus movimientos al editar Costos.
+- La importacion completa es transaccional. La regresion SQL local se ejecuta con `node scripts/tests/xml-inventory-line-consumption.mjs` y no accede a la base remota.
 - No es solo una importacion pasiva de facturas proveedor.
 
 ### 7. Herramientas de saneamiento

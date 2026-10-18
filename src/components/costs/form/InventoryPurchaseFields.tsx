@@ -20,9 +20,10 @@ interface InventoryPurchaseFieldsProps {
   form: UseFormReturn<CostFormValues>;
   disabled?: boolean;
   disabledReason?: string;
+  consumptionDisabled?: boolean;
 }
 
-export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason }: InventoryPurchaseFieldsProps) => {
+export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason, consumptionDisabled = false }: InventoryPurchaseFieldsProps) => {
   const quantity = form.watch('purchase_quantity') as number | undefined;
   const unitCost = form.watch('purchase_unit_cost') as number | undefined;
   const immediateConsumption = form.watch('immediate_consumption');
@@ -142,7 +143,7 @@ export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason
           </div>
         )}
 
-        {immediateConsumption && (!quantity || !unitCost || Number(quantity) <= 0 || Number(unitCost) <= 0) && (
+        {!consumptionDisabled && immediateConsumption && (!quantity || !unitCost || Number(quantity) <= 0 || Number(unitCost) <= 0) && (
           <Alert variant="destructive" className="py-2">
             <Info className="size-4" />
             <AlertDescription className="text-xs">
@@ -165,6 +166,7 @@ export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason
                         checked={field.value || false}
                         onCheckedChange={field.onChange}
                         id="immediate_consumption"
+                        disabled={consumptionDisabled}
                       />
                     </FormControl>
                   </FormItem>

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CostForm } from '../CostForm';
 import type { Cost } from '@/types/costs';
 
-const mocks = vi.hoisted(() => ({ update: vi.fn(), add: vi.fn(), error: vi.fn(), sync: vi.fn() }));
+const mocks = vi.hoisted(() => ({ update: vi.fn(), add: vi.fn(), error: vi.fn(), sync: vi.fn(), hasLineConsumption: vi.fn() }));
 const categories = [{ id: 'inventory', name: 'Inventario' }];
 vi.mock('@/hooks/useCosts', () => ({ useAddCost: () => ({ mutate: mocks.add }), useUpdateCost: () => ({ mutate: mocks.update }) }));
 vi.mock('@/hooks/useCostCategories', () => ({ useCostCategories: () => ({ data: categories }) }));
@@ -16,7 +16,7 @@ vi.mock('@/hooks/useCostCenters', () => ({ useCostCenters: () => ({ data: [] }) 
 vi.mock('@/hooks/useQuickEntry', () => ({ useQuickEntry: () => ({ deleteEntry: vi.fn() }) }));
 vi.mock('@/utils/timezoneUtils', () => ({ getCurrentChileDateString: () => '2026-10-11', formatForInput: (date: string) => date.slice(0,10) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
-vi.mock('@/services/UnifiedPurchaseService', () => ({ UnifiedPurchaseService: { clearImmediateConsumptionForCost: mocks.sync, registerForExistingCost: mocks.sync, syncImportedInvoiceConsumption: mocks.sync } }));
+vi.mock('@/services/UnifiedPurchaseService', () => ({ UnifiedPurchaseService: { clearImmediateConsumptionForCost: mocks.sync, registerForExistingCost: mocks.sync, syncImportedInvoiceConsumption: mocks.sync, hasInvoiceLineConsumption: mocks.hasLineConsumption } }));
 vi.mock('sonner', () => ({ toast: { error: mocks.error, success: vi.fn(), info: vi.fn() } }));
 vi.mock('../ServiceExpenseModals', () => ({ ServiceExpenseModals: () => null }));
 vi.mock('../ManualCostXmlImportDialog', () => ({ ManualCostXmlImportDialog: () => null }));
@@ -59,5 +59,15 @@ describe('editar glosa de un costo ya vinculado a bodega', () => {
     openCost({ inventory_movement_id: null });
     await waitFor(() => expect(mocks.error).toHaveBeenCalledWith('Cantidad requerida', expect.any(Object)));
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it('conserva los destinos de una compra mixta sin volver a consumir sus líneas', async () => {
+    mocks.hasLineConsumption.mockResolvedValue(true);
+    openCost({ supplier_invoice_id: 'invoice-1', crane_id: null, immediate_consumption: false,
+      crane_parts: [{ id: 'part-1' }], purchase_quantity: 4, purchase_unit_cost: 100 } as unknown as Partial<Cost>);
+    await waitFor(() => expect(mocks.update).toHaveBeenCalled());
+    expect(mocks.update.mock.calls[0][0]).toMatchObject({ crane_id: null, immediate_consumption: false, purchase_quantity: 4, purchase_unit_cost: 100 });
+    await mocks.update.mock.calls[0][1].onSuccess([]);
+    expect(mocks.sync).not.toHaveBeenCalled();
   });
 });

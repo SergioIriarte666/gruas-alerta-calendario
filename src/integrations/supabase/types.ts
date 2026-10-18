@@ -7804,6 +7804,8 @@ export type Database = {
       }
       supplier_invoice_items: {
         Row: {
+          consumption_quantity: number | null
+          consumption_crane_id: string | null
           created_at: string
           created_by: string | null
           description: string
@@ -7823,6 +7825,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          consumption_quantity?: number | null
+          consumption_crane_id?: string | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -7842,6 +7846,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          consumption_quantity?: number | null
+          consumption_crane_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string

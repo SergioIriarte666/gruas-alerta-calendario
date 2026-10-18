@@ -32,6 +32,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     manualMatchedItems, setManualMatchedItems,
     editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines,
+    lineConsumptions, setLineConsumptions, consumptionSummary,
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,
     selectedCostCategoryId, setSelectedCostCategoryId,
@@ -187,6 +188,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       onToggleSelected={checked => toggleSelectedDocument(validatedDoc.doc.folio, checked)}
                       isImporting={isImporting}
                       discardedLines={discardedLines}
+                      lineConsumptions={lineConsumptions}
+                      onConsumptionChange={(key, value) => setLineConsumptions(previous => ({ ...previous, [key]: value }))}
+                      cranes={cranes}
+                      defaultCraneId={selectedCraneId}
                       onDiscardLine={key => setDiscardedLines(prev => new Set(prev).add(key))}
                       onRestoreLine={key => setDiscardedLines(prev => { const next = new Set(prev); next.delete(key); return next; })}
                       manualMatchedItems={manualMatchedItems}
@@ -207,6 +212,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
             </div>
 
             <InventoryImportParameters
+              consumptionSummary={consumptionSummary}
               locations={locations} costCategories={costCategories} costSubcategories={costSubcategories}
               costCenters={costCenters} cranes={cranes} operators={operators} serviceSearchResults={serviceSearchResults}
               selectedLocationId={selectedLocationId} onLocationChange={setSelectedLocationId}

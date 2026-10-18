@@ -24,6 +24,7 @@ interface CostFormStep2Props {
   categories: CostCategory[];
   isNewCost?: boolean;
   isInventorySynced?: boolean;
+  hasLineConsumption?: boolean;
   onServiceExpenseSelect?: () => void;
   calculatedServiceTotal?: number;
 }
@@ -33,6 +34,7 @@ export const CostFormStep2 = ({
   categories,
   isNewCost = false,
   isInventorySynced = false,
+  hasLineConsumption = false,
   onServiceExpenseSelect,
   calculatedServiceTotal = 0,
 }: CostFormStep2Props) => {
@@ -162,6 +164,7 @@ export const CostFormStep2 = ({
         <InventoryPurchaseFields
           form={form}
           disabled={isInventorySynced}
+          consumptionDisabled={hasLineConsumption}
           disabledReason={isInventorySynced
             ? 'Puedes editar la descripción de este costo y guardar los cambios. La cantidad y el precio pertenecen al movimiento ya registrado y se modifican desde Inventario.'
             : undefined

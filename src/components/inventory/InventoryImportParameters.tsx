@@ -23,6 +23,7 @@ interface Operator { id: string; name: string }
 interface ServiceRef { id: string; folio: string; client: { name: string } }
 
 interface InventoryImportParametersProps {
+  consumptionSummary: { consumed: number; stored: number };
   locations: Location[];
   costCategories: CostCategory[];
   costSubcategories: CostSubcategory[];
@@ -55,6 +56,7 @@ interface InventoryImportParametersProps {
 }
 
 export const InventoryImportParameters: React.FC<InventoryImportParametersProps> = ({
+  consumptionSummary,
   locations, costCategories, costSubcategories, costCenters, cranes, operators, serviceSearchResults,
   selectedLocationId, onLocationChange, selectedCostCategoryId, onCostCategoryChange,
   selectedCostSubcategory, onCostSubcategoryChange, selectedCostCenterId, onCostCenterChange,
@@ -71,12 +73,12 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
       <div className="space-y-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <span className="rounded-lg bg-primary/10 p-2 text-primary"><Package className="size-4" /></span>
-          Parametros de Ingreso
+          Parámetros de Ingreso
         </CardTitle>
         <div className="flex flex-wrap gap-2">
           <Badge variant={selectedLocationId ? 'default' : 'outline'} className="px-2.5 py-1">{selectedLocationId ? 'Bodega configurada' : 'Falta bodega'}</Badge>
           <Badge variant={selectedCostCategoryId ? 'secondary' : 'outline'} className="px-2.5 py-1">{selectedCostCategoryId ? 'Costo configurado' : 'Falta categoría'}</Badge>
-          <Badge variant={selectedCraneId ? 'secondary' : 'outline'} className="px-2.5 py-1">{selectedCraneId ? 'Consumo inmediato' : 'Solo ingreso a bodega'}</Badge>
+          <Badge variant={consumptionSummary.consumed ? 'secondary' : 'outline'} className="px-2.5 py-1">{consumptionSummary.consumed ? `${consumptionSummary.consumed} con consumo inmediato` : 'Solo ingreso a bodega'}</Badge>
         </div>
       </div>
     </CardHeader>
@@ -87,6 +89,11 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
         className="h-full overflow-y-auto overscroll-contain pr-3 [scrollbar-gutter:stable]"
       >
         <div className="space-y-4 pb-4">
+          <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+            <p className="font-medium">Destino por producto</p>
+            <p className="text-muted-foreground">Elige en cada línea qué consumir y qué guardar. Seleccionar una grúa general no consume productos automáticamente.</p>
+            <p>{consumptionSummary.consumed} línea(s) con consumo · {consumptionSummary.stored} con saldo en bodega</p>
+          </div>
           <div className="space-y-2">
             <Label>Ubicación de Bodega</Label>
             <Select value={selectedLocationId} onValueChange={onLocationChange}>
@@ -172,7 +179,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Grúa</Label>
+                  <Label>Grúa sugerida para consumo</Label>
                   <Select value={selectedCraneId || 'none'} onValueChange={val => onCraneChange(val === 'none' ? '' : val)}>
                     <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
                     <SelectContent><SelectItem value="none">Sin asociar</SelectItem>{cranes.map(c => <SelectItem key={c.id} value={c.id}>{c.licensePlate}</SelectItem>)}</SelectContent>
@@ -209,7 +216,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
             <p>- Costo consolidado en el módulo de Costos</p>
             <p>- Líneas con vínculo a producto y movimiento</p>
             <p>- Entradas de inventario una por cada línea válida</p>
-            {selectedCraneId && <p>- Salida inmediata a grúa y registro en piezas/consumos</p>}
+            {consumptionSummary.consumed > 0 && <p>- Salida y registro en piezas solo por las cantidades marcadas para consumo</p>}
           </div>
 
           <Collapsible>
