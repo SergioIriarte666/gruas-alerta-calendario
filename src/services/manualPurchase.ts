@@ -40,8 +40,11 @@ export async function uploadManualPurchasePhoto(requestId: string, photo: File |
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error('Inicia sesión nuevamente antes de guardar la compra.');
     receiptPath = `${user.id}/manual-purchases/${requestId}.jpg`;
-    const { error } = await supabase.storage.from('quick-entry-photos').upload(receiptPath, photo, { contentType: 'image/jpeg', upsert: true });
-    if (error) throw new Error('No se pudo guardar la foto de respaldo. No se registró la compra.');
+    const form = new FormData();
+    form.append('requestId', requestId);
+    form.append('photo', photo);
+    const { data, error } = await supabase.functions.invoke('purchase-receipts', { body: form });
+    if (error || data?.error || data?.path !== receiptPath || data?.storage !== 'r2') throw new Error('No se pudo guardar y verificar la foto en Cloudflare R2. No se registró la compra.');
   }
   return receiptPath;
 }

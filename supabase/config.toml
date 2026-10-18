@@ -184,3 +184,6 @@ verify_jwt = true
 
 [functions.delete-my-account]
 verify_jwt = true
+
+[functions.purchase-receipts]
+verify_jwt = true

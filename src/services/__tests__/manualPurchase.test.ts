@@ -15,6 +15,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
   mocks.upload.mockResolvedValue({ error: null });
   mocks.rpc.mockResolvedValue({ data: { cost_id: 'cost-1' }, error: null });
+  mocks.invoke.mockResolvedValue({ data: { path: 'user-1/manual-purchases/request-1.jpg', storage: 'r2' }, error: null });
 });
 
 describe('Fotos y persistencia de compras manuales', () => {
@@ -40,7 +41,7 @@ describe('Fotos y persistencia de compras manuales', () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it('si falla el respaldo, no registra la compra sin su foto', async () => {
-    mocks.upload.mockResolvedValueOnce({ error: { message: 'storage unavailable' } });
+    mocks.invoke.mockResolvedValueOnce({ error: { message: 'r2 unavailable' } });
     await expect(registerManualPurchase('request-1', {} as InventoryPurchaseArgs, new File(['jpeg'], 'foto.jpg'))).rejects.toThrow('No se registró la compra');
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -49,7 +50,11 @@ describe('Fotos y persistencia de compras manuales', () => {
     const args = { p_folio: '54491' } as InventoryPurchaseArgs;
     await registerManualPurchase('request-1', args, photo);
     await registerManualPurchase('request-1', args, photo);
-    expect(mocks.upload).toHaveBeenCalledWith('user-1/manual-purchases/request-1.jpg', photo, expect.objectContaining({ upsert: true }));
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.invoke).toHaveBeenCalledWith('purchase-receipts', { body: expect.any(FormData) });
+    const form = mocks.invoke.mock.calls[0][1].body as FormData;
+    expect(form.get('requestId')).toBe('request-1');
+    expect((form.get('photo') as File).name).toBe('foto.jpg');
     expect(mocks.rpc).toHaveBeenNthCalledWith(1, 'register_manual_inventory_purchase', { p_request_id: 'request-1', p_data: args, p_receipt_path: 'user-1/manual-purchases/request-1.jpg' });
     expect(mocks.rpc.mock.calls[1]).toEqual(mocks.rpc.mock.calls[0]);
   });

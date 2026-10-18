@@ -1,14 +1,15 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { XMLInventoryUpload } from '../XMLInventoryUpload';
+import { useXmlInventoryUpload, type PendingProductSuggestion } from '@/hooks/xml/useXmlInventoryUpload';
 
-const mocks = vi.hoisted(() => ({ register: vi.fn(), extract: vi.fn(), preparePhoto: vi.fn(), updateSupplier: vi.fn(), createSupplier: vi.fn(), suppliers: [] as { id: string; name: string; rut: string }[] }));
+const mocks = vi.hoisted(() => ({ register: vi.fn(), extract: vi.fn(), preparePhoto: vi.fn(), updateSupplier: vi.fn(), createSupplier: vi.fn(), createItem: vi.fn(), refetchItems: vi.fn(), catalog: null as { id: string; name: string; sku: string }[] | null, suppliers: [] as { id: string; name: string; rut: string }[] }));
 vi.mock('@/services/manualPurchase', () => ({ registerManualPurchase: mocks.register, extractPurchasePhoto: mocks.extract, preparePurchasePhoto: mocks.preparePhoto }));
 vi.mock('@/hooks/useXMLParsing', () => ({ useXMLParsing: () => ({ selectedFile: null, parseResult: null, isAnalyzing: false, getRootProps: () => ({}), getInputProps: () => ({}), isDragActive: false, reset: vi.fn() }) }));
 vi.mock('@/hooks/useInventory', () => ({
-  useInventoryItems: () => ({ data: tools.map((name, index) => ({ id: `item-${index}`, name })), refetch: vi.fn() }),
-  useInventoryCategories: () => ({ data: [] }), useInventoryLocations: () => ({ data: [{ id: 'warehouse', code: 'MAIN', name: 'Bodega principal' }] }), useCreateInventoryItem: () => ({ mutateAsync: vi.fn() }),
+  useInventoryItems: () => ({ data: mocks.catalog || tools.map((name, index) => ({ id: `item-${index}`, name })), refetch: mocks.refetchItems }),
+  useInventoryCategories: () => ({ data: [] }), useInventoryLocations: () => ({ data: [{ id: 'warehouse', code: 'MAIN', name: 'Bodega principal' }] }), useCreateInventoryItem: () => ({ mutateAsync: mocks.createItem }),
 }));
 vi.mock('@/hooks/useSuppliers', () => ({ useSuppliers: () => ({ suppliers: mocks.suppliers, createSupplierAsync: mocks.createSupplier, updateSupplierAsync: mocks.updateSupplier }) }));
 vi.mock('@/hooks/useUniversalSync', () => ({ useUniversalSync: () => ({ invalidateAll: vi.fn(), refetchCritical: vi.fn() }) }));
@@ -27,6 +28,8 @@ const extraction = { vendorName: 'Ferretería y Repuestos Dicar Ltda.', vendorRu
 };
 
 beforeEach(() => {
+  mocks.catalog = null;
+  mocks.refetchItems.mockResolvedValue({ data: [], error: null });
   mocks.suppliers = [{ id: 'supplier', name: 'Ferretería y Repuestos Dicar Ltda.', rut: '85.355.900-8' }];
   mocks.updateSupplier.mockResolvedValue({ id: 'supplier' });
   mocks.register.mockResolvedValue({ cost_id: 'cost' });
@@ -46,6 +49,53 @@ async function readPhoto() {
 }
 
 describe('Compra desde foto y registro manual', () => {
+  const pendingCreation = (): PendingProductSuggestion => ({
+    doc: { folio: '54504', document_type: 'factura', issue_date: '2026-10-16', net_amount: 29412, vat_amount: 5588, total_amount: 35000, currency: 'CLP', description: 'Dicar', supplier_rut: '85355900-8' },
+    line: { key: '54504-2', lineNumber: 2, item: { product_code: 'DAT89040-2', description: 'DADO IMPACTO TORX T-40 FORCE', quantity: 2, unit_price: 7983, total: 19000 }, matchedItem: null, candidates: [], error: null, warning: null },
+    similarityResult: { shouldAlert: true, similarItems: [], alertMessage: '' },
+  });
+  it('reconsulta el catálogo y reutiliza un SKU existente incluso al confirmar crear nuevo', async () => {
+    const existing = { id: 'existing-impacto', name: 'Dado Impacto Torx 1/2" X 38Mm Ferton', sku: 'DAT89040-2' };
+    mocks.refetchItems.mockResolvedValue({ data: [existing], error: null });
+    const { result } = renderHook(() => useXmlInventoryUpload({ onClose: vi.fn(), onSuccess: vi.fn() }));
+    act(() => result.current.setPendingProductSuggestion(pendingCreation()));
+    await act(async () => result.current.handleCreateSuggestedNew());
+    expect(result.current.manualMatchedItems['54504-2']?.id).toBe('existing-impacto');
+    expect(mocks.createItem).not.toHaveBeenCalled();
+  });
+  it('no crea productos si falla la comprobación final de duplicados', async () => {
+    mocks.refetchItems.mockResolvedValue({ data: undefined, error: new Error('Sin conexión') });
+    const { result } = renderHook(() => useXmlInventoryUpload({ onClose: vi.fn(), onSuccess: vi.fn() }));
+    act(() => result.current.setPendingProductSuggestion(pendingCreation()));
+    await act(async () => result.current.handleCreateSuggestedNew());
+    expect(mocks.createItem).not.toHaveBeenCalled();
+  });
+  it('reconoce Dicar por RUT y sugiere el SKU con un cero faltante sin crear ni vincular a ciegas', async () => {
+    mocks.suppliers = [{ id: 'dicar', name: 'Ferreteria y Repuestos Dicar Limitada', rut: '853559008' }];
+    mocks.catalog = [
+      { id: 'torx', name: 'Dado Torx T-40 Largo Force', sku: 'DAT89040-1' },
+      { id: 'impacto', name: 'Dado Impacto Torx 1/2" X 38Mm Ferton', sku: 'DAT89040-2' },
+    ];
+    mocks.extract.mockResolvedValueOnce({ ...extraction, items: [
+      { productCode: 'DAT8940-1', description: 'DADO TORX T-40 LARGO FORCE', quantity: 2, unitPrice: 6723, unitPriceBasis: 'net' },
+      { productCode: 'DAT8940-2', description: 'DADO IMPACTO TORX T-40 FORCE', quantity: 2, unitPrice: 7983, unitPriceBasis: 'net' },
+    ], totals: { neto: 29412, iva: 5588, total: 35000 } });
+    render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
+    await readPhoto();
+    expect(screen.getByText(/Proveedor existente por RUT:/)).toHaveTextContent('Ferreteria y Repuestos Dicar Limitada');
+    fireEvent.click(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' }));
+    fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));
+    expect(screen.getAllByText(/Código del comprobante: DAT8940-1/)[0]).toHaveTextContent('DAT89040-1');
+    expect(screen.getByText(/Código leído: DAT8940-2/)).toBeInTheDocument();
+    expect(screen.getByText('DAT89040-2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Revisar importación/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Conservar nombre registrado' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Usar' }));
+    expect(screen.getByRole('button', { name: /Revisar importación/ })).toBeEnabled();
+    expect(mocks.register).not.toHaveBeenCalled();
+    expect(mocks.createSupplier).not.toHaveBeenCalled();
+    expect(mocks.updateSupplier).not.toHaveBeenCalled();
+  });
   it('exige resolver un nombre incorrecto del maestro y guarda Río Copiapó sin cambiar su RUT', async () => {
     mocks.suppliers = [{ id: 'rio', name: 'Grúas 5 Norte SpA', rut: '77.084.699-4' }, { id: 'own-company', name: 'Grúas 5 Norte SpA', rut: '76.769.841-0' }];
     mocks.extract.mockResolvedValueOnce({ ...extraction, vendorName: 'Comercializadora Rio Copiapo Spa', vendorRut: '77.084.699-4' });

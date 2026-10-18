@@ -19,7 +19,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCurrentChileDateString, parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
-import { findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
+import { buildSimilarItem, calculateSimilarity, findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
+import { matchInventoryCatalog } from '@/utils/xml/inventoryCatalogMatching';
 import { createLogger } from '@/lib/logger';
 import { toTitleCase } from '@/lib/utils';
 import {
@@ -133,34 +134,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   );
 
   const findMatchedInventoryItem = useCallback(
-    (line: XMLDocumentItem): { match: InventoryCatalogItem | null; candidates: InventoryCatalogItem[] } => {
-      const codeCandidates = [
-        !isPlaceholderCode(line.product_code) ? normalizeCode(line.product_code) : '',
-        normalizeCode(line.product_name),
-        normalizeCode(line.description),
-      ].filter(Boolean);
-
-      for (const code of codeCandidates) {
-        const exactCodeMatch = inventoryCatalog.find(item =>
-          (!isPlaceholderCode(item.sku) && normalizeCode(item.sku) === code) ||
-          (!isPlaceholderCode(item.barcode) && normalizeCode(item.barcode) === code) ||
-          normalizeCode(item.name) === code
-        );
-        if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
-      }
-
-      const normalizedDesc = normalizeText(line.description);
-      const exactNameMatch = inventoryCatalog.find(item => normalizeText(item.name) === normalizedDesc);
-      if (exactNameMatch) return { match: exactNameMatch, candidates: [] };
-
-      const partialMatches = inventoryCatalog.filter(item => {
-        const itemName = normalizeText(item.name);
-        return normalizedDesc.length >= 6 && (itemName.includes(normalizedDesc) || normalizedDesc.includes(itemName));
-      });
-
-      if (partialMatches.length === 1) return { match: partialMatches[0], candidates: [] };
-      return { match: null, candidates: partialMatches };
-    },
+    (line: XMLDocumentItem) => matchInventoryCatalog(line, inventoryCatalog),
     [inventoryCatalog]
   );
 
@@ -242,9 +216,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
         else if (!Number.isInteger(quantity)) { error = 'La cantidad debe ser un número entero para el inventario.'; }
         else if (!matchedItem) {
           if (!effectiveLine.description?.trim()) error = 'La línea no tiene descripción.';
-          else error = candidates.length > 0 ? `${candidates.length} coincidencia(s) parcial(es) encontrada(s). Seleccione una.` : 'No se encontró coincidencia en el catálogo de productos.';
+          else error = candidates.length > 0 ? `${candidates.length} posible(s) producto(s) existente(s). Compara código, descripción y marca antes de vincular; no se creará uno automáticamente.` : 'No se encontró coincidencia en el catálogo de productos.';
         } else if (subtotal <= 0 && total <= 0) { error = 'La línea no tiene monto válido.'; }
         else if (!effectiveLine.description?.trim()) { warning = 'Sin descripción, se usará el nombre del producto.'; }
+        else if (!isPlaceholderCode(effectiveLine.product_code) && matchedItem.sku && normalizeCode(effectiveLine.product_code) !== normalizeCode(matchedItem.sku) && normalizeCode(effectiveLine.product_code) !== normalizeCode(matchedItem.barcode)) { warning = `Código del comprobante: ${effectiveLine.product_code}. Se usará el producto existente ${matchedItem.sku} (${matchedItem.name}), sin crear otro. Verifica la lectura del código.`; }
         else if (!effectiveLine.product_code && normalizeText(matchedItem.name) !== normalizeText(resolvedLine.description)) { warning = 'Coincidencia realizada por descripción aproximada.'; }
 
         return { key: lineKey, lineNumber, item: resolvedLine, matchedItem, candidates, error, warning };
@@ -457,6 +432,21 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     try {
       const rawCode = line.item.product_code?.trim() || null;
       const normalizedCode = !isPlaceholderCode(rawCode) ? rawCode : null;
+      const refreshed = await refetchInventoryItems();
+      if (refreshed.error || !refreshed.data) throw new Error('No se pudo verificar el catálogo antes de crear el producto.');
+      const existing = refreshed.data.filter(item =>
+        (normalizedCode && [item.sku, item.barcode].some(code => normalizeCode(code) === normalizeCode(normalizedCode))) ||
+        normalizeText(item.name) === normalizeText(name)
+      );
+      if (existing.length) {
+        if (existing.length === 1) {
+          setManualMatchedItems(prev => ({ ...prev, [lineKey]: existing[0] }));
+          toast.success(`Se vinculó el producto existente "${existing[0].name}". No se creó otro.`);
+        } else {
+          toast.error('Ya hay productos con este código o nombre. Selecciona el correcto en el catálogo; no se creó otro.');
+        }
+        return;
+      }
       const preferredCategory = categories.find(c => normalizeText(c.name).includes('implement')) || categories.find(c => normalizeText(c.name).includes('repuesto')) || null;
       await createInventoryItem.mutateAsync({
         name, description: `Creado desde importación XML ${doc.folio}`, sku: normalizedCode, barcode: null,
@@ -468,6 +458,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       toast.success(`Producto "${name}" creado y agregado al catálogo`);
     } catch (error) {
       logger.error('Error creating missing inventory product:', error);
+      toast.error('No se pudo crear el producto. Comprueba el catálogo antes de volver a intentar.');
     } finally {
       setPendingProductSuggestion(null);
       setCreatingProductKeys(prev => { const next = new Set(prev); next.delete(lineKey); return next; });
@@ -480,6 +471,16 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setCreatingProductKeys(prev => { const next = new Set(prev); next.add(lineKey); return next; });
     try {
       const similarityResult = await findSimilarItems(line.item.description.trim());
+      const catalogResult = findMatchedInventoryItem(line.item);
+      const catalogSuggestions = [catalogResult.match, ...catalogResult.candidates].filter((item): item is InventoryCatalogItem => !!item);
+      if (catalogSuggestions.length) {
+        similarityResult.similarItems = [...new Map([
+          ...catalogSuggestions.map(item => buildSimilarItem(item, Math.max(calculateSimilarity(line.item.description, item.name), calculateSimilarity(normalizeCode(line.item.product_code), normalizeCode(item.sku))), 'similar')),
+          ...similarityResult.similarItems,
+        ].map(item => [item.id, item])).values()];
+        similarityResult.shouldAlert = true;
+        similarityResult.alertMessage = 'Hay productos existentes con código o descripción similares. Revisa las diferencias antes de crear otro producto.';
+      }
       if (similarityResult.shouldAlert) { setPendingProductSuggestion({ doc, line, similarityResult }); return; }
       await createMissingProductDirect(doc, line, lineKey);
     } catch (error) {

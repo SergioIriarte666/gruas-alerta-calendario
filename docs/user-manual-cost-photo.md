@@ -15,7 +15,7 @@ El filtro de subcategoría también encuentra coincidencias dentro del detalle d
 ## Seguridad y reintentos
 
 - La RPC autoriza administradores y operadores; el servicio de lectura mantiene sus permisos actuales (administradores). Si la lectura no está disponible, el ingreso manual sigue funcionando.
-- La foto se normaliza a JPEG y se guarda en el bucket privado existente `quick-entry-photos`, bajo el usuario y el identificador de solicitud. El detalle del costo utiliza enlaces temporales para visualizarla.
+- La foto se normaliza a JPEG y se guarda en el bucket privado de Cloudflare R2 `g5n-comprobantes-compras`, bajo el usuario y el identificador de solicitud. El detalle del costo utiliza enlaces temporales para visualizarla. Los originales anteriores se trasladan desde **Costos → Respaldos en R2**, verificando cada copia antes de retirarlos de Supabase.
 - El servidor valida montos, RUT, folio, clasificación y foto, y detecta facturas previas por proveedor/folio en Costos, Proveedores o Bodega. No se vincula silenciosamente a un costo previo.
 - La identidad se resuelve por el RUT del emisor, nunca por el nombre del receptor. Si la razón social del comprobante difiere del maestro para el mismo RUT, se debe elegir explícitamente usar el nombre del comprobante o conservar el registrado antes de guardar. La primera opción actualiza el nombre de ese proveedor, también visible en sus registros históricos, sin modificar RUT ni identificador.
 - Tras un error, **Reintentar guardado** conserva el mismo identificador y los mismos datos: una respuesta perdida no crea otro costo. Para modificar datos después de un intento, cerrar y revisar primero si la factura ya está registrada.
@@ -23,7 +23,7 @@ El filtro de subcategoría también encuentra coincidencias dentro del detalle d
 
 ## Publicación
 
-Aplicar la migración `supabase/migrations/20261019001000_manual_cost_purchases.sql` antes de publicar el frontend (`npx supabase db push`). No requiere otra función de lectura ni cambios en secretos: reutiliza `parse-receipt-image`.
+Aplicar las migraciones pendientes antes de publicar el frontend (`npx supabase db push`). La lectura reutiliza `parse-receipt-image`; el respaldo usa la nueva función `purchase-receipts` y la configuración R2 documentada en `docs/technical/purchase-receipts-r2.md`.
 
 Validación local:
 

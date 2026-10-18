@@ -10,6 +10,7 @@ vi.mock('@/hooks/useCostCategories', () => ({ useCostCategories: () => ({ data: 
 vi.mock('@/hooks/useCostCenters', () => ({ useCostCenters: () => ({ data: [], isPending: false }) }));
 vi.mock('@/hooks/useCranes', () => ({ useCranes: () => ({ cranes: [{ id: 'crane', licensePlate: 'PXKZ-26' }] }) }));
 vi.mock('@/hooks/useUniversalSync', () => ({ useUniversalSync: () => ({ invalidateAll: mocks.invalidate }) }));
+vi.mock('@/hooks/useSuppliers', () => ({ useSuppliers: () => ({ suppliers: mocks.supplier ? [mocks.supplier] : [], isLoading: false, error: null }) }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: (options: { queryKey: string[] }) => ({ data: options.queryKey[0] === 'manual-cost-supplier-identity' ? mocks.supplier : [{ id: 'tools', name: 'Herramientas' }, { id: 'supplies', name: 'Consumibles' }], isFetching: false }) }));
 
 const extraction = { vendorName: 'Dicar', vendorRut: '85.355.900-8', documentNumber: '54491', date: '2026-10-15', paymentMethod: 'contado', totals: { neto: 4000, iva: 760, total: 4760 }, items: [{ productCode: '00015-A', description: 'Herramienta', quantity: 4, unitPrice: 1000, unitPriceBasis: 'net', total: 4760 }] };

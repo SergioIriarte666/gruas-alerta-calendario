@@ -8,6 +8,7 @@ import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
 import { ManualCostPurchaseDialog } from '@/components/costs/ManualCostPurchaseDialog';
+import { PurchaseReceiptMigrationDialog } from '@/components/costs/PurchaseReceiptMigrationDialog';
 import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
 import { ManualCostXmlImportDialog } from '@/components/costs/ManualCostXmlImportDialog';
 
@@ -43,6 +44,7 @@ const CostsPage = () => {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
     const [isPhotoCostOpen, setIsPhotoCostOpen] = useState(false);
+    const [isReceiptMigrationOpen, setIsReceiptMigrationOpen] = useState(false);
     const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
@@ -410,6 +412,7 @@ const CostsPage = () => {
                         <Button onClick={() => setIsPhotoCostOpen(true)} variant="outline" size={isMobile ? 'default' : 'sm'} className={isMobile ? 'w-full border-border/70 bg-card/70' : 'border-border/70 bg-card/70'}>
                             <Camera className="mr-2 size-4" />Desde foto / manual
                         </Button>
+                        {user?.role === 'admin' && <Button variant="outline" size={isMobile ? 'default' : 'sm'} className={isMobile ? 'w-full' : ''} onClick={() => setIsReceiptMigrationOpen(true)}>Respaldos en R2</Button>}
 
                         <Button
                             onClick={() => setIsCSVUploadOpen(true)}
@@ -528,6 +531,7 @@ const CostsPage = () => {
                 onSuccess={handleXMLUploadSuccess}
             />
             {isPhotoCostOpen && <ManualCostPurchaseDialog onClose={() => setIsPhotoCostOpen(false)} onSuccess={handleXMLUploadSuccess} />}
+            {isReceiptMigrationOpen && user?.role === 'admin' && <PurchaseReceiptMigrationDialog onClose={() => setIsReceiptMigrationOpen(false)} />}
 
             <CSVCostUpload
                 isOpen={isCSVUploadOpen}

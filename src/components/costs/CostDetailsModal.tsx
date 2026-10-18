@@ -1,4 +1,5 @@
 import React from 'react';
+import { createReceiptSignedUrl } from '@/services/receiptPhotos';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -26,7 +27,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { CostTraceabilityPanel } from './CostTraceabilityPanel';
-import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
@@ -147,9 +147,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
       }
       const results = await Promise.all(
         receiptPhotoPaths.map(async (path) => {
-          const { data } = await supabase.storage
-            .from('quick-entry-photos')
-            .createSignedUrl(path, 60 * 60 * 24 * 7);
+          const { data } = await createReceiptSignedUrl(path);
           return data?.signedUrl || '';
         })
       );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { createReceiptSignedUrl } from '@/services/receiptPhotos';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -95,9 +96,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
 
             const results = await Promise.all(
                 receiptPhotoPaths.map(async (path) => {
-                    const { data } = await supabase.storage
-                        .from('quick-entry-photos')
-                        .createSignedUrl(path, 60 * 60 * 24 * 7);
+                    const { data } = await createReceiptSignedUrl(path);
                     return data?.signedUrl || '';
                 }),
             );

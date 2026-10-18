@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { createReceiptSignedUrls } from '@/services/receiptPhotos';
 
 export function ReceiptPhotoAttachments({ paths, isOpen }: { paths: string[]; isOpen: boolean }) {
   const [urls, setUrls] = useState<string[]>([]);
@@ -9,7 +9,7 @@ export function ReceiptPhotoAttachments({ paths, isOpen }: { paths: string[]; is
     let active = true;
     setUrls([]); setError(false);
     if (!isOpen || !pathsKey) return;
-    void supabase.storage.from('quick-entry-photos').createSignedUrls(pathsKey.split('|'), 600).then(({ data, error: storageError }) => {
+    void createReceiptSignedUrls(pathsKey.split('|')).then(({ data, error: storageError }) => {
       if (!active) return;
       setError(!!storageError || (data || []).some(item => !!item.error));
       setUrls((data || []).flatMap(item => item.signedUrl ? [item.signedUrl] : []));

@@ -108,5 +108,28 @@ assert.deepEqual(await Promise.all(['costs', 'supplier_invoices', 'supplier_paym
 await db.exec("SET test.authorized = 'false'");
 await assert.rejects(register({ ...data, folio: '54506' }), /No autorizado/);
 assert.equal(await count('inventory_movements'), 0);
+await db.exec(`SET test.authorized = 'true'; DROP TRIGGER fail_final ON manual_purchase_registrations;
+CREATE ROLE service_role;
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA storage, auth TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON storage.objects TO authenticated;
+CREATE POLICY test_storage_permissive ON storage.objects FOR ALL TO authenticated USING (true) WITH CHECK (true);`);
+await db.exec(await readFile('supabase/migrations/20261019010000_purchase_receipts_r2.sql', 'utf8'));
+const r2Request = nextRequest();
+const r2Path = `${user}/manual-purchases/${r2Request}.jpg`;
+await db.query('INSERT INTO purchase_receipt_files(path,owner_id,request_id,r2_bucket,r2_key,size_bytes,sha256,legacy_removed) VALUES ($1,$2,$3,$4,$5,6,$6,true)', [r2Path, user, r2Request, 'g5n-comprobantes-compras', `purchase-receipts/${r2Path}`, 'A'.repeat(43) + '=']);
+const r2Cost = await register({ ...data, folio: '54506' }, r2Request, r2Path);
+assert.deepEqual((await db.query('SELECT receipt_photo_paths FROM costs WHERE id=$1', [r2Cost.cost_id])).rows[0].receipt_photo_paths, [r2Path]);
+assert.deepEqual(await register({ ...data, folio: '54506' }, r2Request, r2Path), r2Cost);
+for (const name of ['register_manual_cost_purchase', 'register_manual_inventory_purchase']) {
+  const definition = (await db.query('SELECT pg_get_functiondef($1::regprocedure) AS source', [`${name}(uuid,jsonb,text)`])).rows[0].source;
+  assert.ok(definition.includes('manual_purchase_receipt_exists(p_receipt_path)'));
+}
+await db.exec('SET ROLE authenticated');
+await assert.rejects(db.query('INSERT INTO purchase_receipt_files(path) VALUES ($1)', [r2Path]), /permission denied/);
+await assert.rejects(db.query("INSERT INTO storage.objects VALUES ('quick-entry-photos',$1)", [`${user}/manual-purchases/${nextRequest()}.jpg`]), /row-level security/);
+await db.query("INSERT INTO storage.objects VALUES ('quick-entry-photos',$1)", [`${user}/quick-entry/photo.jpg`]);
+await db.exec('RESET ROLE');
 await db.close();
 console.log('Manual Costs: real sync triggers, codes/net unit prices, per-line classification, pending/paid, header-only, private photo, cross-module duplicates, idempotency, authorization and late-failure atomic rollback passed; no inventory movements.');
+console.log('R2 receipt migration: both purchase RPCs accept service-verified receipts without storage objects; manifest is not client-writable, legacy manual uploads are blocked, other quick-entry photos remain supported.');

@@ -150,7 +150,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                       <div className="space-y-2">
                         {line.candidates.length > 0 && (
                           <div className="space-y-1">
-                            <span className="block text-xs font-medium text-muted-foreground">{line.candidates.length} sugerencia(s):</span>
+                            <span className="block text-xs font-medium text-muted-foreground">Código leído: {line.item.product_code || 'Sin código'}. {line.candidates.length} sugerencia(s). Confirma código, descripción y marca antes de usar:</span>
                             <div className="max-h-[7.5rem] space-y-1 overflow-y-auto">
                               {line.candidates.slice(0, 5).map(candidate => (
                                 <div key={candidate.id} className="flex items-center justify-between gap-1 rounded border bg-muted/50 p-1.5 text-xs">

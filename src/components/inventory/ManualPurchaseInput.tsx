@@ -10,12 +10,16 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Camera, Loader2, Plus, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/xml/xmlInventoryHelpers';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { findSupplierByIdentity } from '@/utils/supplierIdentity';
 
 type ManualInputState = Pick<ReturnType<typeof useXmlInventoryUpload>, 'manual' | 'manualPrepared' | 'prepareManualPurchase' | 'editManualPurchase' | 'isImporting'>;
 
 export function ManualPurchaseInput({ upload, allowNoDetails = false }: { upload: ManualInputState; allowNoDetails?: boolean }) {
   const { manual, manualPrepared, prepareManualPurchase, editManualPurchase, isImporting } = upload;
   const { draft, setDraft, photo, photoUrl, photoBusy, extracting, photoError, choosePhoto, readPhoto, removePhoto } = manual;
+  const { suppliers, isLoading: suppliersLoading, error: suppliersError } = useSuppliers();
+  const supplier = draft.supplierRut.trim() ? findSupplierByIdentity(suppliers, { rut: draft.supplierRut, name: draft.supplierName }) : undefined;
   const busy = isImporting || photoBusy || extracting;
   const totals = manualPurchaseTotals(draft);
   const error = validateManualPurchase(draft, allowNoDetails);
@@ -32,7 +36,7 @@ export function ManualPurchaseInput({ upload, allowNoDetails = false }: { upload
         <div className="space-y-3 rounded-xl border bg-muted/10 p-3">
           <Label htmlFor="manual-photo">Foto de la factura (opcional)</Label>
           <Input id="manual-photo" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={busy} onChange={event => { const file = event.target.files?.[0]; if (file) void choosePhoto(file); event.target.value = ''; }} />
-          <p className="text-xs text-muted-foreground">JPG, PNG, WEBP o HEIC, hasta 20 MB. Se guarda una copia JPEG legible como respaldo.</p>
+          <p className="text-xs text-muted-foreground">JPG, PNG, WEBP o HEIC, hasta 20 MB. Al confirmar se guarda una copia JPEG legible en Cloudflare R2, con acceso privado.</p>
           {photoUrl && <a href={photoUrl} target="_blank" rel="noreferrer"><img src={photoUrl} alt="Foto de respaldo de la compra" className="max-h-64 w-full rounded-lg border object-contain" /></a>}
           {photo && <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={removePhoto}>Quitar foto y conservar los datos</Button>}
           <Button type="button" variant="outline" className="w-full" disabled={!photo || busy} onClick={() => void readPhoto()}>{busy && <Loader2 className="mr-2 size-4 animate-spin" />}{extracting ? 'Leyendo factura…' : photoBusy ? 'Preparando foto…' : 'Leer foto y precargar datos'}</Button>
@@ -41,6 +45,7 @@ export function ManualPurchaseInput({ upload, allowNoDetails = false }: { upload
         </div>
         <fieldset disabled={busy} className="grid min-w-0 content-start gap-3 sm:grid-cols-2">
           {([['supplierName', 'Proveedor'], ['supplierRut', 'RUT del proveedor'], ['folio', 'Folio de factura']] as const).map(([field, label]) => <div key={field} className="space-y-1"><Label htmlFor={`manual-${field}`}>{label} *</Label><Input id={`manual-${field}`} value={draft[field]} onChange={event => setField(field, event.target.value)} maxLength={field === 'supplierName' ? 200 : 25} /></div>)}
+          {draft.supplierRut.trim() && <div role="status" className="rounded-lg border bg-muted/20 p-3 text-sm sm:col-span-2">{suppliersLoading ? 'Buscando proveedor por RUT…' : suppliersError ? 'No se pudo consultar proveedores. No es posible confirmar si ya existe.' : supplier ? <>Proveedor existente por RUT: <strong>{supplier.name}</strong> ({supplier.rut}). Se vinculará a este registro, sin crear otro. Si el nombre del comprobante difiere, podrás conservar el registrado en la revisión.</> : 'No hay coincidencia con este RUT. Comprueba que sea el RUT del emisor, no el del comprador, antes de crear un proveedor.'}</div>}
           <div className="space-y-1"><Label htmlFor="manual-issue-date">Fecha de emisión *</Label><DatePickerInput id="manual-issue-date" disabled={busy} value={draft.issueDate} onChange={value => setField('issueDate', value)} /></div>
           <div className="space-y-1"><Label htmlFor="manual-due-date">Vencimiento del comprobante</Label><DatePickerInput id="manual-due-date" disabled={busy} value={draft.dueDate} onChange={value => setField('dueDate', value)} /><p className="text-xs text-muted-foreground">Si no lo indicas, se usará la fecha de emisión. Podrás ajustarlo en Costo y pago.</p></div>
         </fieldset>

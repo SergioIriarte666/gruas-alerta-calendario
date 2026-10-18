@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createReceiptSignedUrl } from '@/services/receiptPhotos';
 import { AlertTriangle, Link2, Unlink } from 'lucide-react';
 import {
   Dialog,
@@ -12,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import {
@@ -23,7 +23,6 @@ import {
 import type { SiiRcvRecordRow } from '@/types/siiRcv';
 
 const logger = createLogger('LowboyLinkedDetail');
-const RECEIPT_BUCKET = 'quick-entry-photos';
 
 const formatCLP = (value: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
@@ -83,7 +82,7 @@ function ReceiptThumbnails({ paths }: { paths: string[] }) {
       try {
         const results = await Promise.all(
           paths.map(async (path) => {
-            const { data } = await supabase.storage.from(RECEIPT_BUCKET).createSignedUrl(path, 60 * 60);
+            const { data } = await createReceiptSignedUrl(path);
             return data?.signedUrl ?? '';
           }),
         );
