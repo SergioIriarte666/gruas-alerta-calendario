@@ -10032,6 +10032,10 @@ export type Database = {
       }
       import_xml_batch: { Args: { p_payload: Json }; Returns: Json }
       import_xml_costs: { Args: { p_payload: Json }; Returns: undefined }
+      register_manual_inventory_purchase: {
+        Args: { p_request_id: string; p_data: Json; p_receipt_path?: string | null }
+        Returns: Json
+      }
       import_xml_inventory_invoice: {
         Args: {
           p_payment_date?: string | null

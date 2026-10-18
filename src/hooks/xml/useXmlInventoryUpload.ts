@@ -10,7 +10,10 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useServices } from '@/hooks/useServices';
 import { supabase } from '@/integrations/supabase/client';
-import { XMLDocumentData, XMLDocumentItem, Supplier } from '@/types/suppliers';
+import { XMLDocumentData, XMLDocumentItem, Supplier, XMLCompleteParseResult } from '@/types/suppliers';
+import { useManualPurchaseDraft } from '@/hooks/useManualPurchaseDraft';
+import { buildManualPurchaseResult, validateManualPurchase } from '@/utils/manualPurchase';
+import { registerManualPurchase, type InventoryPurchaseArgs } from '@/services/manualPurchase';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCurrentChileDateString, parseFromDatabase } from '@/utils/timezoneUtils';
@@ -114,6 +117,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [progress, setProgress] = useState(0);
   const [pendingProductSuggestion, setPendingProductSuggestion] = useState<PendingProductSuggestion | null>(null);
   const [suggestedProductDetails, setSuggestedProductDetails] = useState<SimilarItem | null>(null);
+  const [sourceMode, setSourceMode] = useState<'xml' | 'manual'>('xml');
+  const [manualResult, setManualResult] = useState<XMLCompleteParseResult | null>(null);
+  const [manualRequestId, setManualRequestId] = useState(() => crypto.randomUUID());
+  const manual = useManualPurchaseDraft();
 
   const servicesForCosts = useMemo(() => getServicesForCosts(), [getServicesForCosts]);
   const { subcategories: costSubcategories = [] } = useCostSubcategories(selectedCostCategoryId || undefined);
@@ -156,7 +163,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   );
 
   const {
-    selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive, reset: resetParsing,
+    selectedFile: xmlFile, parseResult: xmlResult, isAnalyzing: xmlAnalyzing, getRootProps, getInputProps, isDragActive, reset: resetParsing,
   } = useXMLParsing({
     onFileSelected: () => {
       setStep(1);
@@ -184,6 +191,23 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       }
     },
   });
+  const parseResult = sourceMode === 'manual' ? manualResult : xmlResult;
+  const selectedFile = sourceMode === 'manual' ? manual.photo : xmlFile;
+  const isAnalyzing = xmlAnalyzing || manual.photoBusy || manual.extracting;
+
+  const prepareManualPurchase = () => {
+    const error = validateManualPurchase(manual.draft);
+    if (error) { toast.error(error); return; }
+    const result = buildManualPurchaseResult(manual.draft);
+    setManualResult(result);
+    setManualRequestId(crypto.randomUUID());
+    setSelectedDocuments(new Set(result.documents.map(doc => doc.folio)));
+    setManualMatchedItems({}); setLineDescriptionOverrides({}); setDiscardedLines(new Set());
+    setLineConsumptions({}); setLineCostSubcategories({}); setEditedDescriptions(new Map()); setSelectedLineKeys(new Set());
+    if (!selectedCostCategoryId) setSelectedCostCategoryId((costCategories.find(category => normalizeText(category.name).includes('inventario')) || costCategories[0])?.id || '');
+    if (!selectedLocationId) setSelectedLocationId((locations.find(location => location.code === 'MAIN') || locations[0])?.id || '');
+    toast.success('Datos preparados. Clasifica el costo y revisa los productos y sus destinos.');
+  };
 
   const validatedDocuments = useMemo<ValidatedDocument[]>(() => {
     if (!parseResult) return [];
@@ -324,6 +348,9 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
   const resetState = () => {
     resetParsing();
+    manual.reset();
+    setManualResult(null);
+    setManualRequestId(crypto.randomUUID());
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
     setManualMatchedItems({});
@@ -352,6 +379,12 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setProgress(0);
     setPendingProductSuggestion(null);
     setSuggestedProductDetails(null);
+  };
+
+  const changeSourceMode = (mode: 'xml' | 'manual') => {
+    if (isAnalyzing || isImporting || mode === sourceMode) return;
+    resetState();
+    setSourceMode(mode);
   };
 
   const handleClose = () => {
@@ -390,7 +423,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       rut: doc.supplier_rut || undefined,
       is_active: true,
       category: 'otros',
-      notes: 'Proveedor creado automáticamente desde importación XML de inventario',
+      notes: sourceMode === 'manual' ? 'Proveedor creado desde ingreso de compra manual/foto' : 'Proveedor creado automáticamente desde importación XML de inventario',
     });
     return created.id;
   };
@@ -458,9 +491,11 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
   const getReviewError = () => {
     if (configurationError) return configurationError;
+    if (sourceMode === 'manual' && !manualResult) return 'Prepara y revisa los datos de la compra manual.';
     if (selectedValidatedDocuments.length === 0) return 'Selecciona al menos una factura para importar';
     if (selectedValidatedDocuments.some(item => !item.isValid)) return 'Hay facturas seleccionadas con errores de productos';
     for (const document of selectedValidatedDocuments) {
+      if (sourceMode === 'manual' && document.lines.some(line => discardedLines.has(line.key))) return 'Una compra manual debe conservar todos sus productos para mantener los totales del comprobante.';
       for (const line of document.lines.filter(line => !discardedLines.has(line.key))) {
         const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]));
         if (error) return `Factura ${document.doc.folio}, línea ${line.lineNumber}: ${error}`;
@@ -499,10 +534,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
           const editedDesc = editedDescriptions.get(doc.folio);
           const docWithEditedDesc = editedDesc ? { ...doc, description: editedDesc } : doc;
           const productServiceDescription = buildProductDescription(docWithEditedDesc);
-          const supplierName = supplier?.name || docWithEditedDesc.description?.split(' - ').pop()?.trim() || 'Proveedor XML';
+          const supplierName = supplier?.name || supplierNameByRut.get(normalizeCode(doc.supplier_rut)) || docWithEditedDesc.description?.split(' - ').pop()?.trim() || 'Proveedor';
           const costDescription = buildCostDescription(docWithEditedDesc, supplierName);
           const primaryLineDescription = (doc.items || []).map(item => item.description?.trim()).find(Boolean) || doc.description || 'N/A';
-          const sharedNotes = [`Proveedor: ${supplierName}`, `Factura: ${doc.folio}`, `Glosa principal: ${primaryLineDescription}`, `Archivo XML: ${selectedFile?.name || 'N/A'}`, importNotes.trim()].filter(Boolean).join(' | ');
+          const sharedNotes = [`Proveedor: ${supplierName}`, `Factura: ${doc.folio}`, `Glosa principal: ${primaryLineDescription}`, sourceMode === 'manual' ? `Origen: compra ${manual.photo ? 'desde foto revisada' : 'manual'}${manual.photo ? ` (${manual.photo.name})` : ''}` : `Archivo XML: ${selectedFile?.name || 'N/A'}`, importNotes.trim()].filter(Boolean).join(' | ');
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
@@ -519,7 +554,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
           // Toda la escritura (factura, costo, pago, líneas, movimientos y consumo a grúa)
           // ocurre dentro de una sola transacción de Postgres: si cualquier paso falla,
           // no queda ningún registro parcial (ver import_xml_inventory_invoice_rpc.sql).
-          const { error: importError } = await supabase.rpc('import_xml_inventory_invoice', {
+          const purchaseArgs: InventoryPurchaseArgs = {
             p_supplier_id: supplierId,
             p_folio: doc.folio,
             p_issue_date: doc.issue_date,
@@ -531,7 +566,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_document_type: doc.document_type || 'Factura',
             p_description: costDescription,
             p_product_service_description: productServiceDescription,
-            p_xml_file_name: selectedFile?.name || null,
+            p_xml_file_name: sourceMode === 'xml' ? selectedFile?.name || null : null,
             p_is_paid: isPaid,
             p_payment_date: isPaid ? paymentDate : null,
             p_payment_reference: isPaid ? paymentReference.trim() || null : null,
@@ -545,8 +580,13 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_service_folio: selectedServiceFolio || doc.folio,
             p_notes: sharedNotes,
             p_lines: linesPayload,
-          });
-          if (importError) throw new Error(importError.message);
+          };
+          if (sourceMode === 'manual') {
+            await registerManualPurchase(manualRequestId, purchaseArgs, manual.photo);
+          } else {
+            const { error: importError } = await supabase.rpc('import_xml_inventory_invoice', purchaseArgs);
+            if (importError) throw new Error(importError.message);
+          }
 
           importedCount += 1;
           setProgress(Math.round(((index + 1) / selectedValidatedDocuments.length) * 100));
@@ -574,6 +614,8 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   };
 
   return {
+    sourceMode, changeSourceMode, manual, manualPrepared: !!manualResult, prepareManualPurchase,
+    editManualPurchase: () => { setManualResult(null); setSelectedDocuments(new Set()); setStep(1); },
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive,
     validatedDocuments, selectedValidatedDocuments, summary, inventoryCatalog, serviceSearchResults,
     selectedDocuments, toggleSelectedDocument, selectAllDocuments, clearSelectedDocuments,

@@ -79,8 +79,8 @@ describe('asistente XML con costo, pago, productos y revisión', () => {
     expect(datePicker).not.toHaveAttribute('type', 'date');
     fireEvent.click(datePicker);
     expect(screen.getByRole('grid')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('gridcell', { name: '20', exact: true }));
-    fireEvent.keyDown(screen.getByRole('gridcell', { name: '20', exact: true }), { key: 'Escape' });
+    fireEvent.click(screen.getByRole('gridcell', { name: '20' }));
+    fireEvent.keyDown(screen.getByRole('gridcell', { name: '20' }), { key: 'Escape' });
     expect(datePicker).toHaveTextContent('20/10/2026');
     fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));
     fireEvent.click(screen.getByRole('button', { name: /Revisar importación/ }));
@@ -96,10 +96,10 @@ describe('asistente XML con costo, pago, productos y revisión', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pagada' }));
     expect(screen.getByLabelText('Fecha de pago *')).not.toHaveAttribute('type', 'date');
     fireEvent.click(screen.getByLabelText('Fecha de pago *'));
-    fireEvent.click(screen.getByRole('gridcell', { name: '18', exact: true }));
+    fireEvent.click(screen.getByRole('gridcell', { name: '18' }));
     expect(screen.getByRole('button', { name: /Continuar a productos/ })).toBeDisabled();
-    fireEvent.click(screen.getByRole('gridcell', { name: '18', exact: true }));
-    fireEvent.keyDown(screen.getByRole('gridcell', { name: '18', exact: true }), { key: 'Escape' });
+    fireEvent.click(screen.getByRole('gridcell', { name: '18' }));
+    fireEvent.keyDown(screen.getByRole('gridcell', { name: '18' }), { key: 'Escape' });
     expect(screen.getByLabelText('Fecha de pago *')).toHaveTextContent('18/10/2026');
     fireEvent.change(screen.getByLabelText('Referencia de pago'), { target: { value: 'OP-123' } });
     fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));

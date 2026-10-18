@@ -151,7 +151,67 @@ const pendingPayment = await importInvoice(lines, crane, false, undefined, { pay
 assert.deepEqual((await db.query('SELECT paid_date::text, due_date::text, paid_amount, status, notes FROM supplier_payments WHERE id=$1', [pendingPayment.payment_id])).rows[0], { paid_date: null, due_date: '2026-11-15', paid_amount: '0', status: 'pending', notes: null });
 assert.equal((await db.query('SELECT due_date::text FROM supplier_invoices WHERE id=$1', [pendingPayment.invoice_id])).rows[0].due_date, '2026-11-15');
 assert.equal((await db.query("SELECT count(*)::integer AS count FROM pg_proc WHERE proname='import_xml_inventory_invoice'")).rows[0].count, 1);
+await db.exec(`
+CREATE TABLE auth.users(id uuid PRIMARY KEY);
+INSERT INTO auth.users VALUES ('00000000-0000-0000-0000-000000000001');
+CREATE SCHEMA storage;
+CREATE TABLE storage.objects(bucket_id text, name text);
+CREATE TABLE inventory_suppliers(id uuid PRIMARY KEY);
+INSERT INTO inventory_suppliers VALUES ('00000000-0000-0000-0000-000000000050');
+ALTER TABLE costs ADD COLUMN receipt_photo_paths text[];
+ALTER TABLE inventory_movements ADD COLUMN receipt_photo_paths text[];
+INSERT INTO inventory_items VALUES ('00000000-0000-0000-0000-000000000023', 'Llave rueda', 81000);
+`);
+await db.exec(await readFile('supabase/migrations/20261018233000_manual_inventory_purchases.sql', 'utf8'));
+const manualLines = [6723, 7983, 31900, 81000].map((price, index) => ({
+  line_number: index + 1, inventory_item_id: `00000000-0000-0000-0000-00000000002${index}`,
+  description: ['Dado Torx', 'Dado impacto Torx', 'Dado largo', 'Llave rueda'][index], quantity: 1,
+  unit_price: price, subtotal: price, tax_rate: 19, tax_amount: price * 19 / 100, total_amount: price * 119 / 100,
+  consumption_quantity: index < 2 ? 1 : 0, consumption_crane_id: index < 2 ? [crane, otherCrane][index] : null,
+  cost_subcategory_id: '00000000-0000-0000-0000-000000000062',
+}));
+const manualData = {
+  p_supplier_id: '00000000-0000-0000-0000-000000000050', p_folio: '54491', p_issue_date: '2026-10-15', p_due_date: '2026-10-16',
+  p_total_amount: 151851, p_net_amount: 127606, p_vat_amount: 24245, p_currency: 'CLP', p_description: 'Compra de herramientas',
+  p_product_service_description: 'Cuatro herramientas Dicar', p_is_paid: true, p_payment_date: '2026-10-15', p_payment_reference: 'Débito verificado',
+  p_location_id: '00000000-0000-0000-0000-000000000030', p_cost_category_id: '00000000-0000-0000-0000-000000000040', p_lines: manualLines,
+};
+const request = '00000000-0000-0000-0000-000000000100';
+const receiptPath = `00000000-0000-0000-0000-000000000001/manual-purchases/${request}.jpg`;
+await db.query('INSERT INTO storage.objects VALUES ($1,$2)', ['quick-entry-photos', receiptPath]);
+const registerManual = async (requestId = request, data = manualData, receipt = receiptPath) =>
+  (await db.query('SELECT register_manual_inventory_purchase($1,$2::jsonb,$3) AS result', [requestId, JSON.stringify(data), receipt])).rows[0].result;
+const manualResult = await registerManual();
+assert.deepEqual(await registerManual(), manualResult);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM costs WHERE supplier_invoice_id=$1', [manualResult.invoice_id])).rows[0].count, 1);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM supplier_payments WHERE supplier_invoice_id=$1', [manualResult.invoice_id])).rows[0].count, 1);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM supplier_invoice_items WHERE supplier_invoice_id=$1', [manualResult.invoice_id])).rows[0].count, 4);
+assert.deepEqual((await db.query('SELECT amount, receipt_photo_paths FROM costs WHERE id=$1', [manualResult.cost_id])).rows[0], { amount: '151851', receipt_photo_paths: [receiptPath] });
+assert.deepEqual((await db.query('SELECT source_module, xml_file_name FROM supplier_invoices WHERE id=$1', [manualResult.invoice_id])).rows[0], { source_module: 'inventory_photo', xml_file_name: null });
+assert.equal((await movements(manualResult.invoice_id)).filter(row => row.movement_type === 'exit').length, 2);
+assert.deepEqual((await db.query('SELECT status, paid_date::text, paid_amount FROM supplier_payments WHERE id=$1', [manualResult.payment_id])).rows[0], { status: 'paid', paid_date: '2026-10-15', paid_amount: '151851' });
+await assert.rejects(registerManual(request, { ...manualData, p_notes: 'cambiado' }), /otros datos/);
+await assert.rejects(registerManual('00000000-0000-0000-0000-000000000101', manualData, null), /ya está registrada/);
+const manualPending = await registerManual('00000000-0000-0000-0000-000000000102', { ...manualData, p_folio: '54504', p_is_paid: false, p_payment_date: null }, null);
+assert.equal((await db.query('SELECT source_module FROM supplier_invoices WHERE id=$1', [manualPending.invoice_id])).rows[0].source_module, 'inventory_manual');
+assert.deepEqual((await db.query('SELECT status, paid_date::text, paid_amount FROM supplier_payments WHERE id=$1', [manualPending.payment_id])).rows[0], { status: 'pending', paid_date: null, paid_amount: '0' });
+const invalidData = { ...manualData, p_folio: '54505' };
+const newRequest = '00000000-0000-0000-0000-000000000103';
+await assert.rejects(registerManual(newRequest, { ...invalidData, p_net_amount: 127600 }, null), /no cuadran/);
+await assert.rejects(registerManual(newRequest, { ...invalidData, p_is_paid: true, p_payment_date: null }, null), /fecha real de pago/);
+await assert.rejects(registerManual(newRequest, { ...invalidData, p_lines: manualLines.map((line, index) => index === 0 ? { ...line, quantity: 1.2 } : line) }, null), /Producto inválido/);
+await assert.rejects(registerManual(newRequest, { ...invalidData, p_lines: manualLines.map((line, index) => index === 0 ? { ...line, subtotal: 500 } : line) }, null), /no cuadran/);
+await assert.rejects(registerManual(newRequest, invalidData, 'otro/archivo.jpg'), /foto de respaldo/);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM supplier_invoices WHERE invoice_number=$1', ['54505'])).rows[0].count, 0);
+await db.exec(`CREATE FUNCTION fail_manual_registration() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Falla final de prueba'; END $$;
+CREATE TRIGGER fail_manual BEFORE INSERT ON manual_purchase_registrations FOR EACH ROW EXECUTE FUNCTION fail_manual_registration();`);
+const costCount = (await db.query('SELECT count(*)::int AS count FROM costs')).rows[0].count;
+await assert.rejects(registerManual(newRequest, invalidData, null), /Falla final de prueba/);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM costs')).rows[0].count, costCount);
+assert.equal((await db.query('SELECT count(*)::int AS count FROM supplier_invoices WHERE invoice_number=$1', ['54505'])).rows[0].count, 0);
 await db.exec("SET test.authorized = 'false'");
+await assert.rejects(registerManual(newRequest, invalidData, null), /No autorizado/);
 await assert.rejects(importInvoice(), /No autorizado/);
 await db.close();
+console.log('Manual/photo purchase: four Dicar tools, exact totals, one cost/payment, private receipt paths, multi-crane destinations, idempotent retry, duplicate rejection and late-failure atomic rollback passed.');
 console.log('XML inventory: per-line subcategories, one consolidated cost/payment, mixed destinations, partial quantities, multiple cranes, atomic rollback, cost protection and legacy compatibility passed.');

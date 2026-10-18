@@ -135,7 +135,7 @@ const Inventory = () => {
           </Tabs>
           <Button onClick={() => setIsXMLImportOpen(true)} size="sm" className="dashboard-report-button flex items-center gap-2">
             <Upload className="size-4" />
-            <span>{isMobile ? 'XML' : 'Importar XML'}</span>
+            <span>{isMobile ? 'Compra' : 'Ingresar compra'}</span>
           </Button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 import { XMLImportDialogHeader, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
 import { InventoryValidatedDocumentCard } from '@/components/inventory/InventoryValidatedDocumentCard';
 import { InventoryImportParameters } from '@/components/inventory/InventoryImportParameters';
+import { ManualPurchaseInput } from '@/components/inventory/ManualPurchaseInput';
 import { InventoryImportReview } from '@/components/inventory/InventoryImportReview';
 import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
@@ -41,6 +42,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     handleImport, handleClose, resetState, handleCreateMissingProduct, handleUseSuggestedProduct, handleCreateSuggestedNew,
     step, setStep, selectedLineKeys, setSelectedLineKeys, bulkCraneId, setBulkCraneId,
     applyBulkCrane, selectedBulkLineCount, activeSelectedLines, configurationError, reviewError,
+    sourceMode = 'xml', changeSourceMode,
   } = hook;
   const selectedInventoryTotal = selectedValidatedDocuments.reduce((sum, item) => sum + item.doc.total_amount, 0);
   const busy = isAnalyzing || isImporting;
@@ -51,7 +53,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="inventory-dialog h-[94dvh] w-[min(97vw,84rem)] max-w-[84rem] gap-0 overflow-hidden border-border/70 bg-card p-0 shadow-2xl">
-          <XMLImportDialogHeader icon={Receipt} title="Importar compra XML"
+          <XMLImportDialogHeader icon={Receipt} title={sourceMode === 'xml' ? 'Importar compra XML' : 'Registrar compra desde foto / manual'}
             description="Clasifica el costo, registra el pago y distribuye los productos."
             fileName={selectedFile?.name} documentCount={summary.totalDocs} />
           <div className="shrink-0 space-y-3 border-b px-4 py-3 sm:px-6">
@@ -71,11 +73,16 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6" aria-label={steps[step - 1]}>
             {step === 1 && <div className="space-y-4">
-              <XMLDropzoneArea selectedFile={selectedFile} parseResult={parseResult} isAnalyzing={isAnalyzing}
+              <div role="group" aria-label="Origen de la compra" className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="outline" aria-pressed={sourceMode === 'xml'} disabled={busy} onClick={() => changeSourceMode('xml')} className={cn(sourceMode === 'xml' && 'border-primary bg-primary/10')}>Desde XML</Button>
+                <Button type="button" variant="outline" aria-pressed={sourceMode === 'manual'} disabled={busy} onClick={() => changeSourceMode('manual')} className={cn(sourceMode === 'manual' && 'border-primary bg-primary/10')}>Desde foto / manual</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Al cambiar de origen se reinician los datos de esta compra sin guardar.</p>
+              {sourceMode === 'manual' ? <ManualPurchaseInput upload={hook} /> : <XMLDropzoneArea selectedFile={selectedFile} parseResult={parseResult} isAnalyzing={isAnalyzing}
                 isDragActive={isDragActive} getRootProps={getRootProps} getInputProps={getInputProps}
-                onAnalyze={() => {}} onReset={resetState} badges={['Validación por líneas', 'Match con catálogo', 'Trazabilidad completa']} />
+                onAnalyze={() => {}} onReset={resetState} badges={['Validación por líneas', 'Match con catálogo', 'Trazabilidad completa']} />}
               {parseResult?.errors?.length ? <Alert variant="destructive"><AlertCircle className="size-4" /><AlertDescription>{parseResult.errors.join(' ')}</AlertDescription></Alert> : null}
-              <InventoryImportParameters upload={hook} />
+              {(sourceMode === 'xml' || hook.manualPrepared) && <InventoryImportParameters upload={hook} />}
             </div>}
             {step === 2 && <div className="space-y-4">
                             <XMLImportStatsGrid className="sm:grid-cols-4" items={[
@@ -207,6 +214,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       isSelected={selectedDocuments.has(validatedDoc.doc.folio)}
                       onToggleSelected={checked => toggleSelectedDocument(validatedDoc.doc.folio, checked)}
                       isImporting={isImporting}
+                      allowDiscard={sourceMode === 'xml'}
                       discardedLines={discardedLines}
                       lineConsumptions={lineConsumptions}
                       onConsumptionChange={(key, value) => setLineConsumptions(previous => ({ ...previous, [key]: value }))}
@@ -241,7 +249,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
           </div>
           <div className="shrink-0 space-y-2 border-t bg-muted/20 px-4 py-3 sm:px-6">
             {step === 2 && reviewError && <p role="alert" className="text-xs text-destructive">{reviewError}</p>}
-            {step === 1 && selectedFile && configurationError && <p className="text-xs text-muted-foreground">{configurationError}</p>}
+            {step === 1 && selectedFile && (sourceMode === 'xml' || hook.manualPrepared) && configurationError && <p className="text-xs text-muted-foreground">{configurationError}</p>}
             {isImporting && <Progress value={progress} aria-label="Progreso de importación" />}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button type="button" variant="outline" disabled={busy} onClick={() => step > 1 ? setStep(step - 1) : handleClose()}>{step > 1 ? <><ChevronLeft className="mr-1 size-4" />Anterior</> : 'Cerrar'}</Button>

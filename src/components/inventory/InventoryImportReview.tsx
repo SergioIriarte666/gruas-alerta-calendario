@@ -16,6 +16,7 @@ export function InventoryImportReview({ upload }: { upload: ReturnType<typeof us
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="border-b bg-muted/20 py-4"><CardTitle className="flex items-center gap-2 text-base"><ClipboardCheck className="size-4 text-primary" />Revisión de la compra</CardTitle></CardHeader>
         <CardContent className="grid gap-5 pt-4 md:grid-cols-2">
+          {upload.sourceMode === 'manual' && <p className="rounded-lg border bg-muted/20 p-3 text-sm md:col-span-2">Origen: {upload.manual.photo ? 'foto revisada; se guardará como respaldo al confirmar' : 'ingreso manual sin foto'}. Revisa los datos transcritos; no se generará un XML fiscal.</p>}
           <div className="space-y-3">
             <p className="flex items-center gap-2 text-sm font-medium"><Tags className="size-4 text-primary" />Clasificación · importes netos</p>
             <p className="text-sm">{selectedCostCategory?.name} · {selectedCostCenter?.name || 'Sin centro de costo'}</p>

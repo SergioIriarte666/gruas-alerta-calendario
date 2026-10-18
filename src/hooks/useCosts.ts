@@ -73,6 +73,7 @@ const COSTS_LIST_SELECT_CLAUSE = `
   supplier_id,
   supplier_invoice_id,
   supplier_payment_id,
+  receipt_photo_paths,
   inventory_movement_id,
   cost_categories (id, name),
   cost_centers (id, name),

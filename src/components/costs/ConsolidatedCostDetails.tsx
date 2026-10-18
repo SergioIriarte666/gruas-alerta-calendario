@@ -41,6 +41,7 @@ import { useToast } from '@/components/ui/custom-toast';
 import { createLogger } from "@/lib/logger";
 import { getCostAuditDisplay } from '@/utils/costHelpers';
 import { summarizeInvoiceClassifications } from '@/utils/xml/xmlInventoryClassification';
+import { ReceiptPhotoAttachments } from './ReceiptPhotoAttachments';
 
 
 const logger = createLogger("ConsolidatedCostDetails");
@@ -407,6 +408,7 @@ export const ConsolidatedCostDetails = ({
             </Collapsible>
           )}
 
+          <ReceiptPhotoAttachments paths={((cost as unknown as { receipt_photo_paths?: string[] | null }).receipt_photo_paths || []).filter(Boolean)} isOpen={isOpen} />
           {supplierInvoiceDetails && (
             <div className="space-y-3">
               <Separator />
@@ -417,6 +419,7 @@ export const ConsolidatedCostDetails = ({
                     <p className="text-xs text-muted-foreground break-words">
                       Factura {(supplierInvoiceDetails as any).invoice_number}
                       {(supplierInvoiceDetails as any).xml_file_name ? ` · XML ${(supplierInvoiceDetails as any).xml_file_name}` : ''}
+                      {(supplierInvoiceDetails as any).source_module === 'inventory_photo' ? ' · Compra desde foto revisada' : (supplierInvoiceDetails as any).source_module === 'inventory_manual' ? ' · Ingreso manual' : ''}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

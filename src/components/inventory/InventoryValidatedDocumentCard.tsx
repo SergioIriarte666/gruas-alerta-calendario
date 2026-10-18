@@ -43,6 +43,7 @@ interface InventoryValidatedDocumentCardProps {
   costSubcategories: { id: string; name: string }[];
   lineCostSubcategories: Record<string, string>;
   onCostSubcategoryChange: (key: string, value: string) => void;
+  allowDiscard?: boolean;
 }
 
 export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocumentCardProps> = ({
@@ -51,6 +52,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
   lineConsumptions, onConsumptionChange, cranes, selectedLineKeys, onToggleLine,
   costSubcategories, lineCostSubcategories, onCostSubcategoryChange,
+  allowDiscard = true,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
     <CardHeader className="pb-3">
@@ -86,10 +88,10 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                   onCheckedChange={checked => onToggleLine(line.key, checked === true)} />
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-sm font-medium">{line.item.description}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{line.item.product_code || 'Sin código XML'} · {line.item.quantity} un. × {formatCurrency(line.item.unit_price)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{line.item.product_code || 'Sin código de producto'} · {line.item.quantity} un. × {formatCurrency(line.item.unit_price)}</p>
                 </div>
                 <div className="text-right"><p className="whitespace-nowrap text-sm font-semibold tabular-nums">{formatCurrency(computeLineTotal(line.item))}</p><p className="text-xs text-muted-foreground">Total de línea</p></div>
-                <Button type="button" size="sm" variant="ghost" className="size-7 shrink-0 p-0" disabled={isImporting}
+                <Button type="button" size="sm" variant="ghost" className="size-7 shrink-0 p-0" disabled={isImporting || !allowDiscard}
                   onClick={() => isDiscarded ? onRestoreLine(line.key) : onDiscardLine(line.key)}
                   aria-label={`${isDiscarded ? 'Restaurar' : 'Descartar'} línea ${line.lineNumber}`}>
                   {isDiscarded ? <RotateCcw className="size-3.5" /> : <X className="size-3.5" />}
