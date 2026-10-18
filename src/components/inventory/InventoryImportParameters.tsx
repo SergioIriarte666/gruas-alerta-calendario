@@ -1,158 +1,113 @@
 import React from 'react';
-import { Package, Receipt, Link2, ChevronDown, ChevronUp, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Tags, Wallet, Clock3, CircleCheck, Link2, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, toTitleCase } from '@/lib/utils';
-import type { ServiceSearchResult } from '@/hooks/xml/useXmlInventoryUpload';
-
-interface CostSubcategory { id: string; name: string }
-interface CostCenter { id: string; code: string; name: string; is_active: boolean }
-interface Location { id: string; name: string; code: string }
-interface CostCategory { id: string; name: string; default_cost_center_id?: string | null }
-interface Crane { id: string; licensePlate: string }
-interface Operator { id: string; name: string }
-interface ServiceRef { id: string; folio: string; client: { name: string } }
+import { formatCurrency } from '@/utils/xml/xmlInventoryHelpers';
+import type { useXmlInventoryUpload } from '@/hooks/xml/useXmlInventoryUpload';
 
 interface InventoryImportParametersProps {
-  classificationSummary: { name: string; lineCount: number; netAmount: number }[];
-  consumptionSummary: { consumed: number; stored: number };
-  locations: Location[];
-  costCategories: CostCategory[];
-  costSubcategories: CostSubcategory[];
-  costCenters: CostCenter[];
-  cranes: Crane[];
-  operators: Operator[];
-  serviceSearchResults: ServiceSearchResult[];
-  selectedLocationId: string; onLocationChange: (id: string) => void;
-  selectedCostCategoryId: string; onCostCategoryChange: (id: string) => void;
-  selectedCostSubcategory: string; onCostSubcategoryChange: (val: string) => void;
-  selectedCostCenterId: string; onCostCenterChange: (id: string) => void;
-  selectedCraneId: string; onCraneChange: (id: string) => void;
-  selectedOperatorId: string; onOperatorChange: (id: string) => void;
-  selectedServiceId: string; onServiceChange: (id: string) => void;
-  selectedServiceFolio: string; onServiceFolioChange: (folio: string) => void;
-  serviceSearchOpen: boolean; onServiceSearchOpenChange: (open: boolean) => void;
-  serviceSearchQuery: string; onServiceSearchQueryChange: (query: string) => void;
-  isPaid: boolean; onIsPaidChange: (checked: boolean) => void;
-  showAdvancedAssociations: boolean; onShowAdvancedAssociationsChange: (open: boolean) => void;
-  selectedValidatedDocumentsCount: number;
-  selectedLocation: Location | null;
-  selectedCostCategory: CostCategory | null;
-  selectedCostSubcategory: string;
-  selectedCostCenter: CostCenter | null;
-  selectedCrane: Crane | null;
-  selectedOperator: Operator | null;
-  selectedService: ServiceRef | null;
-  isAnalyzing: boolean; isImporting: boolean; progress: number;
-  onImport: () => void; onClose: () => void;
+  upload: ReturnType<typeof useXmlInventoryUpload>;
 }
 
-export const InventoryImportParameters: React.FC<InventoryImportParametersProps> = ({
-  classificationSummary,
-  consumptionSummary,
-  locations, costCategories, costSubcategories, costCenters, cranes, operators, serviceSearchResults,
-  selectedLocationId, onLocationChange, selectedCostCategoryId, onCostCategoryChange,
-  selectedCostSubcategory, onCostSubcategoryChange, selectedCostCenterId, onCostCenterChange,
-  selectedCraneId, onCraneChange, selectedOperatorId, onOperatorChange,
-  selectedServiceId, onServiceChange, selectedServiceFolio, onServiceFolioChange,
-  serviceSearchOpen, onServiceSearchOpenChange, serviceSearchQuery, onServiceSearchQueryChange,
-  isPaid, onIsPaidChange, showAdvancedAssociations, onShowAdvancedAssociationsChange,
-  selectedValidatedDocumentsCount, selectedLocation, selectedCostCategory, selectedCostCenter,
-  selectedCrane, selectedOperator, selectedService,
-  isAnalyzing, isImporting, progress, onImport, onClose,
-}) => (
-  <Card className="min-h-0 overflow-hidden border-border/70 bg-background/95 shadow-sm lg:flex lg:h-full lg:flex-col">
-    <CardHeader className="border-b border-border/70 bg-muted/20 pb-4">
-      <div className="space-y-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <span className="rounded-lg bg-primary/10 p-2 text-primary"><Package className="size-4" /></span>
-          Parámetros de Ingreso
-        </CardTitle>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={selectedLocationId ? 'default' : 'outline'} className="px-2.5 py-1">{selectedLocationId ? 'Bodega configurada' : 'Falta bodega'}</Badge>
-          <Badge variant={selectedCostCategoryId ? 'secondary' : 'outline'} className="px-2.5 py-1">{selectedCostCategoryId ? 'Costo configurado' : 'Falta categoría'}</Badge>
-          <Badge variant={consumptionSummary.consumed ? 'secondary' : 'outline'} className="px-2.5 py-1">{consumptionSummary.consumed ? `${consumptionSummary.consumed} con consumo inmediato` : 'Solo ingreso a bodega'}</Badge>
-        </div>
+export const InventoryImportParameters = ({ upload }: InventoryImportParametersProps) => {
+  const {
+    locations, costCategories, costSubcategories, costCenters, operators, serviceSearchResults,
+    selectedLocationId, setSelectedLocationId, selectedCostCategoryId, setSelectedCostCategoryId,
+    selectedCostSubcategory, setSelectedCostSubcategory, setLineCostSubcategories,
+    selectedCostCenterId, setSelectedCostCenterId, selectedOperatorId, setSelectedOperatorId,
+    selectedServiceId, setSelectedServiceId: onServiceChange, selectedService,
+    selectedServiceFolio, setSelectedServiceFolio: onServiceFolioChange,
+    serviceSearchOpen, setServiceSearchOpen: onServiceSearchOpenChange,
+    serviceSearchQuery, setServiceSearchQuery: onServiceSearchQueryChange,
+    showAdvancedAssociations, setShowAdvancedAssociations,
+    isPaid, setIsPaid, paymentDate, setPaymentDate, paymentReference, setPaymentReference,
+    dueDateOverride, setDueDateOverride, importNotes, setImportNotes, isImporting,
+    selectedValidatedDocuments,
+  } = upload;
+  const total = selectedValidatedDocuments.reduce((sum, document) => sum + document.doc.total_amount, 0);
+  const documentDueDate = selectedValidatedDocuments.length === 1
+    ? selectedValidatedDocuments[0].doc.due_date || selectedValidatedDocuments[0].doc.issue_date : '';
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="overflow-hidden border-border/70">
+          <CardHeader className="border-b bg-muted/20 py-4">
+            <CardTitle className="flex items-center gap-2 text-base"><Tags className="size-4 text-primary" />Clasificación del costo</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="xml-cost-category">Categoría de costo *</Label>
+              <Select value={selectedCostCategoryId} disabled={isImporting} onValueChange={id => {
+                setSelectedCostCategoryId(id);
+                setSelectedCostSubcategory('');
+                setLineCostSubcategories({});
+                const category = costCategories.find(item => item.id === id);
+                if (category?.default_cost_center_id) setSelectedCostCenterId(category.default_cost_center_id);
+              }}>
+                <SelectTrigger id="xml-cost-category"><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
+                <SelectContent>{costCategories.map(category => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="xml-cost-center">Centro de costo</Label>
+              <Select value={selectedCostCenterId || 'none'} disabled={isImporting} onValueChange={value => setSelectedCostCenterId(value === 'none' ? '' : value)}>
+                <SelectTrigger id="xml-cost-center"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Sin centro de costo</SelectItem>{costCenters.filter(center => center.is_active).map(center => <SelectItem key={center.id} value={center.id}>{center.code} - {center.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="xml-warehouse">Bodega de ingreso *</Label>
+              <Select value={selectedLocationId} disabled={isImporting} onValueChange={setSelectedLocationId}>
+                <SelectTrigger id="xml-warehouse"><SelectValue placeholder="Selecciona una bodega" /></SelectTrigger>
+                <SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name} ({location.code})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="xml-default-subcategory">Subcategoría predeterminada</Label>
+              <Select value={selectedCostSubcategory || 'none'} disabled={isImporting || !selectedCostCategoryId} onValueChange={value => setSelectedCostSubcategory(value === 'none' ? '' : value)}>
+                <SelectTrigger id="xml-default-subcategory"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Sin subcategoría predeterminada</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.name}>{subcategory.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Puedes elegir una subcategoría diferente para cada producto en el siguiente paso.</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="overflow-hidden border-border/70">
+          <CardHeader className="border-b bg-muted/20 py-4">
+            <CardTitle className="flex items-center gap-2 text-base"><Wallet className="size-4 text-primary" />Estado de pago</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Estado de pago">
+              <Button type="button" variant="outline" aria-pressed={!isPaid} disabled={isImporting} onClick={() => setIsPaid(false)} className={cn(!isPaid && 'border-primary bg-primary/10')}><Clock3 className="mr-2 size-4" />Pendiente</Button>
+              <Button type="button" variant="outline" aria-pressed={isPaid} disabled={isImporting} onClick={() => setIsPaid(true)} className={cn(isPaid && 'border-primary bg-primary/10')}><CircleCheck className="mr-2 size-4" />Pagada</Button>
+            </div>
+            {isPaid ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2"><Label htmlFor="xml-payment-date">Fecha de pago *</Label><Input id="xml-payment-date" type="date" value={paymentDate} disabled={isImporting} onChange={event => setPaymentDate(event.target.value)} /></div>
+                <div className="space-y-2"><Label htmlFor="xml-payment-reference">Referencia de pago</Label><Input id="xml-payment-reference" value={paymentReference} disabled={isImporting} onChange={event => setPaymentReference(event.target.value)} placeholder="N.º de operación (opcional)" maxLength={200} /></div>
+              </div>
+            ) : (
+              <div className="space-y-2"><Label htmlFor="xml-due-date">Fecha de vencimiento</Label><Input id="xml-due-date" type="date" value={dueDateOverride || documentDueDate} disabled={isImporting} onChange={event => setDueDateOverride(event.target.value)} /><p className="text-xs text-muted-foreground">{selectedValidatedDocuments.length > 1 && !dueDateOverride ? 'Se conserva el vencimiento de cada XML. Al elegir una fecha, se aplica a todas las facturas seleccionadas.' : 'La compra quedará en cuentas por pagar con este vencimiento.'}</p></div>
+            )}
+            <div className={cn('rounded-xl border p-4', isPaid ? 'border-success/20 bg-success/10' : 'border-warning/20 bg-warning/10')} aria-live="polite">
+              <div className="flex items-center justify-between gap-3"><span className="text-sm font-medium">{isPaid ? 'Pago por el total de la compra' : 'Saldo por pagar'}</span><span className="font-semibold tabular-nums">{formatCurrency(total)}</span></div>
+              <p className="mt-1 text-xs text-muted-foreground">{isPaid ? 'Se registrará la fecha indicada en el costo y en el pago al proveedor.' : 'La factura y su costo quedarán pendientes de pago.'}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Una factura, un costo consolidado y un registro de pago por documento.</p>
+          </CardContent>
+        </Card>
       </div>
-    </CardHeader>
-
-    <CardContent className="min-h-0 gap-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
-      <div
-        aria-label="Parámetros de ingreso"
-        className="h-full overflow-y-auto overscroll-contain pr-3 [scrollbar-gutter:stable]"
-      >
-        <div className="space-y-4 pb-4">
-          <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
-            <p className="font-medium">Destino por producto</p>
-            <p className="text-muted-foreground">Elige en cada línea su subcategoría y qué consumir o guardar. Seleccionar una grúa general no consume productos automáticamente.</p>
-            <p>{consumptionSummary.consumed} línea(s) con consumo · {consumptionSummary.stored} con saldo en bodega</p>
-          </div>
-          {classificationSummary.length > 0 && <div className="space-y-2 rounded-lg border border-border/60 p-3 text-sm">
-            <p className="font-medium">Clasificación · importes netos</p>
-            {classificationSummary.map(group => <div key={group.name} className="flex justify-between gap-2 text-xs">
-              <span>{group.name} ({group.lineCount})</span>
-              <span className="whitespace-nowrap">${group.netAmount.toLocaleString('es-CL')}</span>
-            </div>)}
-            <p className="text-xs text-muted-foreground">Se conserva un costo consolidado con el detalle por producto.</p>
-          </div>}
+      <details open={showAdvancedAssociations} onToggle={event => setShowAdvancedAssociations(event.currentTarget.open)} className="rounded-xl border border-border/70 bg-background p-4">
+        <summary className="cursor-pointer text-sm font-medium"><Link2 className="mr-2 inline size-4 text-muted-foreground" />Asociaciones y observaciones</summary>
+        <fieldset disabled={isImporting} className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Ubicación de Bodega</Label>
-            <Select value={selectedLocationId} onValueChange={onLocationChange}>
-              <SelectTrigger><SelectValue placeholder="Selecciona una ubicación" /></SelectTrigger>
-              <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name} ({l.code})</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Categoría de Costo</Label>
-            <Select value={selectedCostCategoryId} onValueChange={onCostCategoryChange}>
-              <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
-              <SelectContent>{costCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Subcategoría general</Label>
-            <Select value={selectedCostSubcategory || 'none'} onValueChange={val => onCostSubcategoryChange(val === 'none' ? '' : val)} disabled={!selectedCostCategoryId}>
-              <SelectTrigger><SelectValue placeholder="Sin subcategoría" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sin subcategoría</SelectItem>
-                {costSubcategories.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Se usa en las líneas que no tengan una subcategoría propia.</p>
-          </div>
-
-          <Collapsible open={showAdvancedAssociations} onOpenChange={onShowAdvancedAssociationsChange}>
-            <div className="rounded-lg border border-border/60 bg-muted/20">
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="ghost" className="flex h-auto w-full items-center justify-between px-3 py-2 hover:bg-transparent">
-                  <span className="flex items-center gap-2 text-sm font-medium"><Link2 className="size-4 text-muted-foreground" />Asociaciones avanzadas</span>
-                  {showAdvancedAssociations ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 border-t px-3 py-3">
-                <div className="space-y-2">
-                  <Label>Centro de Costo</Label>
-                  <Select value={selectedCostCenterId || 'none'} onValueChange={val => onCostCenterChange(val === 'none' ? '' : val)}>
-                    <SelectTrigger><SelectValue placeholder="Sin centro de costo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin centro de costo</SelectItem>
-                      {costCenters.filter(c => c.is_active).map(c => <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
                   <Label>Servicio</Label>
                   <Popover open={serviceSearchOpen} onOpenChange={open => { onServiceSearchOpenChange(open); if (!open) onServiceSearchQueryChange(''); }}>
                     <PopoverTrigger asChild>
@@ -188,95 +143,11 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
                   </Popover>
                   <p className="text-xs text-muted-foreground">Busca por folio, cliente, patente, grúa, operador o fecha.</p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Grúa sugerida para consumo</Label>
-                  <Select value={selectedCraneId || 'none'} onValueChange={val => onCraneChange(val === 'none' ? '' : val)}>
-                    <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
-                    <SelectContent><SelectItem value="none">Sin asociar</SelectItem>{cranes.map(c => <SelectItem key={c.id} value={c.id}>{c.licensePlate}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Operador</Label>
-                  <Select value={selectedOperatorId || 'none'} onValueChange={val => onOperatorChange(val === 'none' ? '' : val)}>
-                    <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
-                    <SelectContent><SelectItem value="none">Sin asociar</SelectItem>{operators.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Folio de Servicio</Label>
-                  <Textarea value={selectedServiceFolio} onChange={e => onServiceFolioChange(e.target.value)} rows={2} className="min-h-[3.5rem] resize-none" placeholder="Ej: F-1234" disabled={isImporting} />
-                </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
-
-          <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-success/10 p-3">
-            <Checkbox id="inventory-xml-is-paid" checked={isPaid} onCheckedChange={checked => onIsPaidChange(Boolean(checked))} disabled={isImporting} />
-            <div className="space-y-0.5">
-              <label htmlFor="inventory-xml-is-paid" className="cursor-pointer text-sm font-medium text-foreground">Marcar compra como pagada</label>
-              <p className="text-xs text-muted-foreground">Al importar, se registrará la fecha del costo como fecha de pago y la factura quedará pagada.</p>
-            </div>
-          </div>
-
-          <div className="space-y-2 rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 to-background p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Resumen del flujo</p>
-            <p>- Factura de proveedor</p>
-            <p>- Costo consolidado en el módulo de Costos</p>
-            <p>- Líneas con vínculo a producto y movimiento</p>
-            <p>- Entradas de inventario una por cada línea válida</p>
-            {consumptionSummary.consumed > 0 && <p>- Salida y registro en piezas solo por las cantidades marcadas para consumo</p>}
-          </div>
-
-          <Collapsible>
-            <div className="rounded-xl border border-border/60 bg-background/95 shadow-sm">
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="ghost" className="flex h-auto w-full items-center justify-between px-3 py-3 hover:bg-muted/30">
-                  <div className="flex items-center gap-2 text-left">
-                    <span className="rounded-md bg-primary/10 p-1.5 text-primary"><Receipt className="size-4" /></span>
-                    <div><p className="text-sm font-semibold text-foreground">Resumen activo</p><p className="text-xs text-muted-foreground">Ver configuración aplicada a {selectedValidatedDocumentsCount} documento(s)</p></div>
-                  </div>
-                  <ChevronDown className="size-4 text-muted-foreground" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="border-t px-3 py-3">
-                <div className="grid grid-cols-1 gap-2 text-xs">
-                  {([
-                    ['Bodega', selectedLocation ? `${selectedLocation.name} (${selectedLocation.code})` : 'Sin seleccionar'],
-                    ['Costo', `${selectedCostCategory?.name || 'Sin categoría'}${selectedCostSubcategory ? ` · ${selectedCostSubcategory}` : ''}`],
-                    ['Centro de costo', selectedCostCenter ? `${selectedCostCenter.code} - ${selectedCostCenter.name}` : 'Sin asignar'],
-                    ['Destino', selectedCrane ? `Grúa ${selectedCrane.licensePlate}${selectedOperator ? ` · ${selectedOperator.name}` : ''}` : 'Solo ingreso a bodega'],
-                    ['Servicio', selectedService ? `${selectedService.folio} - ${toTitleCase(selectedService.client.name)}` : 'Sin asociar'],
-                    ['Pago', isPaid ? 'Compra marcada como pagada' : 'Compra pendiente de pago'],
-                  ] as [string, string][]).map(([label, value]) => (
-                    <div key={label} className="rounded-lg bg-muted/40 px-3 py-2">
-                      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-                      <span className="font-medium text-foreground">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
-
-          {(isAnalyzing || isImporting) && (
-            <div className="space-y-2">
-              <Progress value={progress} />
-              <p className="text-xs text-muted-foreground">{isAnalyzing ? 'Analizando XML...' : 'Importando transacciones...'}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </CardContent>
-
-    <div className="space-y-2 border-t bg-muted/20 p-4">
-      <Button className="h-11 w-full text-sm font-semibold shadow-sm" onClick={onImport}
-        disabled={isAnalyzing || isImporting || selectedValidatedDocumentsCount === 0 || !selectedLocationId}>
-        {isImporting ? <><Loader2 className="mr-2 size-4 animate-spin" />Importando...</> : 'Importar a Bodega'}
-      </Button>
-      <Button variant="outline" className="h-11 w-full" onClick={onClose} disabled={isAnalyzing || isImporting}>Cerrar</Button>
+          <div className="space-y-2"><Label htmlFor="xml-operator">Operador</Label><Select value={selectedOperatorId || 'none'} disabled={isImporting} onValueChange={value => setSelectedOperatorId(value === 'none' ? '' : value)}><SelectTrigger id="xml-operator"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Sin asociar</SelectItem>{operators.map(operator => <SelectItem key={operator.id} value={operator.id}>{operator.name}</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-2"><Label htmlFor="xml-service-folio">Folio de servicio</Label><Input id="xml-service-folio" value={selectedServiceFolio} onChange={event => onServiceFolioChange(event.target.value)} placeholder="Opcional" /></div>
+          <div className="space-y-2 sm:col-span-2"><Label htmlFor="xml-import-notes">Observaciones</Label><Textarea id="xml-import-notes" value={importNotes} onChange={event => setImportNotes(event.target.value)} rows={2} /></div>
+        </fieldset>
+      </details>
     </div>
-  </Card>
-);
+  );
+};

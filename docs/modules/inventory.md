@@ -98,11 +98,14 @@ RPC y tooling frecuentes:
 - Puede adjuntar fotos del quick entry y limpiar el registro rapido al finalizar.
 
 ### 6. Importacion XML
+- El modal se organiza en tres etapas: Costo y pago, Productos y Revision. La categoria, centro de costo, bodega, estado de pago y total permanecen visibles; la escritura solo se ejecuta desde la revision final.
+- El primer paso permite elegir Pagada/Pendiente, indicar fecha de pago y referencia opcional, configurar vencimiento y agregar observaciones. La referencia se conserva en notas del costo y pago; el numero de factura sigue siendo la referencia documental del pago.
+- La grua general se reemplaza por una accion explicita sobre productos seleccionados. La asignacion masiva conserva cantidades parciales existentes y no modifica productos sin seleccionar, descartados o de facturas deseleccionadas. Elegir servicio no asigna consumos a sus gruas automaticamente.
 - `XMLInventoryUpload` soporta validacion de lineas, matching con catalogo, alta manual de producto y enlaces con compras/costos.
 - Cada linea permite mantener el producto en bodega o indicar consumo inmediato, cantidad entera y grua de destino. El saldo no consumido permanece en la bodega seleccionada.
 - Cada producto tambien puede heredar la subcategoria general, seleccionar una propia de la categoria activa o quedar expresamente sin subcategoria. Cambiar la categoria limpia las selecciones por linea para evitar referencias incompatibles.
 - Las clasificaciones se guardan en `supplier_invoice_items.cost_subcategory_id` y `cost_subcategory` (nombre conservado para trazabilidad). El detalle de Costos muestra cada clasificacion y un resumen de importes netos; la factura mantiene un solo costo y un solo pago. Si las lineas tienen clasificaciones diferentes, el costo consolidado queda sin una subcategoria global que atribuya todo el importe a una sola.
-- La grua general es una sugerencia para las lineas marcadas; no activa el consumo de toda la factura. Se conserva una factura, un costo consolidado y un pago, con movimientos vinculados por linea.
+- Se conserva una factura, un costo consolidado y un pago, con movimientos vinculados por linea. Cada consumo requiere una grua elegida por producto o asignada mediante la accion masiva.
 - Los destinos se guardan en `supplier_invoice_items.consumption_quantity` y `consumption_crane_id`; los registros anteriores mantienen ambos campos nulos. Las compras con destinos por linea conservan sus movimientos al editar Costos.
 - La importacion completa es transaccional. La regresion SQL local se ejecuta con `node scripts/tests/xml-inventory-line-consumption.mjs` y no accede a la base remota.
 - La unicidad de entradas activas se verifica por costo y linea de factura para XML; los movimientos sin linea documental conservan la unicidad por costo. Esto permite varios productos en un costo consolidado sin entradas duplicadas para la misma linea.

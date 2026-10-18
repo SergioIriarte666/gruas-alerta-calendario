@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { XMLDocumentData, XMLDocumentItem, Supplier } from '@/types/suppliers';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { getCurrentChileDateString, parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
 import { createLogger } from '@/lib/logger';
@@ -26,6 +26,7 @@ import {
 
 import { buildLineConsumptionPayload, resolveLineConsumption, validateLineConsumption, type LineConsumption } from '@/utils/xml/xmlInventoryConsumption';
 import { resolveLineSubcategoryId, summarizeInvoiceClassifications } from '@/utils/xml/xmlInventoryClassification';
+import { applyCraneToSelectedLines, isImportDateValid } from '@/utils/xml/xmlInventoryWizard';
 
 const logger = createLogger('useXmlInventoryUpload');
 
@@ -95,13 +96,19 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
   const [selectedCostSubcategory, setSelectedCostSubcategory] = useState<string>('');
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>('');
-  const [selectedCraneId, setSelectedCraneId] = useState<string>('');
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
   const [selectedServiceId, setSelectedServiceId] = useState<string>('');
   const [selectedServiceFolio, setSelectedServiceFolio] = useState<string>('');
   const [serviceSearchOpen, setServiceSearchOpen] = useState(false);
   const [serviceSearchQuery, setServiceSearchQuery] = useState('');
   const [isPaid, setIsPaid] = useState(false);
+  const [paymentDate, setPaymentDate] = useState(getCurrentChileDateString);
+  const [paymentReference, setPaymentReference] = useState('');
+  const [dueDateOverride, setDueDateOverride] = useState('');
+  const [importNotes, setImportNotes] = useState('');
+  const [step, setStep] = useState(1);
+  const [selectedLineKeys, setSelectedLineKeys] = useState<Set<string>>(new Set());
+  const [bulkCraneId, setBulkCraneId] = useState('');
   const [showAdvancedAssociations, setShowAdvancedAssociations] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [isImporting, setIsImporting] = useState(false);
@@ -153,6 +160,9 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive, reset: resetParsing,
   } = useXMLParsing({
     onFileSelected: () => {
+      setStep(1);
+      setSelectedLineKeys(new Set());
+      setBulkCraneId('');
       setSelectedDocuments(new Set());
       setLineDescriptionOverrides({});
       setManualMatchedItems({});
@@ -297,7 +307,6 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const selectedLocation = useMemo(() => locations.find(l => l.id === selectedLocationId) || null, [locations, selectedLocationId]);
   const selectedCostCategory = useMemo(() => costCategories.find(c => c.id === selectedCostCategoryId) || null, [costCategories, selectedCostCategoryId]);
   const selectedCostCenter = useMemo(() => costCenters.find(c => c.id === selectedCostCenterId) || null, [costCenters, selectedCostCenterId]);
-  const selectedCrane = useMemo(() => cranes.find(c => c.id === selectedCraneId) || null, [cranes, selectedCraneId]);
   const selectedOperator = useMemo(() => operators.find(o => o.id === selectedOperatorId) || null, [operators, selectedOperatorId]);
 
   useEffect(() => {
@@ -310,7 +319,6 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     if (!selectedServiceId) return;
     const service = servicesForCosts.find(s => s.id === selectedServiceId);
     if (!service) return;
-    setSelectedCraneId(service.crane?.id || '');
     setSelectedOperatorId(service.operator?.id || '');
     setSelectedServiceFolio(service.folio || '');
   }, [selectedServiceId, servicesForCosts]);
@@ -328,13 +336,19 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setSelectedCostCategoryId('');
     setSelectedCostSubcategory('');
     setSelectedCostCenterId('');
-    setSelectedCraneId('');
     setSelectedOperatorId('');
     setSelectedServiceId('');
     setSelectedServiceFolio('');
     setServiceSearchOpen(false);
     setServiceSearchQuery('');
     setIsPaid(false);
+    setPaymentDate(getCurrentChileDateString());
+    setPaymentReference('');
+    setDueDateOverride('');
+    setImportNotes('');
+    setStep(1);
+    setSelectedLineKeys(new Set());
+    setBulkCraneId('');
     setShowAdvancedAssociations(false);
     setIsImporting(false);
     setProgress(0);
@@ -439,22 +453,39 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     await createMissingProductDirect(pending.doc, pending.line, pending.line.key);
   };
 
-  const handleImport = async () => {
-    if (!selectedLocationId) { toast.error('Selecciona una ubicación de bodega'); return; }
-    if (!selectedCostCategoryId) { toast.error('Selecciona una categoría de costo'); return; }
-    if (selectedValidatedDocuments.length === 0) { toast.error('Selecciona al menos una factura válida para importar'); return; }
-    if (selectedValidatedDocuments.some(item => !item.isValid)) { toast.error('Hay facturas seleccionadas con errores bloqueantes'); return; }
+  const configurationError = !selectedLocationId ? 'Selecciona una ubicación de bodega'
+    : !selectedCostCategoryId ? 'Selecciona una categoría de costo'
+    : isPaid && !isImportDateValid(paymentDate) ? 'Indica una fecha de pago válida'
+    : dueDateOverride && !isImportDateValid(dueDateOverride) ? 'Indica una fecha de vencimiento válida' : null;
+
+  const getReviewError = () => {
+    if (configurationError) return configurationError;
+    if (selectedValidatedDocuments.length === 0) return 'Selecciona al menos una factura para importar';
+    if (selectedValidatedDocuments.some(item => !item.isValid)) return 'Hay facturas seleccionadas con errores de productos';
     for (const document of selectedValidatedDocuments) {
       for (const line of document.lines.filter(line => !discardedLines.has(line.key))) {
-        const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId);
-        if (error) { toast.error(`Factura ${document.doc.folio}, línea ${line.lineNumber}: ${error}`); return; }
+        const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]));
+        if (error) return `Factura ${document.doc.folio}, línea ${line.lineNumber}: ${error}`;
         const subcategoryId = lineCostSubcategories[line.key];
         if (subcategoryId && !costSubcategories.some(subcategory => subcategory.id === subcategoryId)) {
-          toast.error(`Factura ${document.doc.folio}, línea ${line.lineNumber}: selecciona una subcategoría de la categoría actual.`);
-          return;
+          return `Factura ${document.doc.folio}, línea ${line.lineNumber}: selecciona una subcategoría de la categoría actual.`;
         }
       }
     }
+    return null;
+  };
+  const reviewError = getReviewError();
+  const activeSelectedLines = selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key));
+  const selectedBulkLineCount = activeSelectedLines.filter(line => selectedLineKeys.has(line.key)).length;
+  const applyBulkCrane = () => {
+    if (!bulkCraneId || !cranes.some(crane => crane.id === bulkCraneId) || !selectedBulkLineCount) return;
+    setLineConsumptions(previous => applyCraneToSelectedLines(activeSelectedLines.map(line => ({ key: line.key, quantity: Number(line.item.quantity) })), selectedLineKeys, previous, bulkCraneId));
+    toast.success(`Grúa aplicada a ${selectedBulkLineCount} producto(s)`);
+  };
+
+  const handleImport = async () => {
+    if (isImporting) return;
+    if (reviewError) { toast.error(reviewError); return; }
 
     setIsImporting(true);
     setProgress(0);
@@ -473,12 +504,12 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
           const supplierName = supplier?.name || docWithEditedDesc.description?.split(' - ').pop()?.trim() || 'Proveedor XML';
           const costDescription = buildCostDescription(docWithEditedDesc, supplierName);
           const primaryLineDescription = (doc.items || []).map(item => item.description?.trim()).find(Boolean) || doc.description || 'N/A';
-          const sharedNotes = [`Proveedor: ${supplierName}`, `Factura: ${doc.folio}`, `Glosa principal: ${primaryLineDescription}`, `Archivo XML: ${selectedFile?.name || 'N/A'}`].join(' | ');
+          const sharedNotes = [`Proveedor: ${supplierName}`, `Factura: ${doc.folio}`, `Glosa principal: ${primaryLineDescription}`, `Archivo XML: ${selectedFile?.name || 'N/A'}`, importNotes.trim()].filter(Boolean).join(' | ');
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
             cost_subcategory_id: resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories),
-            ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId),
+            ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key])),
             line_number: line.lineNumber, inventory_item_id: line.matchedItem!.id,
             product_code: line.item.product_code || line.matchedItem?.sku || line.matchedItem?.barcode || null,
             product_name: line.item.product_name || line.matchedItem?.name || null, description: line.item.description,
@@ -494,7 +525,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_supplier_id: supplierId,
             p_folio: doc.folio,
             p_issue_date: doc.issue_date,
-            p_due_date: doc.due_date || doc.issue_date,
+            p_due_date: dueDateOverride || doc.due_date || doc.issue_date,
             p_total_amount: doc.total_amount,
             p_net_amount: doc.net_amount || activeLines.reduce((sum, line) => sum + computeLineSubtotal(line.item), 0),
             p_vat_amount: doc.vat_amount || activeLines.reduce((sum, line) => sum + computeLineTaxAmount(line.item), 0),
@@ -504,11 +535,13 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_product_service_description: productServiceDescription,
             p_xml_file_name: selectedFile?.name || null,
             p_is_paid: isPaid,
+            p_payment_date: isPaid ? paymentDate : null,
+            p_payment_reference: isPaid ? paymentReference.trim() || null : null,
             p_location_id: selectedLocationId,
             p_cost_category_id: selectedCostCategoryId,
             p_cost_subcategory: selectedCostSubcategory || 'Importación XML Bodega',
             p_cost_center_id: selectedCostCenterId || null,
-            p_crane_id: selectedCraneId || null,
+            p_crane_id: null,
             p_operator_id: selectedOperatorId || null,
             p_service_id: selectedServiceId || null,
             p_service_folio: selectedServiceFolio || doc.folio,
@@ -558,19 +591,22 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     selectedCostCategoryId, setSelectedCostCategoryId,
     selectedCostSubcategory, setSelectedCostSubcategory,
     selectedCostCenterId, setSelectedCostCenterId,
-    selectedCraneId, setSelectedCraneId,
     selectedOperatorId, setSelectedOperatorId,
     selectedServiceId, setSelectedServiceId,
     selectedServiceFolio, setSelectedServiceFolio,
     serviceSearchOpen, setServiceSearchOpen,
     serviceSearchQuery, setServiceSearchQuery,
     isPaid, setIsPaid,
+    paymentDate, setPaymentDate, paymentReference, setPaymentReference,
+    dueDateOverride, setDueDateOverride, importNotes, setImportNotes,
+    step, setStep, selectedLineKeys, setSelectedLineKeys, bulkCraneId, setBulkCraneId,
+    applyBulkCrane, selectedBulkLineCount, activeSelectedLines, configurationError, reviewError,
     showAdvancedAssociations, setShowAdvancedAssociations,
     selectedLocationId, setSelectedLocationId,
     isImporting, progress,
     pendingProductSuggestion, setPendingProductSuggestion,
     suggestedProductDetails, setSuggestedProductDetails,
-    selectedService, selectedLocation, selectedCostCategory, selectedCostCenter, selectedCrane, selectedOperator,
+    selectedService, selectedLocation, selectedCostCategory, selectedCostCenter, selectedOperator,
     locations, costCategories, costSubcategories, costCenters, cranes, operators,
     handleImport, handleClose, resetState,
     handleCreateMissingProduct, handleUseSuggestedProduct, handleCreateSuggestedNew,

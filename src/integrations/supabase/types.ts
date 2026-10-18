@@ -10034,6 +10034,8 @@ export type Database = {
       import_xml_costs: { Args: { p_payload: Json }; Returns: undefined }
       import_xml_inventory_invoice: {
         Args: {
+          p_payment_date?: string | null
+          p_payment_reference?: string | null
           p_cost_category_id: string
           p_cost_center_id: string
           p_cost_subcategory: string

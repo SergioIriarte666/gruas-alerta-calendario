@@ -38,7 +38,8 @@ interface InventoryValidatedDocumentCardProps {
   lineConsumptions: Record<string, LineConsumption>;
   onConsumptionChange: (key: string, value: LineConsumption) => void;
   cranes: { id: string; licensePlate: string }[];
-  defaultCraneId: string;
+  selectedLineKeys: Set<string>;
+  onToggleLine: (key: string, checked: boolean) => void;
   costSubcategories: { id: string; name: string }[];
   defaultCostSubcategory: string;
   lineCostSubcategories: Record<string, string>;
@@ -49,7 +50,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   validatedDoc, isSelected, onToggleSelected, isImporting, discardedLines, onDiscardLine, onRestoreLine,
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
-  lineConsumptions, onConsumptionChange, cranes, defaultCraneId,
+  lineConsumptions, onConsumptionChange, cranes, selectedLineKeys, onToggleLine,
   costSubcategories, defaultCostSubcategory, lineCostSubcategories, onCostSubcategoryChange,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
@@ -73,71 +74,67 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
       {validatedDoc.errors.length > 0 && <Alert variant="destructive"><AlertCircle className="size-4" /><AlertDescription>{validatedDoc.errors.join(' ')}</AlertDescription></Alert>}
       {validatedDoc.warnings.length > 0 && <Alert><AlertCircle className="size-4" /><AlertDescription>{validatedDoc.warnings.join(' ')}</AlertDescription></Alert>}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left">
-              <th className="pb-2 pr-3">#</th><th className="pb-2 pr-3">Codigo XML</th><th className="pb-2 pr-3">Descripcion</th>
-              <th className="pb-2 pr-3">Cantidad</th><th className="pb-2 pr-3">Unitario</th><th className="pb-2 pr-3">Total</th>
-              <th className="pb-2 pr-3">Producto</th><th className="pb-2 pr-3">Estado</th><th className="pb-2 text-center">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {validatedDoc.lines.map(line => {
-              const isDiscarded = discardedLines.has(line.key);
-              const consumption = resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]);
-              const consumptionError = validateLineConsumption(Number(line.item.quantity), consumption, defaultCraneId);
-              return (
-                <tr key={line.key} className={cn('border-b last:border-0 align-top transition-opacity', isDiscarded && 'opacity-40')}>
-                  <td className="py-2 pr-3">{line.lineNumber}</td>
-                  <td className="py-2 pr-3 font-mono text-xs">{line.item.product_code || '-'}</td>
-                  <td className="min-w-[20rem] py-2 pr-3">
-                    <div className="space-y-1">
-                      <Textarea value={line.item.description} onChange={e => onUpdateLineDescription(line.lineNumber, e.target.value)}
-                        disabled={isImporting} rows={2} className="min-h-[4.5rem] resize-y"
-                        placeholder="Edita la glosa para mejorar la coincidencia con el catálogo" />
-                      <p className="text-xs text-muted-foreground">La validación y la coincidencia se recalculan al editar la glosa.</p>
-                      <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-2">
-                        <Label htmlFor={`subcategory-${line.key}`} className="text-xs">Subcategoría del producto</Label>
-                        <Select value={lineCostSubcategories[line.key] === undefined ? 'inherit' : lineCostSubcategories[line.key] || 'none'}
-                          disabled={isImporting || isDiscarded} onValueChange={value => onCostSubcategoryChange(line.key, value)}>
-                          <SelectTrigger id={`subcategory-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="inherit">Usar general: {defaultCostSubcategory || 'Sin subcategoría'}</SelectItem>
-                            <SelectItem value="none">Sin subcategoría</SelectItem>
-                            {costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <Label htmlFor={`destination-${line.key}`} className="text-xs">Destino del producto</Label>
-                        <Select value={consumption.immediate ? 'consume' : 'store'} disabled={isImporting || isDiscarded}
-                          onValueChange={value => onConsumptionChange(line.key, { ...consumption, immediate: value === 'consume' })}>
-                          <SelectTrigger id={`destination-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="store">Mantener en bodega</SelectItem><SelectItem value="consume">Consumo inmediato</SelectItem></SelectContent>
-                        </Select>
-                        {consumption.immediate && <>
-                          <Label htmlFor={`crane-${line.key}`} className="text-xs">Grúa de destino</Label>
-                          <Select value={consumption.craneId || defaultCraneId || 'none'} disabled={isImporting || isDiscarded}
-                            onValueChange={value => onConsumptionChange(line.key, { ...consumption, craneId: value === 'none' ? '' : value })}>
-                            <SelectTrigger id={`crane-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="none">Selecciona una grúa</SelectItem>{cranes.map(crane => <SelectItem key={crane.id} value={crane.id}>{crane.licensePlate}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <div className="flex items-center justify-between gap-2">
-                            <Label htmlFor={`consume-${line.key}`} className="text-xs">Cantidad a consumir</Label>
-                            <Input id={`consume-${line.key}`} type="number" min={1} max={Number(line.item.quantity)} step={1}
-                              className="h-8 w-24" value={Number.isNaN(consumption.quantity) ? '' : consumption.quantity} disabled={isImporting || isDiscarded}
-                              onChange={event => onConsumptionChange(line.key, { ...consumption, quantity: event.target.value === '' ? NaN : Number(event.target.value) })} />
-                          </div>
-                          {consumptionError ? <p role="alert" className="text-xs text-destructive">{consumptionError}</p>
-                            : <p className="text-xs text-muted-foreground">{consumption.quantity} a consumo · {Number(line.item.quantity) - consumption.quantity} permanece(n) en bodega</p>}
-                        </>}
-                      </div>
+      <div className="space-y-3">
+        {validatedDoc.lines.map(line => {
+          const isDiscarded = discardedLines.has(line.key);
+          const consumption = resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]);
+          const consumptionError = validateLineConsumption(Number(line.item.quantity), consumption);
+          return (
+            <div key={line.key} className={cn('space-y-3 rounded-xl border border-border/70 bg-background p-4', isDiscarded && 'opacity-50')}>
+              <div className="flex items-start gap-3">
+                <Checkbox aria-label={`Seleccionar producto ${line.lineNumber} de factura ${validatedDoc.doc.folio}`} className="mt-1"
+                  checked={selectedLineKeys.has(line.key)} disabled={isImporting || isDiscarded || !isSelected}
+                  onCheckedChange={checked => onToggleLine(line.key, checked === true)} />
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-medium">{line.item.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{line.item.product_code || 'Sin código XML'} · {line.item.quantity} un. × {formatCurrency(line.item.unit_price)}</p>
+                </div>
+                <div className="text-right"><p className="whitespace-nowrap text-sm font-semibold tabular-nums">{formatCurrency(computeLineTotal(line.item))}</p><p className="text-xs text-muted-foreground">Total de línea</p></div>
+                <Button type="button" size="sm" variant="ghost" className="size-7 shrink-0 p-0" disabled={isImporting}
+                  onClick={() => isDiscarded ? onRestoreLine(line.key) : onDiscardLine(line.key)}
+                  aria-label={`${isDiscarded ? 'Restaurar' : 'Descartar'} línea ${line.lineNumber}`}>
+                  {isDiscarded ? <RotateCcw className="size-3.5" /> : <X className="size-3.5" />}
+                </Button>
+              </div>
+              {isDiscarded ? <Badge variant="outline">Línea descartada</Badge> : <>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_120px]">
+                  <div className="space-y-2">
+                    <Label htmlFor={`subcategory-${line.key}`}>Subcategoría del producto</Label>
+                    <Select value={lineCostSubcategories[line.key] === undefined ? 'inherit' : lineCostSubcategories[line.key] || 'none'} disabled={isImporting}
+                      onValueChange={value => onCostSubcategoryChange(line.key, value)}>
+                      <SelectTrigger id={`subcategory-${line.key}`}><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="inherit">Usar general: {defaultCostSubcategory || 'Sin subcategoría'}</SelectItem><SelectItem value="none">Sin subcategoría</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`destination-${line.key}`}>Destino del producto</Label>
+                    <Select value={consumption.immediate ? 'consume' : 'store'} disabled={isImporting}
+                      onValueChange={value => onConsumptionChange(line.key, { ...consumption, immediate: value === 'consume' })}>
+                      <SelectTrigger id={`destination-${line.key}`}><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="store">Mantener en bodega</SelectItem><SelectItem value="consume">Consumo inmediato</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  {consumption.immediate ? <>
+                    <div className="space-y-2"><Label htmlFor={`crane-${line.key}`}>Grúa de destino</Label>
+                      <Select value={consumption.craneId || 'none'} disabled={isImporting} onValueChange={value => onConsumptionChange(line.key, { ...consumption, craneId: value === 'none' ? '' : value })}>
+                        <SelectTrigger id={`crane-${line.key}`}><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="none">Selecciona una grúa</SelectItem>{cranes.map(crane => <SelectItem key={crane.id} value={crane.id}>{crane.licensePlate}</SelectItem>)}</SelectContent>
+                      </Select>
                     </div>
-                  </td>
-                  <td className="py-2 pr-3">{line.item.quantity}</td>
-                  <td className="py-2 pr-3">{formatCurrency(line.item.unit_price)}</td>
-                  <td className="py-2 pr-3">{formatCurrency(computeLineTotal(line.item))}</td>
-                  <td className="min-w-[17.5rem] py-2 pr-3">
-                    {line.matchedItem ? (
+                    <div className="space-y-2"><Label htmlFor={`consume-${line.key}`}>Cantidad a consumir</Label>
+                      <Input id={`consume-${line.key}`} type="number" min={1} max={Number(line.item.quantity)} step={1} value={Number.isNaN(consumption.quantity) ? '' : consumption.quantity} disabled={isImporting}
+                        onChange={event => onConsumptionChange(line.key, { ...consumption, quantity: event.target.value === '' ? NaN : Number(event.target.value) })} />
+                    </div>
+                  </> : <p className="self-end rounded-lg bg-muted/30 px-3 py-2 text-sm text-muted-foreground sm:col-span-2">{line.item.quantity} unidad(es) permanece(n) en bodega</p>}
+                </div>
+                {consumption.immediate && (consumptionError ? <p role="alert" className="text-xs text-destructive">{consumptionError}</p>
+                  : <p className="text-xs text-muted-foreground">{consumption.quantity} a consumo · {Number(line.item.quantity) - consumption.quantity} permanece(n) en bodega</p>)}
+              </>}
+              {line.error ? <p className="text-xs text-destructive">{line.error}</p> : line.warning ? <p className="text-xs text-muted-foreground">{line.warning}</p> : <Badge variant="outline" className="gap-1"><CheckCircle2 className="size-3" />Producto validado</Badge>}
+              <details open={!line.matchedItem} className="rounded-lg border border-border/60 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-medium">Producto en catálogo{line.matchedItem ? `: ${line.matchedItem.name}` : ': vincular o crear'}</summary>
+                <div className="mt-2">
+                                      {line.matchedItem ? (
                       <div>
                         <div className="font-medium">{line.matchedItem.name}</div>
                         <div className="text-xs text-muted-foreground">{line.matchedItem.sku || line.matchedItem.barcode || 'Sin SKU'}</div>
@@ -195,30 +192,17 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                         </Button>
                       </div>
                     )}
-                  </td>
-                  <td className="py-2">
-                    {line.error ? <Badge variant="destructive">{line.error}</Badge>
-                      : line.warning ? <Badge variant="secondary">{line.warning}</Badge>
-                      : <Badge variant="default" className="gap-1"><CheckCircle2 className="size-3" />OK</Badge>}
-                  </td>
-                  <td className="py-2 text-center">
-                    {isDiscarded ? (
-                      <Button type="button" size="sm" variant="ghost" className="size-7 p-0 text-success hover:bg-success/10 hover:text-success"
-                        onClick={() => onRestoreLine(line.key)} disabled={isImporting} title="Restaurar línea">
-                        <RotateCcw className="size-3.5" />
-                      </Button>
-                    ) : (
-                      <Button type="button" size="sm" variant="ghost" className="size-7 p-0 text-danger hover:bg-danger-soft hover:text-danger"
-                        onClick={() => onDiscardLine(line.key)} disabled={isImporting} title="Descartar línea">
-                        <X className="size-3.5" />
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                </div>
+              </details>
+              <details className="rounded-lg border border-border/60 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-medium">Editar glosa del producto</summary>
+                <Label htmlFor={`description-${line.key}`} className="sr-only">Glosa del producto {line.lineNumber}</Label>
+                <Textarea id={`description-${line.key}`} className="mt-2" value={line.item.description} disabled={isImporting} rows={2} onChange={event => onUpdateLineDescription(line.lineNumber, event.target.value)} />
+                <p className="mt-1 text-xs text-muted-foreground">La coincidencia con el catálogo se recalcula al editar.</p>
+              </details>
+            </div>
+          );
+        })}
       </div>
     </CardContent>
   </Card>
