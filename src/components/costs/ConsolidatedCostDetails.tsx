@@ -40,6 +40,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 import { createLogger } from "@/lib/logger";
 import { getCostAuditDisplay } from '@/utils/costHelpers';
+import { summarizeInvoiceClassifications } from '@/utils/xml/xmlInventoryClassification';
 
 
 const logger = createLogger("ConsolidatedCostDetails");
@@ -149,6 +150,7 @@ export const ConsolidatedCostDetails = ({
             tax_rate,
             tax_amount,
             total_amount,
+            cost_subcategory,
             movement_id,
             inventory_item:inventory_items(id, name, sku, barcode)
           )
@@ -171,6 +173,7 @@ export const ConsolidatedCostDetails = ({
   });
 
   const invoiceItems = ((supplierInvoiceDetails as any)?.items || []) as Array<any>;
+  const classificationSummary = summarizeInvoiceClassifications(invoiceItems, cost.subcategory);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -444,12 +447,24 @@ export const ConsolidatedCostDetails = ({
                   </div>
                 </div>
 
+                <div className="rounded-lg border border-border bg-muted/20 p-3">
+                  <p className="mb-2 text-sm font-medium">Clasificación por producto · importes netos</p>
+                  <div className="space-y-1 text-sm">
+                    {classificationSummary.map(group => <div key={group.name} className="flex items-center justify-between gap-3">
+                      <span>{group.name} · {group.lineCount} línea(s)</span>
+                      <span className="font-medium">{formatCurrency(group.netAmount)}</span>
+                    </div>)}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">La factura mantiene un solo costo consolidado. El IVA se muestra en el total del documento.</p>
+                </div>
+
                 <div className="overflow-x-auto rounded-lg border border-border">
                   <table className="min-w-[47.5rem] w-full text-sm">
                     <thead className="bg-muted/40">
                       <tr className="text-left">
                         <th className="px-3 py-2">Codigo</th>
                         <th className="px-3 py-2">Descripcion</th>
+                        <th className="px-3 py-2">Subcategoría</th>
                         <th className="px-3 py-2">Cantidad</th>
                         <th className="px-3 py-2">Unitario</th>
                         <th className="px-3 py-2">Subtotal</th>
@@ -471,6 +486,7 @@ export const ConsolidatedCostDetails = ({
                               </div>
                             )}
                           </td>
+                          <td className="px-3 py-2 whitespace-nowrap">{(item.cost_subcategory ?? cost.subcategory) || 'Sin subcategoría'}</td>
                           <td className="px-3 py-2 whitespace-nowrap">{item.quantity}</td>
                           <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(Number(item.unit_price || 0))}</td>
                           <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(Number(item.subtotal || 0))}</td>

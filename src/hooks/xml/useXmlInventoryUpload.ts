@@ -25,6 +25,7 @@ import {
 } from '@/utils/xml/xmlInventoryHelpers';
 
 import { buildLineConsumptionPayload, resolveLineConsumption, validateLineConsumption, type LineConsumption } from '@/utils/xml/xmlInventoryConsumption';
+import { resolveLineSubcategoryId, summarizeInvoiceClassifications } from '@/utils/xml/xmlInventoryClassification';
 
 const logger = createLogger('useXmlInventoryUpload');
 
@@ -88,6 +89,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
   const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
   const [lineConsumptions, setLineConsumptions] = useState<Record<string, LineConsumption>>({});
+  const [lineCostSubcategories, setLineCostSubcategories] = useState<Record<string, string>>({});
   const [catalogSearchOpen, setCatalogSearchOpen] = useState<Record<string, boolean>>({});
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
@@ -156,6 +158,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       setManualMatchedItems({});
       setDiscardedLines(new Set());
       setLineConsumptions({});
+      setLineCostSubcategories({});
       setEditedDescriptions(new Map());
     },
     onParsed: (result) => {
@@ -251,6 +254,13 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     };
   }, [selectedValidatedDocuments, discardedLines, lineConsumptions]);
 
+  const classificationSummary = useMemo(() => summarizeInvoiceClassifications(
+    selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key)).map(line => {
+      const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories);
+      return { cost_subcategory: costSubcategories.find(subcategory => subcategory.id === subcategoryId)?.name || '', subtotal: computeLineSubtotal(line.item) };
+    })
+  ), [selectedValidatedDocuments, discardedLines, lineCostSubcategories, selectedCostSubcategory, costSubcategories]);
+
   const summary = useMemo(() => ({
     totalDocs: validatedDocuments.length,
     validDocs: validatedDocuments.filter(item => item.isValid).length,
@@ -312,6 +322,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setManualMatchedItems({});
     setDiscardedLines(new Set());
     setLineConsumptions({});
+    setLineCostSubcategories({});
     setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
@@ -437,6 +448,11 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       for (const line of document.lines.filter(line => !discardedLines.has(line.key))) {
         const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId);
         if (error) { toast.error(`Factura ${document.doc.folio}, línea ${line.lineNumber}: ${error}`); return; }
+        const subcategoryId = lineCostSubcategories[line.key];
+        if (subcategoryId && !costSubcategories.some(subcategory => subcategory.id === subcategoryId)) {
+          toast.error(`Factura ${document.doc.folio}, línea ${line.lineNumber}: selecciona una subcategoría de la categoría actual.`);
+          return;
+        }
       }
     }
 
@@ -461,6 +477,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
+            cost_subcategory_id: resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories),
             ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]), selectedCraneId),
             line_number: line.lineNumber, inventory_item_id: line.matchedItem!.id,
             product_code: line.item.product_code || line.matchedItem?.sku || line.matchedItem?.barcode || null,
@@ -534,6 +551,8 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines,
     lineConsumptions, setLineConsumptions, consumptionSummary,
+    lineCostSubcategories, setLineCostSubcategories,
+    classificationSummary,
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,
     selectedCostCategoryId, setSelectedCostCategoryId,

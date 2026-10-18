@@ -33,6 +33,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines,
     lineConsumptions, setLineConsumptions, consumptionSummary,
+    lineCostSubcategories, setLineCostSubcategories,
+    classificationSummary,
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,
     selectedCostCategoryId, setSelectedCostCategoryId,
@@ -192,6 +194,15 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       onConsumptionChange={(key, value) => setLineConsumptions(previous => ({ ...previous, [key]: value }))}
                       cranes={cranes}
                       defaultCraneId={selectedCraneId}
+                      costSubcategories={costSubcategories}
+                      defaultCostSubcategory={selectedCostSubcategory}
+                      lineCostSubcategories={lineCostSubcategories}
+                      onCostSubcategoryChange={(key, value) => setLineCostSubcategories(previous => {
+                        const next = { ...previous };
+                        if (value === 'inherit') delete next[key];
+                        else next[key] = value === 'none' ? '' : value;
+                        return next;
+                      })}
                       onDiscardLine={key => setDiscardedLines(prev => new Set(prev).add(key))}
                       onRestoreLine={key => setDiscardedLines(prev => { const next = new Set(prev); next.delete(key); return next; })}
                       manualMatchedItems={manualMatchedItems}
@@ -212,12 +223,13 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
             </div>
 
             <InventoryImportParameters
+              classificationSummary={classificationSummary}
               consumptionSummary={consumptionSummary}
               locations={locations} costCategories={costCategories} costSubcategories={costSubcategories}
               costCenters={costCenters} cranes={cranes} operators={operators} serviceSearchResults={serviceSearchResults}
               selectedLocationId={selectedLocationId} onLocationChange={setSelectedLocationId}
               selectedCostCategoryId={selectedCostCategoryId}
-              onCostCategoryChange={id => { setSelectedCostCategoryId(id); setSelectedCostSubcategory(''); const cat = costCategories.find(c => c.id === id); if (!selectedCostCenterId && cat?.default_cost_center_id) setSelectedCostCenterId(cat.default_cost_center_id); }}
+              onCostCategoryChange={id => { setSelectedCostCategoryId(id); setSelectedCostSubcategory(''); setLineCostSubcategories({}); const cat = costCategories.find(c => c.id === id); if (!selectedCostCenterId && cat?.default_cost_center_id) setSelectedCostCenterId(cat.default_cost_center_id); }}
               selectedCostSubcategory={selectedCostSubcategory} onCostSubcategoryChange={setSelectedCostSubcategory}
               selectedCostCenterId={selectedCostCenterId} onCostCenterChange={setSelectedCostCenterId}
               selectedCraneId={selectedCraneId} onCraneChange={setSelectedCraneId}

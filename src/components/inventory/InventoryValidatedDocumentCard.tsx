@@ -39,6 +39,10 @@ interface InventoryValidatedDocumentCardProps {
   onConsumptionChange: (key: string, value: LineConsumption) => void;
   cranes: { id: string; licensePlate: string }[];
   defaultCraneId: string;
+  costSubcategories: { id: string; name: string }[];
+  defaultCostSubcategory: string;
+  lineCostSubcategories: Record<string, string>;
+  onCostSubcategoryChange: (key: string, value: string) => void;
 }
 
 export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocumentCardProps> = ({
@@ -46,6 +50,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
   lineConsumptions, onConsumptionChange, cranes, defaultCraneId,
+  costSubcategories, defaultCostSubcategory, lineCostSubcategories, onCostSubcategoryChange,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
     <CardHeader className="pb-3">
@@ -93,6 +98,16 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                         placeholder="Edita la glosa para mejorar la coincidencia con el catálogo" />
                       <p className="text-xs text-muted-foreground">La validación y la coincidencia se recalculan al editar la glosa.</p>
                       <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-2">
+                        <Label htmlFor={`subcategory-${line.key}`} className="text-xs">Subcategoría del producto</Label>
+                        <Select value={lineCostSubcategories[line.key] === undefined ? 'inherit' : lineCostSubcategories[line.key] || 'none'}
+                          disabled={isImporting || isDiscarded} onValueChange={value => onCostSubcategoryChange(line.key, value)}>
+                          <SelectTrigger id={`subcategory-${line.key}`} className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inherit">Usar general: {defaultCostSubcategory || 'Sin subcategoría'}</SelectItem>
+                            <SelectItem value="none">Sin subcategoría</SelectItem>
+                            {costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                         <Label htmlFor={`destination-${line.key}`} className="text-xs">Destino del producto</Label>
                         <Select value={consumption.immediate ? 'consume' : 'store'} disabled={isImporting || isDiscarded}
                           onValueChange={value => onConsumptionChange(line.key, { ...consumption, immediate: value === 'consume' })}>

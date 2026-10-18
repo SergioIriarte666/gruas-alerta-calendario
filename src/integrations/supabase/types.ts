@@ -7804,6 +7804,8 @@ export type Database = {
       }
       supplier_invoice_items: {
         Row: {
+          cost_subcategory_id: string | null
+          cost_subcategory: string | null
           consumption_quantity: number | null
           consumption_crane_id: string | null
           created_at: string
@@ -7825,6 +7827,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost_subcategory_id?: string | null
+          cost_subcategory?: string | null
           consumption_quantity?: number | null
           consumption_crane_id?: string | null
           created_at?: string
@@ -7846,6 +7850,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost_subcategory_id?: string | null
+          cost_subcategory?: string | null
           consumption_quantity?: number | null
           consumption_crane_id?: string | null
           created_at?: string
@@ -7867,6 +7873,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_invoice_items_cost_subcategory_id_fkey"
+            columns: ["cost_subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "cost_subcategories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_invoice_items_created_by_fkey"
             columns: ["created_by"]

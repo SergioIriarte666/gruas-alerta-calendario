@@ -23,6 +23,7 @@ interface Operator { id: string; name: string }
 interface ServiceRef { id: string; folio: string; client: { name: string } }
 
 interface InventoryImportParametersProps {
+  classificationSummary: { name: string; lineCount: number; netAmount: number }[];
   consumptionSummary: { consumed: number; stored: number };
   locations: Location[];
   costCategories: CostCategory[];
@@ -56,6 +57,7 @@ interface InventoryImportParametersProps {
 }
 
 export const InventoryImportParameters: React.FC<InventoryImportParametersProps> = ({
+  classificationSummary,
   consumptionSummary,
   locations, costCategories, costSubcategories, costCenters, cranes, operators, serviceSearchResults,
   selectedLocationId, onLocationChange, selectedCostCategoryId, onCostCategoryChange,
@@ -91,9 +93,17 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
         <div className="space-y-4 pb-4">
           <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
             <p className="font-medium">Destino por producto</p>
-            <p className="text-muted-foreground">Elige en cada línea qué consumir y qué guardar. Seleccionar una grúa general no consume productos automáticamente.</p>
+            <p className="text-muted-foreground">Elige en cada línea su subcategoría y qué consumir o guardar. Seleccionar una grúa general no consume productos automáticamente.</p>
             <p>{consumptionSummary.consumed} línea(s) con consumo · {consumptionSummary.stored} con saldo en bodega</p>
           </div>
+          {classificationSummary.length > 0 && <div className="space-y-2 rounded-lg border border-border/60 p-3 text-sm">
+            <p className="font-medium">Clasificación · importes netos</p>
+            {classificationSummary.map(group => <div key={group.name} className="flex justify-between gap-2 text-xs">
+              <span>{group.name} ({group.lineCount})</span>
+              <span className="whitespace-nowrap">${group.netAmount.toLocaleString('es-CL')}</span>
+            </div>)}
+            <p className="text-xs text-muted-foreground">Se conserva un costo consolidado con el detalle por producto.</p>
+          </div>}
           <div className="space-y-2">
             <Label>Ubicación de Bodega</Label>
             <Select value={selectedLocationId} onValueChange={onLocationChange}>
@@ -111,7 +121,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
           </div>
 
           <div className="space-y-2">
-            <Label>Subcategoría</Label>
+            <Label>Subcategoría general</Label>
             <Select value={selectedCostSubcategory || 'none'} onValueChange={val => onCostSubcategoryChange(val === 'none' ? '' : val)} disabled={!selectedCostCategoryId}>
               <SelectTrigger><SelectValue placeholder="Sin subcategoría" /></SelectTrigger>
               <SelectContent>
@@ -119,6 +129,7 @@ export const InventoryImportParameters: React.FC<InventoryImportParametersProps>
                 {costSubcategories.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">Se usa en las líneas que no tengan una subcategoría propia.</p>
           </div>
 
           <Collapsible open={showAdvancedAssociations} onOpenChange={onShowAdvancedAssociationsChange}>
