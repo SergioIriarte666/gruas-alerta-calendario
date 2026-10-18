@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
+import { invoiceItemProperties, invoiceItemRules } from "./invoiceExtraction.ts";
 
 const allowedRoles = ["admin"] as const;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -116,7 +117,7 @@ serve(async (req: Request) => {
         if (buf.byteLength > MAX_IMAGE_BYTES) {
           return jsonResponse({ error: "La imagen excede el tamaño máximo permitido" }, 400);
         }
-        dataUrl = `data:${mime};base64,${base64Encode(buf)}`;
+        dataUrl = `data:${mime};base64,${base64Encode(buf.buffer)}`;
       } catch (downloadErr) {
         console.error("Image download error:", downloadErr);
         const message = downloadErr instanceof Error ? downloadErr.message : "No se pudo descargar la imagen";
@@ -141,6 +142,7 @@ Reglas:
 - Si la factura tiene neto + IVA + total, devuelve los tres. Si solo hay total (boleta), devuelve solo total.
 - Intenta extraer medio de pago si aparece (efectivo, débito, crédito, transferencia, cheque, otro).
 - Si la factura tiene múltiples ítems/líneas, devuélvelos en "items" con descripción, cantidad, precio unitario y total. Si no hay líneas claras, omite items.
+${invoiceItemRules}
 `
       : `Eres un extractor de datos de comprobantes de gasto chilenos (boleta/factura) a partir de una imagen.
 Devuelve SIEMPRE datos estructurados usando la herramienta extract_receipt.
@@ -196,9 +198,9 @@ Reglas:
                   totals: {
                     type: "object",
                     properties: {
-                      neto: { type: "number" },
-                      iva: { type: "number" },
-                      total: { type: "number" },
+                      neto: { type: docMode === "invoice" ? ["number", "null"] : "number" },
+                      iva: { type: docMode === "invoice" ? ["number", "null"] : "number" },
+                      total: { type: docMode === "invoice" ? ["number", "null"] : "number" },
                     },
                     required: ["total"],
                   },
@@ -209,12 +211,13 @@ Reglas:
                     description: "Líneas/ítems de la factura cuando existan. Omitir si no hay detalle.",
                     items: {
                       type: "object",
-                      properties: {
+                      properties: docMode === "invoice" ? invoiceItemProperties : {
                         description: { type: "string" },
                         quantity: { type: "number" },
                         unitPrice: { type: "number" },
                         total: { type: "number" },
                       },
+                      ...(docMode === "invoice" && { required: ["productCode", "description", "quantity", "unitPrice", "unitPriceBasis", "total"] }),
                     },
                   },
                   confidence: {

@@ -73,7 +73,11 @@ export function validateManualPurchase(draft: ManualPurchaseDraft): string | nul
   }
   if ([draft.net, draft.vat, draft.total].some(value => !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) || Number(draft.total) <= 0) return 'Completa neto, IVA y total con los importes del comprobante.';
   const calculated = manualPurchaseTotals(draft);
-  if (Math.abs(calculated.net - Number(draft.net)) > 1 || Math.abs(calculated.vat - Number(draft.vat)) > 1 || Math.abs(Number(draft.net) + Number(draft.vat) - Number(draft.total)) > 1) return 'Los productos, el IVA y el total no cuadran. Revisa los precios netos y el comprobante.';
+  const money = (value: number) => `$${value.toLocaleString('es-CL', { maximumFractionDigits: 2 })}`;
+  if (Math.abs(calculated.net - Number(draft.net)) > 1) return `Neto no cuadra: comprobante ${money(Number(draft.net))}; cantidad × precio unitario neto ${money(calculated.net)} (diferencia ${money(Math.abs(calculated.net - Number(draft.net)))}). Revisa cantidades y precios unitarios.`;
+  if (Math.abs(calculated.vat - Number(draft.vat)) > 1) return `IVA no cuadra: comprobante ${money(Number(draft.vat))}; calculado ${money(calculated.vat)} (diferencia ${money(Math.abs(calculated.vat - Number(draft.vat)))}). Revisa el IVA leído en la foto.`;
+  const headerTotal = Number(draft.net) + Number(draft.vat);
+  if (Math.abs(headerTotal - Number(draft.total)) > 1) return `Total no cuadra: comprobante ${money(Number(draft.total))}; neto + IVA ${money(headerTotal)} (diferencia ${money(Math.abs(headerTotal - Number(draft.total)))}). Revisa el total del comprobante.`;
   return null;
 }
 
@@ -97,13 +101,11 @@ export function draftFromReceiptExtraction(value: unknown): ManualPurchaseDraft 
   const receipt = record(value);
   const totals = record(receipt.totals);
   const items = Array.isArray(receipt.items) ? receipt.items.slice(0, 100).map(record) : [];
-  const lineSum = items.reduce((sum, item) => sum + (Number(item.total) || Number(item.unitPrice) * Number(item.quantity) || 0), 0);
-  const grossPrices = Number(totals.iva) > 0 && Math.abs(lineSum - Number(totals.total)) <= 2 && Math.abs(lineSum - Number(totals.neto)) > 2;
   return {
     supplierName: text(receipt.vendorName), supplierRut: normalizePurchaseRut(text(receipt.vendorRut)), folio: text(receipt.documentNumber),
     issueDate: isImportDateValid(text(receipt.date)) ? text(receipt.date) : '', dueDate: '', net: amount(totals.neto), vat: amount(totals.iva), total: amount(totals.total),
-    lines: items.length ? items.map(item => ({ id: crypto.randomUUID(), code: '', description: text(item.description),
-      quantity: amount(item.quantity), unitPrice: grossPrices && typeof item.unitPrice === 'number' ? String(Math.round(item.unitPrice / 1.19 * 100) / 100) : amount(item.unitPrice),
+    lines: items.length ? items.map(item => ({ id: crypto.randomUUID(), code: text(item.productCode) || text(item.product_code) || text(item.code), description: text(item.description),
+      quantity: amount(item.quantity), unitPrice: item.unitPriceBasis === 'gross' && Number(totals.iva) > 0 && amount(item.unitPrice) !== '' ? String(Math.round(Number(item.unitPrice) / 1.19 * 100) / 100) : amount(item.unitPrice),
       taxRate: totals.iva === 0 ? '0' : '19',
     })) : [emptyPurchaseLine()],
   };

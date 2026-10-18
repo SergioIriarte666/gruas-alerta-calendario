@@ -23,7 +23,7 @@ vi.mock('@/components/inventory/ProductDetailsModal', () => ({ ProductDetailsMod
 
 const tools = ['Dado Torx', 'Dado impacto Torx', 'Dado largo', 'Llave rueda'];
 const extraction = { vendorName: 'Ferretería y Repuestos Dicar Ltda.', vendorRut: '85.355.900-8', documentNumber: '54491', date: '2026-10-15', paymentMethod: 'débito',
-  totals: { neto: 127606, iva: 24245, total: 151851 }, items: tools.map((description, index) => ({ description, quantity: 1, unitPrice: [6723, 7983, 31900, 81000][index], total: [6723, 7983, 31900, 81000][index] })),
+  totals: { neto: 127606, iva: 24245, total: 151851 }, items: tools.map((description, index) => ({ productCode: ['DAT89040-1', 'DAT89040-2', 'DIL89938', 'LLR90030'][index], description, quantity: 1, unitPrice: [6723, 7983, 31900, 81000][index], unitPriceBasis: 'net', total: [6723, 7983, 31900, 81000][index] })),
 };
 
 beforeEach(() => {
@@ -72,6 +72,7 @@ describe('Compra desde foto y registro manual', () => {
     await readPhoto();
     expect(screen.getByLabelText('Proveedor *')).toHaveValue('Ferretería y Repuestos Dicar Ltda.');
     expect(screen.getByLabelText('Total del comprobante *')).toHaveValue(151851);
+    expect(screen.getAllByLabelText('Código').map(input => (input as HTMLInputElement).value)).toEqual(['DAT89040-1', 'DAT89040-2', 'DIL89938', 'LLR90030']);
     expect(mocks.register).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' }));
     expect(screen.getByRole('button', { name: 'Pagada' })).toHaveAttribute('aria-pressed', 'false');
@@ -90,6 +91,7 @@ describe('Compra desde foto y registro manual', () => {
     expect(args).toMatchObject({ p_folio: '54491', p_supplier_id: 'supplier', p_total_amount: 151851, p_net_amount: 127606, p_vat_amount: 24245, p_is_paid: false, p_xml_file_name: null });
     expect(args.p_lines).toHaveLength(4);
     expect(args.p_lines[0].cost_subcategory_id).toBe('tools');
+    expect(args.p_lines[0].product_code).toBe('DAT89040-1');
     expect(photo).toBeInstanceOf(File);
     expect(photo.name).toBe('IMG_5940.jpg');
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(1));
@@ -99,8 +101,18 @@ describe('Compra desde foto y registro manual', () => {
     await readPhoto();
     fireEvent.change(screen.getByLabelText('Total del comprobante *'), { target: { value: '150000' } });
     expect(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' })).toBeDisabled();
-    expect(screen.getByText(/Los productos, el IVA y el total no cuadran/)).toBeInTheDocument();
+    expect(screen.getByText(/Total no cuadra:/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Total del comprobante *'), { target: { value: '151851' } });
+    expect(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' })).toBeEnabled();
+    expect(mocks.register).not.toHaveBeenCalled();
+  });
+  it('señala el IVA exacto que no cuadra en lugar de culpar a todas las líneas', async () => {
+    render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
+    await readPhoto();
+    fireEvent.change(screen.getByLabelText('IVA del comprobante *'), { target: { value: '24345' } });
+    expect(screen.getByText(/IVA no cuadra: comprobante \$24.345; calculado \$24.245 \(diferencia \$100\)/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('IVA del comprobante *'), { target: { value: '24245' } });
     expect(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' })).toBeEnabled();
     expect(mocks.register).not.toHaveBeenCalled();
   });

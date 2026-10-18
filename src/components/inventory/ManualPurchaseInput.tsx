@@ -58,7 +58,7 @@ export function ManualPurchaseInput({ upload }: { upload: ReturnType<typeof useX
       </div>
       <div className="grid gap-3 rounded-xl border p-3 sm:grid-cols-3">
         {([['net', 'Neto del comprobante'], ['vat', 'IVA del comprobante'], ['total', 'Total del comprobante']] as const).map(([field, label]) => <div key={field} className="space-y-1"><Label htmlFor={`manual-${field}`}>{label} *</Label><Input id={`manual-${field}`} type="number" min="0" value={draft[field]} disabled={busy} onChange={event => setField(field, event.target.value)} /></div>)}
-        <p className="text-xs text-muted-foreground sm:col-span-3">Calculado desde productos: neto {formatCurrency(totals.net)} · IVA {formatCurrency(totals.vat)} · total {formatCurrency(totals.total)}. Compara con el impreso antes de continuar.</p>
+        <p className="text-xs text-muted-foreground sm:col-span-3">Cálculo: cantidad × precio unitario neto, no la columna Total de la foto. Neto {formatCurrency(totals.net)} · IVA {formatCurrency(totals.vat)} · total {formatCurrency(totals.total)}. Compara con el impreso antes de continuar.</p>
       </div>
       {error && <p role="status" className="text-sm text-muted-foreground">{error}</p>}
       <Button type="button" disabled={busy || !!error} onClick={prepareManualPurchase}>Usar estos datos y clasificar compra</Button>

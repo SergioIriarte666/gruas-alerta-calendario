@@ -48,9 +48,32 @@ describe('Compra manual desde comprobante Dicar 54491', () => {
     expect(value.lines.map(line => line.unitPrice)).toEqual(['6723', '7983', '31900', '81000']);
     expect(validateManualPurchase(value)).toBeNull();
   });
-  it('convierte precios brutos solo si la suma de las líneas coincide con el total afecto', () => {
-    const value = draftFromReceiptExtraction({ vendorName: 'Dicar', vendorRut: '85355900-8', documentNumber: '54491', date: '2026-10-15', totals: { neto: 1000, iva: 190, total: 1190 }, items: [{ description: 'Herramienta', quantity: 1, unitPrice: 1190, total: 1190 }] });
+  it('convierte precios brutos solo cuando el lector declara explícitamente esa base', () => {
+    const value = draftFromReceiptExtraction({ vendorName: 'Dicar', vendorRut: '85355900-8', documentNumber: '54491', date: '2026-10-15', totals: { neto: 1000, iva: 190, total: 1190 }, items: [{ description: 'Herramienta', quantity: 1, unitPrice: 1190, unitPriceBasis: 'gross', total: 1190 }] });
     expect(value.lines[0].unitPrice).toBe('1000');
     expect(validateManualPurchase(value)).toBeNull();
+  });
+  it.each([173076, 205960.44, 999999])('preserva código y P.Unitario, sin inferir precios desde Total=%s', total => {
+    const value = draftFromReceiptExtraction({ vendorName: 'Dicar', vendorRut: '85355900-8', documentNumber: '54491', date: '2026-10-15', totals: { neto: 173076, iva: 32884, total: 205960 },
+      items: [{ productCode: '00015-A', description: 'Producto', quantity: 4, unitPrice: 43269, unitPriceBasis: 'net', total }],
+    });
+    expect(value.lines[0]).toMatchObject({ code: '00015-A', quantity: '4', unitPrice: '43269' });
+    expect(manualPurchaseTotals(value)).toEqual({ net: 173076, vat: 32884, total: 205960 });
+    expect(buildManualPurchaseResult(value).documents[0].items?.[0].product_code).toBe('00015-A');
+  });
+  it('no descuenta IVA de un precio unitario neto porque la columna Total incluya IVA', () => {
+    const value = draftFromReceiptExtraction({ totals: { neto: 1000, iva: 190, total: 1190 }, items: [{ description: 'Producto', quantity: 1, unitPrice: 1000, total: 1190 }] });
+    expect(value.lines[0].unitPrice).toBe('1000');
+  });
+  it('deja el precio unitario pendiente si es ilegible, aunque exista un total de línea', () => {
+    const value = draftFromReceiptExtraction({ totals: { neto: 5000, iva: 950, total: 5950 }, items: [{ productCode: 'DAT89040-1', description: 'Producto', quantity: 2, unitPrice: null, total: 5000 }] });
+    expect(value.lines[0].unitPrice).toBe('');
+    expect(value.lines[0].code).toBe('DAT89040-1');
+  });
+  it('identifica el IVA mal leído de la captura sin modificar los datos del comprobante', () => {
+    const value = { ...draft(), vat: '24345' };
+    expect(validateManualPurchase(value)).toBe('IVA no cuadra: comprobante $24.345; calculado $24.245 (diferencia $100). Revisa el IVA leído en la foto.');
+    expect(value.vat).toBe('24345');
+    expect(validateManualPurchase({ ...value, vat: '24245' })).toBeNull();
   });
 });
