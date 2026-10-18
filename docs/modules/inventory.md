@@ -105,6 +105,7 @@ RPC y tooling frecuentes:
 - La grua general es una sugerencia para las lineas marcadas; no activa el consumo de toda la factura. Se conserva una factura, un costo consolidado y un pago, con movimientos vinculados por linea.
 - Los destinos se guardan en `supplier_invoice_items.consumption_quantity` y `consumption_crane_id`; los registros anteriores mantienen ambos campos nulos. Las compras con destinos por linea conservan sus movimientos al editar Costos.
 - La importacion completa es transaccional. La regresion SQL local se ejecuta con `node scripts/tests/xml-inventory-line-consumption.mjs` y no accede a la base remota.
+- La unicidad de entradas activas se verifica por costo y linea de factura para XML; los movimientos sin linea documental conservan la unicidad por costo. Esto permite varios productos en un costo consolidado sin entradas duplicadas para la misma linea.
 - No es solo una importacion pasiva de facturas proveedor.
 
 ### 7. Herramientas de saneamiento

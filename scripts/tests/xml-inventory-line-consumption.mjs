@@ -40,6 +40,8 @@ INSERT INTO cost_subcategories VALUES
 `);
 
 const baseline = await readFile('supabase/migrations/00000000000000_baseline_schema.sql', 'utf8');
+const entryIndexStart = baseline.indexOf('CREATE UNIQUE INDEX "uniq_inventory_entry_active_per_cost"');
+await db.exec(baseline.slice(entryIndexStart, baseline.indexOf(';', entryIndexStart) + 1));
 const start = baseline.indexOf('CREATE OR REPLACE FUNCTION "public"."sync_inventory_exit_to_crane_parts"');
 await db.exec(baseline.slice(start, baseline.indexOf('$_$;', start) + 4));
 const sync = await readFile('supabase/migrations/20260715183000_lowboy_inventory_intercompany.sql', 'utf8');
@@ -73,6 +75,9 @@ async function importInvoice(items = lines, selectedCrane = crane, paid = false,
 async function movements(invoiceId) {
   return (await db.query('SELECT movement_type, quantity, total_cost, crane_id, cost_id, supplier_invoice_item_id FROM inventory_movements WHERE supplier_invoice_id=$1 ORDER BY movement_type, quantity', [invoiceId])).rows;
 }
+await assert.rejects(importInvoice(), /uniq_inventory_entry_active_per_cost/);
+assert.equal((await db.query('SELECT count(*)::integer AS count FROM supplier_invoices')).rows[0].count, 0);
+await db.exec(await readFile('supabase/migrations/20261018210000_allow_xml_entries_per_invoice_line.sql', 'utf8'));
 const result = await importInvoice();
 const mixed = await movements(result.invoice_id);
 assert.equal(mixed.filter(row => row.movement_type === 'entry').length, 3);
@@ -84,6 +89,9 @@ assert.equal((await db.query('SELECT count(*)::integer AS count FROM crane_parts
 assert.equal((await db.query('SELECT crane_id FROM costs WHERE id=$1', [result.cost_id])).rows[0].crane_id, null);
 assert.equal((await db.query('SELECT amount FROM supplier_invoices WHERE id=$1', [result.invoice_id])).rows[0].amount, '714');
 assert.deepEqual((await db.query("SELECT sum(CASE WHEN movement_type='entry' THEN quantity ELSE -quantity END)::integer AS balance FROM inventory_movements WHERE supplier_invoice_id=$1 GROUP BY item_id ORDER BY item_id", [result.invoice_id])).rows.map(row => row.balance), [0, 0, 1]);
+await assert.rejects(db.query("INSERT INTO inventory_movements(item_id,location_id,movement_type,quantity,cost_id,supplier_invoice_item_id,status) SELECT item_id,location_id,movement_type,quantity,cost_id,supplier_invoice_item_id,status FROM inventory_movements WHERE supplier_invoice_id=$1 AND movement_type='entry' LIMIT 1", [result.invoice_id]), /uniq_inventory_entry_active_per_cost_invoice_line/);
+await db.exec("INSERT INTO inventory_movements(cost_id,movement_type,quantity,status) VALUES ('00000000-0000-0000-0000-000000000070','entry',1,'active')");
+await assert.rejects(db.exec("INSERT INTO inventory_movements(cost_id,movement_type,quantity,status) VALUES ('00000000-0000-0000-0000-000000000070','entry',1,'active')"), /uniq_inventory_entry_active_per_cost/);
 
 const partial = await importInvoice(lines.map((line, index) => ({ ...line, consumption_quantity: index === 0 ? 2 : line.consumption_quantity, consumption_crane_id: index === 1 ? otherCrane : line.consumption_crane_id })));
 const exits = (await movements(partial.invoice_id)).filter(row => row.movement_type === 'exit');
