@@ -3,8 +3,8 @@ interface ClassifiedInvoiceLine {
   subtotal: number | string | null;
 }
 
-export function resolveLineSubcategoryId(value: string | undefined, defaultName: string, options: { id: string; name: string }[]) {
-  return value === undefined ? options.find(option => option.name === defaultName)?.id || null : value || null;
+export function resolveLineSubcategoryId(value: string | undefined) {
+  return value || null;
 }
 
 export function summarizeInvoiceClassifications(lines: ClassifiedInvoiceLine[], defaultSubcategory?: string | null) {

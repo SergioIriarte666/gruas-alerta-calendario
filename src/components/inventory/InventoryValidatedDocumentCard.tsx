@@ -41,7 +41,6 @@ interface InventoryValidatedDocumentCardProps {
   selectedLineKeys: Set<string>;
   onToggleLine: (key: string, checked: boolean) => void;
   costSubcategories: { id: string; name: string }[];
-  defaultCostSubcategory: string;
   lineCostSubcategories: Record<string, string>;
   onCostSubcategoryChange: (key: string, value: string) => void;
 }
@@ -51,7 +50,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
   lineConsumptions, onConsumptionChange, cranes, selectedLineKeys, onToggleLine,
-  costSubcategories, defaultCostSubcategory, lineCostSubcategories, onCostSubcategoryChange,
+  costSubcategories, lineCostSubcategories, onCostSubcategoryChange,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
     <CardHeader className="pb-3">
@@ -100,10 +99,10 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_120px]">
                   <div className="space-y-2">
                     <Label htmlFor={`subcategory-${line.key}`}>Subcategoría del producto</Label>
-                    <Select value={lineCostSubcategories[line.key] === undefined ? 'inherit' : lineCostSubcategories[line.key] || 'none'} disabled={isImporting}
+                    <Select value={lineCostSubcategories[line.key] || 'none'} disabled={isImporting}
                       onValueChange={value => onCostSubcategoryChange(line.key, value)}>
                       <SelectTrigger id={`subcategory-${line.key}`}><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="inherit">Usar general: {defaultCostSubcategory || 'Sin subcategoría'}</SelectItem><SelectItem value="none">Sin subcategoría</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}</SelectContent>
+                      <SelectContent><SelectItem value="none">Sin subcategoría</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">

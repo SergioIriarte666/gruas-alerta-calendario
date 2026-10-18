@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { resolveLineSubcategoryId, summarizeInvoiceClassifications } from '../xmlInventoryClassification';
 
-const options = [{ id: 'parts', name: 'Partes y Piezas' }, { id: 'tools', name: 'Herramientas' }, { id: 'supplies', name: 'Consumibles' }];
-
 describe('subcategoría por producto XML', () => {
-  it('usa la general salvo selección propia y permite quitarla expresamente', () => {
-    expect(resolveLineSubcategoryId(undefined, 'Partes y Piezas', options)).toBe('parts');
-    expect(resolveLineSubcategoryId('tools', 'Partes y Piezas', options)).toBe('tools');
-    expect(resolveLineSubcategoryId('', 'Partes y Piezas', options)).toBeNull();
-    expect(resolveLineSubcategoryId(undefined, 'No existe', options)).toBeNull();
+  it('usa únicamente la subcategoría elegida para cada producto', () => {
+    expect(resolveLineSubcategoryId(undefined)).toBeNull();
+    expect(resolveLineSubcategoryId('parts')).toBe('parts');
+    expect(resolveLineSubcategoryId('tools')).toBe('tools');
+    expect(resolveLineSubcategoryId('')).toBeNull();
   });
 
   it('resume los tres productos del XML sin duplicar el costo ni distribuir el IVA', () => {

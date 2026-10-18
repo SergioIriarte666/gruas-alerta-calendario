@@ -7,7 +7,7 @@ import { resolveLineSubcategoryId } from '@/utils/xml/xmlInventoryClassification
 import { computeLineSubtotal, computeLineTaxAmount, formatCurrency } from '@/utils/xml/xmlInventoryHelpers';
 
 export function InventoryImportReview({ upload }: { upload: ReturnType<typeof useXmlInventoryUpload> }) {
-  const { selectedValidatedDocuments, discardedLines, lineConsumptions, lineCostSubcategories, selectedCostSubcategory,
+  const { selectedValidatedDocuments, discardedLines, lineConsumptions, lineCostSubcategories,
     costSubcategories, cranes, classificationSummary, selectedLocation, selectedCostCategory, selectedCostCenter,
     isPaid, paymentDate, paymentReference, dueDateOverride, selectedOperator, selectedService, selectedServiceFolio, importNotes } = upload;
   const total = selectedValidatedDocuments.reduce((sum, document) => sum + document.doc.total_amount, 0);
@@ -42,7 +42,7 @@ export function InventoryImportReview({ upload }: { upload: ReturnType<typeof us
           <CardContent className="divide-y p-0">
             {lines.map(line => {
               const consumption = resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]);
-              const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories);
+              const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key]);
               const subcategory = costSubcategories.find(item => item.id === subcategoryId)?.name || 'Sin subcategoría';
               const crane = cranes.find(item => item.id === consumption.craneId);
               return <div key={line.key} className="space-y-2 px-4 py-3">

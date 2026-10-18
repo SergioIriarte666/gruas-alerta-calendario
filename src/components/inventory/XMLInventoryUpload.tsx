@@ -35,7 +35,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     updateLineDescription, manualMatchedItems, setManualMatchedItems, editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines, lineConsumptions, setLineConsumptions,
     lineCostSubcategories, setLineCostSubcategories, catalogSearchOpen, setCatalogSearchOpen,
-    creatingProductKeys, selectedCostSubcategory, isPaid, isImporting, progress,
+    creatingProductKeys, isPaid, isImporting, progress,
     pendingProductSuggestion, setPendingProductSuggestion, suggestedProductDetails, setSuggestedProductDetails,
     selectedCostCategory, selectedCostCenter, selectedLocation, costSubcategories, cranes,
     handleImport, handleClose, resetState, handleCreateMissingProduct, handleUseSuggestedProduct, handleCreateSuggestedNew,
@@ -214,12 +214,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       selectedLineKeys={selectedLineKeys}
                       onToggleLine={(key, checked) => setSelectedLineKeys(previous => { const next = new Set(previous); if (checked) next.add(key); else next.delete(key); return next; })}
                       costSubcategories={costSubcategories}
-                      defaultCostSubcategory={selectedCostSubcategory}
                       lineCostSubcategories={lineCostSubcategories}
                       onCostSubcategoryChange={(key, value) => setLineCostSubcategories(previous => {
                         const next = { ...previous };
-                        if (value === 'inherit') delete next[key];
-                        else next[key] = value === 'none' ? '' : value;
+                        next[key] = value === 'none' ? '' : value;
                         return next;
                       })}
                       onDiscardLine={key => setDiscardedLines(prev => new Set(prev).add(key))}

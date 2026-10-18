@@ -18,9 +18,9 @@ interface InventoryImportParametersProps {
 
 export const InventoryImportParameters = ({ upload }: InventoryImportParametersProps) => {
   const {
-    locations, costCategories, costSubcategories, costCenters, operators, serviceSearchResults,
+    locations, costCategories, costCenters, operators, serviceSearchResults,
     selectedLocationId, setSelectedLocationId, selectedCostCategoryId, setSelectedCostCategoryId,
-    selectedCostSubcategory, setSelectedCostSubcategory, setLineCostSubcategories,
+    setLineCostSubcategories,
     selectedCostCenterId, setSelectedCostCenterId, selectedOperatorId, setSelectedOperatorId,
     selectedServiceId, setSelectedServiceId: onServiceChange, selectedService,
     selectedServiceFolio, setSelectedServiceFolio: onServiceFolioChange,
@@ -46,7 +46,6 @@ export const InventoryImportParameters = ({ upload }: InventoryImportParametersP
               <Label htmlFor="xml-cost-category">Categoría de costo *</Label>
               <Select value={selectedCostCategoryId} disabled={isImporting} onValueChange={id => {
                 setSelectedCostCategoryId(id);
-                setSelectedCostSubcategory('');
                 setLineCostSubcategories({});
                 const category = costCategories.find(item => item.id === id);
                 if (category?.default_cost_center_id) setSelectedCostCenterId(category.default_cost_center_id);
@@ -69,13 +68,9 @@ export const InventoryImportParameters = ({ upload }: InventoryImportParametersP
                 <SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name} ({location.code})</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="xml-default-subcategory">Subcategoría predeterminada</Label>
-              <Select value={selectedCostSubcategory || 'none'} disabled={isImporting || !selectedCostCategoryId} onValueChange={value => setSelectedCostSubcategory(value === 'none' ? '' : value)}>
-                <SelectTrigger id="xml-default-subcategory"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="none">Sin subcategoría predeterminada</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.name}>{subcategory.name}</SelectItem>)}</SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Puedes elegir una subcategoría diferente para cada producto en el siguiente paso.</p>
+            <div className="rounded-lg bg-primary/5 p-3 sm:col-span-2">
+              <p className="text-sm font-medium">Subcategorías por producto</p>
+              <p className="mt-1 text-xs text-muted-foreground">En el paso Productos asignarás la subcategoría de cada artículo: por ejemplo, Partes y Piezas, Consumibles o Herramientas. La factura conserva un solo costo consolidado.</p>
             </div>
           </CardContent>
         </Card>

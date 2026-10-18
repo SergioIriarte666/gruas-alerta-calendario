@@ -52,7 +52,6 @@ function useTestUpload() {
     toggleSelectedDocument: noop, selectAllDocuments: noop, clearSelectedDocuments: noop,
     manualMatchedItems: {}, setManualMatchedItems: noop, editedDescriptions: new Map(), setEditedDescriptions: noop,
     discardedLines: new Set(), setDiscardedLines: noop, catalogSearchOpen: {}, setCatalogSearchOpen: noop, creatingProductKeys: new Set(),
-    selectedCostSubcategory: '', setSelectedCostSubcategory: noop,
     selectedCostCategoryId: 'inventory', selectedCostCategory: { id: 'inventory', name: 'Inventario' }, setSelectedCostCategoryId: noop,
     selectedLocationId: 'warehouse', selectedLocation: { id: 'warehouse', name: 'Bodega LowBoy', code: 'LB001' }, setSelectedLocationId: noop,
     selectedCostCenterId: 'center', selectedCostCenter: { id: 'center', code: 'OPER', name: 'Operacionales' }, setSelectedCostCenterId: noop,
@@ -76,6 +75,8 @@ describe('asistente XML con costo, pago, productos y revisión', () => {
   it('valida el pago, conserva los destinos y solo importa desde la revisión', async () => {
     render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
     expect(screen.queryByText('Grúa sugerida para consumo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Subcategoría predeterminada')).not.toBeInTheDocument();
+    expect(screen.getByText('Subcategorías por producto')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Pagada' }));
     fireEvent.change(screen.getByLabelText('Fecha de pago *'), { target: { value: '' } });
     expect(screen.getByRole('button', { name: /Continuar a productos/ })).toBeDisabled();
@@ -83,6 +84,8 @@ describe('asistente XML con costo, pago, productos y revisión', () => {
     fireEvent.change(screen.getByLabelText('Referencia de pago'), { target: { value: 'OP-123' } });
     fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));
     expect(screen.getAllByLabelText('Grúa de destino')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Subcategoría del producto')).toHaveLength(3);
+    expect(screen.queryByText(/Usar general:/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Destino del producto', { selector: '#destination-7069653-3' })).toHaveTextContent('Mantener en bodega');
     fireEvent.click(screen.getByRole('button', { name: /Revisar importación/ }));
     expect(screen.getByRole('heading', { name: 'Revisión de la compra' })).toBeInTheDocument();

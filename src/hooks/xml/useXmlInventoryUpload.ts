@@ -94,7 +94,6 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [catalogSearchOpen, setCatalogSearchOpen] = useState<Record<string, boolean>>({});
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
-  const [selectedCostSubcategory, setSelectedCostSubcategory] = useState<string>('');
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>('');
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
   const [selectedServiceId, setSelectedServiceId] = useState<string>('');
@@ -266,10 +265,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
   const classificationSummary = useMemo(() => summarizeInvoiceClassifications(
     selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key)).map(line => {
-      const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories);
+      const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key]);
       return { cost_subcategory: costSubcategories.find(subcategory => subcategory.id === subcategoryId)?.name || '', subtotal: computeLineSubtotal(line.item) };
     })
-  ), [selectedValidatedDocuments, discardedLines, lineCostSubcategories, selectedCostSubcategory, costSubcategories]);
+  ), [selectedValidatedDocuments, discardedLines, lineCostSubcategories, costSubcategories]);
 
   const summary = useMemo(() => ({
     totalDocs: validatedDocuments.length,
@@ -334,7 +333,6 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
-    setSelectedCostSubcategory('');
     setSelectedCostCenterId('');
     setSelectedOperatorId('');
     setSelectedServiceId('');
@@ -508,7 +506,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
-            cost_subcategory_id: resolveLineSubcategoryId(lineCostSubcategories[line.key], selectedCostSubcategory, costSubcategories),
+            cost_subcategory_id: resolveLineSubcategoryId(lineCostSubcategories[line.key]),
             ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key])),
             line_number: line.lineNumber, inventory_item_id: line.matchedItem!.id,
             product_code: line.item.product_code || line.matchedItem?.sku || line.matchedItem?.barcode || null,
@@ -539,7 +537,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_payment_reference: isPaid ? paymentReference.trim() || null : null,
             p_location_id: selectedLocationId,
             p_cost_category_id: selectedCostCategoryId,
-            p_cost_subcategory: selectedCostSubcategory || 'Importación XML Bodega',
+            p_cost_subcategory: null,
             p_cost_center_id: selectedCostCenterId || null,
             p_crane_id: null,
             p_operator_id: selectedOperatorId || null,
@@ -589,7 +587,6 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,
     selectedCostCategoryId, setSelectedCostCategoryId,
-    selectedCostSubcategory, setSelectedCostSubcategory,
     selectedCostCenterId, setSelectedCostCenterId,
     selectedOperatorId, setSelectedOperatorId,
     selectedServiceId, setSelectedServiceId,
