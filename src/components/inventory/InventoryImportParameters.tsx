@@ -3,6 +3,7 @@ import { Tags, Wallet, Clock3, CircleCheck, Link2, Check, ChevronsUpDown } from 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -85,11 +86,11 @@ export const InventoryImportParameters = ({ upload }: InventoryImportParametersP
             </div>
             {isPaid ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2"><Label htmlFor="xml-payment-date">Fecha de pago *</Label><Input id="xml-payment-date" type="date" value={paymentDate} disabled={isImporting} onChange={event => setPaymentDate(event.target.value)} /></div>
+                <div className="space-y-2"><Label htmlFor="xml-payment-date">Fecha de pago *</Label><DatePickerInput id="xml-payment-date" value={paymentDate} disabled={isImporting} onChange={setPaymentDate} /></div>
                 <div className="space-y-2"><Label htmlFor="xml-payment-reference">Referencia de pago</Label><Input id="xml-payment-reference" value={paymentReference} disabled={isImporting} onChange={event => setPaymentReference(event.target.value)} placeholder="N.º de operación (opcional)" maxLength={200} /></div>
               </div>
             ) : (
-              <div className="space-y-2"><Label htmlFor="xml-due-date">Fecha de vencimiento</Label><Input id="xml-due-date" type="date" value={dueDateOverride || documentDueDate} disabled={isImporting} onChange={event => setDueDateOverride(event.target.value)} /><p className="text-xs text-muted-foreground">{selectedValidatedDocuments.length > 1 && !dueDateOverride ? 'Se conserva el vencimiento de cada XML. Al elegir una fecha, se aplica a todas las facturas seleccionadas.' : 'La compra quedará en cuentas por pagar con este vencimiento.'}</p></div>
+              <div className="space-y-2"><Label htmlFor="xml-due-date">Fecha de vencimiento</Label><DatePickerInput id="xml-due-date" value={dueDateOverride || documentDueDate} disabled={isImporting} onChange={setDueDateOverride} /><p className="text-xs text-muted-foreground">{selectedValidatedDocuments.length > 1 && !dueDateOverride ? 'Se conserva el vencimiento de cada XML. Al elegir una fecha, se aplica a todas las facturas seleccionadas.' : 'La compra quedará en cuentas por pagar con este vencimiento.'}</p></div>
             )}
             <div className={cn('rounded-xl border p-4', isPaid ? 'border-success/20 bg-success/10' : 'border-warning/20 bg-warning/10')} aria-live="polite">
               <div className="flex items-center justify-between gap-3"><span className="text-sm font-medium">{isPaid ? 'Pago por el total de la compra' : 'Saldo por pagar'}</span><span className="font-semibold tabular-nums">{formatCurrency(total)}</span></div>
