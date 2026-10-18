@@ -419,7 +419,7 @@ export const ConsolidatedCostDetails = ({
                     <p className="text-xs text-muted-foreground break-words">
                       Factura {(supplierInvoiceDetails as any).invoice_number}
                       {(supplierInvoiceDetails as any).xml_file_name ? ` · XML ${(supplierInvoiceDetails as any).xml_file_name}` : ''}
-                      {(supplierInvoiceDetails as any).source_module === 'inventory_photo' ? ' · Compra desde foto revisada' : (supplierInvoiceDetails as any).source_module === 'inventory_manual' ? ' · Ingreso manual' : ''}
+                      {['inventory_photo', 'costs_photo'].includes((supplierInvoiceDetails as any).source_module) ? ' · Compra desde foto revisada' : ['inventory_manual', 'costs_manual'].includes((supplierInvoiceDetails as any).source_module) ? ' · Ingreso manual' : ''}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -7,6 +7,7 @@ import { CostForm } from '@/components/costs/CostForm';
 import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
+import { ManualCostPurchaseDialog } from '@/components/costs/ManualCostPurchaseDialog';
 import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
 import { ManualCostXmlImportDialog } from '@/components/costs/ManualCostXmlImportDialog';
 
@@ -22,9 +23,9 @@ import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
-import { matchesCostIdentifier, prepareCostForDuplication } from '@/utils/costHelpers';
+import { matchesCostIdentifier, matchesCostSubcategory, prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit, FileSpreadsheet, WalletCards } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet, WalletCards, Camera } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
@@ -41,6 +42,7 @@ const CostsPage = () => {
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
+    const [isPhotoCostOpen, setIsPhotoCostOpen] = useState(false);
     const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
@@ -276,7 +278,7 @@ const CostsPage = () => {
         }
 
         if (filters.subcategory && filters.subcategory !== 'all') {
-            filtered = filtered.filter(cost => cost.subcategory === filters.subcategory);
+            filtered = filtered.filter(cost => matchesCostSubcategory(cost, filters.subcategory));
         }
 
         // dateFrom/dateTo se filtran server-side en useCosts — no duplicar aquí
@@ -405,6 +407,10 @@ const CostsPage = () => {
                             XML
                         </Button>
 
+                        <Button onClick={() => setIsPhotoCostOpen(true)} variant="outline" size={isMobile ? 'default' : 'sm'} className={isMobile ? 'w-full border-border/70 bg-card/70' : 'border-border/70 bg-card/70'}>
+                            <Camera className="mr-2 size-4" />Desde foto / manual
+                        </Button>
+
                         <Button
                             onClick={() => setIsCSVUploadOpen(true)}
                             variant="outline"
@@ -439,6 +445,7 @@ const CostsPage = () => {
                 onExport={handleExportToExcel}
                 isMobile={isMobile}
             />
+            {filters.subcategory && filters.subcategory !== 'all' && <p className="text-xs text-muted-foreground">Incluye coincidencias en el detalle de la factura. Cada costo aparece una sola vez por su monto completo; este filtro no prorratea el total por subcategoría.</p>}
             
             {viewMode === 'table' ? (
                 <EnhancedCostsTable
@@ -520,6 +527,7 @@ const CostsPage = () => {
                 onClose={handleCloseXMLUpload}
                 onSuccess={handleXMLUploadSuccess}
             />
+            {isPhotoCostOpen && <ManualCostPurchaseDialog onClose={() => setIsPhotoCostOpen(false)} onSuccess={handleXMLUploadSuccess} />}
 
             <CSVCostUpload
                 isOpen={isCSVUploadOpen}

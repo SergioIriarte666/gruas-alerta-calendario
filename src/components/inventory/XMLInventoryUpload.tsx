@@ -138,7 +138,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                         <div className="max-h-72 divide-y divide-border/60 overflow-y-auto">
                           {validatedDocuments.map((validatedDoc, index) => {
                             const isSelected = selectedDocuments.has(validatedDoc.doc.folio);
-                            const supplierName = validatedDoc.supplier?.name || parseResult?.suppliers.find(s => s.rut === validatedDoc.doc.supplier_rut)?.name || 'Proveedor sin nombre';
+                            const supplierName = hook.getInvoiceSupplierName?.(validatedDoc) || validatedDoc.supplier?.name || parseResult?.suppliers.find(s => s.rut === validatedDoc.doc.supplier_rut)?.name || 'Proveedor sin nombre';
 
                             return (
                               <div
@@ -172,6 +172,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                     {validatedDoc.doc.issue_date && <span>Fecha: {validatedDoc.doc.issue_date}</span>}
                                     <span>Monto: ${validatedDoc.doc.total_amount.toLocaleString('es-CL')}</span>
+                                    <span>RUT emisor: {validatedDoc.doc.supplier_rut || 'Sin RUT'}</span>
                                     <span>{validatedDoc.lines.filter(l => !discardedLines.has(l.key)).length} línea(s)</span>
                                   </div>
                                 </button>
@@ -182,6 +183,18 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       </CardContent>
                     </Card>
                   )}
+
+                  {selectedValidatedDocuments.map(document => {
+                    const conflict = hook.getSupplierNameConflict?.(document);
+                    if (!conflict) return null;
+                    return <Alert key={conflict.key} className="border-warning/30 bg-warning/10"><AlertDescription className="space-y-3">
+                      <p><strong>Revisar razón social · RUT {conflict.rut}</strong></p>
+                      <p>Comprobante: {conflict.name}. Proveedor registrado: {conflict.masterName}. La glosa no modifica el proveedor.</p>
+                      <p className="text-xs">Usar el nombre del comprobante actualizará la razón social de ese proveedor al importar, también visible en sus registros anteriores. Su RUT e identificador se conservan; no se asociará a otro RUT.</p>
+                      <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={busy} aria-pressed={conflict.decision === 'document'} onClick={() => hook.setSupplierNameDecisions(previous => ({ ...previous, [conflict.key]: 'document' }))}>Usar nombre del comprobante</Button><Button type="button" variant="outline" disabled={busy} aria-pressed={conflict.decision === 'master'} onClick={() => hook.setSupplierNameDecisions(previous => ({ ...previous, [conflict.key]: 'master' }))}>Conservar nombre registrado</Button></div>
+                      {conflict.decision && <p className="text-sm font-medium">Se usará: {conflict.decision === 'document' ? conflict.name : conflict.masterName}.</p>}
+                    </AlertDescription></Alert>;
+                  })}
 
                   {validatedDocuments.length > 0 && selectedValidatedDocuments.length === 0 && (
                     <Alert className="border-warning/30 bg-warning/10">

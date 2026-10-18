@@ -13,6 +13,7 @@ interface XMLImportDialogHeaderProps {
   fileName?: string | null;
   documentCount?: number | null;
   countLabel?: string;
+  emptyFileLabel?: string;
 }
 
 type XMLImportStatTone = 'neutral' | 'success' | 'info' | 'danger';
@@ -78,6 +79,7 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
   fileName,
   documentCount,
   countLabel = 'doc(s)',
+  emptyFileLabel = 'Esperando XML',
 }) => (
   <DialogHeader className="relative overflow-hidden border-b border-border/70 bg-card px-4 py-5 text-left sm:px-6">
     <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-primary" />
@@ -95,7 +97,7 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
       <div className="flex flex-wrap gap-2">
         <Badge variant="outline" className="max-w-full border-border/70 bg-background/80 px-3 py-1.5 text-xs shadow-sm">
           <span className="truncate">
-          {fileName ? `Archivo: ${fileName}` : 'Esperando XML'}
+          {fileName ? `Archivo: ${fileName}` : emptyFileLabel}
           </span>
         </Badge>
         {typeof documentCount === 'number' && (

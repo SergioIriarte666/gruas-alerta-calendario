@@ -37,7 +37,8 @@ export function InventoryImportReview({ upload }: { upload: ReturnType<typeof us
         const tax = document.doc.vat_amount ?? lines.reduce((sum, line) => sum + computeLineTaxAmount(line.item), 0);
         return <Card key={document.doc.folio} className="overflow-hidden border-border/70">
           <CardHeader className="border-b bg-muted/20 py-4">
-            <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle className="text-base">Factura {document.doc.folio} · {document.supplier?.name || 'Proveedor XML'}</CardTitle><Badge variant="secondary">{formatCurrency(document.doc.total_amount)}</Badge></div>
+            <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle className="text-base">Factura {document.doc.folio} · {upload.getInvoiceSupplierName?.(document) || document.supplier?.name || 'Proveedor XML'}</CardTitle><Badge variant="secondary">{formatCurrency(document.doc.total_amount)}</Badge></div>
+            <p className="text-sm text-muted-foreground">RUT emisor: {document.doc.supplier_rut || 'Sin RUT'}</p>
             <p className="text-xs text-muted-foreground">Neto {formatCurrency(net)} · IVA {formatCurrency(tax)} · Vencimiento {dueDateOverride || document.doc.due_date || document.doc.issue_date}</p>
           </CardHeader>
           <CardContent className="divide-y p-0">

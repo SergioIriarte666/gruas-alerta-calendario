@@ -1,0 +1,112 @@
+import { PGlite } from '@electric-sql/pglite';
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+process.on('uncaughtException', error => { console.error(error.message, error.where || '', error.query?.slice(Math.max(0, Number(error.position) - 120), Number(error.position) + 120)); process.exit(1); });
+
+const db = new PGlite();
+const user = '00000000-0000-0000-0000-000000000001';
+const category = '00000000-0000-0000-0000-000000000040';
+const crane = '00000000-0000-0000-0000-000000000010';
+await db.exec(`
+CREATE SCHEMA auth;
+CREATE SCHEMA storage;
+CREATE ROLE anon;
+CREATE ROLE authenticated;
+CREATE TABLE auth.users(id uuid PRIMARY KEY);
+INSERT INTO auth.users VALUES ('${user}');
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT '${user}'::uuid $$;
+CREATE TYPE app_role AS ENUM ('admin', 'operator');
+CREATE FUNCTION has_role(uuid, app_role) RETURNS boolean LANGUAGE sql AS $$ SELECT coalesce(current_setting('test.authorized', true), 'true') = 'true' $$;
+CREATE TABLE storage.objects(bucket_id text, name text);
+CREATE TABLE cranes(id uuid PRIMARY KEY);
+INSERT INTO cranes VALUES ('${crane}');
+CREATE TABLE cost_centers(id uuid PRIMARY KEY);
+CREATE TABLE cost_categories(id uuid PRIMARY KEY, name text);
+INSERT INTO cost_categories VALUES ('${category}', 'Inventario');
+CREATE TABLE cost_subcategories(id uuid PRIMARY KEY, category_id uuid, name text, is_active boolean);
+INSERT INTO cost_subcategories VALUES
+ ('00000000-0000-0000-0000-000000000060', '${category}', 'Herramientas', true),
+ ('00000000-0000-0000-0000-000000000061', '${category}', 'Consumibles', true),
+ ('00000000-0000-0000-0000-000000000062', '${category}', 'Inactiva', false),
+ ('00000000-0000-0000-0000-000000000063', gen_random_uuid(), 'Otra categoría', true);
+CREATE TABLE inventory_suppliers(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, rut text, is_active boolean, created_by uuid);
+CREATE TABLE supplier_invoices(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), supplier_id uuid REFERENCES inventory_suppliers, invoice_number text, issue_date date, due_date date, amount numeric, net_amount numeric, tax_amount numeric, currency text, description text, status text, paid_amount numeric, source_module text);
+CREATE UNIQUE INDEX unique_invoice ON supplier_invoices(supplier_id, invoice_number);
+CREATE TABLE costs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), amount numeric, category_id uuid REFERENCES cost_categories, date date, description text, notes text, document_type text, document_number text, crane_id uuid REFERENCES cranes, immediate_consumption boolean, payment_date date, supplier_id uuid REFERENCES inventory_suppliers, supplier_invoice_id uuid REFERENCES supplier_invoices, cost_center_id uuid REFERENCES cost_centers, service_folio text, subcategory text, created_by uuid, entity text, paid_by text, receipt_photo_paths text[], supplier_payment_id uuid, inventory_movement_id uuid, purchase_quantity numeric, purchase_unit_cost numeric, other_reason text, updated_at timestamptz);
+CREATE TABLE supplier_payments(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), supplier_id uuid REFERENCES inventory_suppliers, cost_id uuid UNIQUE REFERENCES costs, supplier_invoice_id uuid REFERENCES supplier_invoices, reference_number text, amount numeric, description text, category text, subcategory text, due_date date, status text, paid_date date, paid_amount numeric, notes text, crane_id uuid REFERENCES cranes, add_to_inventory boolean, created_by uuid, created_at timestamptz, updated_at timestamptz);
+CREATE TABLE supplier_invoice_items(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), supplier_invoice_id uuid REFERENCES supplier_invoices, inventory_item_id uuid CHECK (inventory_item_id IS NULL), line_number integer, product_code text, product_name text, description text, quantity integer, unit_price numeric, subtotal numeric, tax_rate numeric, tax_amount numeric, total_amount numeric, created_by uuid, cost_subcategory_id uuid REFERENCES cost_subcategories, cost_subcategory text);
+CREATE TABLE inventory_movements(id uuid PRIMARY KEY);
+`);
+const baseline = await readFile('supabase/migrations/00000000000000_baseline_schema.sql', 'utf8');
+for (const name of ['create_supplier_payment_from_cost', 'create_cost_from_supplier_payment', 'sync_supplier_payment_update_to_cost', 'sync_inventory_cost_to_movement']) {
+  const start = baseline.indexOf(`CREATE OR REPLACE FUNCTION "public"."${name}"`);
+  await db.exec(baseline.slice(start, baseline.indexOf('$$;', start) + 3));
+}
+await db.exec(`
+CREATE TRIGGER cost_payment AFTER INSERT OR UPDATE ON costs FOR EACH ROW EXECUTE FUNCTION create_supplier_payment_from_cost();
+CREATE TRIGGER cost_inventory AFTER INSERT ON costs FOR EACH ROW EXECUTE FUNCTION sync_inventory_cost_to_movement();
+CREATE TRIGGER payment_cost AFTER INSERT OR UPDATE OF status ON supplier_payments FOR EACH ROW EXECUTE FUNCTION create_cost_from_supplier_payment();
+CREATE TRIGGER payment_sync AFTER UPDATE ON supplier_payments FOR EACH ROW EXECUTE FUNCTION sync_supplier_payment_update_to_cost();
+`);
+await db.exec(await readFile('supabase/migrations/20261018233000_manual_inventory_purchases.sql', 'utf8'));
+await db.exec(await readFile('supabase/migrations/20261019001000_manual_cost_purchases.sql', 'utf8'));
+const lines = [6723, 7983, 31900, 81000].map((unitPrice, index) => ({ product_code: ['DAT89040-1', 'DAT89040-2', 'DIL89938', 'LLR90030'][index], description: `Herramienta ${index + 1}`, quantity: 1, unit_price: unitPrice, subtotal: unitPrice, tax_rate: 19, tax_amount: unitPrice * .19, total_amount: unitPrice * 1.19, cost_subcategory_id: `00000000-0000-0000-0000-00000000006${index % 2}`, cost_subcategory: 'Nombre manipulado' }));
+const data = { supplier_name: 'Dicar', supplier_rut: '85.355.900-8', folio: '54491', issue_date: '2026-10-15', due_date: '2026-10-16', net_amount: 127606, vat_amount: 24245, total_amount: 151851, category_id: category, entity: 'gruas_5_norte', paid_by: 'gruas_5_norte', description: 'Factura de herramientas Dicar', crane_id: crane, is_paid: false, lines };
+let sequence = 100;
+const nextRequest = () => `00000000-0000-0000-0000-${String(++sequence).padStart(12, '0')}`;
+const register = async (payload = data, request = nextRequest(), receipt = null) => (await db.query('SELECT register_manual_cost_purchase($1,$2::jsonb,$3) AS result', [request, JSON.stringify(payload), receipt])).rows[0].result;
+const count = async table => (await db.query(`SELECT count(*)::int AS count FROM ${table}`)).rows[0].count;
+const request = nextRequest();
+const receipt = `${user}/manual-purchases/${request}.jpg`;
+await db.query("INSERT INTO storage.objects VALUES ('quick-entry-photos', $1)", [receipt]);
+const result = await register(data, request, receipt);
+assert.deepEqual(await register(data, request, receipt), result);
+assert.equal(await count('costs'), 1);
+assert.equal(await count('supplier_payments'), 1);
+assert.equal(await count('supplier_invoices'), 1);
+assert.equal(await count('inventory_movements'), 0);
+assert.deepEqual((await db.query('SELECT amount, receipt_photo_paths, subcategory, immediate_consumption, purchase_quantity, crane_id FROM costs WHERE id=$1', [result.cost_id])).rows[0], { amount: '151851', receipt_photo_paths: [receipt], subcategory: null, immediate_consumption: false, purchase_quantity: null, crane_id: crane });
+assert.deepEqual((await db.query('SELECT status, paid_date, paid_amount, reference_number, add_to_inventory FROM supplier_payments WHERE id=$1', [result.payment_id])).rows[0], { status: 'pending', paid_date: null, paid_amount: '0', reference_number: '54491', add_to_inventory: false });
+assert.equal((await db.query('SELECT source_module FROM supplier_invoices WHERE id=$1', [result.invoice_id])).rows[0].source_module, 'costs_photo');
+const savedLines = (await db.query('SELECT product_code, unit_price, cost_subcategory, inventory_item_id FROM supplier_invoice_items ORDER BY line_number')).rows;
+assert.deepEqual(savedLines.map(line => line.product_code), lines.map(line => line.product_code));
+assert.deepEqual(savedLines.map(line => Number(line.unit_price)), [6723, 7983, 31900, 81000]);
+assert.deepEqual(savedLines.map(line => line.cost_subcategory), ['Herramientas', 'Consumibles', 'Herramientas', 'Consumibles']);
+assert.ok(savedLines.every(line => line.inventory_item_id === null));
+await assert.rejects(register({ ...data, description: 'Cambio' }, request, receipt), /otros datos/);
+await assert.rejects(register({ ...data, folio: '00054491' }), /ya está registrada/);
+const paid = await register({ ...data, folio: '54504', is_paid: true, payment_date: '2026-10-17', payment_reference: 'OP-123', entity: 'lowboy', paid_by: 'gruas_5_norte' });
+assert.deepEqual((await db.query('SELECT status, paid_date::text, paid_amount, notes FROM supplier_payments WHERE id=$1', [paid.payment_id])).rows[0], { status: 'paid', paid_date: '2026-10-17', paid_amount: '151851', notes: 'Referencia de pago: OP-123' });
+const noDetails = await register({ ...data, folio: '54505', lines: [], header_subcategory_id: '00000000-0000-0000-0000-000000000060' });
+assert.equal((await db.query('SELECT subcategory FROM costs WHERE id=$1', [noDetails.cost_id])).rows[0].subcategory, 'Herramientas');
+assert.equal((await db.query('SELECT count(*)::int AS count FROM supplier_invoice_items WHERE supplier_invoice_id=$1', [noDetails.invoice_id])).rows[0].count, 0);
+const rio = '00000000-0000-0000-0000-000000000070';
+const ownCompany = '00000000-0000-0000-0000-000000000071';
+await db.query("INSERT INTO inventory_suppliers(id,name,rut) VALUES ($1,'Grúas 5 Norte SpA','77.084.699-4'),($2,'Grúas 5 Norte SpA','76.769.841-0')", [rio, ownCompany]);
+const correctedRio = await register({ ...data, folio: '134967', supplier_rut: '77.084.699-4', supplier_name: 'Comercializadora Rio Copiapo Spa', confirm_supplier_name: true });
+assert.equal((await db.query('SELECT supplier_id FROM costs WHERE id=$1', [correctedRio.cost_id])).rows[0].supplier_id, rio);
+assert.deepEqual((await db.query('SELECT name, rut FROM inventory_suppliers WHERE id=$1', [rio])).rows[0], { name: 'Comercializadora Rio Copiapo Spa', rut: '77.084.699-4' });
+assert.equal((await db.query('SELECT name FROM inventory_suppliers WHERE id=$1', [ownCompany])).rows[0].name, 'Grúas 5 Norte SpA');
+await assert.rejects(register({ ...data, folio: '54506', vat_amount: 24345 }), /no cuadran/);
+await assert.rejects(register({ ...data, folio: '54506', is_paid: true }), /fecha real de pago/);
+await assert.rejects(register({ ...data, folio: '54506', supplier_rut: '85.355.900-9' }), /dígito verificador/);
+await assert.rejects(register({ ...data, folio: '54506', lines: lines.map(line => ({ ...line, quantity: 1.5 })) }), /Producto inválido/);
+await assert.rejects(register({ ...data, folio: '54506', lines: lines.map(line => ({ ...line, unit_price: 999 })) }), /no cuadran/);
+for (const suffix of ['62', '63', '99']) await assert.rejects(register({ ...data, folio: '54506', lines: lines.map(line => ({ ...line, cost_subcategory_id: `00000000-0000-0000-0000-0000000000${suffix}` })) }), /subcategoría/);
+await assert.rejects(register({ ...data, folio: '54506' }, nextRequest(), 'otro/archivo.jpg'), /foto de respaldo/);
+const supplier = (await db.query("SELECT id FROM inventory_suppliers WHERE rut='85355900-8'")).rows[0].id;
+await db.query("INSERT INTO supplier_invoices(supplier_id, invoice_number, source_module) VALUES ($1,'111','inventory_xml')", [supplier]);
+await assert.rejects(register({ ...data, folio: '000111' }), /ya está registrada/);
+await db.query("INSERT INTO costs(supplier_id, document_number, category_id, description) VALUES ($1,'222',$2,'Costo previo')", [supplier, category]);
+await assert.rejects(register({ ...data, folio: '222' }), /ya está registrada/);
+const counts = await Promise.all(['costs', 'supplier_invoices', 'supplier_payments', 'inventory_suppliers', 'supplier_invoice_items'].map(count));
+await db.exec(`CREATE FUNCTION fail_final_registration() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Falla final de prueba'; END $$;
+CREATE TRIGGER fail_final BEFORE INSERT ON manual_purchase_registrations FOR EACH ROW EXECUTE FUNCTION fail_final_registration();`);
+await assert.rejects(register({ ...data, folio: '54506', supplier_name: 'Nuevo proveedor', supplier_rut: '76.769.841-0' }), /Falla final/);
+assert.deepEqual(await Promise.all(['costs', 'supplier_invoices', 'supplier_payments', 'inventory_suppliers', 'supplier_invoice_items'].map(count)), counts);
+await db.exec("SET test.authorized = 'false'");
+await assert.rejects(register({ ...data, folio: '54506' }), /No autorizado/);
+assert.equal(await count('inventory_movements'), 0);
+await db.close();
+console.log('Manual Costs: real sync triggers, codes/net unit prices, per-line classification, pending/paid, header-only, private photo, cross-module duplicates, idempotency, authorization and late-failure atomic rollback passed; no inventory movements.');

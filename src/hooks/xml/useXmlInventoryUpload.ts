@@ -14,6 +14,7 @@ import { XMLDocumentData, XMLDocumentItem, Supplier, XMLCompleteParseResult } fr
 import { useManualPurchaseDraft } from '@/hooks/useManualPurchaseDraft';
 import { buildManualPurchaseResult, validateManualPurchase } from '@/utils/manualPurchase';
 import { registerManualPurchase, type InventoryPurchaseArgs } from '@/services/manualPurchase';
+import { normalizeSupplierName, normalizeSupplierRut } from '@/utils/supplierIdentity';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCurrentChileDateString, parseFromDatabase } from '@/utils/timezoneUtils';
@@ -84,7 +85,8 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const { getServicesForCosts } = useServices();
   const { data: locations = [] } = useInventoryLocations();
   const createInventoryItem = useCreateInventoryItem();
-  const { suppliers = [], createSupplierAsync } = useSuppliers();
+  const { suppliers = [], createSupplierAsync, updateSupplierAsync } = useSuppliers();
+  const [supplierNameDecisions, setSupplierNameDecisions] = useState<Record<string, 'document' | 'master'>>({});
   const { invalidateAll, refetchCritical } = useUniversalSync();
 
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
@@ -278,6 +280,19 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     return map;
   }, [parseResult]);
 
+  const getSupplierNameConflict = (document: ValidatedDocument) => {
+    const name = supplierNameByRut.get(normalizeCode(document.doc.supplier_rut))?.trim();
+    const supplier = document.supplier;
+    if (!supplier || !name || normalizeSupplierName(name) === normalizeSupplierName(supplier.name)) return null;
+    const key = JSON.stringify([supplier.id, normalizeSupplierRut(supplier.rut), supplier.name, name]);
+    return { key, name, masterName: supplier.name, rut: document.doc.supplier_rut, decision: supplierNameDecisions[key] };
+  };
+  const getInvoiceSupplierName = (document: ValidatedDocument) => {
+    const conflict = getSupplierNameConflict(document);
+    if (conflict?.decision === 'master') return conflict.masterName;
+    return supplierNameByRut.get(normalizeCode(document.doc.supplier_rut)) || document.supplier?.name || 'Proveedor sin nombre';
+  };
+
   const consumptionSummary = useMemo(() => {
     const lines = selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key));
     const consumed = lines.filter(line => lineConsumptions[line.key]?.immediate);
@@ -350,6 +365,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     resetParsing();
     manual.reset();
     setManualResult(null);
+    setSupplierNameDecisions({});
     setManualRequestId(crypto.randomUUID());
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
@@ -416,7 +432,13 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   };
 
   const ensureSupplier = async (doc: XMLDocumentData, supplier: Supplier | undefined): Promise<string> => {
-    if (supplier?.id) return supplier.id;
+    if (supplier?.id) {
+      if (normalizeSupplierRut(supplier.rut) !== normalizeSupplierRut(doc.supplier_rut)) throw new Error('El RUT del proveedor vinculado no coincide con el emisor de la factura.');
+      const validated = selectedValidatedDocuments.find(document => document.doc === doc);
+      const conflict = validated && getSupplierNameConflict(validated);
+      if (conflict?.decision === 'document') await updateSupplierAsync({ id: supplier.id, data: { name: conflict.name } });
+      return supplier.id;
+    }
     const supplierNameFromXml = supplierNameByRut.get(normalizeCode(doc.supplier_rut));
     const created = await createSupplierAsync({
       name: supplierNameFromXml || doc.description?.split(' - ').pop()?.trim() || `Proveedor XML ${doc.supplier_rut || doc.folio}`,
@@ -425,6 +447,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
       category: 'otros',
       notes: sourceMode === 'manual' ? 'Proveedor creado desde ingreso de compra manual/foto' : 'Proveedor creado automáticamente desde importación XML de inventario',
     });
+    if (normalizeSupplierRut(created.rut) !== normalizeSupplierRut(doc.supplier_rut)) throw new Error('El proveedor devuelto tiene un RUT diferente al emisor. No se registró la compra.');
     return created.id;
   };
 
@@ -495,6 +518,8 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     if (selectedValidatedDocuments.length === 0) return 'Selecciona al menos una factura para importar';
     if (selectedValidatedDocuments.some(item => !item.isValid)) return 'Hay facturas seleccionadas con errores de productos';
     for (const document of selectedValidatedDocuments) {
+      const conflict = getSupplierNameConflict(document);
+      if (conflict && !conflict.decision) return `Factura ${document.doc.folio}: confirma la razón social del proveedor para el RUT ${document.doc.supplier_rut}.`;
       if (sourceMode === 'manual' && document.lines.some(line => discardedLines.has(line.key))) return 'Una compra manual debe conservar todos sus productos para mantener los totales del comprobante.';
       for (const line of document.lines.filter(line => !discardedLines.has(line.key))) {
         const error = validateLineConsumption(Number(line.item.quantity), resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]));
@@ -534,7 +559,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
           const editedDesc = editedDescriptions.get(doc.folio);
           const docWithEditedDesc = editedDesc ? { ...doc, description: editedDesc } : doc;
           const productServiceDescription = buildProductDescription(docWithEditedDesc);
-          const supplierName = supplier?.name || supplierNameByRut.get(normalizeCode(doc.supplier_rut)) || docWithEditedDesc.description?.split(' - ').pop()?.trim() || 'Proveedor';
+          const supplierName = getInvoiceSupplierName(validatedDoc);
           const costDescription = buildCostDescription(docWithEditedDesc, supplierName);
           const primaryLineDescription = (doc.items || []).map(item => item.description?.trim()).find(Boolean) || doc.description || 'N/A';
           const sharedNotes = [`Proveedor: ${supplierName}`, `Factura: ${doc.folio}`, `Glosa principal: ${primaryLineDescription}`, sourceMode === 'manual' ? `Origen: compra ${manual.photo ? 'desde foto revisada' : 'manual'}${manual.photo ? ` (${manual.photo.name})` : ''}` : `Archivo XML: ${selectedFile?.name || 'N/A'}`, importNotes.trim()].filter(Boolean).join(' | ');
@@ -618,6 +643,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     editManualPurchase: () => { setManualResult(null); setSelectedDocuments(new Set()); setStep(1); },
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive,
     validatedDocuments, selectedValidatedDocuments, summary, inventoryCatalog, serviceSearchResults,
+    getInvoiceSupplierName, getSupplierNameConflict, setSupplierNameDecisions,
     selectedDocuments, toggleSelectedDocument, selectAllDocuments, clearSelectedDocuments,
     lineDescriptionOverrides, updateLineDescription,
     manualMatchedItems, setManualMatchedItems,

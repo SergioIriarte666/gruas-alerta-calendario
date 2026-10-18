@@ -58,13 +58,13 @@ export function manualPurchaseTotals(draft: ManualPurchaseDraft) {
   return { net, vat, total: net + vat };
 }
 
-export function validateManualPurchase(draft: ManualPurchaseDraft): string | null {
+export function validateManualPurchase(draft: ManualPurchaseDraft, allowNoDetails = false): string | null {
   if (!draft.supplierName.trim()) return 'Indica el nombre del proveedor.';
   if (!isPurchaseRutValid(draft.supplierRut)) return 'Revisa el RUT del proveedor y su dígito verificador.';
   if (!/^\d{1,20}$/.test(draft.folio.trim()) || /^0+$/.test(draft.folio.trim())) return 'Indica un folio numérico válido.';
   if (!isImportDateValid(draft.issueDate)) return 'Indica una fecha de emisión válida.';
   if (draft.dueDate && (!isImportDateValid(draft.dueDate) || draft.dueDate < draft.issueDate)) return 'El vencimiento no puede ser anterior a la emisión.';
-  if (!draft.lines.length || draft.lines.length > 100) return 'Ingresa entre 1 y 100 productos.';
+  if ((!draft.lines.length && !allowNoDetails) || draft.lines.length > 100) return 'Ingresa entre 1 y 100 productos.';
   for (const [index, line] of draft.lines.entries()) {
     if (!line.description.trim()) return `Producto ${index + 1}: falta la descripción.`;
     if (!Number.isSafeInteger(Number(line.quantity)) || Number(line.quantity) <= 0 || Number(line.quantity) > 2147483647) return `Producto ${index + 1}: la cantidad debe ser un entero mayor a cero dentro del rango permitido.`;
@@ -74,8 +74,8 @@ export function validateManualPurchase(draft: ManualPurchaseDraft): string | nul
   if ([draft.net, draft.vat, draft.total].some(value => !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) || Number(draft.total) <= 0) return 'Completa neto, IVA y total con los importes del comprobante.';
   const calculated = manualPurchaseTotals(draft);
   const money = (value: number) => `$${value.toLocaleString('es-CL', { maximumFractionDigits: 2 })}`;
-  if (Math.abs(calculated.net - Number(draft.net)) > 1) return `Neto no cuadra: comprobante ${money(Number(draft.net))}; cantidad × precio unitario neto ${money(calculated.net)} (diferencia ${money(Math.abs(calculated.net - Number(draft.net)))}). Revisa cantidades y precios unitarios.`;
-  if (Math.abs(calculated.vat - Number(draft.vat)) > 1) return `IVA no cuadra: comprobante ${money(Number(draft.vat))}; calculado ${money(calculated.vat)} (diferencia ${money(Math.abs(calculated.vat - Number(draft.vat)))}). Revisa el IVA leído en la foto.`;
+  if (draft.lines.length && Math.abs(calculated.net - Number(draft.net)) > 1) return `Neto no cuadra: comprobante ${money(Number(draft.net))}; cantidad × precio unitario neto ${money(calculated.net)} (diferencia ${money(Math.abs(calculated.net - Number(draft.net)))}). Revisa cantidades y precios unitarios.`;
+  if (draft.lines.length && Math.abs(calculated.vat - Number(draft.vat)) > 1) return `IVA no cuadra: comprobante ${money(Number(draft.vat))}; calculado ${money(calculated.vat)} (diferencia ${money(Math.abs(calculated.vat - Number(draft.vat)))}). Revisa el IVA leído en la foto.`;
   const headerTotal = Number(draft.net) + Number(draft.vat);
   if (Math.abs(headerTotal - Number(draft.total)) > 1) return `Total no cuadra: comprobante ${money(Number(draft.total))}; neto + IVA ${money(headerTotal)} (diferencia ${money(Math.abs(headerTotal - Number(draft.total)))}). Revisa el total del comprobante.`;
   return null;

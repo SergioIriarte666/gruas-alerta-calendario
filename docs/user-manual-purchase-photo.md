@@ -11,6 +11,8 @@ En **Bodega → Ingresar compra**, elegir **Desde foto / manual**. El origen **D
 
 La foto se prepara localmente y se envía al servicio de lectura solo al solicitarlo. Se almacena en el bucket privado `quick-entry-photos` al confirmar. Si falla la subida, no se registra la compra. Si hay un error de red durante el registro, reintentar sin cambiar los datos utiliza el mismo identificador y no duplica la compra. Una factura del mismo proveedor y folio ya registrada por otro flujo se rechaza.
 
+El proveedor se vincula por el **RUT del emisor**, no por el receptor ni por la glosa. El resumen y la revisión muestran ese RUT. Si el nombre leído difiere del maestro para el mismo RUT, elegir **Usar nombre del comprobante** o **Conservar nombre registrado** en Productos antes de confirmar. La primera opción corrige el nombre del maestro al importar, también visible en sus registros históricos, sin cambiar su RUT ni identificador. Esa corrección del maestro es una operación previa al registro de la compra; si la compra falla después, el nombre corregido se conserva. No se reasignan automáticamente costos antiguos a otro proveedor.
+
 ## Instalación y validación
 
 Aplicar la migración `20261018233000_manual_inventory_purchases.sql`. Reutiliza la transacción de inventario existente, agrega `register_manual_inventory_purchase` y una bitácora privada de idempotencia. No requiere una nueva Edge Function ni otra clave de IA. Mantener disponible `parse-receipt-image`; el ingreso manual funciona independientemente de la IA.

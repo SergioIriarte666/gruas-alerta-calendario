@@ -98,3 +98,7 @@ export const prepareCostForDuplication = (cost: Cost) => {
     supplier_id: cost.supplier_id || 'none',
   };
 };
+
+export function matchesCostSubcategory(cost: { subcategory?: string | null; supplier_invoices?: { supplier_invoice_items?: { cost_subcategory?: string | null }[] } | null }, subcategory: string) {
+  return cost.subcategory === subcategory || !!cost.supplier_invoices?.supplier_invoice_items?.some(item => item.cost_subcategory === subcategory);
+}

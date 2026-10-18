@@ -30,6 +30,7 @@ import { computeSelectedTotal } from '@/utils/xml/xmlInventoryHelpers';
 import { createSupplierInvoiceForImportedCost } from '@/services/xmlCostInvoiceSync';
 import { classifySelectedCostItems, getConsolidatedCostSubcategory, resolveXmlCostPaymentDate } from '@/utils/xml/xmlCostWizard';
 import { isImportDateValid } from '@/utils/xml/xmlInventoryWizard';
+import { normalizeSupplierRut, supplierRutVariants } from '@/utils/supplierIdentity';
 
 const logger = createLogger('useXmlCostUpload');
 
@@ -464,8 +465,9 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const findSupplierByRutOrName = async (rut: string, name: string): Promise<string | null> => {
     if (rut?.trim()) {
-      const { data } = await supabase.from('inventory_suppliers').select('id').eq('rut', rut.trim()).maybeSingle();
-      if (data) return data.id;
+      const { data, error } = await supabase.from('inventory_suppliers').select('id, rut').in('rut', supplierRutVariants(rut));
+      if (error) throw error;
+      return data?.find(supplier => normalizeSupplierRut(supplier.rut) === normalizeSupplierRut(rut))?.id || null;
     }
     if (name?.trim()) {
       const { data } = await supabase.from('inventory_suppliers').select('id, name').ilike('name', `%${name.trim()}%`).limit(1).maybeSingle();

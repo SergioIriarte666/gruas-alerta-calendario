@@ -34,7 +34,7 @@ export async function extractPurchasePhoto(file: File): Promise<unknown> {
 
 export type InventoryPurchaseArgs = Database['public']['Functions']['import_xml_inventory_invoice']['Args'];
 
-export async function registerManualPurchase(requestId: string, args: InventoryPurchaseArgs, photo: File | null) {
+export async function uploadManualPurchasePhoto(requestId: string, photo: File | null) {
   let receiptPath: string | null = null;
   if (photo) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -43,6 +43,11 @@ export async function registerManualPurchase(requestId: string, args: InventoryP
     const { error } = await supabase.storage.from('quick-entry-photos').upload(receiptPath, photo, { contentType: 'image/jpeg', upsert: true });
     if (error) throw new Error('No se pudo guardar la foto de respaldo. No se registró la compra.');
   }
+  return receiptPath;
+}
+
+export async function registerManualPurchase(requestId: string, args: InventoryPurchaseArgs, photo: File | null) {
+  const receiptPath = await uploadManualPurchasePhoto(requestId, photo);
   const { data, error } = await supabase.rpc('register_manual_inventory_purchase', { p_request_id: requestId, p_data: args as unknown as Json, p_receipt_path: receiptPath });
   if (error) throw new Error(error.message);
   return data;

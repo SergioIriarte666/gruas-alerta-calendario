@@ -16,6 +16,13 @@ export const normalizeSupplierRut = (rut?: string | null): string => {
   return (rut || '').replace(/[^0-9kK]/g, '').toUpperCase().trim();
 };
 
+export const supplierRutVariants = (rut: string): string[] => {
+  const normalized = normalizeSupplierRut(rut);
+  const body = normalized.slice(0, -1);
+  const digit = normalized.slice(-1);
+  return [...new Set([rut.trim(), normalized, `${body}-${digit}`, `${body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${digit}`].flatMap(value => [value, value.toLowerCase()]))];
+};
+
 export const normalizeSupplierName = (name?: string | null): string => {
   return (name || '')
     .normalize('NFD')
@@ -43,8 +50,7 @@ export const findSupplierByIdentity = <T extends Pick<SupplierIdentityLike, 'nam
   const targetName = normalizeSupplierName(target.name);
 
   if (targetRut) {
-    const byRut = suppliers.find((supplier) => normalizeSupplierRut(supplier.rut) === targetRut);
-    if (byRut) return byRut;
+    return suppliers.find((supplier) => normalizeSupplierRut(supplier.rut) === targetRut);
   }
 
   if (targetName) {

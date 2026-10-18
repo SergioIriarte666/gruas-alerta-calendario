@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { XMLInventoryUpload } from '../XMLInventoryUpload';
 
-const mocks = vi.hoisted(() => ({ register: vi.fn(), extract: vi.fn(), preparePhoto: vi.fn() }));
+const mocks = vi.hoisted(() => ({ register: vi.fn(), extract: vi.fn(), preparePhoto: vi.fn(), updateSupplier: vi.fn(), createSupplier: vi.fn(), suppliers: [] as { id: string; name: string; rut: string }[] }));
 vi.mock('@/services/manualPurchase', () => ({ registerManualPurchase: mocks.register, extractPurchasePhoto: mocks.extract, preparePurchasePhoto: mocks.preparePhoto }));
 vi.mock('@/hooks/useXMLParsing', () => ({ useXMLParsing: () => ({ selectedFile: null, parseResult: null, isAnalyzing: false, getRootProps: () => ({}), getInputProps: () => ({}), isDragActive: false, reset: vi.fn() }) }));
 vi.mock('@/hooks/useInventory', () => ({
   useInventoryItems: () => ({ data: tools.map((name, index) => ({ id: `item-${index}`, name })), refetch: vi.fn() }),
   useInventoryCategories: () => ({ data: [] }), useInventoryLocations: () => ({ data: [{ id: 'warehouse', code: 'MAIN', name: 'Bodega principal' }] }), useCreateInventoryItem: () => ({ mutateAsync: vi.fn() }),
 }));
-vi.mock('@/hooks/useSuppliers', () => ({ useSuppliers: () => ({ suppliers: [{ id: 'supplier', name: 'Dicar', rut: '85.355.900-8' }], createSupplierAsync: vi.fn() }) }));
+vi.mock('@/hooks/useSuppliers', () => ({ useSuppliers: () => ({ suppliers: mocks.suppliers, createSupplierAsync: mocks.createSupplier, updateSupplierAsync: mocks.updateSupplier }) }));
 vi.mock('@/hooks/useUniversalSync', () => ({ useUniversalSync: () => ({ invalidateAll: vi.fn(), refetchCritical: vi.fn() }) }));
 vi.mock('@/hooks/useCostCategories', () => ({ useCostCategories: () => ({ data: [{ id: 'inventory', name: 'Inventario' }] }) }));
 vi.mock('@/hooks/useCostSubcategories', () => ({ useCostSubcategories: () => ({ subcategories: [{ id: 'tools', name: 'Herramientas' }] }) }));
@@ -27,6 +27,8 @@ const extraction = { vendorName: 'Ferretería y Repuestos Dicar Ltda.', vendorRu
 };
 
 beforeEach(() => {
+  mocks.suppliers = [{ id: 'supplier', name: 'Ferretería y Repuestos Dicar Ltda.', rut: '85.355.900-8' }];
+  mocks.updateSupplier.mockResolvedValue({ id: 'supplier' });
   mocks.register.mockResolvedValue({ cost_id: 'cost' });
   mocks.extract.mockResolvedValue(extraction);
   mocks.preparePhoto.mockImplementation(async file => new File([file], 'IMG_5940.jpg', { type: 'image/jpeg' }));
@@ -44,10 +46,29 @@ async function readPhoto() {
 }
 
 describe('Compra desde foto y registro manual', () => {
+  it('exige resolver un nombre incorrecto del maestro y guarda Río Copiapó sin cambiar su RUT', async () => {
+    mocks.suppliers = [{ id: 'rio', name: 'Grúas 5 Norte SpA', rut: '77.084.699-4' }, { id: 'own-company', name: 'Grúas 5 Norte SpA', rut: '76.769.841-0' }];
+    mocks.extract.mockResolvedValueOnce({ ...extraction, vendorName: 'Comercializadora Rio Copiapo Spa', vendorRut: '77.084.699-4' });
+    render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
+    await readPhoto();
+    fireEvent.click(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' }));
+    fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));
+    expect(screen.getByText(/Proveedor registrado: Grúas 5 Norte SpA/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Revisar importación/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Usar nombre del comprobante' }));
+    fireEvent.click(screen.getByRole('button', { name: /Revisar importación/ }));
+    expect(screen.getByText(/Factura 54491 · Comercializadora Rio Copiapo Spa/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Importar compra/ }));
+    await waitFor(() => expect(mocks.register).toHaveBeenCalledOnce());
+    expect(mocks.updateSupplier).toHaveBeenCalledWith({ id: 'rio', data: { name: 'Comercializadora Rio Copiapo Spa' } });
+    expect(mocks.register.mock.calls[0][1]).toMatchObject({ p_supplier_id: 'rio', p_notes: expect.stringContaining('Proveedor: Comercializadora Rio Copiapo Spa') });
+    expect(mocks.createSupplier).not.toHaveBeenCalled();
+  });
+
   it('registra una compra escrita manualmente sin foto y permite indicar que está pagada', async () => {
     render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Desde foto / manual' }));
-    for (const [label, value] of [['Proveedor *', 'Dicar'], ['RUT del proveedor *', '85355900-8'], ['Folio de factura *', '54504'], ['Producto 1 *', tools[0]], ['Precio unit. neto *', '1000'], ['Neto del comprobante *', '1000'], ['IVA del comprobante *', '190'], ['Total del comprobante *', '1190']]) {
+    for (const [label, value] of [['Proveedor *', 'Ferretería y Repuestos Dicar Ltda.'], ['RUT del proveedor *', '85355900-8'], ['Folio de factura *', '54504'], ['Producto 1 *', tools[0]], ['Precio unit. neto *', '1000'], ['Neto del comprobante *', '1000'], ['IVA del comprobante *', '190'], ['Total del comprobante *', '1190']]) {
       fireEvent.change(screen.getByLabelText(label), { target: { value } });
     }
     fireEvent.click(screen.getByLabelText('Fecha de emisión *'));

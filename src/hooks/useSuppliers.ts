@@ -249,6 +249,7 @@ export const useSuppliers = () => {
     createSupplier: createSupplierMutation.mutate,
     createSupplierAsync: createSupplierMutation.mutateAsync,
     updateSupplier: updateSupplierMutation.mutate,
+    updateSupplierAsync: updateSupplierMutation.mutateAsync,
     deleteSupplier: deleteSupplierMutation.mutate,
     toggleSupplierStatus: toggleSupplierStatusMutation.mutate,
     isCreating: createSupplierMutation.isPending,

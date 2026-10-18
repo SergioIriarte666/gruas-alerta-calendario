@@ -97,6 +97,7 @@ const COSTS_LIST_SELECT_CLAUSE = `
       quantity,
       unit_price,
       subtotal,
+      cost_subcategory,
       tax_amount,
       total_amount
     )

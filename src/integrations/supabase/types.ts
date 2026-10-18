@@ -10036,6 +10036,10 @@ export type Database = {
         Args: { p_request_id: string; p_data: Json; p_receipt_path?: string | null }
         Returns: Json
       }
+      register_manual_cost_purchase: {
+        Args: { p_request_id: string; p_data: Json; p_receipt_path?: string | null }
+        Returns: Json
+      }
       import_xml_inventory_invoice: {
         Args: {
           p_payment_date?: string | null

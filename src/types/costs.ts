@@ -56,6 +56,7 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
       quantity: number | null;
       unit_price: number | null;
       subtotal: number | null;
+      cost_subcategory?: string | null;
       tax_amount: number | null;
       total_amount: number | null;
     }[];
