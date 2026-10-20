@@ -42,6 +42,8 @@ function useTestUpload() {
     step, setStep, isPaid, setIsPaid, paymentDate, setPaymentDate, paymentReference, setPaymentReference,
     dueDateOverride, setDueDateOverride, importNotes, setImportNotes, selectedLineKeys, setSelectedLineKeys,
     bulkCraneId, setBulkCraneId, lineConsumptions, setLineConsumptions, lineCostSubcategories, setLineCostSubcategories,
+    selectedCostSubcategoryId: '', setSelectedCostSubcategoryId: noop, resolveEffectiveSubcategoryId: (key: string) => lineCostSubcategories[key] || null,
+    selectedEntity: 'gruas_5_norte', setSelectedEntity: noop, selectedPaidBy: 'gruas_5_norte', setSelectedPaidBy: noop,
     showAdvancedAssociations, setShowAdvancedAssociations, configurationError, reviewError: configurationError,
     applyBulkCrane: () => setLineConsumptions(previous => applyCraneToSelectedLines(lines.map(line => ({ key: line.key, quantity: line.item.quantity })), selectedLineKeys, previous, bulkCraneId)),
     activeSelectedLines: lines, selectedBulkLineCount: selectedLineKeys.size,

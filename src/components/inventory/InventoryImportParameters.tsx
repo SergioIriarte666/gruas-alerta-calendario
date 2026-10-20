@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, toTitleCase } from '@/lib/utils';
+import { ENTITIES, type EntityKey } from '@/lib/entities';
 import { formatCurrency } from '@/utils/xml/xmlInventoryHelpers';
 import type { useXmlInventoryUpload } from '@/hooks/xml/useXmlInventoryUpload';
 
@@ -19,9 +20,10 @@ interface InventoryImportParametersProps {
 
 export const InventoryImportParameters = ({ upload }: InventoryImportParametersProps) => {
   const {
-    locations, costCategories, costCenters, operators, serviceSearchResults,
+    locations, costCategories, costSubcategories, costCenters, operators, serviceSearchResults,
     selectedLocationId, setSelectedLocationId, selectedCostCategoryId, setSelectedCostCategoryId,
-    setLineCostSubcategories,
+    setLineCostSubcategories, selectedCostSubcategoryId, setSelectedCostSubcategoryId,
+    selectedEntity, setSelectedEntity, selectedPaidBy, setSelectedPaidBy,
     selectedCostCenterId, setSelectedCostCenterId, selectedOperatorId, setSelectedOperatorId,
     selectedServiceId, setSelectedServiceId: onServiceChange, selectedService,
     selectedServiceFolio, setSelectedServiceFolio: onServiceFolioChange,
@@ -48,6 +50,7 @@ export const InventoryImportParameters = ({ upload }: InventoryImportParametersP
               <Select value={selectedCostCategoryId} disabled={isImporting} onValueChange={id => {
                 setSelectedCostCategoryId(id);
                 setLineCostSubcategories({});
+                setSelectedCostSubcategoryId('');
                 const category = costCategories.find(item => item.id === id);
                 if (category?.default_cost_center_id) setSelectedCostCenterId(category.default_cost_center_id);
               }}>
@@ -62,16 +65,38 @@ export const InventoryImportParameters = ({ upload }: InventoryImportParametersP
                 <SelectContent><SelectItem value="none">Sin centro de costo</SelectItem>{costCenters.filter(center => center.is_active).map(center => <SelectItem key={center.id} value={center.id}>{center.code} - {center.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
+              <Label htmlFor="xml-cost-subcategory">Subcategoría</Label>
+              <Select value={selectedCostSubcategoryId || 'none'} disabled={isImporting || !selectedCostCategoryId} onValueChange={value => setSelectedCostSubcategoryId(value === 'none' ? '' : value)}>
+                <SelectTrigger id="xml-cost-subcategory"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Sin subcategoría</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Se aplica a todos los productos; en el paso Productos puedes cambiar la de cada uno.</p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="xml-warehouse">Bodega de ingreso *</Label>
               <Select value={selectedLocationId} disabled={isImporting} onValueChange={setSelectedLocationId}>
                 <SelectTrigger id="xml-warehouse"><SelectValue placeholder="Selecciona una bodega" /></SelectTrigger>
                 <SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name} ({location.code})</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="xml-cost-entity">Empresa</Label>
+              <Select value={selectedEntity} disabled={isImporting} onValueChange={value => setSelectedEntity(value as EntityKey)}>
+                <SelectTrigger id="xml-cost-entity"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value={ENTITIES.GRUAS_5_NORTE.key}>{ENTITIES.GRUAS_5_NORTE.label}</SelectItem><SelectItem value={ENTITIES.LOWBOY.key}>{ENTITIES.LOWBOY.label}</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="xml-cost-paid-by">Financiado por</Label>
+              <Select value={selectedPaidBy} disabled={isImporting} onValueChange={value => setSelectedPaidBy(value as EntityKey)}>
+                <SelectTrigger id="xml-cost-paid-by"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value={ENTITIES.GRUAS_5_NORTE.key}>{ENTITIES.GRUAS_5_NORTE.label}</SelectItem><SelectItem value={ENTITIES.LOWBOY.key}>{ENTITIES.LOWBOY.label}</SelectItem></SelectContent>
+              </Select>
+            </div>
             <div className="rounded-lg bg-primary/5 p-3 sm:col-span-2">
               <p className="text-sm font-medium">Subcategorías por producto</p>
-              <p className="mt-1 text-xs text-muted-foreground">En el paso Productos asignarás la subcategoría de cada artículo: por ejemplo, Partes y Piezas, Consumibles o Herramientas. La factura conserva un solo costo consolidado.</p>
+              <p className="mt-1 text-xs text-muted-foreground">La subcategoría elegida arriba queda como valor por defecto. En el paso Productos puedes asignar otra a cada artículo: por ejemplo, Partes y Piezas, Consumibles o Herramientas. La factura conserva un solo costo consolidado.</p>
             </div>
           </CardContent>
         </Card>

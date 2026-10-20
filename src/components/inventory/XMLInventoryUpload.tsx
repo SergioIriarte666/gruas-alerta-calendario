@@ -35,7 +35,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     selectedDocuments, toggleSelectedDocument, selectAllDocuments, clearSelectedDocuments,
     updateLineDescription, manualMatchedItems, setManualMatchedItems, editedDescriptions, setEditedDescriptions,
     discardedLines, setDiscardedLines, lineConsumptions, setLineConsumptions,
-    lineCostSubcategories, setLineCostSubcategories, catalogSearchOpen, setCatalogSearchOpen,
+    lineCostSubcategories, setLineCostSubcategories, selectedCostSubcategoryId, catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys, isPaid, isImporting, progress,
     pendingProductSuggestion, setPendingProductSuggestion, suggestedProductDetails, setSuggestedProductDetails,
     selectedCostCategory, selectedCostCenter, selectedLocation, costSubcategories, cranes,
@@ -236,6 +236,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                       onToggleLine={(key, checked) => setSelectedLineKeys(previous => { const next = new Set(previous); if (checked) next.add(key); else next.delete(key); return next; })}
                       costSubcategories={costSubcategories}
                       lineCostSubcategories={lineCostSubcategories}
+                      defaultCostSubcategoryId={selectedCostSubcategoryId}
                       onCostSubcategoryChange={(key, value) => setLineCostSubcategories(previous => {
                         const next = { ...previous };
                         next[key] = value === 'none' ? '' : value;

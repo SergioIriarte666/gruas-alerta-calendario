@@ -3,14 +3,15 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { useXmlInventoryUpload } from '@/hooks/xml/useXmlInventoryUpload';
 import { resolveLineConsumption } from '@/utils/xml/xmlInventoryConsumption';
-import { resolveLineSubcategoryId } from '@/utils/xml/xmlInventoryClassification';
+import { ENTITIES } from '@/lib/entities';
 import { computeLineSubtotal, computeLineTaxAmount, formatCurrency } from '@/utils/xml/xmlInventoryHelpers';
 
 export function InventoryImportReview({ upload }: { upload: ReturnType<typeof useXmlInventoryUpload> }) {
-  const { selectedValidatedDocuments, discardedLines, lineConsumptions, lineCostSubcategories,
-    costSubcategories, cranes, classificationSummary, selectedLocation, selectedCostCategory, selectedCostCenter,
+  const { selectedValidatedDocuments, discardedLines, lineConsumptions, resolveEffectiveSubcategoryId,
+    costSubcategories, cranes, classificationSummary, selectedLocation, selectedCostCategory, selectedCostCenter, selectedEntity, selectedPaidBy,
     isPaid, paymentDate, paymentReference, dueDateOverride, selectedOperator, selectedService, selectedServiceFolio, importNotes } = upload;
   const total = selectedValidatedDocuments.reduce((sum, document) => sum + document.doc.total_amount, 0);
+  const entityLabel = (key: string) => Object.values(ENTITIES).find(entity => entity.key === key)?.label || key;
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden border-border/70">
@@ -20,6 +21,7 @@ export function InventoryImportReview({ upload }: { upload: ReturnType<typeof us
           <div className="space-y-3">
             <p className="flex items-center gap-2 text-sm font-medium"><Tags className="size-4 text-primary" />Clasificación · importes netos</p>
             <p className="text-sm">{selectedCostCategory?.name} · {selectedCostCenter?.name || 'Sin centro de costo'}</p>
+            <p className="text-sm">Empresa: {entityLabel(selectedEntity)} · Financiado por {entityLabel(selectedPaidBy)}</p>
             {classificationSummary.map(group => <div key={group.name} className="flex justify-between gap-3 text-sm"><span>{group.name} ({group.lineCount})</span><span className="tabular-nums">{formatCurrency(group.netAmount)}</span></div>)}
             <p className="text-xs text-muted-foreground">Cada factura conserva un solo costo consolidado y el detalle por producto.</p>
           </div>
@@ -44,7 +46,7 @@ export function InventoryImportReview({ upload }: { upload: ReturnType<typeof us
           <CardContent className="divide-y p-0">
             {lines.map(line => {
               const consumption = resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key]);
-              const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key]);
+              const subcategoryId = resolveEffectiveSubcategoryId(line.key);
               const subcategory = costSubcategories.find(item => item.id === subcategoryId)?.name || 'Sin subcategoría';
               const crane = cranes.find(item => item.id === consumption.craneId);
               return <div key={line.key} className="space-y-2 px-4 py-3">

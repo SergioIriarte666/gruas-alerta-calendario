@@ -132,9 +132,35 @@ describe('Compra desde foto y registro manual', () => {
     expect(screen.getByText(/ingreso manual sin foto/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Importar compra/ }));
     await waitFor(() => expect(mocks.register).toHaveBeenCalledOnce());
-    expect(mocks.register.mock.calls[0][1]).toMatchObject({ p_folio: '54504', p_total_amount: 1190, p_is_paid: true, p_payment_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
+    expect(mocks.register.mock.calls[0][1]).toMatchObject({ p_folio: '54504', p_total_amount: 1190, p_is_paid: true, p_entity: 'gruas_5_norte', p_paid_by: 'gruas_5_norte', p_cost_subcategory: null, p_cost_subcategory_id: null, p_payment_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
     expect(mocks.register.mock.calls[0][2]).toBeNull();
     expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it('permite elegir quién financia la compra y una subcategoría por defecto para todos los productos', async () => {
+    render(<XMLInventoryUpload isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Desde foto / manual' }));
+    for (const [label, value] of [['Proveedor *', 'Ferretería y Repuestos Dicar Ltda.'], ['RUT del proveedor *', '85355900-8'], ['Folio de factura *', '54505'], ['Producto 1 *', tools[0]], ['Precio unit. neto *', '1000'], ['Neto del comprobante *', '1000'], ['IVA del comprobante *', '190'], ['Total del comprobante *', '1190']]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    }
+    fireEvent.click(screen.getByLabelText('Fecha de emisión *'));
+    fireEvent.click(screen.getByRole('gridcell', { name: '15' }));
+    fireEvent.keyDown(screen.getByRole('gridcell', { name: '15' }), { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Usar estos datos y clasificar compra' }));
+    expect(screen.getByLabelText('Empresa')).toHaveTextContent('Grúas 5 Norte SpA');
+    fireEvent.keyDown(screen.getByLabelText('Financiado por'), { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByRole('option', { name: 'LowBoy Chile SpA' }));
+    fireEvent.keyDown(screen.getByLabelText('Subcategoría'), { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByRole('option', { name: 'Herramientas' }));
+    fireEvent.click(screen.getByRole('button', { name: /Continuar a productos/ }));
+    expect(screen.getByLabelText('Subcategoría del producto', { selector: '#subcategory-54505-1' })).toHaveTextContent('Herramientas');
+    fireEvent.click(screen.getByRole('button', { name: /Revisar importación/ }));
+    expect(screen.getByText('Empresa: Grúas 5 Norte SpA · Financiado por LowBoy Chile SpA')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Importar compra/ }));
+    await waitFor(() => expect(mocks.register).toHaveBeenCalledOnce());
+    const args = mocks.register.mock.calls[0][1];
+    expect(args).toMatchObject({ p_folio: '54505', p_entity: 'gruas_5_norte', p_paid_by: 'lowboy', p_cost_subcategory: 'Herramientas', p_cost_subcategory_id: 'tools' });
+    expect(args.p_lines[0].cost_subcategory_id).toBe('tools');
   });
 
   it('precarga el comprobante, exige revisión y registra una sola compra con foto al confirmar', async () => {

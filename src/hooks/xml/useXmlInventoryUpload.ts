@@ -14,6 +14,7 @@ import { XMLDocumentData, XMLDocumentItem, Supplier, XMLCompleteParseResult } fr
 import { useManualPurchaseDraft } from '@/hooks/useManualPurchaseDraft';
 import { buildManualPurchaseResult, validateManualPurchase } from '@/utils/manualPurchase';
 import { registerManualPurchase, type InventoryPurchaseArgs } from '@/services/manualPurchase';
+import { ENTITIES, type EntityKey } from '@/lib/entities';
 import { normalizeSupplierName, normalizeSupplierRut } from '@/utils/supplierIdentity';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -97,6 +98,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
   const [lineConsumptions, setLineConsumptions] = useState<Record<string, LineConsumption>>({});
   const [lineCostSubcategories, setLineCostSubcategories] = useState<Record<string, string>>({});
+  // Subcategoría de cabecera: valor por defecto de los productos que no eligen una propia.
+  const [selectedCostSubcategoryId, setSelectedCostSubcategoryId] = useState('');
+  const [selectedEntity, setSelectedEntity] = useState<EntityKey>(ENTITIES.GRUAS_5_NORTE.key);
+  const [selectedPaidBy, setSelectedPaidBy] = useState<EntityKey>(ENTITIES.GRUAS_5_NORTE.key);
   const [catalogSearchOpen, setCatalogSearchOpen] = useState<Record<string, boolean>>({});
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
@@ -127,6 +132,11 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
   const servicesForCosts = useMemo(() => getServicesForCosts(), [getServicesForCosts]);
   const { subcategories: costSubcategories = [] } = useCostSubcategories(selectedCostCategoryId || undefined);
+  // Una línea con elección explícita (incluido "Sin subcategoría", guardado como '') manda sobre la cabecera.
+  const resolveEffectiveSubcategoryId = useCallback(
+    (key: string) => key in lineCostSubcategories ? resolveLineSubcategoryId(lineCostSubcategories[key]) : selectedCostSubcategoryId || null,
+    [lineCostSubcategories, selectedCostSubcategoryId]
+  );
 
   const inventoryCatalog = useMemo<InventoryCatalogItem[]>(
     () => inventoryItems.map(item => ({ id: item.id, name: item.name, sku: item.sku, barcode: item.barcode, unit_cost: item.unit_cost })),
@@ -279,10 +289,10 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
   const classificationSummary = useMemo(() => summarizeInvoiceClassifications(
     selectedValidatedDocuments.flatMap(document => document.lines).filter(line => !discardedLines.has(line.key)).map(line => {
-      const subcategoryId = resolveLineSubcategoryId(lineCostSubcategories[line.key]);
+      const subcategoryId = resolveEffectiveSubcategoryId(line.key);
       return { cost_subcategory: costSubcategories.find(subcategory => subcategory.id === subcategoryId)?.name || '', subtotal: computeLineSubtotal(line.item) };
     })
-  ), [selectedValidatedDocuments, discardedLines, lineCostSubcategories, costSubcategories]);
+  ), [selectedValidatedDocuments, discardedLines, resolveEffectiveSubcategoryId, costSubcategories]);
 
   const summary = useMemo(() => ({
     totalDocs: validatedDocuments.length,
@@ -348,6 +358,9 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     setDiscardedLines(new Set());
     setLineConsumptions({});
     setLineCostSubcategories({});
+    setSelectedCostSubcategoryId('');
+    setSelectedEntity(ENTITIES.GRUAS_5_NORTE.key);
+    setSelectedPaidBy(ENTITIES.GRUAS_5_NORTE.key);
     setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
@@ -518,6 +531,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     if (sourceMode === 'manual' && !manualResult) return 'Prepara y revisa los datos de la compra manual.';
     if (selectedValidatedDocuments.length === 0) return 'Selecciona al menos una factura para importar';
     if (selectedValidatedDocuments.some(item => !item.isValid)) return 'Hay facturas seleccionadas con errores de productos';
+    if (selectedCostSubcategoryId && !costSubcategories.some(subcategory => subcategory.id === selectedCostSubcategoryId)) return 'Selecciona una subcategoría de la categoría actual.';
     for (const document of selectedValidatedDocuments) {
       const conflict = getSupplierNameConflict(document);
       if (conflict && !conflict.decision) return `Factura ${document.doc.folio}: confirma la razón social del proveedor para el RUT ${document.doc.supplier_rut}.`;
@@ -567,7 +581,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
 
           const activeLines = validatedDoc.lines.filter(line => !discardedLines.has(line.key));
           const linesPayload = activeLines.map(line => ({
-            cost_subcategory_id: resolveLineSubcategoryId(lineCostSubcategories[line.key]),
+            cost_subcategory_id: resolveEffectiveSubcategoryId(line.key),
             ...buildLineConsumptionPayload(resolveLineConsumption(Number(line.item.quantity), lineConsumptions[line.key])),
             line_number: line.lineNumber, inventory_item_id: line.matchedItem!.id,
             product_code: line.item.product_code || line.matchedItem?.sku || line.matchedItem?.barcode || null,
@@ -598,7 +612,9 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_payment_reference: isPaid ? paymentReference.trim() || null : null,
             p_location_id: selectedLocationId,
             p_cost_category_id: selectedCostCategoryId,
-            p_cost_subcategory: null,
+            p_cost_subcategory: costSubcategories.find(subcategory => subcategory.id === selectedCostSubcategoryId)?.name ?? null,
+            p_entity: selectedEntity,
+            p_paid_by: selectedPaidBy,
             p_cost_center_id: selectedCostCenterId || null,
             p_crane_id: null,
             p_operator_id: selectedOperatorId || null,
@@ -608,7 +624,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
             p_lines: linesPayload,
           };
           if (sourceMode === 'manual') {
-            await registerManualPurchase(manualRequestId, purchaseArgs, manual.photo);
+            await registerManualPurchase(manualRequestId, { ...purchaseArgs, p_cost_subcategory_id: selectedCostSubcategoryId || null }, manual.photo);
           } else {
             const { error: importError } = await supabase.rpc('import_xml_inventory_invoice', purchaseArgs);
             if (importError) throw new Error(importError.message);
@@ -652,6 +668,8 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     discardedLines, setDiscardedLines,
     lineConsumptions, setLineConsumptions, consumptionSummary,
     lineCostSubcategories, setLineCostSubcategories,
+    selectedCostSubcategoryId, setSelectedCostSubcategoryId, resolveEffectiveSubcategoryId,
+    selectedEntity, setSelectedEntity, selectedPaidBy, setSelectedPaidBy,
     classificationSummary,
     catalogSearchOpen, setCatalogSearchOpen,
     creatingProductKeys,

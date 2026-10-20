@@ -4113,6 +4113,42 @@ export type Database = {
           },
         ]
       }
+      issued_invoice_imports: {
+        Row: {
+          created_at: string
+          created_by: string
+          draft: Json
+          file_hash: string
+          file_name: string
+          id: string
+          result: Json | null
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          draft: Json
+          file_hash: string
+          file_name: string
+          id?: string
+          result?: Json | null
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          draft?: Json
+          file_hash?: string
+          file_name?: string
+          id?: string
+          result?: Json | null
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       iva_f29_separations: {
         Row: {
           invoice_id: string
@@ -4513,6 +4549,30 @@ export type Database = {
           scheduled_date?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      manual_purchase_registrations: {
+        Row: {
+          created_at: string
+          created_by: string
+          payload: Json
+          request_id: string
+          result: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          payload: Json
+          request_id: string
+          result: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          payload?: Json
+          request_id?: string
+          result?: Json
         }
         Relationships: []
       }
@@ -5538,6 +5598,42 @@ export type Database = {
           rut?: string | null
           status?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      purchase_receipt_files: {
+        Row: {
+          legacy_removed: boolean
+          owner_id: string
+          path: string
+          r2_bucket: string
+          r2_key: string
+          request_id: string
+          sha256: string
+          size_bytes: number
+          verified_at: string
+        }
+        Insert: {
+          legacy_removed?: boolean
+          owner_id: string
+          path: string
+          r2_bucket: string
+          r2_key: string
+          request_id: string
+          sha256: string
+          size_bytes: number
+          verified_at?: string
+        }
+        Update: {
+          legacy_removed?: boolean
+          owner_id?: string
+          path?: string
+          r2_bucket?: string
+          r2_key?: string
+          request_id?: string
+          sha256?: string
+          size_bytes?: number
+          verified_at?: string
         }
         Relationships: []
       }
@@ -7804,10 +7900,10 @@ export type Database = {
       }
       supplier_invoice_items: {
         Row: {
-          cost_subcategory_id: string | null
-          cost_subcategory: string | null
-          consumption_quantity: number | null
           consumption_crane_id: string | null
+          consumption_quantity: number | null
+          cost_subcategory: string | null
+          cost_subcategory_id: string | null
           created_at: string
           created_by: string | null
           description: string
@@ -7827,10 +7923,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          cost_subcategory_id?: string | null
-          cost_subcategory?: string | null
-          consumption_quantity?: number | null
           consumption_crane_id?: string | null
+          consumption_quantity?: number | null
+          cost_subcategory?: string | null
+          cost_subcategory_id?: string | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -7850,10 +7946,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          cost_subcategory_id?: string | null
-          cost_subcategory?: string | null
-          consumption_quantity?: number | null
           consumption_crane_id?: string | null
+          consumption_quantity?: number | null
+          cost_subcategory?: string | null
+          cost_subcategory_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string
@@ -7873,6 +7969,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_invoice_items_consumption_crane_id_fkey"
+            columns: ["consumption_crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_invoice_items_cost_subcategory_id_fkey"
             columns: ["cost_subcategory_id"]
@@ -9181,6 +9284,20 @@ export type Database = {
           rows_by_table: Json
         }[]
       }
+      backup_dump_chunk_v2: {
+        Args: {
+          p_max_bytes?: number
+          p_page?: number
+          p_start_offset?: number
+          p_start_table?: string
+        }
+        Returns: {
+          body: string
+          next_offset: number
+          next_table: string
+          rows_by_table: Json
+        }[]
+      }
       build_import_batch_summary: {
         Args: { p_batch_id: string }
         Returns: Json
@@ -9325,6 +9442,10 @@ export type Database = {
       compute_service_route_metrics: {
         Args: { p_service_id: string }
         Returns: undefined
+      }
+      confirm_and_register_issued_invoice: {
+        Args: { p_document_id: string; p_expected_draft: Json }
+        Returns: Json
       }
       confirm_service_handoff: {
         Args: {
@@ -10032,18 +10153,8 @@ export type Database = {
       }
       import_xml_batch: { Args: { p_payload: Json }; Returns: Json }
       import_xml_costs: { Args: { p_payload: Json }; Returns: undefined }
-      register_manual_inventory_purchase: {
-        Args: { p_request_id: string; p_data: Json; p_receipt_path?: string | null }
-        Returns: Json
-      }
-      register_manual_cost_purchase: {
-        Args: { p_request_id: string; p_data: Json; p_receipt_path?: string | null }
-        Returns: Json
-      }
       import_xml_inventory_invoice: {
         Args: {
-          p_payment_date?: string | null
-          p_payment_reference?: string | null
           p_cost_category_id: string
           p_cost_center_id: string
           p_cost_subcategory: string
@@ -10052,6 +10163,7 @@ export type Database = {
           p_description: string
           p_document_type: string
           p_due_date: string
+          p_entity?: string
           p_folio: string
           p_is_paid: boolean
           p_issue_date: string
@@ -10060,6 +10172,9 @@ export type Database = {
           p_net_amount: number
           p_notes: string
           p_operator_id: string
+          p_paid_by?: string
+          p_payment_date?: string
+          p_payment_reference?: string
           p_product_service_description: string
           p_service_folio: string
           p_service_id: string
@@ -10123,6 +10238,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      issued_invoice_candidates: {
+        Args: { p_client_rut: string }
+        Returns: Json
+      }
       journey_stage_rank: { Args: { p_stage: string }; Returns: number }
       list_operators_config: {
         Args: never
@@ -10134,6 +10253,12 @@ export type Database = {
           services_direct: number
           services_resource: number
           user_id_set: boolean
+        }[]
+      }
+      list_purchase_receipts_for_r2: {
+        Args: { p_after?: string; p_limit?: number }
+        Returns: {
+          path: string
         }[]
       }
       log_audit_entry: {
@@ -10178,6 +10303,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      manual_purchase_receipt_exists: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_all_operator_activity_read: { Args: never; Returns: number }
       mark_costs_paid_batch: {
@@ -10216,6 +10345,8 @@ export type Database = {
       migrate_unsync_crane_parts: { Args: never; Returns: Json }
       migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
       next_service_folio: { Args: never; Returns: string }
+      normalize_import_oc: { Args: { p_value: string }; Returns: string }
+      normalize_import_rut: { Args: { p_value: string }; Returns: string }
       normalize_service_location_text: {
         Args: { p_text: string }
         Returns: string
@@ -10265,6 +10396,18 @@ export type Database = {
       recovery_assert_admin: { Args: never; Returns: undefined }
       recovery_current_organization_id: { Args: never; Returns: string }
       recovery_redact: { Args: { payload: Json }; Returns: Json }
+      register_issued_invoice: {
+        Args: { p_document_id: string; p_expected_draft: Json }
+        Returns: Json
+      }
+      register_manual_cost_purchase: {
+        Args: { p_data: Json; p_receipt_path?: string; p_request_id: string }
+        Returns: Json
+      }
+      register_manual_inventory_purchase: {
+        Args: { p_data: Json; p_receipt_path?: string; p_request_id: string }
+        Returns: Json
+      }
       reject_pending_user: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -10299,6 +10442,16 @@ export type Database = {
         }
         Returns: Json
       }
+      save_issued_invoice_draft: {
+        Args: {
+          p_draft: Json
+          p_hash: string
+          p_id: string
+          p_name: string
+          p_path: string
+        }
+        Returns: Json
+      }
       save_lowboy_sale_with_containers: {
         Args: {
           p_client_name: string
@@ -10319,10 +10472,6 @@ export type Database = {
           p_vehicles?: Json
         }
         Returns: string
-      }
-      search_service_ids: {
-        Args: { p_search: string }
-        Returns: { id: string }[]
       }
       search_costs: {
         Args: { p_search: string }
@@ -10370,6 +10519,12 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      search_service_ids: {
+        Args: { p_search: string }
+        Returns: {
+          id: string
+        }[]
       }
       search_voidable_inventory_purchases: {
         Args: { p_search?: string }

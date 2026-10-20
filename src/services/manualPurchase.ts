@@ -33,6 +33,8 @@ export async function extractPurchasePhoto(file: File): Promise<unknown> {
 }
 
 export type InventoryPurchaseArgs = Database['public']['Functions']['import_xml_inventory_invoice']['Args'];
+/** p_data de register_manual_inventory_purchase: los args del RPC interno más la subcategoría de cabecera (uuid), que el wrapper valida contra la categoría y aplica a los productos sin una propia. */
+export type ManualInventoryPurchaseData = InventoryPurchaseArgs & { p_cost_subcategory_id?: string | null };
 
 export async function uploadManualPurchasePhoto(requestId: string, photo: File | null) {
   let receiptPath: string | null = null;
@@ -49,7 +51,7 @@ export async function uploadManualPurchasePhoto(requestId: string, photo: File |
   return receiptPath;
 }
 
-export async function registerManualPurchase(requestId: string, args: InventoryPurchaseArgs, photo: File | null) {
+export async function registerManualPurchase(requestId: string, args: ManualInventoryPurchaseData, photo: File | null) {
   const receiptPath = await uploadManualPurchasePhoto(requestId, photo);
   const { data, error } = await supabase.rpc('register_manual_inventory_purchase', { p_request_id: requestId, p_data: args as unknown as Json, p_receipt_path: receiptPath });
   if (error) throw new Error(error.message);

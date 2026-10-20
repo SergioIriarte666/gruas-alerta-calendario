@@ -43,6 +43,8 @@ interface InventoryValidatedDocumentCardProps {
   costSubcategories: { id: string; name: string }[];
   lineCostSubcategories: Record<string, string>;
   onCostSubcategoryChange: (key: string, value: string) => void;
+  /** Subcategoría de cabecera: se muestra en las líneas sin elección propia. */
+  defaultCostSubcategoryId?: string;
   allowDiscard?: boolean;
 }
 
@@ -51,7 +53,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
   lineConsumptions, onConsumptionChange, cranes, selectedLineKeys, onToggleLine,
-  costSubcategories, lineCostSubcategories, onCostSubcategoryChange,
+  costSubcategories, lineCostSubcategories, onCostSubcategoryChange, defaultCostSubcategoryId = '',
   allowDiscard = true,
 }) => (
   <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
@@ -101,7 +103,7 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_120px]">
                   <div className="space-y-2">
                     <Label htmlFor={`subcategory-${line.key}`}>Subcategoría del producto</Label>
-                    <Select value={lineCostSubcategories[line.key] || 'none'} disabled={isImporting}
+                    <Select value={(line.key in lineCostSubcategories ? lineCostSubcategories[line.key] : defaultCostSubcategoryId) || 'none'} disabled={isImporting}
                       onValueChange={value => onCostSubcategoryChange(line.key, value)}>
                       <SelectTrigger id={`subcategory-${line.key}`}><SelectValue /></SelectTrigger>
                       <SelectContent><SelectItem value="none">Sin subcategoría</SelectItem>{costSubcategories.map(subcategory => <SelectItem key={subcategory.id} value={subcategory.id}>{subcategory.name}</SelectItem>)}</SelectContent>
