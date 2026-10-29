@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Shield, Wrench } from 'lucide-react';
 import { calculateCustodyTotal, isCustodyDataComplete, type CustodyData } from '@/utils/custodyCalculations';
+import { isCustodyMode, type CustodyMode } from '@/types';
 import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CustodySectionProps {
   serviceTypeName?: string;
-  custodyMode?: string;
+  custodyMode?: CustodyMode;
   custodyDays?: number;
   custodyDailyRate?: number;
   custodyRateType?: string;
@@ -20,7 +21,7 @@ interface CustodySectionProps {
   custodyDiscountPercentage?: number;
   custodyTotalAmount?: number;
   custodyNotes?: string;
-  onCustodyModeChange?: (value: string) => void;
+  onCustodyModeChange?: (value: CustodyMode) => void;
   onCustodyDaysChange?: (value: number) => void;
   onCustodyDailyRateChange?: (value: number) => void;
   onCustodyRateTypeChange?: (value: string) => void;
@@ -130,7 +131,9 @@ export const CustodySection = ({
               {isEquipmentRental ? 'Modo de Arriendo' : 'Modo de Custodia'}
             </Label>
             <Select 
-              onValueChange={(value) => onCustodyModeChange?.(value)} 
+              onValueChange={(value) => {
+                if (isCustodyMode(value)) onCustodyModeChange?.(value);
+              }}
               value={custodyMode}
             >
               <SelectTrigger>

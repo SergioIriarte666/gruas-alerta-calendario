@@ -1,5 +1,16 @@
 import type { ServiceLocationSource } from './serviceLocation';
 
+/**
+ * Modo de custodia de un servicio. 'entry_exit' viene del calendario
+ * (prefilledData.inCustody) y se persiste tal cual en custody_mode; la única
+ * fuente del union, compartida por Service, ServiceFormData y la fila snake_case.
+ */
+export const CUSTODY_MODES = ['manual', 'calendar', 'none', 'entry_exit'] as const;
+export type CustodyMode = (typeof CUSTODY_MODES)[number];
+
+/** Guarda de tipo para valores que llegan como string (Select, DB). */
+export const isCustodyMode = (value: string): value is CustodyMode =>
+  (CUSTODY_MODES as readonly string[]).includes(value);
 
 export interface Service {
   id: string;
@@ -50,7 +61,7 @@ export interface Service {
   invoiceFolio?: string;
   invoiceNumeroFiscal?: string;
   // Custody fields
-  custodyMode?: 'manual' | 'calendar' | 'none';
+  custodyMode?: CustodyMode;
   custodyDays?: number;
   custodyDailyRate?: number;
   custodyRateType?: string;
@@ -101,7 +112,7 @@ export interface TripVehicleDraft {
 export interface ServiceSnakeCase extends Service {
   [key: string]: unknown;
   purchase_order_number?: string;
-  custody_mode?: 'manual' | 'calendar' | 'none' | 'entry_exit';
+  custody_mode?: CustodyMode;
   custody_days?: number;
   custody_daily_rate?: number;
   custody_rate_type?: string;
@@ -252,7 +263,7 @@ export interface ServiceFormData {
   status: ServiceStatus;
   observations?: string;
   // Custody fields
-  custodyMode?: 'manual' | 'calendar' | 'none';
+  custodyMode?: CustodyMode;
   custodyDays?: number;
   custodyDailyRate?: number;
   custodyRateType?: string;
