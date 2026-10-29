@@ -257,7 +257,7 @@ export const TripChildrenReadOnly = ({ parentId, showFinancials = true, onOpenCh
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="outline" className="gap-1 border-trip/30 bg-trip-soft text-trip-text">
           <Layers className="size-3" /> {children.length} vehículo{children.length === 1 ? '' : 's'}
         </Badge>
         {distinctClients > 1 && <Badge variant="outline">Multicliente ({distinctClients})</Badge>}
@@ -309,8 +309,8 @@ export const TripChildrenReadOnly = ({ parentId, showFinancials = true, onOpenCh
 export const TripParentBanner = ({ parentId }: { parentId: string }) => {
   const { data: parent } = useTripParent(parentId);
   return (
-    <div className="flex items-center gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-sm">
-      <CornerDownRight className="size-4 shrink-0 text-info" />
+    <div className="flex items-center gap-2 rounded-md border border-trip/30 bg-trip-soft/40 px-3 py-2 text-sm">
+      <CornerDownRight className="size-4 shrink-0 text-trip-text" />
       <span>
         Parte del viaje <strong>{parent?.folio ?? '…'}</strong>. Los datos operativos, costos y comisión del viaje se
         editan en el servicio padre; aquí solo lo propio del vehículo (valor, O.C., siniestro).

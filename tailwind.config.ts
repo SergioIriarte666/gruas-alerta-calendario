@@ -92,6 +92,13 @@ export default {
 					text: 'hsl(var(--info-text))',
 					soft: 'hsl(var(--info-soft))'
 				},
+				// Viajes multi-vehículo (badges "Viaje · N vehículos" y "Viaje SRV-x").
+				trip: {
+					DEFAULT: 'hsl(var(--trip))',
+					foreground: 'hsl(var(--trip-foreground))',
+					text: 'hsl(var(--trip-text))',
+					soft: 'hsl(var(--trip-soft))'
+				},
 				auth: {
 					background: 'hsl(var(--auth-background))',
 					foreground: 'hsl(var(--auth-foreground))',

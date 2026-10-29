@@ -76,13 +76,13 @@ const ServiceCard = ({
             <div className="mb-1 flex flex-wrap items-center gap-1">
               <Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge>
               {service.isTripParent && (
-                <Badge variant="secondary" className="gap-1 whitespace-nowrap text-xs font-normal">
+                <Badge variant="outline" className="gap-1 whitespace-nowrap border-trip/30 bg-trip-soft text-xs font-normal text-trip-text">
                   <Layers className="size-3" />
                   Viaje · {childCount} vehículo{childCount === 1 ? '' : 's'}
                 </Badge>
               )}
               {service.tripParentId && (
-                <Badge variant="outline" className="gap-1 whitespace-nowrap text-xs font-normal text-muted-foreground">
+                <Badge variant="outline" className="gap-1 whitespace-nowrap border-trip/40 bg-trip-soft/40 text-xs font-normal text-trip-text">
                   <CornerDownRight className="size-3" />
                   Viaje {childInfo?.parentFolio ?? '…'}
                 </Badge>

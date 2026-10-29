@@ -194,8 +194,8 @@ export const ServicesTable = React.memo(({
                   disabled={!canExpand}
                 >
                   <Badge
-                    variant="secondary"
-                    className="gap-1 whitespace-nowrap text-xs font-normal"
+                    variant="outline"
+                    className="gap-1 whitespace-nowrap border-trip/30 bg-trip-soft text-xs font-normal text-trip-text"
                     title="Viaje multi-vehículo: los vehículos son servicios hijos con su propio folio"
                   >
                     {canExpand
@@ -208,7 +208,7 @@ export const ServicesTable = React.memo(({
               {service.tripParentId && (
                 <Badge
                   variant="outline"
-                  className="gap-1 whitespace-nowrap text-xs font-normal text-muted-foreground"
+                  className="gap-1 whitespace-nowrap border-trip/40 bg-trip-soft/40 text-xs font-normal text-trip-text"
                   title="Vehículo de un viaje multi-vehículo"
                 >
                   <CornerDownRight className="size-3" />

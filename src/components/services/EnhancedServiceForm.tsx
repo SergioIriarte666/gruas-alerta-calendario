@@ -1444,7 +1444,7 @@ export const EnhancedServiceForm = React.memo(({
             </div>
           )}
           {(isMultiVehicle || isEditingTripParent) && (
-            <Badge variant="secondary" className="gap-1 whitespace-nowrap">
+            <Badge variant="outline" className="gap-1 whitespace-nowrap border-trip/30 bg-trip-soft text-trip-text">
               <Layers className="size-3.5" />
               Viaje{isMultiVehicle ? ` · ${formData.tripVehicles?.length ?? 0} vehículo${(formData.tripVehicles?.length ?? 0) === 1 ? '' : 's'}` : ''}
             </Badge>

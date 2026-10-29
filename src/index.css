@@ -51,6 +51,12 @@
   --info-foreground: 222 80% 12%;
   --info-text: 217 75% 40%;
   --info-soft: 217 91% 94%;
+  /* Viajes multi-vehículo (Grupaje Lowboy): familia índigo, distinta del
+     primario violeta de folios y del info azul de estados. */
+  --trip: 239 84% 67%;
+  --trip-foreground: 226 57% 12%;
+  --trip-text: 243 55% 38%;
+  --trip-soft: 226 100% 94%;
 
   /* === Autenticación sobre fondo fotográfico ===
      Estos tokens no dependen del tema: aseguran contraste estable sobre el
@@ -435,6 +441,10 @@ a:active > .operator-activity-item {
   --info-foreground: 222 47% 8%;
   --info-text: 217 95% 78%;
   --info-soft: 217 60% 20%;
+  --trip: 234 89% 74%;
+  --trip-foreground: 222 47% 8%;
+  --trip-text: 230 94% 82%;
+  --trip-soft: 243 45% 22%;
 
   /* === Sombras (más profundas) === */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
