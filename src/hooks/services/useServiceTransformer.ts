@@ -71,6 +71,7 @@ export const useServiceTransformer = () => {
           basePrice: item.service_types.base_price || null,
           isActive: item.service_types.is_active ?? true,
           vehicleInfoOptional: item.service_types.vehicle_info_optional || false,
+          supportsMultiVehicle: item.service_types.supports_multi_vehicle || false,
           purchaseOrderRequired: item.service_types.purchase_order_required || false,
           originRequired: item.service_types.origin_required !== false,
           destinationRequired: item.service_types.destination_required !== false,
@@ -137,6 +138,10 @@ export const useServiceTransformer = () => {
         vehicleBrand: item.vehicle_brand || '',
         vehicleModel: item.vehicle_model || '',
         licensePlate: item.license_plate || '',
+        // Viaje multi-vehículo: padre (is_trip_parent) o hijo (trip_parent_id)
+        tripParentId: item.trip_parent_id ?? null,
+        isTripParent: item.is_trip_parent === true,
+        incidentNumber: item.incident_number ?? null,
         // Optional service timing and mileage fields
         startTime: item.start_time || undefined,
         endTime: item.end_time || undefined,

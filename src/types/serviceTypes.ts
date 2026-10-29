@@ -21,6 +21,7 @@ export interface ServiceTypeConfig extends ServiceTypeRequirements {
   availableInClientPortal: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
+  supportsMultiVehicle: boolean;
   serviceCategory: ServiceCategory;
   telemetryMode: TelemetryMode;
   createdAt: string;
@@ -35,6 +36,7 @@ export interface ServiceTypeFormData {
   availableInClientPortal: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
+  supportsMultiVehicle: boolean;
   serviceCategory: ServiceCategory;
   telemetryMode: TelemetryMode;
   purchaseOrderRequired: boolean;

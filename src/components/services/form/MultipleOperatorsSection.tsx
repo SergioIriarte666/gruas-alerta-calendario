@@ -19,6 +19,8 @@ interface MultipleOperatorsSectionProps {
   hasValidationError?: boolean;
   validationMessage?: string;
   complianceIssuesByOperatorId?: Record<string, ComplianceIssue[]>;
+  /** Texto junto a "Comisión (CLP)", ej. "(una por viaje)". */
+  commissionHint?: string;
 }
 export const MultipleOperatorsSection = ({
   operators,
@@ -26,6 +28,7 @@ export const MultipleOperatorsSection = ({
   availableOperators,
   operatorRequired = false,
   disabled = false,
+  commissionHint,
   hasValidationError = false,
   validationMessage,
   complianceIssuesByOperatorId = {},
@@ -176,6 +179,9 @@ export const MultipleOperatorsSection = ({
                 <Label className="flex items-center gap-1">
                   <DollarSign className="size-3 text-success" />
                   Comisión (CLP) {!isExempt(operator.operatorId) && '*'}
+                  {commissionHint && (
+                    <span className="text-xs font-normal text-muted-foreground">{commissionHint}</span>
+                  )}
                 </Label>
                 <Input
                   type="number"

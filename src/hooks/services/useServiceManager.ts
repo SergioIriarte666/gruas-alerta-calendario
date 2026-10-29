@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Service, ServiceFormData, ServiceSnakeCase } from '@/types';
+import { Service, ServiceFormData, ServiceSnakeCase, TripVehicleDraft } from '@/types';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
@@ -63,7 +63,123 @@ const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido'
   }
 };
 
-// Función helper para detectar comisiones existentes y comparar con nuevas
+// Embed usado al devolver el servicio recién creado (createService y createTripService).
+const CREATED_SERVICE_SELECT = `
+  *,
+  client:clients!services_client_id_fkey(*),
+  third_party_client:clients!services_third_party_client_id_fkey(*),
+  crane:cranes(*),
+  operator:operators(*),
+  serviceType:service_types(*),
+  creator:profiles!services_created_by_fkey(id, full_name, email)
+`;
+
+/**
+ * Operadores del servicio → service_resources. El trigger
+ * sync_service_commissions genera la comisión (categoría "Comisión Operador")
+ * SOLO desde filas con commission_amount > 0; nunca se escribe en costs a mano.
+ */
+const insertServiceOperatorResources = async (
+  serviceId: string,
+  operators: ServiceFormData['operators'],
+  options?: CreateServiceOptions,
+): Promise<void> => {
+  if (!operators || operators.length === 0) return;
+
+  const operatorPromises = operators.map(async (op, index) => {
+    const operatorData = {
+      service_id: serviceId,
+      resource_type: 'operator',
+      operator_id: op.operatorId,
+      is_primary: index === 0,
+      commission_amount: op.commission,
+      role: op.role || 'Principal'
+    };
+
+    const { error: operatorError } = await supabase
+      .from('service_resources')
+      .insert(operatorData);
+
+    if (operatorError) throw operatorError;
+  });
+
+  try {
+    await Promise.all(operatorPromises);
+  } catch (resourceError) {
+    const readableResourceError = getReadableSupabaseError(resourceError);
+
+    if (!options?.tolerateResourceSyncFailure) {
+      throw new Error(readableResourceError);
+    }
+
+    logger.error('[useServiceManager - createService] Non-blocking service_resources error:', resourceError);
+  }
+};
+
+/** Costos del formulario ("Gastos de Servicios") contra el servicio indicado. */
+const insertServiceFormCosts = async (params: {
+  serviceId: string;
+  serviceFolio: string;
+  craneId: string | null;
+  serviceDate: string | null;
+  costDetails: ServiceFormData['costDetails'];
+  markPaid: boolean;
+}): Promise<void> => {
+  const { serviceId, serviceFolio, craneId, serviceDate, costDetails, markPaid } = params;
+  if (!costDetails || costDetails.length === 0) return;
+
+  const { data: serviceCostCategory, error: serviceCostCategoryError } = await supabase
+    .from('cost_categories')
+    .select('id')
+    .eq('name', 'Gastos de Servicios')
+    .maybeSingle();
+
+  if (serviceCostCategoryError) throw serviceCostCategoryError;
+  if (!serviceCostCategory) {
+    throw new Error('No se encontró la categoría Gastos de Servicios');
+  }
+
+  const costPromises = costDetails.map(async (cost) => {
+    const costData = {
+      service_id: serviceId,
+      amount: cost.amount,
+      description: cost.description,
+      date: serviceDate,
+      payment_date: markPaid ? serviceDate : null,
+      notes: cost.notes || 'Costo desde formulario de servicio',
+      category_id: serviceCostCategory.id,
+      crane_id: craneId,
+      service_folio: serviceFolio,
+      subcategory: cost.subcategory,
+      supplier_id: (cost as Record<string, unknown>).supplier_id || null,
+      operator_id: (cost as Record<string, unknown>).operator_id || null,
+      document_type: (cost as Record<string, unknown>).document_type || null,
+      document_number: (cost as Record<string, unknown>).document_number || null,
+      location_text: (cost as Record<string, unknown>).location_text || null,
+      other_reason: (cost as Record<string, unknown>).other_reason || null,
+      purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
+      purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
+      immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
+      entity: 'gruas_5_norte',
+      paid_by: 'gruas_5_norte',
+    };
+
+    const { error: costError } = await supabase
+      .from('costs')
+      .insert(costData);
+
+    if (costError) throw costError;
+  });
+
+  await Promise.all(costPromises);
+};
+
+const toDateOrNull = (value?: string | null) =>
+  value && value.trim() !== '' ? value : null;
+
+const toUuidOrNull = (value?: string | null) =>
+  value && value.trim() !== '' ? value : null;
+
 // Función para transformar datos de Supabase a Service con manejo robusto de campos opcionales
 const transformToService = (data: ServiceSnakeCase): Service => {
   
@@ -350,100 +466,25 @@ export const useServiceManager = () => {
         const { data: newService, error: serviceError } = await supabase
           .from('services')
           .insert(transformedDataWithGeo)
-          .select(`
-            *,
-            client:clients!services_client_id_fkey(*),
-            third_party_client:clients!services_third_party_client_id_fkey(*),
-            crane:cranes(*),
-            operator:operators(*),
-            serviceType:service_types(*),
-            creator:profiles!services_created_by_fkey(id, full_name, email)
-          `)
+          .select(CREATED_SERVICE_SELECT)
           .single();
 
         if (serviceError) {
           throw new Error(getReadableSupabaseError(serviceError));
         }
-        
-        // Si hay operadores, crearlos en service_resources
-        if (serviceData.operators && serviceData.operators.length > 0) {
-          const operatorPromises = serviceData.operators.map(async (op, index) => {
-            const operatorData = {
-              service_id: newService.id,
-              resource_type: 'operator',
-              operator_id: op.operatorId,
-              is_primary: index === 0,
-              commission_amount: op.commission,
-              role: op.role || 'Principal'
-            };
-            
-            const { error: operatorError } = await supabase
-              .from('service_resources')
-              .insert(operatorData);
-              
-            if (operatorError) throw operatorError;
-          });
 
-          try {
-            await Promise.all(operatorPromises);
-          } catch (resourceError) {
-            const readableResourceError = getReadableSupabaseError(resourceError);
+        // Operadores → service_resources (la comisión la genera el trigger)
+        await insertServiceOperatorResources(newService.id, serviceData.operators, options);
 
-            if (!options?.tolerateResourceSyncFailure) {
-              throw new Error(readableResourceError);
-            }
-
-            logger.error('[useServiceManager - createService] Non-blocking service_resources error:', resourceError);
-          }
-        }
-
-        // Si hay costos, crearlos
-        if (serviceData.costDetails && serviceData.costDetails.length > 0) {
-          const { data: serviceCostCategory, error: serviceCostCategoryError } = await supabase
-            .from('cost_categories')
-            .select('id')
-            .eq('name', 'Gastos de Servicios')
-            .maybeSingle();
-
-          if (serviceCostCategoryError) throw serviceCostCategoryError;
-          if (!serviceCostCategory) {
-            throw new Error('No se encontró la categoría Gastos de Servicios');
-          }
-
-          const costPromises = serviceData.costDetails.map(async (cost) => {
-            const costData = {
-              service_id: newService.id,
-              amount: cost.amount,
-              description: cost.description,
-              date: transformedData.service_date,
-              payment_date: serviceData.markCostsPaidOnCreate ? transformedData.service_date : null,
-              notes: cost.notes || 'Costo desde formulario de servicio',
-              category_id: serviceCostCategory.id,
-              crane_id: newService.crane_id,
-              service_folio: newService.folio,
-              subcategory: cost.subcategory,
-              supplier_id: (cost as Record<string, unknown>).supplier_id || null,
-              operator_id: (cost as Record<string, unknown>).operator_id || null,
-              document_type: (cost as Record<string, unknown>).document_type || null,
-              document_number: (cost as Record<string, unknown>).document_number || null,
-              location_text: (cost as Record<string, unknown>).location_text || null,
-              other_reason: (cost as Record<string, unknown>).other_reason || null,
-              purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
-              purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
-              immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
-              entity: 'gruas_5_norte',
-              paid_by: 'gruas_5_norte',
-            };
-            
-            const { error: costError } = await supabase
-              .from('costs')
-              .insert(costData);
-              
-            if (costError) throw costError;
-          });
-          
-          await Promise.all(costPromises);
-        }
+        // Costos del formulario ("Gastos de Servicios")
+        await insertServiceFormCosts({
+          serviceId: newService.id,
+          serviceFolio: newService.folio,
+          craneId: newService.crane_id,
+          serviceDate: transformedData.service_date,
+          costDetails: serviceData.costDetails,
+          markPaid: !!serviceData.markCostsPaidOnCreate,
+        });
 
         // Si es servicio subcontratado, crear el costo del tercero automáticamente
         if (serviceTypeConfig?.is_outsourced && serviceData.outsourcedProviderId && serviceData.outsourcedCost && serviceData.outsourcedCost > 0) {
@@ -529,6 +570,139 @@ export const useServiceManager = () => {
       createMutationErrorHandler({
         title: 'Error al Crear Servicio',
         context: 'useServiceManager - createService'
+      })(error);
+    }
+  });
+
+  // CREAR VIAJE MULTI-VEHÍCULO (Grupaje Lowboy): 1 padre + N hijos en una
+  // transacción (RPC create_trip_service). Los folios los genera el RPC.
+  // service_resources (operador + comisión del viaje) y los costos del
+  // formulario se crean DESPUÉS contra el PADRE por el flujo existente: así la
+  // comisión nace una sola vez (los hijos no tienen resource con comisión).
+  const createTripServiceMutation = useMutation({
+    mutationFn: async ({
+      serviceData,
+      options,
+    }: {
+      serviceData: ServiceFormData;
+      options?: CreateServiceOptions;
+    }): Promise<Service> => {
+      try {
+        const vehicles: TripVehicleDraft[] = serviceData.tripVehicles ?? [];
+        if (vehicles.length === 0) {
+          throw new Error('Un viaje necesita al menos un vehículo');
+        }
+
+        const originPoint = serviceData.origin ? (serviceData.originLat ?? null) : null;
+        const destinationPoint = serviceData.destination ? (serviceData.destinationLat ?? null) : null;
+
+        const parentPayload = {
+          service_type_id: toUuidOrNull(serviceData.serviceType),
+          request_date: toDateOrNull(serviceData.requestDate),
+          service_date: toDateOrNull(serviceData.serviceDate),
+          start_time: serviceData.startTime || null,
+          end_time: serviceData.endTime || null,
+          origin: serviceData.origin || null,
+          origin_lat: originPoint,
+          origin_lng: serviceData.origin ? (serviceData.originLng ?? null) : null,
+          origin_location_source: originPoint != null ? (serviceData.originLocationSource ?? null) : null,
+          destination: serviceData.destination || null,
+          destination_lat: destinationPoint,
+          destination_lng: serviceData.destination ? (serviceData.destinationLng ?? null) : null,
+          destination_location_source:
+            destinationPoint != null ? (serviceData.destinationLocationSource ?? null) : null,
+          crane_id: toUuidOrNull(serviceData.crane),
+          operator_id: toUuidOrNull(serviceData.operators?.[0]?.operatorId),
+          operator_commission: serviceData.operators?.[0]?.commission || 0,
+          status: serviceData.status || 'pending',
+          observations: serviceData.observations || null,
+          contact_person: serviceData.contactPerson || null,
+          contact_phone: serviceData.contactPhone || null,
+        };
+
+        const vehiclesPayload = vehicles.map((vehicle) => ({
+          client_id: vehicle.clientId,
+          folio: vehicle.folio?.trim() || null,
+          license_plate: normalizeLicensePlate(vehicle.licensePlate),
+          vehicle_brand: normalizeVehicleFreeText(vehicle.vehicleBrand) || null,
+          vehicle_model: normalizeVehicleFreeText(vehicle.vehicleModel) || null,
+          purchase_order: vehicle.purchaseOrder?.trim() || null,
+          incident_number: vehicle.incidentNumber?.trim() || null,
+          value: Number(vehicle.value) || 0,
+        }));
+
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('create_trip_service', {
+          p_parent: parentPayload,
+          p_vehicles: vehiclesPayload,
+        });
+
+        if (rpcError) {
+          throw new Error(getReadableSupabaseError(rpcError));
+        }
+
+        const created = rpcResult as unknown as {
+          parent_id: string;
+          parent_folio: string;
+          children: Array<{ id: string; folio: string; license_plate: string; client_id: string }>;
+        };
+
+        logger.debug('Viaje creado:', created);
+
+        // Recursos y costos SOLO contra el padre (flujo existente).
+        await insertServiceOperatorResources(created.parent_id, serviceData.operators, options);
+        await insertServiceFormCosts({
+          serviceId: created.parent_id,
+          serviceFolio: created.parent_folio,
+          craneId: parentPayload.crane_id,
+          serviceDate: parentPayload.service_date,
+          costDetails: serviceData.costDetails,
+          markPaid: !!serviceData.markCostsPaidOnCreate,
+        });
+
+        const { data: parentService, error: fetchError } = await supabase
+          .from('services')
+          .select(CREATED_SERVICE_SELECT)
+          .eq('id', created.parent_id)
+          .single();
+
+        if (fetchError) {
+          throw new Error(getReadableSupabaseError(fetchError));
+        }
+
+        if (!options?.skipInvalidation) {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['services'] }),
+            queryClient.invalidateQueries({ queryKey: ['costs'] }),
+            queryClient.invalidateQueries({ queryKey: ['costs', 'service-totals'] }),
+            queryClient.invalidateQueries({ queryKey: ['trip-services'] }),
+            queryClient.invalidateQueries({ queryKey: ['favorite-locations'] }),
+          ]);
+        }
+
+        return transformToService(parentService as unknown as ServiceSnakeCase);
+      } catch (error) {
+        logger.error('Error en creación de viaje multi-vehículo:', error);
+        throw error instanceof Error
+          ? error
+          : new Error(getReadableSupabaseError(error, 'No se pudo crear el viaje'));
+      }
+    },
+    onSuccess: (data, variables) => {
+      if (!variables.options?.silent) {
+        const count = variables.serviceData.tripVehicles?.length ?? 0;
+        toast.success(`Viaje ${data.folio} creado con ${count} vehículo${count === 1 ? '' : 's'}`);
+      }
+    },
+    onError: (error: unknown, variables) => {
+      logger.error('[useServiceManager - createTripService] Error:', error);
+
+      if (variables.options?.silent) {
+        return;
+      }
+
+      createMutationErrorHandler({
+        title: 'Error al Crear Viaje',
+        context: 'useServiceManager - createTripService'
       })(error);
     }
   });
@@ -1297,6 +1471,25 @@ export const useServiceManager = () => {
   // ELIMINAR SERVICIO - Usa RPC delete_service_cascade para eliminar en cascada
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Un viaje multi-vehículo con hijos no se elimina: el FK trip_parent_id
+      // es ON DELETE RESTRICT. Primero se eliminan (o desvinculan) los hijos.
+      const { count: childCount, error: childError } = await supabase
+        .from('services')
+        .select('id', { count: 'exact', head: true })
+        .eq('trip_parent_id', id);
+
+      if (childError) {
+        logger.error('No se pudo verificar los vehículos del viaje:', childError);
+        throw new Error(`No se pudo verificar los vehículos del viaje: ${childError.message}`);
+      }
+
+      if (childCount && childCount > 0) {
+        throw new Error(
+          `Este servicio es un viaje con ${childCount} vehículo${childCount === 1 ? '' : 's'} asociado${childCount === 1 ? '' : 's'}. ` +
+          'Elimina primero los servicios de cada vehículo (hijos) y luego el viaje.',
+        );
+      }
+
       // Guarda de UI: el backend bloquea igual (assert_service_deletable +
       // trigger a_guard_service_delete), pero preguntar antes permite decir QUÉ
       // bloquea y ofrecer Anular en vez de un error crudo de Postgres.
@@ -1335,6 +1528,7 @@ export const useServiceManager = () => {
       
       await queryClient.invalidateQueries({ queryKey: ['services'] });
       await queryClient.invalidateQueries({ queryKey: ['costs'] });
+      await queryClient.invalidateQueries({ queryKey: ['trip-services'] });
       // El servicio pudo tener venta de productos: sus salidas de bodega quedan
       // desligadas (service_id → NULL) y cualquier vista de stock debe releer.
       invalidateStockDependentQueries(queryClient);
@@ -1360,11 +1554,16 @@ export const useServiceManager = () => {
   });
 
   // Estados de carga unificados
-  const isLoading = createServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending;
+  const isLoading = createServiceMutation.isPending || createTripServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending;
 
   // Funciones públicas
   const createService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {
     return createServiceMutation.mutateAsync({ serviceData, options });
+  };
+
+  /** Viaje multi-vehículo: devuelve el servicio PADRE recién creado. */
+  const createTripService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {
+    return createTripServiceMutation.mutateAsync({ serviceData, options });
   };
 
   const updateService = async (
@@ -1381,10 +1580,11 @@ export const useServiceManager = () => {
 
   return {
     createService,
+    createTripService,
     updateService,
     deleteService,
     isLoading,
-    isCreating: createServiceMutation.isPending,
+    isCreating: createServiceMutation.isPending || createTripServiceMutation.isPending,
     isUpdating: updateServiceMutation.isPending,
     isDeleting: deleteServiceMutation.isPending
   };

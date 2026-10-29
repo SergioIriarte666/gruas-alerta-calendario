@@ -2,7 +2,7 @@ import { Service } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign, Ban } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign, Ban, Layers, CornerDownRight } from 'lucide-react';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -40,7 +40,10 @@ export const ServicesMobileView = ({
   onSort: _onSort,
 }: ServicesMobileViewProps) => {
   const { user } = useUser();
-  const { data: serviceCostTotals, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
+  const { data: costTotalsData, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
+  const serviceCostTotals = costTotalsData?.totals;
+  const tripParents = costTotalsData?.parents;
+  const tripChildren = costTotalsData?.children;
   const { isMobile: _isMobile, isTablet: _isTablet } = useDeviceType();
   const isAdmin = user?.role === 'admin';
 
@@ -84,15 +87,41 @@ export const ServicesMobileView = ({
 
       {services.map((service) => {
         const isInvoiced = service.status === 'invoiced';
+        const trip = service.isTripParent ? tripParents?.[service.id] : undefined;
+        const childInfo = service.tripParentId ? tripChildren?.[service.id] : undefined;
+        const tripPlates = trip?.children.map(child => child.childLicensePlate).filter(Boolean) ?? [];
         
         return (
           <Card key={service.id} className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <div className="mb-1"><Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge></div>
-                <p className="text-foreground font-medium">{toTitleCase(service.client.name)}</p>
-                <p className="text-muted-foreground text-sm">{service.client.department} • {service.client.rut}</p>
+                <div className="mb-1 flex flex-wrap items-center gap-1">
+                  <Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge>
+                  {service.isTripParent && (
+                    <Badge variant="secondary" className="gap-1 whitespace-nowrap text-xs font-normal">
+                      <Layers className="size-3" />
+                      Viaje · {trip?.vehicleCount ?? '…'} vehículo{trip?.vehicleCount === 1 ? '' : 's'}
+                    </Badge>
+                  )}
+                  {service.tripParentId && (
+                    <Badge variant="outline" className="gap-1 whitespace-nowrap text-xs font-normal text-muted-foreground">
+                      <CornerDownRight className="size-3" />
+                      Viaje {childInfo?.parentFolio ?? '…'}
+                    </Badge>
+                  )}
+                </div>
+                {trip && trip.clientCount > 1 ? (
+                  <>
+                    <p className="text-foreground font-medium">Varios ({trip.clientCount})</p>
+                    <p className="text-muted-foreground text-sm">Viaje multicliente</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-foreground font-medium">{toTitleCase(service.client.name)}</p>
+                    <p className="text-muted-foreground text-sm">{service.client.department} • {service.client.rut}</p>
+                  </>
+                )}
                 </div>
                 {getServiceStatusBadge(service.status)}
               </div>
@@ -105,7 +134,7 @@ export const ServicesMobileView = ({
 
                 <div className="flex items-center text-foreground text-sm">
                   <Truck className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                  <span>{formatVehicleInfo(service)}</span>
+                  <span>{trip ? (tripPlates.length > 0 ? tripPlates.join(' · ') : 'Sin vehículos') : formatVehicleInfo(service)}</span>
                 </div>
 
                 <div className="flex items-start text-foreground text-sm">
@@ -123,7 +152,13 @@ export const ServicesMobileView = ({
 
                 <div className="flex items-center text-primary text-sm font-semibold">
                   <DollarSign className="size-4 mr-2 flex-shrink-0" />
-                  <ServiceValueWithProfit service={service} totalCost={serviceCostTotals?.[service.id]} isError={costsError} />
+                  <ServiceValueWithProfit
+                    service={service}
+                    totalCost={serviceCostTotals?.[service.id]}
+                    isError={costsError}
+                    tripValue={service.isTripParent ? (trip?.tripValue ?? 0) : undefined}
+                    allocatedCost={childInfo?.allocatedAmount}
+                  />
                 </div>
               </div>
 

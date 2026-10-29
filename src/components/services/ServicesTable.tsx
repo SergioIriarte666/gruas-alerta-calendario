@@ -3,7 +3,7 @@ import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff, Ban } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff, Ban, Layers, CornerDownRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
@@ -67,7 +67,10 @@ export const ServicesTable = React.memo(({
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
-  const { data: serviceCostTotals, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
+  const { data: costTotalsData, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
+  const serviceCostTotals = costTotalsData?.totals;
+  const tripParents = costTotalsData?.parents;
+  const tripChildren = costTotalsData?.children;
 
   // El castigo solo aplica a completados sin vínculo a factura ni cierre. Se
   // consulta por página (2 consultas), no por fila.
@@ -133,15 +136,42 @@ export const ServicesTable = React.memo(({
             {sortField === 'folio' && sortDirection === 'asc' ? <ArrowUp className="size-3" /> : sortField === 'folio' && sortDirection === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
           </button>
         ),
-        cell: ({ row }) => (
-          <Badge
-            variant="outline"
-            className="whitespace-nowrap border-primary/20 bg-primary/10 text-primary"
-            title={`Folio: ${row.original.folio}`}
-          >
-            #{row.original.folio}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const service = row.original;
+          const trip = service.isTripParent ? tripParents?.[service.id] : undefined;
+          const childInfo = service.tripParentId ? tripChildren?.[service.id] : undefined;
+          return (
+            <div className="flex flex-col items-start gap-1">
+              <Badge
+                variant="outline"
+                className="whitespace-nowrap border-primary/20 bg-primary/10 text-primary"
+                title={`Folio: ${service.folio}`}
+              >
+                #{service.folio}
+              </Badge>
+              {service.isTripParent && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 whitespace-nowrap text-xs font-normal"
+                  title="Viaje multi-vehículo: los vehículos son servicios hijos con su propio folio"
+                >
+                  <Layers className="size-3" />
+                  Viaje · {trip?.vehicleCount ?? '…'} vehículo{trip?.vehicleCount === 1 ? '' : 's'}
+                </Badge>
+              )}
+              {service.tripParentId && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 whitespace-nowrap text-xs font-normal text-muted-foreground"
+                  title="Vehículo de un viaje multi-vehículo"
+                >
+                  <CornerDownRight className="size-3" />
+                  Viaje {childInfo?.parentFolio ?? '…'}
+                </Badge>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'date',
@@ -166,14 +196,25 @@ export const ServicesTable = React.memo(({
         header: () => (
           <span className="text-secondary-foreground/80 text-sm font-normal">Cliente</span>
         ),
-        cell: ({ row }) => (
-          <div>
-            <div className="font-medium">{toTitleCase(row.original.client.name)}</div>
-            <div className="text-sm text-muted-foreground">
-              {row.original.client.department} • {row.original.client.rut}
+        cell: ({ row }) => {
+          const trip = row.original.isTripParent ? tripParents?.[row.original.id] : undefined;
+          if (trip && trip.clientCount > 1) {
+            return (
+              <div>
+                <div className="font-medium">Varios ({trip.clientCount})</div>
+                <div className="text-sm text-muted-foreground">Viaje multicliente</div>
+              </div>
+            );
+          }
+          return (
+            <div>
+              <div className="font-medium">{toTitleCase(row.original.client.name)}</div>
+              <div className="text-sm text-muted-foreground">
+                {row.original.client.department} • {row.original.client.rut}
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: 'vehicle',
@@ -183,7 +224,18 @@ export const ServicesTable = React.memo(({
         header: () => (
           <span className="text-secondary-foreground/80 text-sm font-normal">Vehículo</span>
         ),
-        cell: ({ row }) => <span>{formatVehicleInfo(row.original)}</span>,
+        cell: ({ row }) => {
+          const trip = row.original.isTripParent ? tripParents?.[row.original.id] : undefined;
+          if (trip) {
+            const plates = trip.children.map(child => child.childLicensePlate).filter(Boolean);
+            return (
+              <span className="text-sm" title={plates.join(', ')}>
+                {plates.length > 0 ? plates.join(' · ') : 'Sin vehículos'}
+              </span>
+            );
+          }
+          return <span>{formatVehicleInfo(row.original)}</span>;
+        },
       },
       {
         id: 'originDestination',
@@ -260,6 +312,8 @@ export const ServicesTable = React.memo(({
             service={row.original}
             totalCost={serviceCostTotals?.[row.original.id]}
             isError={costsError}
+            tripValue={row.original.isTripParent ? (tripParents?.[row.original.id]?.tripValue ?? 0) : undefined}
+            allocatedCost={row.original.tripParentId ? tripChildren?.[row.original.id]?.allocatedAmount : undefined}
           />
         ),
       },
@@ -410,7 +464,7 @@ export const ServicesTable = React.memo(({
     );
 
     return cols;
-  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, onWriteOff, linkedServiceIds, serviceCostTotals, costsError, isAdmin, sortField, sortDirection, onSort]);
+  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, onWriteOff, linkedServiceIds, serviceCostTotals, tripParents, tripChildren, costsError, isAdmin, sortField, sortDirection, onSort]);
 
   const table = useReactTable({
     data: services,

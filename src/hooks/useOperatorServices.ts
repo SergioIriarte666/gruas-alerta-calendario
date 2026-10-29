@@ -28,6 +28,8 @@ const OPERATOR_SERVICES_SELECT = `
   vehicle_brand,
   vehicle_model,
   license_plate,
+  trip_parent_id,
+  is_trip_parent,
   origin,
   origin_lat,
   origin_lng,
@@ -126,11 +128,15 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
     // fecha no haya pasado. Ver buildOperatorVisibilityFilter.
     const visibilityFilter = buildOperatorVisibilityFilter(getBusinessToday());
 
+    // Un viaje multi-vehículo (Grupaje Lowboy) es UN trabajo para el operador:
+    // se muestra el padre y nunca los hijos (uno por patente, con el mismo
+    // operador y grúa). Las patentes se listan en el detalle del padre.
     const [{ data: directServices, error: directError }, { data: resourceServices, error: resourceServicesError }] = await Promise.all([
       supabase
         .from('services')
         .select(OPERATOR_SERVICES_SELECT)
         .eq('operator_id', operatorData.id)
+        .is('trip_parent_id', null)
         .or(visibilityFilter)
         .order('service_date', { ascending: true }),
       // Servicios asignados vía service_resources (multi-operador), filtrados server-side
@@ -140,6 +146,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         .select(`${OPERATOR_SERVICES_SELECT}, service_resources!inner(operator_id, resource_type)`)
         .eq('service_resources.operator_id', operatorData.id)
         .eq('service_resources.resource_type', 'operator')
+        .is('trip_parent_id', null)
         .or(visibilityFilter)
         .order('service_date', { ascending: true }),
     ]);

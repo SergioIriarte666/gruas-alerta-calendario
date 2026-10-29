@@ -43,6 +43,7 @@ import { ServiceCostsSection } from './ServiceCostsSection';
 import { ClientNotificationsToggle } from './ClientNotificationsToggle';
 import { ServiceDocumentsSection } from './ServiceDocumentsSection';
 import { ServiceHandoffPanel } from './ServiceHandoffPanel';
+import { TripChildrenReadOnly, TripParentBanner } from './form/TripVehiclesSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
@@ -913,6 +914,16 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
             <TabsContent value="general" className="mt-0">
               <div className="space-y-4">
+                  {serviceData.tripParentId && (
+                    <TripParentBanner parentId={serviceData.tripParentId} />
+                  )}
+                  {serviceData.isTripParent && (
+                    <DetailSection title="Vehículos del Viaje" icon={Truck} color="cyan">
+                      <div className="col-span-full">
+                        <TripChildrenReadOnly parentId={serviceData.id} />
+                      </div>
+                    </DetailSection>
+                  )}
                   <DetailSection title="Cliente" icon={User} color="blue">
                       <DetailItem icon={User} label="Nombre / Razón Social" value={toTitleCase(serviceData.client.name)} valueClass="text-lg" />
                       <DetailItem icon={Building} label="Departamento" value={serviceData.client.department} />
@@ -930,6 +941,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                         <DetailItem icon={Phone} label="Teléfono Persona en el Lugar" value={serviceData.contactPhone || (serviceData as any).contact_phone} />
                       )}
                   </DetailSection>
+                  {!serviceData.isTripParent && (
                   <DetailSection title="Vehículo" icon={Truck} color="cyan">
                       <DetailItem icon={Truck} label="Referencia visible" value={formatVehicleInfo(serviceData)} />
                       {shouldShowVehicleInfo(serviceData) && (
@@ -938,7 +950,11 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           <DetailItem icon={IdCard} label="Patente" value={serviceData.licensePlate} valueClass="text-lg" />
                         </>
                       )}
+                      {serviceData.incidentNumber && (
+                        <DetailItem icon={FileText} label="N° Siniestro" value={serviceData.incidentNumber} />
+                      )}
                   </DetailSection>
+                  )}
               </div>
             </TabsContent>
             

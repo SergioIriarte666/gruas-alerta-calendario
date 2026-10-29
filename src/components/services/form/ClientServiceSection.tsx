@@ -28,6 +28,9 @@ interface ClientServiceSectionProps {
   // Invoice information
   invoiceFolio?: string;
   invoiceNumeroFiscal?: string;
+  /** Viaje multi-vehículo: el cliente y la O.C. son datos de cada vehículo. */
+  hideClient?: boolean;
+  hidePurchaseOrder?: boolean;
 }
 
 export const ClientServiceSection = ({
@@ -50,11 +53,14 @@ export const ClientServiceSection = ({
   serviceTypesLoading,
   disabled = false,
   invoiceFolio,
-  invoiceNumeroFiscal
+  invoiceNumeroFiscal,
+  hideClient = false,
+  hidePurchaseOrder = false
 }: ClientServiceSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Cliente */}
+      {!hideClient && (
       <div className="space-y-2">
         <Label htmlFor="client">Cliente</Label>
         <Select value={clientId} onValueChange={onClientChange} disabled={disabled}>
@@ -77,8 +83,10 @@ export const ClientServiceSection = ({
           </SelectContent>
         </Select>
       </div>
+      )}
 
       {/* Orden de Compra */}
+      {!hidePurchaseOrder && (
       <div className="space-y-2">
         <Label htmlFor="purchaseOrder">Orden de Compra (Opcional)</Label>
         <Input
@@ -89,6 +97,7 @@ export const ClientServiceSection = ({
           disabled={disabled}
         />
       </div>
+      )}
 
       {/* Número de Cotización */}
       <div className="space-y-2">

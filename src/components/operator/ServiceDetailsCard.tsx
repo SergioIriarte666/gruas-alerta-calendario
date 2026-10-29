@@ -3,9 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Service } from '@/types';
 import { toTitleCase } from '@/lib/utils';
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Car, MapPin, User, Phone, CalendarClock, FileText, Truck } from 'lucide-react';
+import { Car, MapPin, User, Phone, CalendarClock, FileText, Truck, Layers } from 'lucide-react';
+import { useTripChildren } from '@/hooks/services/useTripServices';
 
 interface ServiceDetailsCardProps {
   service: Service;
@@ -50,6 +50,10 @@ export const ServiceDetailsCard = ({ service }: ServiceDetailsCardProps) => {
     .filter(Boolean)
     .join(' ');
 
+  // Viaje multi-vehículo: el operador ve UN trabajo (el padre) y acá las
+  // patentes que viajan. Solo lectura; los hijos nunca se listan como trabajos.
+  const { data: tripChildren = [] } = useTripChildren(service.isTripParent ? service.id : null);
+
   const dateLabel = service.serviceDate
     ? businessClock.format(service.serviceDate, "EEEE d 'de' MMMM yyyy", { locale: es })
     : '';
@@ -86,6 +90,29 @@ export const ServiceDetailsCard = ({ service }: ServiceDetailsCardProps) => {
 
         {vehicleLabel && (
           <Row icon={Car} label="Vehículo" value={vehicleLabel} />
+        )}
+        {service.isTripParent && tripChildren.length > 0 && (
+          <div className="operator-service-detail-row flex items-start gap-3 py-2.5 sm:col-span-2">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Layers className="size-3.5" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="operator-native-eyebrow mb-1">Vehículos del viaje ({tripChildren.length})</p>
+              <ul className="space-y-1">
+                {tripChildren.map((child) => (
+                  <li key={child.id} className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="operator-license-plate rounded-lg bg-muted px-2 py-1 text-xs font-bold tracking-wider text-foreground">
+                      {child.licensePlate.toUpperCase() || '—'}
+                    </span>
+                    <span className="text-foreground">{[child.vehicleBrand, child.vehicleModel].filter(Boolean).join(' ')}</span>
+                    {child.clientName && (
+                      <span className="text-muted-foreground">· {toTitleCase(child.clientName)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         )}
         {service.contactPerson && (
           <Row icon={User} label="Persona en el lugar" value={service.contactPerson} />

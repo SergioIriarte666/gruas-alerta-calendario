@@ -16,6 +16,7 @@ interface CreateServiceTypeData {
   available_in_client_portal?: boolean;
   vehicle_info_optional?: boolean;
   is_outsourced?: boolean;
+  supports_multi_vehicle?: boolean;
   service_category?: 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente';
   telemetry_mode?: TelemetryMode;
   purchase_order_required?: boolean;
@@ -37,6 +38,7 @@ const SERVICE_TYPE_SELECT = `
   available_in_client_portal,
   vehicle_info_optional,
   is_outsourced,
+  supports_multi_vehicle,
   service_category,
   telemetry_mode,
   purchase_order_required,
@@ -71,6 +73,7 @@ const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData =
     available_in_client_portal: availableInClientPortal,
     vehicle_info_optional: data.vehicleInfoOptional,
     is_outsourced: isOutsourced,
+    supports_multi_vehicle: data.supportsMultiVehicle,
     service_category: data.serviceCategory,
     telemetry_mode: data.telemetryMode,
     purchase_order_required: data.purchaseOrderRequired,
@@ -109,6 +112,7 @@ export const useServiceTypesManagement = () => {
         availableInClientPortal: item.available_in_client_portal || false,
         vehicleInfoOptional: item.vehicle_info_optional || false,
         isOutsourced: item.is_outsourced || false,
+        supportsMultiVehicle: item.supports_multi_vehicle || false,
         serviceCategory: (item.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') || 'traslado',
         telemetryMode: (item.telemetry_mode as TelemetryMode) || 'none',
         purchaseOrderRequired: item.purchase_order_required || false,

@@ -69,10 +69,32 @@ export interface Service {
   outsourcedProviderId?: string;
   outsourcedCost?: number;
   outsourcedNotes?: string;
+  // Viajes multi-vehículo (Grupaje Lowboy): el padre agrupa N hijos (uno por
+  // patente). El padre lleva value = 0; el ingreso vive en los hijos.
+  tripParentId?: string | null;
+  // Opcional a propósito: una docena de módulos arman Service a mano (portal,
+  // reportes, exportaciones) y ninguno es un viaje. undefined === false.
+  isTripParent?: boolean;
+  // N° de siniestro del vehículo (por hijo, no por viaje).
+  incidentNumber?: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
   creatorName?: string;
+}
+
+/** Vehículo de un viaje multi-vehículo mientras se arma en el formulario. */
+export interface TripVehicleDraft {
+  id: string;
+  clientId: string;
+  /** Folio manual opcional (ej. N° de asistencia del cliente). Vacío = automático. */
+  folio: string;
+  licensePlate: string;
+  vehicleBrand: string;
+  vehicleModel: string;
+  purchaseOrder: string;
+  incidentNumber: string;
+  value: number;
 }
 
 /** Variante snake_case de Service para datos sin transformar desde Supabase */
@@ -95,6 +117,9 @@ export interface ServiceSnakeCase extends Service {
   outsourced_provider_id?: string;
   outsourced_cost?: number;
   outsourced_notes?: string;
+  trip_parent_id?: string | null;
+  is_trip_parent?: boolean;
+  incident_number?: string | null;
   // Campos snake_case de DB (no camelCase en Service)
   request_date?: string;
   service_date?: string;
@@ -246,6 +271,9 @@ export interface ServiceFormData {
   outsourcedProviderId?: string;
   outsourcedCost?: number;
   outsourcedNotes?: string;
+  // Viaje multi-vehículo: lista de vehículos (un servicio hijo por fila).
+  tripVehicles?: TripVehicleDraft[];
+  incidentNumber?: string;
 }
 
 export interface Client {
@@ -423,6 +451,8 @@ export interface ServiceType {
   isActive: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced?: boolean;
+  // true = el formulario crea 1 viaje + N servicios hijo (uno por patente).
+  supportsMultiVehicle?: boolean;
   // Campos de configuración de requerimientos
   purchaseOrderRequired: boolean;
   originRequired: boolean;

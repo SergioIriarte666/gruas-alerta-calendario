@@ -28,6 +28,7 @@ const defaultFormData: ServiceTypeFormData = {
   availableInClientPortal: false,
   vehicleInfoOptional: false,
   isOutsourced: false,
+  supportsMultiVehicle: false,
   serviceCategory: 'traslado',
   telemetryMode: 'crane',
   purchaseOrderRequired: false,
@@ -54,6 +55,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         availableInClientPortal: serviceType.availableInClientPortal,
         vehicleInfoOptional: serviceType.vehicleInfoOptional,
         isOutsourced: serviceType.isOutsourced || false,
+        supportsMultiVehicle: serviceType.supportsMultiVehicle || false,
         serviceCategory: serviceType.serviceCategory || 'traslado',
         telemetryMode: serviceType.telemetryMode || 'none',
         purchaseOrderRequired: serviceType.purchaseOrderRequired,
@@ -196,6 +198,23 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 id="vehicleInfoOptional"
                 checked={formData.vehicleInfoOptional}
                 onCheckedChange={(checked) => updateField('vehicleInfoOptional', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <Label htmlFor="supportsMultiVehicle" className="text-foreground text-sm font-medium cursor-pointer">
+                  Viaje multi-vehículo
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  El formulario crea un servicio "viaje" (datos operativos, costos y comisión) más un servicio por
+                  patente (valor, O.C. y N° de siniestro propios). Ej: Grupaje Lowboy.
+                </p>
+              </div>
+              <Switch
+                id="supportsMultiVehicle"
+                checked={formData.supportsMultiVehicle}
+                onCheckedChange={(checked) => updateField('supportsMultiVehicle', checked)}
               />
             </div>
           </CardContent>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ServiceType } from '@/types';
+import { ServiceType, TripVehicleDraft } from '@/types';
 import { ServiceOperator } from '@/types/serviceDetails';
 import { ComplianceIssue, formatComplianceIssueMessage } from './useResourceCompliance';
 
@@ -18,6 +18,9 @@ interface ServiceFormData {
   licensePlate: string;
   purchaseOrder: string;
   status: string;
+  /** Viaje multi-vehículo: se valida la lista en lugar del vehículo único. */
+  isMultiVehicle?: boolean;
+  tripVehicles?: TripVehicleDraft[];
 }
 
 export interface ValidationError {
@@ -195,6 +198,40 @@ export const useServiceFormValidation = ({
           : 'El destino no tiene coordenada. Puedes guardarlo igual; sin punto no hay seguimiento ni métricas de ruta.',
         severity: hasActiveTrackingLink ? 'error' : 'warning'
       });
+    }
+
+    // Viaje multi-vehículo: cada fila es un servicio hijo. Se exige patente,
+    // cliente y valor > 0 por vehículo; la O.C. y el N° de siniestro son
+    // opcionales (sin O.C. el hijo nace "Cotizado").
+    if (formData.isMultiVehicle) {
+      const vehicles = formData.tripVehicles ?? [];
+      if (vehicles.length === 0) {
+        errors.push({
+          field: 'tripVehicles',
+          message: 'El viaje necesita al menos un vehículo',
+          severity: 'error'
+        });
+      } else {
+        const problems: string[] = [];
+        const plates = new Set<string>();
+        vehicles.forEach((vehicle, index) => {
+          const row = `Vehículo ${index + 1}`;
+          const plate = vehicle.licensePlate?.trim().toUpperCase();
+          if (!plate) problems.push(`${row}: falta la patente`);
+          else if (plates.has(plate)) problems.push(`${row}: patente ${plate} repetida en el viaje`);
+          else plates.add(plate);
+          if (!vehicle.clientId?.trim()) problems.push(`${row}: falta el cliente`);
+          if (!(Number(vehicle.value) > 0)) problems.push(`${row}: el valor debe ser mayor a 0`);
+        });
+        if (problems.length > 0) {
+          errors.push({
+            field: 'tripVehicles',
+            message: problems.join(' · '),
+            severity: 'error'
+          });
+        }
+      }
+      return errors;
     }
 
     // Validación de marca de vehículo

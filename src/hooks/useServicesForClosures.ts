@@ -143,14 +143,18 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         third_party_client:clients!services_third_party_client_id_fkey(id, name, rut)
       `;
 
+      // El padre de un viaje multi-vehículo (value 0) nunca se factura: cada
+      // hijo entra al cierre de SU cliente por su propio client_id.
       let billableQuery = supabase
         .from('services')
         .select(baseServiceSelect)
+        .eq('is_trip_parent', false)
         .in('status', [...CLOSURE_CANDIDATE_STATUSES]);
 
       let pendingQuery = supabase
         .from('services')
         .select(baseServiceSelect)
+        .eq('is_trip_parent', false)
         .eq('status', 'pending');
 
       // Add explicit date range filter only when the user selects dates
@@ -534,6 +538,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
             )
           )
         `)
+        .eq('is_trip_parent', false)
         .or(`purchase_order.ilike.${searchPattern},purchase_order_number.ilike.${searchPattern},folio.ilike.${searchPattern},license_plate.ilike.${searchPattern}`)
         .limit(10);
 

@@ -14,6 +14,7 @@ const SERVICE_TYPE_SELECT = `
   is_active,
   vehicle_info_optional,
   is_outsourced,
+  supports_multi_vehicle,
   service_category,
   purchase_order_required,
   origin_required,
@@ -47,6 +48,7 @@ const fetchServiceTypes = async (): Promise<ServiceType[]> => {
     isActive: serviceType.is_active,
     vehicleInfoOptional: serviceType.vehicle_info_optional || false,
     isOutsourced: serviceType.is_outsourced || false,
+    supportsMultiVehicle: serviceType.supports_multi_vehicle || false,
     serviceCategory: (serviceType.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') || 'traslado',
     purchaseOrderRequired: serviceType.purchase_order_required || false,
     originRequired: serviceType.origin_required !== false, // Default true

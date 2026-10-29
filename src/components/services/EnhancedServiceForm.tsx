@@ -3,9 +3,20 @@ import { differenceInCalendarDates } from '@/utils/calendarDate';
 import { parseDateValue } from '@/utils/calendarDate';
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
-import { Service, ServiceSnakeCase, ServiceItemDraft, ServiceStopDraft } from '@/types';
+import { Service, ServiceSnakeCase, ServiceItemDraft, ServiceStopDraft, TripVehicleDraft } from '@/types';
 import type { ServiceLocationSource } from '@/types/serviceLocation';
 import { FolioSection } from './form/FolioSection';
+import {
+  TripVehiclesSection,
+  TripChildrenReadOnly,
+  TripParentBanner,
+  createTripVehicleDraft,
+  getTripTotalValue,
+  getTripDistinctClientIds,
+} from './form/TripVehiclesSection';
+import { useTripChildren } from '@/hooks/services/useTripServices';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/utils/statusHelpers';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
 import { VehicleSection } from './form/VehicleSection';
@@ -54,7 +65,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save, Trash2, Plus } from 'lucide-react';
+import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save, Trash2, Plus, Layers } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
@@ -93,7 +104,7 @@ export const EnhancedServiceForm = React.memo(({
   const { user: profileUser } = useUser();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { suppliers } = useSuppliers();
-  const { createService, updateService, isCreating, isUpdating } = useServiceManager();
+  const { createService, createTripService, updateService, isCreating, isUpdating } = useServiceManager();
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
@@ -252,7 +263,9 @@ export const EnhancedServiceForm = React.memo(({
     // Outsourced/Third-party service fields
     outsourcedProviderId: service?.outsourcedProviderId || (service as ServiceSnakeCase)?.outsourced_provider_id || '',
     outsourcedCost: service?.outsourcedCost || (service as ServiceSnakeCase)?.outsourced_cost || 0,
-    outsourcedNotes: service?.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || ''
+    outsourcedNotes: service?.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || '',
+    // Viaje multi-vehículo (solo creación): un servicio hijo por fila.
+    tripVehicles: [] as TripVehicleDraft[]
   });
 
   // Map prefilledData to formData when duplicating
@@ -310,7 +323,8 @@ export const EnhancedServiceForm = React.memo(({
         contactPhone: '',
         outsourcedProviderId: '',
         outsourcedCost: 0,
-        outsourcedNotes: ''
+        outsourcedNotes: '',
+        tripVehicles: []
       });
 
       setEnableCustody(prefilledData.inCustody || false);
@@ -537,7 +551,8 @@ export const EnhancedServiceForm = React.memo(({
         contactPhone: service.contactPhone || (service as ServiceSnakeCase)?.contact_phone || '',
         outsourcedProviderId: service.outsourcedProviderId || (service as ServiceSnakeCase)?.outsourced_provider_id || '',
         outsourcedCost: service.outsourcedCost || (service as ServiceSnakeCase)?.outsourced_cost || 0,
-        outsourcedNotes: service.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || ''
+        outsourcedNotes: service.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || '',
+        tripVehicles: []
       });
       setIsManualFolio(true);
     }
@@ -545,6 +560,33 @@ export const EnhancedServiceForm = React.memo(({
 
   // Obtener el tipo de servicio seleccionado
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
+
+  // Viaje multi-vehículo (Grupaje Lowboy): SOLO al crear. Se arma la lista de
+  // vehículos y el RPC create_trip_service crea 1 padre + N hijos. Al editar,
+  // el padre se trata como servicio normal (sin sección de vehículo, con la
+  // lista de hijos solo lectura) y cada hijo se edita individual.
+  const isMultiVehicle = !service && !!selectedServiceType?.supportsMultiVehicle;
+  const isEditingTripParent = !!service?.isTripParent;
+  const isEditingTripChild = !!service?.tripParentId;
+  const { data: editingTripChildren = [] } = useTripChildren(isEditingTripParent ? service?.id : null);
+  const editingTripValue = useMemo(
+    () => editingTripChildren.reduce((sum, child) => sum + child.value, 0),
+    [editingTripChildren],
+  );
+  const tripTotalValue = useMemo(() => getTripTotalValue(formData.tripVehicles), [formData.tripVehicles]);
+  const tripClientIds = useMemo(() => getTripDistinctClientIds(formData.tripVehicles), [formData.tripVehicles]);
+  const isMulticlientTrip = isMultiVehicle && tripClientIds.length > 1;
+
+  // Al activar el modo multi-vehículo arranca con una fila; el cliente que
+  // pudiera haberse elegido antes de cambiar el tipo se hereda a la fila.
+  useEffect(() => {
+    if (!isMultiVehicle) return;
+    setFormData(prev => (
+      (prev.tripVehicles?.length ?? 0) > 0
+        ? prev
+        : { ...prev, tripVehicles: [createTripVehicleDraft(prev.client)] }
+    ));
+  }, [isMultiVehicle]);
   const selectedOperatorIds = useMemo(
     () =>
       (formData.operators || [])
@@ -638,7 +680,9 @@ export const EnhancedServiceForm = React.memo(({
       vehicleModel: formData.vehicleModel,
       licensePlate: formData.licensePlate,
       purchaseOrder: formData.purchaseOrder,
-      status: formData.status
+      status: formData.status,
+      isMultiVehicle,
+      tripVehicles: formData.tripVehicles
     }), [
       formData.serviceType,
       formData.crane,
@@ -653,7 +697,9 @@ export const EnhancedServiceForm = React.memo(({
       formData.vehicleModel,
       formData.licensePlate,
       formData.purchaseOrder,
-      formData.status
+      formData.status,
+      isMultiVehicle,
+      formData.tripVehicles
     ]);
 
   const { validationErrors, blockingErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
@@ -865,6 +911,7 @@ export const EnhancedServiceForm = React.memo(({
   // Fase en la que vive cada campo validable, para navegar al primer error
   const FIELD_STEP_MAP: Record<string, number> = {
     purchaseOrder: 1,
+    tripVehicles: 2,
     vehicleBrand: 2,
     vehicleModel: 2,
     licensePlate: 2,
@@ -881,11 +928,17 @@ export const EnhancedServiceForm = React.memo(({
     return errorSteps.length > 0 ? Math.min(...errorSteps) : null;
   };
 
+  const tripSummaryClientName = useMemo(() => {
+    if (!isMultiVehicle) return null;
+    if (tripClientIds.length > 1) return `Varios (${tripClientIds.length})`;
+    return clients.find(c => c.id === tripClientIds[0])?.name || '';
+  }, [isMultiVehicle, tripClientIds, clients]);
+
   const summaryPanelProps = useMemo(() => ({
-    folio,
-    clientName: selectedClient?.name || '',
+    folio: isMultiVehicle ? 'Automático' : folio,
+    clientName: tripSummaryClientName ?? selectedClient?.name ?? '',
     serviceTypeName: selectedServiceType?.name || '',
-    value: formData.value,
+    value: isMultiVehicle ? tripTotalValue : isEditingTripParent ? editingTripValue : formData.value,
     totalCommissions,
     totalCosts,
     operatorsCount: formData.operators?.length || 0,
@@ -896,6 +949,11 @@ export const EnhancedServiceForm = React.memo(({
     isEditing: !!service,
   }), [
     folio,
+    isMultiVehicle,
+    tripSummaryClientName,
+    tripTotalValue,
+    isEditingTripParent,
+    editingTripValue,
     selectedClient?.name,
     selectedServiceType?.name,
     formData.value,
@@ -1097,8 +1155,12 @@ export const EnhancedServiceForm = React.memo(({
       }
 
       let finalFolio = folio;
-      
-      if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
+
+      // Viaje multi-vehículo: el folio del padre y de cada hijo los genera el
+      // RPC (next_service_folio o folio manual por vehículo). No se genera acá.
+      if (isMultiVehicle) {
+        finalFolio = '';
+      } else if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
         logger.debug('🔄 Generating folio at submission time...');
         try {
           finalFolio = await generateUniqueValidFolio();
@@ -1112,7 +1174,7 @@ export const EnhancedServiceForm = React.memo(({
         }
       }
       
-      if (!finalFolio || finalFolio.trim() === '') {
+      if (!isMultiVehicle && (!finalFolio || finalFolio.trim() === '')) {
         playRetroErrorSound();
         toast.error('Error: El folio no puede estar vacío');
         return;
@@ -1193,6 +1255,11 @@ export const EnhancedServiceForm = React.memo(({
 
         await syncServiceItems(result.id);
         await syncServiceStops(result.id);
+      } else if (isMultiVehicle) {
+        logger.debug('🔄 Creating multi-vehicle trip...');
+        result = await createTripService(finalData);
+
+        await syncServiceStops(result.id);
       } else {
         logger.debug('🔄 Creating new service...');
         result = await createService(finalData);
@@ -1245,7 +1312,12 @@ export const EnhancedServiceForm = React.memo(({
       logger.debug('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
       playRetroSuccessSound();
-      toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
+      if (isMultiVehicle) {
+        const count = finalData.tripVehicles?.length ?? 0;
+        toast.success(`Viaje ${result.folio} creado con ${count} vehículo${count === 1 ? '' : 's'}`);
+      } else {
+        toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
+      }
 
       if (!service) {
         const assignedOperator = finalData.operators?.[0];
@@ -1371,6 +1443,17 @@ export const EnhancedServiceForm = React.memo(({
               </span>
             </div>
           )}
+          {(isMultiVehicle || isEditingTripParent) && (
+            <Badge variant="secondary" className="gap-1 whitespace-nowrap">
+              <Layers className="size-3.5" />
+              Viaje{isMultiVehicle ? ` · ${formData.tripVehicles?.length ?? 0} vehículo${(formData.tripVehicles?.length ?? 0) === 1 ? '' : 's'}` : ''}
+            </Badge>
+          )}
+          {isMulticlientTrip && (
+            <Badge variant="outline" className="whitespace-nowrap border-info/40 text-info">
+              Multicliente
+            </Badge>
+          )}
         </div>
         
         {/* Progress bar */}
@@ -1408,11 +1491,21 @@ export const EnhancedServiceForm = React.memo(({
             {/* Step 1: Información Básica */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-fade-in">
+                {isEditingTripChild && service?.tripParentId && (
+                  <TripParentBanner parentId={service.tripParentId} />
+                )}
+
                 <ColoredSectionCard
                   title="Identificación"
                   icon={<FileText className="size-5" />}
                   color="blue"
                 >
+                  {isMultiVehicle ? (
+                    <p className="text-sm text-muted-foreground">
+                      Los folios se asignan al guardar: uno para el viaje y uno por cada vehículo
+                      (correlativo SRV- o el folio manual indicado en la fila del vehículo).
+                    </p>
+                  ) : (
                   <FolioSection
                     folio={folio}
                     onFolioChange={setFolio}
@@ -1432,6 +1525,7 @@ export const EnhancedServiceForm = React.memo(({
                     isLoading={false}
                     disabled={false}
                   />
+                  )}
                 </ColoredSectionCard>
 
                 <ColoredSectionCard
@@ -1480,7 +1574,14 @@ export const EnhancedServiceForm = React.memo(({
                     disabled={false}
                     invoiceFolio={service?.invoiceFolio}
                     invoiceNumeroFiscal={service?.invoiceNumeroFiscal}
+                    hideClient={isMultiVehicle}
+                    hidePurchaseOrder={isMultiVehicle}
                   />
+                  {isMultiVehicle && (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      En un viaje multi-vehículo el cliente y la orden de compra se indican por vehículo (paso 2).
+                    </p>
+                  )}
                 </ColoredSectionCard>
               </div>
             )}
@@ -1488,6 +1589,35 @@ export const EnhancedServiceForm = React.memo(({
             {/* Step 2: Vehículo y Ubicación */}
             {currentStep === 2 && (
               <div className="space-y-4 animate-fade-in">
+                {isMultiVehicle ? (
+                  <ColoredSectionCard
+                    title="Vehículos del Viaje"
+                    icon={<Layers className="size-5" />}
+                    color="green"
+                    hasError={isFieldInvalid('tripVehicles')}
+                    required
+                  >
+                    <TripVehiclesSection
+                      vehicles={formData.tripVehicles ?? []}
+                      onVehiclesChange={(vehicles) => setFormData(prev => ({ ...prev, tripVehicles: vehicles }))}
+                      clients={clients}
+                      disabled={false}
+                      errorMessage={getFieldError('tripVehicles')?.message}
+                    />
+                  </ColoredSectionCard>
+                ) : isEditingTripParent && service ? (
+                  <ColoredSectionCard
+                    title="Vehículos del Viaje"
+                    icon={<Layers className="size-5" />}
+                    color="green"
+                  >
+                    <p className="mb-3 text-sm text-muted-foreground">
+                      Cada vehículo es un servicio propio: edítalo desde la lista de servicios.
+                      Aquí se editan los datos del viaje (fechas, ruta, grúa, operador, costos).
+                    </p>
+                    <TripChildrenReadOnly parentId={service.id} />
+                  </ColoredSectionCard>
+                ) : (
                 <ColoredSectionCard
                   title="Datos del Vehículo"
                   icon={<Truck className="size-5" />}
@@ -1512,6 +1642,7 @@ export const EnhancedServiceForm = React.memo(({
                     skipLookup={skipPatentLookup}
                   />
                 </ColoredSectionCard>
+                )}
 
                 <ColoredSectionCard
                   title="Ubicación"
@@ -1683,6 +1814,7 @@ export const EnhancedServiceForm = React.memo(({
                       availableOperators={operators}
                       operatorRequired={selectedServiceType?.operatorRequired || false}
                       disabled={false}
+                      commissionHint={(isMultiVehicle || isEditingTripParent) ? '(una por viaje)' : undefined}
                       hasValidationError={isFieldInvalid('operators')}
                       validationMessage={getFieldError('operators')?.message}
                       complianceIssuesByOperatorId={operatorComplianceIssuesById}
@@ -1745,6 +1877,47 @@ export const EnhancedServiceForm = React.memo(({
             {/* Step 4: Financiero y Final */}
             {currentStep === 4 && (
               <div className="space-y-4 animate-fade-in">
+                {(isMultiVehicle || isEditingTripParent) ? (
+                  <ColoredSectionCard
+                    title="Información Financiera del Viaje"
+                    icon={<DollarSign className="size-5" />}
+                    color="green"
+                  >
+                    {(() => {
+                      const tripValue = isMultiVehicle ? tripTotalValue : editingTripValue;
+                      const profit = tripValue - totalCommissions - totalCosts;
+                      return (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                            <div className="rounded-md border-2 border-primary/30 bg-primary/5 p-3">
+                              <Label className="mb-1 block text-xs text-muted-foreground">Valor del viaje</Label>
+                              <div className="text-xl font-bold text-primary tabular-nums">{formatCurrency(tripValue)}</div>
+                              <div className="text-xs text-muted-foreground">Suma de los vehículos (solo lectura)</div>
+                            </div>
+                            <div className="rounded-md border border-border/70 bg-background/70 p-3">
+                              <Label className="mb-1 block text-xs text-muted-foreground">Comisión operador</Label>
+                              <div className="text-lg font-semibold tabular-nums">{formatCurrency(totalCommissions)}</div>
+                              <div className="text-xs text-muted-foreground">Una por viaje</div>
+                            </div>
+                            <div className="rounded-md border border-border/70 bg-background/70 p-3">
+                              <Label className="mb-1 block text-xs text-muted-foreground">Costos del viaje</Label>
+                              <div className="text-lg font-semibold tabular-nums">{formatCurrency(totalCosts)}</div>
+                              <div className="text-xs text-muted-foreground">Se prorratean por valor</div>
+                            </div>
+                            <div className="rounded-md border border-border/70 bg-background/70 p-3">
+                              <Label className="mb-1 block text-xs text-muted-foreground">Utilidad estimada</Label>
+                              <div className={`text-lg font-semibold tabular-nums ${profit < 0 ? 'text-destructive' : 'text-success'}`}>{formatCurrency(profit)}</div>
+                              <div className="text-xs text-muted-foreground">Valor del viaje − comisión − costos</div>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            El viaje lleva valor 0 en la base: el ingreso vive en cada vehículo y se factura por separado a su cliente.
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </ColoredSectionCard>
+                ) : (
                 <ColoredSectionCard
                   title="Información Financiera"
                   icon={<DollarSign className="size-5" />}
@@ -1776,6 +1949,7 @@ export const EnhancedServiceForm = React.memo(({
                     onClearRate={() => setValueFromRate(false)}
                   />
                 </ColoredSectionCard>
+                )}
 
                 {/* Toggle para habilitar Custodia/Arriendo */}
                 <ColoredSectionCard
@@ -2001,7 +2175,7 @@ export const EnhancedServiceForm = React.memo(({
                 disabled={blockingErrors.length > 0 || isCreating || isUpdating || isSubmitting}
                 className="bg-success px-2 text-xs text-success-foreground hover:bg-success/90 sm:px-3 sm:text-sm"
               >
-                {isCreating || isUpdating ? 'Guardando...' : 'Crear Servicio'}
+                {isCreating || isUpdating ? 'Guardando...' : isMultiVehicle ? 'Crear Viaje' : 'Crear Servicio'}
               </Button>
             ) : null}
           </div>

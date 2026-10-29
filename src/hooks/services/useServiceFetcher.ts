@@ -11,6 +11,7 @@ const logger = createLogger('ServiceFetcher');
 const SERVICE_SELECT = `
   id, folio, request_date, service_date, client_id, purchase_order, purchase_order_number, quote_number,
   vehicle_brand, vehicle_model, license_plate,
+  trip_parent_id, is_trip_parent, incident_number,
   origin, origin_lat, origin_lng, destination, destination_lat, destination_lng,
   service_type_id, value, crane_id, operator_id, operator_commission,
   status, observations, has_excess, client_covered_amount, excess_amount, third_party_client_id,
@@ -26,7 +27,7 @@ const SERVICE_SELECT = `
   third_party_client:clients!services_third_party_client_id_fkey(id, name),
   cranes(id, license_plate, brand, model, type, is_active, owner_company_rut, owner_company_name),
   operators(id, name, rut, phone, license_number, is_active, exam_expiry),
-  service_types(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required),
+  service_types(id, name, description, is_active, base_price, vehicle_info_optional, supports_multi_vehicle, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required),
   creator:profiles!services_created_by_fkey(id, full_name, email)
 `;
 

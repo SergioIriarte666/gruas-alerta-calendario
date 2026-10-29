@@ -455,6 +455,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       checklist_template_items: {
@@ -692,6 +699,13 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
           {
+            foreignKeyName: "checklists_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+          {
             foreignKeyName: "checklists_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -920,6 +934,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -1608,6 +1629,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
           {
             foreignKeyName: "costs_supplier_id_fkey"
@@ -2865,6 +2893,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "inspection_storage_orphans_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       inspections: {
@@ -2990,6 +3025,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -3607,6 +3649,13 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
           {
+            foreignKeyName: "inventory_movements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+          {
             foreignKeyName: "inventory_movements_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -4019,6 +4068,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -4763,6 +4819,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "notification_outbox_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       notification_settings: {
@@ -4954,6 +5017,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "operator_activity_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       operator_documents: {
@@ -5111,6 +5181,13 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
           {
+            foreignKeyName: "operator_location_points_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+          {
             foreignKeyName: "operator_location_points_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
@@ -5216,6 +5293,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
           {
             foreignKeyName: "operator_location_sessions_user_id_fkey"
@@ -6136,6 +6220,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_cash_receipts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_change_history: {
@@ -6216,6 +6307,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "service_change_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -6375,6 +6473,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_disputes: {
@@ -6463,6 +6568,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_disputes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_external_closures: {
@@ -6549,6 +6661,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_external_closures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_external_evidence: {
@@ -6620,6 +6739,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_external_evidence_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_items: {
@@ -6688,6 +6814,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "service_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -6774,6 +6907,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "service_operator_handoffs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -6931,6 +7071,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_route_metrics: {
@@ -7038,6 +7185,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_route_metrics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_stop_events: {
@@ -7109,6 +7263,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "service_stop_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -7183,6 +7344,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "service_stops_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -7280,6 +7448,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_tracking_links_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       service_types: {
@@ -7302,6 +7477,7 @@ export type Database = {
           requires_detail: boolean
           requires_photo_set: boolean
           service_category: string
+          supports_multi_vehicle: boolean
           telemetry_mode: string
           updated_at: string | null
           vehicle_brand_required: boolean
@@ -7327,6 +7503,7 @@ export type Database = {
           requires_detail?: boolean
           requires_photo_set?: boolean
           service_category?: string
+          supports_multi_vehicle?: boolean
           telemetry_mode?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
@@ -7352,6 +7529,7 @@ export type Database = {
           requires_detail?: boolean
           requires_photo_set?: boolean
           service_category?: string
+          supports_multi_vehicle?: boolean
           telemetry_mode?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
@@ -7428,6 +7606,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       services: {
@@ -7462,9 +7647,11 @@ export type Database = {
           folio: string
           has_excess: boolean
           id: string
+          incident_number: string | null
           insured_name: string | null
           invoice_folio: string | null
           invoice_numero_fiscal: string | null
+          is_trip_parent: boolean
           journey_stage_reached: string | null
           license_plate: string | null
           observations: string | null
@@ -7493,6 +7680,7 @@ export type Database = {
           status: Database["public"]["Enums"]["service_status"] | null
           telemetry_mode: string
           third_party_client_id: string | null
+          trip_parent_id: string | null
           updated_at: string | null
           urgency: string | null
           value: number
@@ -7533,9 +7721,11 @@ export type Database = {
           folio: string
           has_excess?: boolean
           id?: string
+          incident_number?: string | null
           insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
+          is_trip_parent?: boolean
           journey_stage_reached?: string | null
           license_plate?: string | null
           observations?: string | null
@@ -7564,6 +7754,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["service_status"] | null
           telemetry_mode?: string
           third_party_client_id?: string | null
+          trip_parent_id?: string | null
           updated_at?: string | null
           urgency?: string | null
           value: number
@@ -7604,9 +7795,11 @@ export type Database = {
           folio?: string
           has_excess?: boolean
           id?: string
+          incident_number?: string | null
           insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
+          is_trip_parent?: boolean
           journey_stage_reached?: string | null
           license_plate?: string | null
           observations?: string | null
@@ -7635,6 +7828,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["service_status"] | null
           telemetry_mode?: string
           third_party_client_id?: string | null
+          trip_parent_id?: string | null
           updated_at?: string | null
           urgency?: string | null
           value?: number
@@ -7709,6 +7903,13 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
           {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+          {
             foreignKeyName: "services_service_type_id_fkey"
             columns: ["service_type_id"]
             isOneToOne: false
@@ -7721,6 +7922,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["trip_parent_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["trip_parent_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["trip_parent_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["trip_parent_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["trip_parent_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
           {
             foreignKeyName: "services_written_off_by_fkey"
@@ -8444,6 +8680,13 @@ export type Database = {
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
           },
+          {
+            foreignKeyName: "trip_estimates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
         ]
       }
       user_activity_log: {
@@ -9057,6 +9300,13 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
           {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+          {
             foreignKeyName: "services_service_type_id_fkey"
             columns: ["service_type_id"]
             isOneToOne: false
@@ -9165,6 +9415,75 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
+          },
+        ]
+      }
+      trip_cost_allocations: {
+        Row: {
+          allocated_amount: number | null
+          child_client_id: string | null
+          child_folio: string | null
+          child_id: string | null
+          child_license_plate: string | null
+          child_status: string | null
+          child_value: number | null
+          client_count: number | null
+          parent_costs: number | null
+          parent_folio: string | null
+          parent_id: string | null
+          trip_value: number | null
+          vehicle_count: number | null
+          weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["child_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "services_trip_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "trip_cost_allocations"
+            referencedColumns: ["child_id"]
           },
         ]
       }
@@ -9550,6 +9869,10 @@ export type Database = {
       create_service_tracking_link: {
         Args: { p_service_id: string }
         Returns: string
+      }
+      create_trip_service: {
+        Args: { p_parent: Json; p_vehicles: Json }
+        Returns: Json
       }
       current_operator_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
