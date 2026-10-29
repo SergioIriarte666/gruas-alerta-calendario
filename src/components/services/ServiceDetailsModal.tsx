@@ -44,6 +44,9 @@ import { ClientNotificationsToggle } from './ClientNotificationsToggle';
 import { ServiceDocumentsSection } from './ServiceDocumentsSection';
 import { ServiceHandoffPanel } from './ServiceHandoffPanel';
 import { TripChildrenReadOnly, TripParentBanner } from './form/TripVehiclesSection';
+import { useTripChildren } from '@/hooks/services/useTripServices';
+import { useServiceCostTotals } from '@/hooks/services/useServiceCostTotals';
+import { buildTripChildFinance, buildTripParentFinance, formatTripWeight, type TripFinance } from '@/utils/tripFinance';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
@@ -535,6 +538,23 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   
   const totalCommissions = enhancedService?.totalCommissions || 0;
   const totalServiceCosts = enhancedService?.totalCosts || 0;
+
+  // Viaje multi-vehículo: el padre vale 0 en BD y los hijos cargan parte de
+  // los costos del viaje. El prorrateo viene de la vista trip_cost_allocations
+  // por los mismos hooks del listado; acá solo se combinan los números.
+  const tripRole: 'parent' | 'child' | null = service?.isTripParent
+    ? 'parent'
+    : service?.tripParentId
+      ? 'child'
+      : null;
+  const { data: tripChildren = [] } = useTripChildren(tripRole === 'parent' ? service?.id : null);
+  const tripCostIds = React.useMemo(() => {
+    if (!service || !tripRole) return [];
+    return tripRole === 'parent'
+      ? [service.id, ...tripChildren.map(child => child.id)]
+      : [service.id];
+  }, [service, tripRole, tripChildren]);
+  const { data: tripCostData } = useServiceCostTotals(tripCostIds);
   
   const primaryOperator =
     enhancedService?.operators && enhancedService.operators.length > 0
@@ -586,11 +606,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
   if (!isOpen || !serviceData) return null;
   
-  // Calcular totales usando datos mejorados si están disponibles
-  const totalCosts = totalServiceCosts + totalCommissions;
-  
-  // Usar getDisplayServiceValue para mostrar el valor total real del servicio
-  const displayServiceValue = getDisplayServiceValue(serviceData);
+  // Costos directos del servicio (costos + comisiones de sus operadores)
+  const directCosts = totalServiceCosts + totalCommissions;
+
+  const tripFinance: TripFinance | null = tripRole === 'parent'
+    ? buildTripParentFinance(tripChildren, tripCostData?.totals ?? {}, directCosts)
+    : tripRole === 'child'
+      ? buildTripChildFinance(Number(serviceData.value || 0), directCosts, tripCostData?.children?.[serviceData.id])
+      : null;
+
+  // Padre: el valor mostrado es la suma de los hijos. Hijo: suma su prorrateo.
+  const displayServiceValue = tripFinance?.kind === 'parent'
+    ? tripFinance.tripValue
+    : getDisplayServiceValue(serviceData);
+  const totalCosts = tripFinance?.kind === 'child' ? tripFinance.totalCosts : directCosts;
   
   // Obtener desglose de valores
   const serviceBreakdown = getServiceValueBreakdown(serviceData);
@@ -601,7 +630,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   
   // Handler para descargar PDF
   const handleDownloadPDF = () => {
-    generatePDF(serviceData, totalCosts, totalCommissions, netProfit);
+    generatePDF(serviceData, totalCosts, totalCommissions, netProfit, tripFinance);
   };
 
   // Generación de documentos comerciales
@@ -1160,7 +1189,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   />
 
                   <DetailSection title="Finanzas" icon={DollarSign} color="emerald">
-                        {serviceBreakdown.hasBothValues ? (
+                        {tripFinance?.kind === 'parent' ? (
+                          <DetailItem
+                            icon={DollarSign}
+                            label={`Valor del Viaje · ${tripFinance.vehicleCount} vehículo${tripFinance.vehicleCount === 1 ? '' : 's'}`}
+                            value={formatCurrency(tripFinance.tripValue)}
+                            valueClass="text-lg text-primary font-bold"
+                          />
+                        ) : serviceBreakdown.hasBothValues ? (
                           <>
                             <DetailItem 
                               icon={DollarSign} 
@@ -1213,8 +1249,62 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                             thirdPartyClientRut={(serviceData as any).thirdPartyClientRut}
                           />
                         )}
-                         <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
+                        {tripFinance?.kind === 'child' && (
+                          <>
+                            <DetailItem icon={DollarSign} label="Costos directos" value={formatCurrency(tripFinance.directCosts)} valueClass="text-md font-medium" />
+                            <DetailItem
+                              icon={DollarSign}
+                              label={`Costos del viaje (prorrateo${tripFinance.parentFolio ? ` · ${tripFinance.parentFolio}` : ''})`}
+                              value={formatCurrency(tripFinance.allocatedAmount)}
+                              valueClass="text-md font-medium text-trip-text"
+                            />
+                          </>
+                        )}
+                         <DetailItem
+                           icon={DollarSign}
+                           label={tripFinance?.kind === 'parent' ? 'Total Costos del Viaje' : 'Total Costos'}
+                           value={formatCurrency(totalCosts)}
+                           valueClass="text-lg text-destructive font-bold"
+                         />
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}/>
+                        {tripFinance?.kind === 'parent' && tripFinance.vehicles.length > 0 && (
+                          <div className="col-span-1 md:col-span-2 overflow-x-auto rounded-md border border-border">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Vehículo</th>
+                                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Cliente</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Valor</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">%</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Costo asignado</th>
+                                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Utilidad</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {tripFinance.vehicles.map((vehicle) => (
+                                  <tr key={vehicle.id}>
+                                    <td className="px-3 py-2">
+                                      <div className="font-medium">{vehicle.licensePlate || '—'}</div>
+                                      <div className="text-xs text-muted-foreground">{vehicle.folio}</div>
+                                    </td>
+                                    <td className="px-3 py-2">{toTitleCase(vehicle.clientName)}</td>
+                                    <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(vehicle.value)}</td>
+                                    <td className="px-3 py-2 text-right tabular-nums">{formatTripWeight(vehicle.weight)}</td>
+                                    <td className="px-3 py-2 text-right tabular-nums" title={vehicle.directCosts > 0 ? `Más ${formatCurrency(vehicle.directCosts)} de costos directos del vehículo` : undefined}>
+                                      {formatCurrency(vehicle.allocatedAmount)}
+                                      {vehicle.directCosts > 0 && (
+                                        <div className="text-xs text-muted-foreground">+ {formatCurrency(vehicle.directCosts)} directos</div>
+                                      )}
+                                    </td>
+                                    <td className={`px-3 py-2 text-right font-medium tabular-nums ${vehicle.profit < 0 ? 'text-destructive' : 'text-success'}`}>
+                                      {formatCurrency(vehicle.profit)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                   </DetailSection>
 
                   {isProductSaleService && isAdmin && (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { generateServiceDetailsPDF } from '@/utils/pdf/serviceDetailsPdfGenerator';
+import type { TripFinance } from '@/utils/tripFinance';
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
@@ -14,7 +15,8 @@ export const useServiceDetailsPDF = () => {
     serviceData: any, 
     totalCosts: number, 
     totalCommissions: number, 
-    netProfit: number
+    netProfit: number,
+    trip: TripFinance | null = null,
   ) => {
     setIsGenerating(true);
     
@@ -25,7 +27,8 @@ export const useServiceDetailsPDF = () => {
         service: serviceData,
         totalCosts,
         totalCommissions,
-        netProfit
+        netProfit,
+        trip
       });
       
       // Descargar automáticamente

@@ -13,12 +13,15 @@ import {
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { fetchServiceItemsBreakdown, ITEMS_SERVICE_TYPES } from './serviceItemsData';
 import { REPORT_PDF_COLORS } from './reportPdfTheme';
+import { formatTripWeight, type TripFinance } from '@/utils/tripFinance';
 
 interface ServiceDetailsPDFData {
   service: any;
   totalCosts: number;
   totalCommissions: number;
   netProfit: number;
+  /** Viaje multi-vehículo: números del viaje (padre) o del vehículo (hijo). */
+  trip?: TripFinance | null;
 }
 
 const TMS_GREEN = REPORT_PDF_COLORS.primary;
@@ -451,14 +454,21 @@ const addResourcesSection = (doc: jsPDF, service: any, yPosition: number): numbe
 const addFinancesSection = (doc: jsPDF, service: any, data: ServiceDetailsPDFData, yPosition: number): number => {
   yPosition = addSectionTitle(doc, 'FINANZAS', yPosition);
   
-  const displayServiceValue = getDisplayServiceValue(service);
+  const trip = data.trip ?? null;
+  // Padre de viaje: vale 0 en BD; el valor es la suma de los vehículos.
+  const displayServiceValue = trip?.kind === 'parent' ? trip.tripValue : getDisplayServiceValue(service);
   const serviceBreakdown = getServiceValueBreakdown(service);
   const isCustody = isCustodyService(service);
   
   const financesData: Array<[string, string]> = [];
   
-  // Mostrar desglose si hay tanto valor base como custodia
-  if (serviceBreakdown.hasBothValues) {
+  if (trip?.kind === 'parent') {
+    financesData.push([
+      `Valor del Viaje (${trip.vehicleCount} vehículo${trip.vehicleCount === 1 ? '' : 's'}):`,
+      formatCurrency(trip.tripValue)
+    ]);
+  } else if (serviceBreakdown.hasBothValues) {
+    // Mostrar desglose si hay tanto valor base como custodia
     financesData.push(
       ['Valor Base del Servicio:', formatCurrency(serviceBreakdown.baseValue)],
       ['Valor de Custodia/Arriendo:', formatCurrency(serviceBreakdown.custodyValue)],
@@ -480,12 +490,23 @@ const addFinancesSection = (doc: jsPDF, service: any, data: ServiceDetailsPDFDat
   }
   
   // Agregar costos y comisiones
-  financesData.push(
-    ['Total Costos del Servicio:', formatCurrency(data.totalCosts - data.totalCommissions)],
-    ['Total Comisiones:', formatCurrency(data.totalCommissions)],
-    ['Total Costos y Comisiones:', formatCurrency(data.totalCosts)],
-    ['Ganancia Neta:', formatCurrency(data.netProfit)]
-  );
+  if (trip?.kind === 'child') {
+    // Hijo de viaje: data.totalCosts ya incluye el prorrateo.
+    financesData.push(
+      ['Costos directos:', formatCurrency(trip.directCosts - data.totalCommissions)],
+      ['Total Comisiones:', formatCurrency(data.totalCommissions)],
+      [`Costos del viaje (prorrateo${trip.parentFolio ? ` ${trip.parentFolio}` : ''}):`, formatCurrency(trip.allocatedAmount)],
+      ['Total Costos:', formatCurrency(data.totalCosts)],
+      ['Ganancia Neta:', formatCurrency(data.netProfit)]
+    );
+  } else {
+    financesData.push(
+      [trip?.kind === 'parent' ? 'Costos del Viaje:' : 'Total Costos del Servicio:', formatCurrency(data.totalCosts - data.totalCommissions)],
+      ['Total Comisiones:', formatCurrency(data.totalCommissions)],
+      [trip?.kind === 'parent' ? 'Total Costos del Viaje:' : 'Total Costos y Comisiones:', formatCurrency(data.totalCosts)],
+      ['Ganancia Neta:', formatCurrency(data.netProfit)]
+    );
+  }
   
   autoTable(doc, {
     startY: yPosition,
@@ -511,7 +532,45 @@ const addFinancesSection = (doc: jsPDF, service: any, data: ServiceDetailsPDFDat
     margin: { left: 20, right: 20 }
   });
   
-  return (doc as any).lastAutoTable.finalY + 10;
+  yPosition = (doc as any).lastAutoTable.finalY + 10;
+
+  // Desglose por vehículo del viaje: valor, peso, costo asignado y utilidad.
+  if (trip?.kind === 'parent' && trip.vehicles.length > 0) {
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Desglose por vehículo (prorrateo ponderado por valor):', 20, yPosition);
+    yPosition += 4;
+
+    autoTable(doc, {
+      startY: yPosition,
+      head: [['Vehículo', 'Folio', 'Cliente', 'Valor', '%', 'Costo asignado', 'Utilidad']],
+      body: trip.vehicles.map((vehicle) => [
+        vehicle.licensePlate || '-',
+        vehicle.folio,
+        vehicle.clientName,
+        formatCurrency(vehicle.value),
+        formatTripWeight(vehicle.weight),
+        vehicle.directCosts > 0
+          ? `${formatCurrency(vehicle.allocatedAmount)} (+${formatCurrency(vehicle.directCosts)} directos)`
+          : formatCurrency(vehicle.allocatedAmount),
+        formatCurrency(vehicle.profit)
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: TMS_GREEN, textColor: [255, 255, 255], fontSize: 8 },
+      styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0] },
+      columnStyles: {
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+        6: { halign: 'right' }
+      },
+      margin: { left: 20, right: 20 }
+    });
+
+    yPosition = (doc as any).lastAutoTable.finalY + 10;
+  }
+
+  return yPosition;
 };
 
 const addObservationsSection = (doc: jsPDF, observations: string, yPosition: number): number => {
