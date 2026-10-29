@@ -682,7 +682,9 @@ export const EnhancedServiceForm = React.memo(({
       purchaseOrder: formData.purchaseOrder,
       status: formData.status,
       isMultiVehicle,
-      tripVehicles: formData.tripVehicles
+      tripVehicles: formData.tripVehicles,
+      isTripParent: isEditingTripParent,
+      isTripChild: isEditingTripChild
     }), [
       formData.serviceType,
       formData.crane,
@@ -699,7 +701,9 @@ export const EnhancedServiceForm = React.memo(({
       formData.purchaseOrder,
       formData.status,
       isMultiVehicle,
-      formData.tripVehicles
+      formData.tripVehicles,
+      isEditingTripParent,
+      isEditingTripChild
     ]);
 
   const { validationErrors, blockingErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({

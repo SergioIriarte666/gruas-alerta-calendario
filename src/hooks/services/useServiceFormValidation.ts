@@ -21,7 +21,28 @@ interface ServiceFormData {
   /** Viaje multi-vehículo: se valida la lista en lugar del vehículo único. */
   isMultiVehicle?: boolean;
   tripVehicles?: TripVehicleDraft[];
+  /** Edición de un viaje existente (padre) o de uno de sus vehículos (hijo). */
+  isTripParent?: boolean;
+  isTripChild?: boolean;
 }
+
+/**
+ * Un tipo multi-vehículo (o un servicio que ya es padre/hijo de viaje) no
+ * tiene vehículo único que validar: el padre no lleva patente y los hijos
+ * nacen del RPC con la suya. Los flags *_required del tipo se ignoran aquí,
+ * estén como estén en la base; la lista de vehículos se valida aparte.
+ */
+export const shouldSkipSingleVehicleRequirements = ({
+  supportsMultiVehicle,
+  isMultiVehicle,
+  isTripParent,
+  isTripChild,
+}: {
+  supportsMultiVehicle?: boolean;
+  isMultiVehicle?: boolean;
+  isTripParent?: boolean;
+  isTripChild?: boolean;
+}): boolean => !!(supportsMultiVehicle || isMultiVehicle || isTripParent || isTripChild);
 
 export interface ValidationError {
   field: string;
@@ -234,8 +255,15 @@ export const useServiceFormValidation = ({
       return errors;
     }
 
+    const skipSingleVehicle = shouldSkipSingleVehicleRequirements({
+      supportsMultiVehicle: selectedServiceType.supportsMultiVehicle,
+      isMultiVehicle: formData.isMultiVehicle,
+      isTripParent: formData.isTripParent,
+      isTripChild: formData.isTripChild,
+    });
+
     // Validación de marca de vehículo
-    if (selectedServiceType.vehicleBrandRequired) {
+    if (!skipSingleVehicle && selectedServiceType.vehicleBrandRequired) {
       if (!formData.vehicleBrand || formData.vehicleBrand.trim() === '') {
         errors.push({
           field: 'vehicleBrand',
@@ -246,7 +274,7 @@ export const useServiceFormValidation = ({
     }
 
     // Validación de modelo de vehículo
-    if (selectedServiceType.vehicleModelRequired) {
+    if (!skipSingleVehicle && selectedServiceType.vehicleModelRequired) {
       if (!formData.vehicleModel || formData.vehicleModel.trim() === '') {
         errors.push({
           field: 'vehicleModel',
@@ -257,7 +285,7 @@ export const useServiceFormValidation = ({
     }
 
     // Validación de patente
-    if (selectedServiceType.licensePlateRequired) {
+    if (!skipSingleVehicle && selectedServiceType.licensePlateRequired) {
       if (!formData.licensePlate || formData.licensePlate.trim() === '') {
         errors.push({
           field: 'licensePlate',
