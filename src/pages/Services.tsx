@@ -106,6 +106,7 @@ const Services = () => {
     filteredServices,
     totalPages,
     paginatedServices,
+    autoExpandedParentIds,
     prefilledData,
     fromCalendarEvent,
     sortField,
@@ -490,6 +491,7 @@ const Services = () => {
           {!searchLoading && !searchError && (isMobile ? (
             <ServicesMobileView
               services={paginatedServices}
+              autoExpandedIds={autoExpandedParentIds}
               hasInitialServices={services.length > 0}
               onViewDetails={handleViewDetails}
               onEdit={isAdmin ? handleRequestEdit : undefined}
@@ -504,6 +506,7 @@ const Services = () => {
           ) : (
             <ServicesTable
               services={paginatedServices}
+              autoExpandedIds={autoExpandedParentIds}
               hasInitialServices={services.length > 0}
               onViewDetails={handleViewDetails}
               onEdit={isAdmin ? handleRequestEdit : undefined}

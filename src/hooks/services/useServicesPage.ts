@@ -8,6 +8,71 @@ import { useServiceSearch } from './useServiceSearch';
 import { useUser } from '@/contexts/UserContext';
 import { Service } from '@/types';
 import { toast } from 'sonner';
+
+/**
+ * Fila del listado: un servicio normal, o un viaje (padre) con sus vehículos
+ * (hijos) como subRows. Los hijos nunca son filas de primer nivel.
+ */
+export interface ServiceTreeRow extends Service {
+  subRows?: Service[];
+}
+
+const compareFolio = (a: Service, b: Service) => a.folio.localeCompare(b.folio, 'es', { numeric: true });
+
+/**
+ * Agrupa los hijos de viaje bajo su padre. Un hijo que calzó con el filtro
+ * arrastra a su padre al resultado (aunque el padre no calce) y deja el grupo
+ * marcado para auto-expandir. Los hijos conservan su orden por folio; el
+ * grupo ocupa la posición del primer miembro que apareció en el orden
+ * aplicado, y la paginación cuenta solo filas de primer nivel.
+ */
+export const buildServiceTree = (
+  filtered: Service[],
+  all: Service[],
+): { rows: ServiceTreeRow[]; autoExpandedParentIds: string[] } => {
+  const byId = new Map(all.map(service => [service.id, service]));
+  const childrenByParent = new Map<string, Service[]>();
+  for (const service of all) {
+    if (!service.tripParentId) continue;
+    const siblings = childrenByParent.get(service.tripParentId) ?? [];
+    siblings.push(service);
+    childrenByParent.set(service.tripParentId, siblings);
+  }
+
+  const rows: ServiceTreeRow[] = [];
+  const placedParents = new Set<string>();
+  const autoExpanded = new Set<string>();
+
+  const placeParent = (parent: Service) => {
+    if (placedParents.has(parent.id)) return;
+    placedParents.add(parent.id);
+    rows.push({
+      ...parent,
+      subRows: [...(childrenByParent.get(parent.id) ?? [])].sort(compareFolio),
+    });
+  };
+
+  for (const service of filtered) {
+    if (service.tripParentId) {
+      const parent = byId.get(service.tripParentId);
+      if (!parent) {
+        // Padre fuera del set cargado: no se esconde el hijo.
+        rows.push({ ...service });
+        continue;
+      }
+      placeParent(parent);
+      autoExpanded.add(parent.id);
+      continue;
+    }
+    if (service.isTripParent) {
+      placeParent(service);
+      continue;
+    }
+    rows.push({ ...service });
+  }
+
+  return { rows, autoExpandedParentIds: [...autoExpanded] };
+};
 import { isFutureDate, parseFromDatabase } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
@@ -99,6 +164,17 @@ export const useServicesPage = () => {
   };
 
   const hasAdvancedFilters = advancedFilters !== null;
+
+  // Valor del viaje = suma de sus hijos (el padre lleva 0 en BD). Solo para
+  // ordenar por la columna Valor con el mismo criterio que muestra la tabla.
+  const tripValueByParent = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const service of baseServices) {
+      if (!service.tripParentId) continue;
+      totals.set(service.tripParentId, (totals.get(service.tripParentId) ?? 0) + (service.value || 0));
+    }
+    return totals;
+  }, [baseServices]);
 
   const filteredAndSortedServices = useMemo(() => {
     const filtered = baseServices.filter(service => {
@@ -233,8 +309,8 @@ export const useServicesPage = () => {
             valueB = b.operator?.name || '';
             break;
           case 'value':
-            valueA = a.value || 0;
-            valueB = b.value || 0;
+            valueA = a.isTripParent ? (tripValueByParent.get(a.id) ?? 0) : (a.value || 0);
+            valueB = b.isTripParent ? (tripValueByParent.get(b.id) ?? 0) : (b.value || 0);
             break;
           case 'status':
             valueA = a.status;
@@ -270,11 +346,18 @@ export const useServicesPage = () => {
     }
 
     return filtered;
-  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, searchIds, sortDirection, sortField, statusFilter, withoutCoordinates]);
+  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, searchIds, sortDirection, sortField, statusFilter, tripValueByParent, withoutCoordinates]);
 
-  const totalPages = Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
+  // Árbol ANTES de paginar: los hijos viajan con su padre y el grupo nunca se
+  // corta entre páginas.
+  const { rows: serviceTreeRows, autoExpandedParentIds } = useMemo(
+    () => buildServiceTree(filteredAndSortedServices, baseServices),
+    [filteredAndSortedServices, baseServices],
+  );
 
-  const paginatedServices = filteredAndSortedServices.slice(
+  const totalPages = Math.ceil(serviceTreeRows.length / ITEMS_PER_PAGE || 1);
+
+  const paginatedServices = serviceTreeRows.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -561,6 +644,7 @@ export const useServicesPage = () => {
     filteredServices: filteredAndSortedServices,
     totalPages,
     paginatedServices,
+    autoExpandedParentIds,
     ITEMS_PER_PAGE,
     prefilledData,
     fromCalendarEvent,

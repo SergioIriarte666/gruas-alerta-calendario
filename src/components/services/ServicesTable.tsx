@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Service } from '@/types';
+import type { ServiceTreeRow } from '@/hooks/services/useServicesPage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff, Ban, Layers, CornerDownRight } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, MessageCircle, MapPinOff, Ban, Layers, CornerDownRight, ChevronRight, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
@@ -22,8 +23,10 @@ import {
   flexRender,
   ColumnDef,
   getCoreRowModel,
+  getExpandedRowModel,
   useReactTable,
   RowSelectionState,
+  ExpandedState,
 } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -31,7 +34,10 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 const logger = createLogger("ServicesTable");
 
 interface ServicesTableProps {
-  services: Service[];
+  /** Filas de primer nivel; un viaje trae sus vehículos en subRows. */
+  services: ServiceTreeRow[];
+  /** Viajes que deben abrirse porque un filtro/búsqueda calzó con un hijo. */
+  autoExpandedIds?: string[];
   hasInitialServices: boolean;
   onViewDetails: (service: Service) => void;
   onEdit?: (service: Service) => void;
@@ -50,6 +56,7 @@ interface ServicesTableProps {
 
 export const ServicesTable = React.memo(({
   services,
+  autoExpandedIds,
   hasInitialServices,
   onViewDetails,
   onEdit,
@@ -67,7 +74,28 @@ export const ServicesTable = React.memo(({
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
-  const { data: costTotalsData, isError: costsError } = useServiceCostTotals(services.map(service => service.id));
+
+  // Expansión de viajes: colapsado por defecto, vive solo mientras la página
+  // está montada. La búsqueda/filtro que calza con un hijo abre su grupo.
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const autoExpandedKey = (autoExpandedIds ?? []).join('|');
+  useEffect(() => {
+    if (!autoExpandedKey) return;
+    setExpanded(prev => {
+      const next = prev === true ? {} : { ...prev };
+      for (const id of autoExpandedKey.split('|')) next[id] = true;
+      return next;
+    });
+  }, [autoExpandedKey]);
+
+  // Los costos se consultan para padres e hijos de la página (los hijos
+  // necesitan su prorrateo aunque estén colapsados).
+  const allPageServiceIds = useMemo(
+    () => services.flatMap(service => [service.id, ...(service.subRows ?? []).map(child => child.id)]),
+    [services],
+  );
+  const totalServicesOnPage = allPageServiceIds.length;
+  const { data: costTotalsData, isError: costsError } = useServiceCostTotals(allPageServiceIds);
   const serviceCostTotals = costTotalsData?.totals;
   const tripParents = costTotalsData?.parents;
   const tripChildren = costTotalsData?.children;
@@ -75,7 +103,12 @@ export const ServicesTable = React.memo(({
   // El castigo solo aplica a completados sin vínculo a factura ni cierre. Se
   // consulta por página (2 consultas), no por fila.
   const writeOffCandidateIds = useMemo(
-    () => (onWriteOff ? services.filter(s => s.status === 'completed').map(s => s.id) : []),
+    () => (onWriteOff
+      ? services
+        .flatMap(service => [service, ...(service.subRows ?? [])])
+        .filter(s => s.status === 'completed')
+        .map(s => s.id)
+      : []),
     [onWriteOff, services],
   );
   const { linkedServiceIds } = useServiceBillingLinks(writeOffCandidateIds);
@@ -91,8 +124,8 @@ export const ServicesTable = React.memo(({
     return state;
   }, [selectedServices]);
 
-  const columns = useMemo<ColumnDef<Service>[]>(() => {
-    const cols: ColumnDef<Service>[] = [];
+  const columns = useMemo<ColumnDef<ServiceTreeRow>[]>(() => {
+    const cols: ColumnDef<ServiceTreeRow>[] = [];
 
     if (onSelectionChange) {
       cols.push({
@@ -140,8 +173,10 @@ export const ServicesTable = React.memo(({
           const service = row.original;
           const trip = service.isTripParent ? tripParents?.[service.id] : undefined;
           const childInfo = service.tripParentId ? tripChildren?.[service.id] : undefined;
+          const childCount = service.subRows?.length ?? trip?.vehicleCount ?? 0;
+          const canExpand = row.getCanExpand();
           return (
-            <div className="flex flex-col items-start gap-1">
+            <div className={`flex flex-col items-start gap-1 ${row.depth > 0 ? 'pl-6' : ''}`}>
               <Badge
                 variant="outline"
                 className="whitespace-nowrap border-primary/20 bg-primary/10 text-primary"
@@ -150,14 +185,25 @@ export const ServicesTable = React.memo(({
                 #{service.folio}
               </Badge>
               {service.isTripParent && (
-                <Badge
-                  variant="secondary"
-                  className="gap-1 whitespace-nowrap text-xs font-normal"
-                  title="Viaje multi-vehículo: los vehículos son servicios hijos con su propio folio"
+                <button
+                  type="button"
+                  className="inline-flex items-center"
+                  onClick={(e) => { e.stopPropagation(); if (canExpand) row.toggleExpanded(); }}
+                  aria-expanded={row.getIsExpanded()}
+                  aria-label={row.getIsExpanded() ? 'Ocultar vehículos del viaje' : 'Mostrar vehículos del viaje'}
+                  disabled={!canExpand}
                 >
-                  <Layers className="size-3" />
-                  Viaje · {trip?.vehicleCount ?? '…'} vehículo{trip?.vehicleCount === 1 ? '' : 's'}
-                </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 whitespace-nowrap text-xs font-normal"
+                    title="Viaje multi-vehículo: los vehículos son servicios hijos con su propio folio"
+                  >
+                    {canExpand
+                      ? (row.getIsExpanded() ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />)
+                      : <Layers className="size-3" />}
+                    Viaje · {childCount} vehículo{childCount === 1 ? '' : 's'}
+                  </Badge>
+                </button>
               )}
               {service.tripParentId && (
                 <Badge
@@ -469,15 +515,21 @@ export const ServicesTable = React.memo(({
   const table = useReactTable({
     data: services,
     columns,
-    state: { rowSelection },
+    state: { rowSelection, expanded },
     getRowId: (row) => row.id,
+    getSubRows: (row) => row.subRows,
+    onExpandedChange: setExpanded,
     enableRowSelection: !!onSelectionChange,
+    // El checkbox del padre selecciona SOLO al padre: los hijos se eligen
+    // expandiendo el viaje. Sin esto TanStack cascadea la selección.
+    enableSubRowSelection: false,
     onRowSelectionChange: (updater) => {
       if (!onSelectionChange) return;
       const next = typeof updater === 'function' ? updater(rowSelection) : updater;
       onSelectionChange(new Set(Object.keys(next).filter(k => next[k])));
     },
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   if (isMobile) {
@@ -486,6 +538,7 @@ export const ServicesTable = React.memo(({
         <CardContent className="p-4">
           <ServicesMobileView
             services={services}
+            autoExpandedIds={autoExpandedIds}
             hasInitialServices={hasInitialServices}
             onViewDetails={onViewDetails}
             onEdit={onEdit}
@@ -507,7 +560,7 @@ export const ServicesTable = React.memo(({
       <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center gap-x-2">
           <Truck className="size-5 text-primary" />
-          <span>Servicios Registrados ({services.length})</span>
+          <span>Servicios Registrados ({totalServicesOnPage})</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -561,7 +614,7 @@ export const ServicesTable = React.memo(({
                 {table.getRowModel().rows.map(row => (
                   <tr
                     key={row.id}
-                    className="border-b border-border/40 hover:bg-muted/30 transition-colors cursor-pointer"
+                    className={`border-b border-border/40 hover:bg-muted/30 transition-colors cursor-pointer ${row.depth > 0 ? 'bg-muted/15 border-l-2 border-l-primary/30' : ''}`}
                     onClick={() => onViewDetails(row.original)}
                   >
                     {row.getVisibleCells().map(cell => (
