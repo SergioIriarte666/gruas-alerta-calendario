@@ -729,6 +729,12 @@ export const useServiceManager = () => {
 
       // Obtener estado real actual para auto-transiciones de flujo VIP
       let currentStatus: Service['status'] | undefined;
+      // Hijo de un viaje multi-vehículo: su estado operativo lo gobierna el
+      // padre (trigger propagate_trip_status_to_children). Agregar una O.C. o
+      // una cotización guarda el dato y NUNCA retrocede el estado
+      // (completed → with_purchase_order / quoted). El hijo sigue siendo
+      // candidato a cierre tal como está.
+      let isTripChild = false;
       const shouldResolveCurrentStatus =
         serviceData.status === undefined &&
         (serviceData.quoteNumber !== undefined || serviceData.purchaseOrderNumber !== undefined);
@@ -736,12 +742,16 @@ export const useServiceManager = () => {
       if (shouldResolveCurrentStatus) {
         const { data: currentService } = await supabase
           .from('services')
-          .select('status')
+          .select('status, trip_parent_id')
           .eq('id', id)
           .single();
 
         currentStatus = currentService?.status as Service['status'] | undefined;
+        isTripChild = !!currentService?.trip_parent_id;
       }
+
+      // Para servicios normales las transiciones VIP siguen intactas.
+      const allowVipAutoTransitions = !isTripChild;
 
       if (isPartialUpdate) {
         // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
@@ -752,7 +762,7 @@ export const useServiceManager = () => {
         if (serviceData.quoteNumber !== undefined) {
           transformedData.quote_number = serviceData.quoteNumber;
           // Auto-transición: completed + quote_number -> quoted
-          if (currentStatus === 'completed' && serviceData.quoteNumber && !serviceData.status) {
+          if (allowVipAutoTransitions && currentStatus === 'completed' && serviceData.quoteNumber && !serviceData.status) {
             transformedData.status = 'quoted';
           }
         }
@@ -762,7 +772,7 @@ export const useServiceManager = () => {
         if (serviceData.purchaseOrderNumber !== undefined) {
           transformedData.purchase_order_number = serviceData.purchaseOrderNumber;
           // Auto-transición: quoted/purchase_order_pending + purchase_order_number -> with_purchase_order
-          if ((currentStatus === 'quoted' || currentStatus === 'purchase_order_pending') && serviceData.purchaseOrderNumber && !serviceData.status) {
+          if (allowVipAutoTransitions && (currentStatus === 'quoted' || currentStatus === 'purchase_order_pending') && serviceData.purchaseOrderNumber && !serviceData.status) {
             transformedData.status = 'with_purchase_order';
           }
         }
@@ -992,10 +1002,11 @@ export const useServiceManager = () => {
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas
       const isStatusUnchanged = serviceData.status === undefined || serviceData.status === currentStatus;
-      if (isStatusUnchanged && currentStatus === 'completed' && transformedData.quote_number) {
+      if (allowVipAutoTransitions && isStatusUnchanged && currentStatus === 'completed' && transformedData.quote_number) {
         transformedData.status = 'quoted';
       }
       if (
+        allowVipAutoTransitions &&
         isStatusUnchanged &&
         (currentStatus === 'quoted' || currentStatus === 'purchase_order_pending') &&
         transformedData.purchase_order_number
